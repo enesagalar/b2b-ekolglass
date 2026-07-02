@@ -1,0 +1,97 @@
+export const roles = [
+  "SUPER_ADMIN",
+  "ADMIN",
+  "SALES_MANAGER",
+  "SALES_STAFF",
+  "WAREHOUSE_STAFF",
+  "ACCOUNTING_STAFF",
+  "DEALER_OWNER",
+  "DEALER_STAFF",
+  "PENDING_CUSTOMER",
+  "GUEST",
+] as const;
+
+export type Role = (typeof roles)[number];
+
+export const permissions = [
+  "admin.dashboard.read",
+  "admin.content.manage",
+  "dealer.application.review",
+  "company.manage",
+  "product.manage",
+  "product.read",
+  "price.read",
+  "price.manage",
+  "stock.read.detailed",
+  "stock.manage",
+  "quote.create",
+  "quote.review",
+  "order.create",
+  "order.approve",
+  "order.track",
+  "report.read",
+] as const;
+
+export type Permission = (typeof permissions)[number];
+
+export const rolePermissions: Record<Role, Permission[]> = {
+  SUPER_ADMIN: [...permissions],
+  ADMIN: [
+    "admin.dashboard.read",
+    "admin.content.manage",
+    "dealer.application.review",
+    "company.manage",
+    "product.manage",
+    "product.read",
+    "price.read",
+    "price.manage",
+    "stock.read.detailed",
+    "stock.manage",
+    "quote.review",
+    "order.approve",
+    "order.track",
+    "report.read",
+  ],
+  SALES_MANAGER: [
+    "admin.dashboard.read",
+    "dealer.application.review",
+    "company.manage",
+    "product.read",
+    "price.read",
+    "price.manage",
+    "stock.read.detailed",
+    "quote.review",
+    "order.approve",
+    "order.track",
+    "report.read",
+  ],
+  SALES_STAFF: [
+    "admin.dashboard.read",
+    "product.read",
+    "price.read",
+    "stock.read.detailed",
+    "quote.review",
+    "order.track",
+  ],
+  WAREHOUSE_STAFF: ["product.read", "stock.read.detailed", "stock.manage", "order.track"],
+  ACCOUNTING_STAFF: ["admin.dashboard.read", "price.read", "order.track", "report.read"],
+  DEALER_OWNER: ["product.read", "price.read", "quote.create", "order.create", "order.track"],
+  DEALER_STAFF: ["product.read", "price.read", "quote.create", "order.create", "order.track"],
+  PENDING_CUSTOMER: ["product.read"],
+  GUEST: ["product.read", "quote.create"],
+};
+
+export function hasPermission(role: Role, permission: Permission) {
+  return rolePermissions[role].includes(permission);
+}
+
+export function isAdminRole(role: Role) {
+  return [
+    "SUPER_ADMIN",
+    "ADMIN",
+    "SALES_MANAGER",
+    "SALES_STAFF",
+    "WAREHOUSE_STAFF",
+    "ACCOUNTING_STAFF",
+  ].includes(role);
+}

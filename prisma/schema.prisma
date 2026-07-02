@@ -1,0 +1,451 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  name           String
+  role           String
+  status         String         @default("ACTIVE")
+  companyId      String?
+  company        Company?       @relation(fields: [companyId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  createdOrders  Order[]        @relation("OrderCreatedBy")
+  approvedOrders Order[]        @relation("OrderApprovedBy")
+  pageRevisions  PageRevision[]
+  auditLogs      AuditLog[]
+}
+
+model Company {
+  id                  String              @id @default(cuid())
+  legalName           String
+  displayName         String
+  taxOffice           String?
+  taxNumber           String?
+  email               String
+  phone               String
+  city                String
+  country             String              @default("TR")
+  status              String              @default("PENDING")
+  paymentTerms        String?
+  creditLimit         Decimal?
+  customerGroupId     String?
+  customerGroup       CustomerGroup?      @relation(fields: [customerGroupId], references: [id])
+  assignedSalesUserId String?
+  internalNotes       String?
+  users               User[]
+  addresses           Address[]
+  dealerApplications  DealerApplication[]
+  quoteRequests       QuoteRequest[]
+  orders              Order[]
+  priceLists          PriceList[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model CustomerGroup {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  description String?
+  companies   Company[]
+  priceLists  PriceList[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model DealerApplication {
+  id            String    @id @default(cuid())
+  companyName   String
+  contactName   String
+  email         String
+  phone         String
+  city          String
+  taxNumber     String?
+  customerType  String
+  message       String?
+  status        String    @default("NEW")
+  companyId     String?
+  company       Company?  @relation(fields: [companyId], references: [id])
+  reviewedById  String?
+  reviewedAt    DateTime?
+  internalNotes String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label      String
+  line1      String
+  line2      String?
+  district   String?
+  city       String
+  country    String   @default("TR")
+  postalCode String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ProductCategory {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  sortOrder   Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                 String                 @id @default(cuid())
+  code               String                 @unique
+  name               String
+  categoryId         String
+  category           ProductCategory        @relation(fields: [categoryId], references: [id])
+  vehicleBrand       String?
+  vehicleModel       String?
+  yearStart          Int?
+  yearEnd            Int?
+  glassPosition      String?
+  glassType          String
+  dimensions         String?
+  thicknessMm        Decimal?
+  tint               String?
+  isTempered         Boolean                @default(false)
+  isLaminated        Boolean                @default(false)
+  processingNotes    String?
+  compatibilityNotes String?
+  isCustomAvailable  Boolean                @default(false)
+  orderMode          String                 @default("QUOTE_OR_ORDER")
+  status             String                 @default("ACTIVE")
+  stockItems         StockItem[]
+  prices             ProductPrice[]
+  compatibilities    ProductCompatibility[]
+  quoteItems         QuoteRequestItem[]
+  orderItems         OrderItem[]
+  mediaAssets        MediaAsset[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([code])
+  @@index([vehicleBrand, vehicleModel])
+  @@index([glassType])
+}
+
+model ProductCompatibility {
+  id           String   @id @default(cuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  vehicleBrand String
+  vehicleModel String
+  yearStart    Int?
+  yearEnd      Int?
+  oemReference String?
+  notes        String?
+  createdAt    DateTime @default(now())
+}
+
+model PriceList {
+  id              String         @id @default(cuid())
+  name            String
+  currency        String         @default("TRY")
+  customerGroupId String?
+  customerGroup   CustomerGroup? @relation(fields: [customerGroupId], references: [id])
+  companyId       String?
+  company         Company?       @relation(fields: [companyId], references: [id])
+  startsAt        DateTime       @default(now())
+  endsAt          DateTime?
+  isActive        Boolean        @default(true)
+  prices          ProductPrice[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model ProductPrice {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  amount      Decimal
+  minQuantity Int       @default(1)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([productId, priceListId, minQuantity])
+}
+
+model StockItem {
+  id               String   @id @default(cuid())
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseCode    String
+  quantity         Int      @default(0)
+  reservedQuantity Int      @default(0)
+  visibility       String   @default("SIMPLIFIED")
+  status           String   @default("ASK_FOR_AVAILABILITY")
+  updatedAt        DateTime @updatedAt
+
+  @@unique([productId, warehouseCode])
+}
+
+model QuoteRequest {
+  id                  String             @id @default(cuid())
+  quoteNumber         String             @unique
+  companyId           String?
+  company             Company?           @relation(fields: [companyId], references: [id])
+  requesterName       String
+  requesterEmail      String
+  requesterPhone      String?
+  customerType        String?
+  desiredDeliveryDate DateTime?
+  status              String             @default("NEW")
+  notes               String?
+  internalNotes       String?
+  items               QuoteRequestItem[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model QuoteRequestItem {
+  id             String       @id @default(cuid())
+  quoteRequestId String
+  quoteRequest   QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  productId      String?
+  product        Product?     @relation(fields: [productId], references: [id])
+  customTitle    String?
+  quantity       Int          @default(1)
+  dimensions     String?
+  glassType      String?
+  notes          String?
+}
+
+model Order {
+  id                String               @id @default(cuid())
+  orderNumber       String               @unique
+  companyId         String
+  company           Company              @relation(fields: [companyId], references: [id])
+  status            String               @default("DRAFT")
+  currency          String               @default("TRY")
+  subtotal          Decimal              @default(0)
+  deliveryAddressId String?
+  shipmentMethod    String?
+  notes             String?
+  internalNotes     String?
+  createdById       String?
+  createdBy         User?                @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  approvedById      String?
+  approvedBy        User?                @relation("OrderApprovedBy", fields: [approvedById], references: [id])
+  items             OrderItem[]
+  statusHistory     OrderStatusHistory[]
+  shipment          Shipment?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal?
+  notes     String?
+}
+
+model OrderStatusHistory {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus  String?
+  toStatus    String
+  changedById String?
+  note        String?
+  createdAt   DateTime @default(now())
+}
+
+model Shipment {
+  id                 String            @id @default(cuid())
+  orderId            String            @unique
+  order              Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  providerId         String?
+  provider           ShippingProvider? @relation(fields: [providerId], references: [id])
+  carrier            String?
+  trackingNumber     String?
+  externalShipmentId String?
+  trackingUrl        String?
+  labelUrl           String?
+  rawStatus          String?
+  status             String            @default("PENDING")
+  shippedAt          DateTime?
+  deliveredAt        DateTime?
+  events             ShipmentEvent[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model ShipmentEvent {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  eventCode   String
+  title       String
+  description String?
+  occurredAt  DateTime
+  location    String?
+  rawPayload  String?
+  createdAt   DateTime @default(now())
+
+  @@index([shipmentId, occurredAt])
+}
+
+model ShippingProvider {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  name            String
+  providerType    String
+  baseUrl         String?
+  accountNumber   String?
+  credentialsKey  String?
+  isActive        Boolean          @default(false)
+  supportsLabels  Boolean          @default(false)
+  supportsWebhook Boolean          @default(false)
+  notes           String?
+  shipments       Shipment[]
+  logs            IntegrationLog[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model MediaAsset {
+  id         String      @id @default(cuid())
+  key        String      @unique
+  title      String
+  url        String
+  altText    String
+  usage      String
+  productId  String?
+  product    Product?    @relation(fields: [productId], references: [id])
+  pageBlocks PageBlock[]
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  value       String
+  valueType   String   @default("TEXT")
+  group       String
+  description String?
+  isEditable  Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+model Page {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  title          String
+  status         String         @default("DRAFT")
+  locale         String         @default("tr")
+  seoTitle       String?
+  seoDescription String?
+  publishedAt    DateTime?
+  blocks         PageBlock[]
+  revisions      PageRevision[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model PageBlock {
+  id           String      @id @default(cuid())
+  pageId       String
+  page         Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type         String
+  sortOrder    Int         @default(0)
+  title        String?
+  eyebrow      String?
+  body         String?
+  ctaLabel     String?
+  ctaHref      String?
+  mediaAssetId String?
+  mediaAsset   MediaAsset? @relation(fields: [mediaAssetId], references: [id])
+  settingsJson String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([pageId, sortOrder])
+}
+
+model PageRevision {
+  id           String   @id @default(cuid())
+  pageId       String
+  page         Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  version      Int
+  snapshotJson String
+  createdById  String?
+  createdBy    User?    @relation(fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@unique([pageId, version])
+}
+
+model DashboardWidget {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  title       String
+  description String?
+  role        String
+  metricKey   String
+  icon        String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    String?
+  createdAt   DateTime @default(now())
+}
+
+model IntegrationLog {
+  id              String            @id @default(cuid())
+  providerId      String?
+  provider        ShippingProvider? @relation(fields: [providerId], references: [id])
+  direction       String
+  operation       String
+  status          String
+  entityType      String?
+  entityId        String?
+  requestSummary  String?
+  responseSummary String?
+  errorMessage    String?
+  retryCount      Int               @default(0)
+  createdAt       DateTime          @default(now())
+
+  @@index([providerId, createdAt])
+  @@index([entityType, entityId])
+}
