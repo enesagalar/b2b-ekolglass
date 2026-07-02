@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { siteSettingSchema } from "@/domain/validation";
+import { requireAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function updateSiteSetting(formData: FormData) {
+  const user = await requireAdminUser();
   const parsed = siteSettingSchema.safeParse({
     key: formData.get("key"),
     value: formData.get("value"),
@@ -24,6 +26,16 @@ export async function updateSiteSetting(formData: FormData) {
       value: parsed.data.value,
       valueType: "TEXT",
       group: "homepage",
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      actorUserId: user.id,
+      action: "site_setting.update",
+      entityType: "SiteSetting",
+      entityId: parsed.data.key,
+      metadata: JSON.stringify({ key: parsed.data.key }),
     },
   });
 

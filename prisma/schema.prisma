@@ -13,6 +13,8 @@ model User {
   name           String
   role           String
   status         String         @default("ACTIVE")
+  passwordHash   String?
+  lastLoginAt    DateTime?
   companyId      String?
   company        Company?       @relation(fields: [companyId], references: [id])
   createdAt      DateTime       @default(now())
@@ -20,7 +22,22 @@ model User {
   createdOrders  Order[]        @relation("OrderCreatedBy")
   approvedOrders Order[]        @relation("OrderApprovedBy")
   pageRevisions  PageRevision[]
+  sessions       AuthSession[]
   auditLogs      AuditLog[]
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Company {

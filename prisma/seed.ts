@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { hash } from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const adapter = new PrismaBetterSqlite3({
@@ -352,6 +353,33 @@ async function main() {
       create: { key, title, metricKey, role, icon, sortOrder },
     });
   }
+
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@ekolglass.local").toLowerCase();
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!adminPassword && process.env.NODE_ENV === "production") {
+    throw new Error("SEED_ADMIN_PASSWORD must be set when seeding production.");
+  }
+
+  const resolvedAdminPassword = adminPassword ?? "EkolGlass2026!";
+  const adminPasswordHash = await hash(resolvedAdminPassword, 12);
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      name: "EkolGlass Super Admin",
+      role: "SUPER_ADMIN",
+      status: "ACTIVE",
+      passwordHash: adminPasswordHash,
+    },
+    create: {
+      email: adminEmail,
+      name: "EkolGlass Super Admin",
+      role: "SUPER_ADMIN",
+      status: "ACTIVE",
+      passwordHash: adminPasswordHash,
+    },
+  });
 }
 
 main()

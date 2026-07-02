@@ -10,6 +10,7 @@ import {
   UsersRound,
 } from "lucide-react";
 
+import { logout } from "@/features/auth/actions";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -73,9 +74,16 @@ export default async function AdminPage() {
             <Factory size={22} className="text-teal-800" aria-hidden="true" />
             <span className="font-semibold text-slate-950">EkolGlass Admin</span>
           </div>
-          <Link href="/" className="text-sm font-medium text-slate-600">
-            Portala dön
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-sm font-medium text-slate-600">
+              Portala dön
+            </Link>
+            <form action={logout}>
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
+                Çıkış
+              </button>
+            </form>
+          </div>
         </div>
       </header>
       <section className="mx-auto max-w-7xl px-5 py-8 md:px-8">

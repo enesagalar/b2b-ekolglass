@@ -15,3 +15,8 @@ export const siteSettingSchema = z.object({
   key: z.string().min(3).max(120),
   value: z.string().min(1).max(2000),
 });
+
+export const loginSchema = z.object({
+  email: z.email("Geçerli bir e-posta girin."),
+  password: z.string().min(8, "Şifre en az 8 karakter olmalıdır.").max(120),
+});

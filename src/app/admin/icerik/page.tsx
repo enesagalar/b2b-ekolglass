@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ImageIcon, Save } from "lucide-react";
 
+import { logout } from "@/features/auth/actions";
 import { updateSiteSetting } from "@/features/site-settings/actions";
 import { prisma } from "@/lib/prisma";
 
@@ -25,9 +26,16 @@ export default async function AdminContentPage() {
           <Link href="/admin" className="font-semibold text-slate-950">
             EkolGlass Admin
           </Link>
-          <Link href="/" className="text-sm font-medium text-slate-600">
-            Portala dön
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-sm font-medium text-slate-600">
+              Portala dön
+            </Link>
+            <form action={logout}>
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
+                Çıkış
+              </button>
+            </form>
+          </div>
         </div>
       </header>
       <section className="mx-auto max-w-5xl px-5 py-8 md:px-8">

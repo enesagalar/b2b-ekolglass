@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint src prisma --ext .ts,.tsx --cache --no-error-on-unmatched-pattern",
     "test": "vitest run",
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.11.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.23.0",
