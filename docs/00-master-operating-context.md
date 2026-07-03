@@ -16,3 +16,14 @@ Oncelik sirasi:
 Tasarim dili kurumsal, endustriyel, hizli ve sade olmalidir. Gorsel kalite onemlidir, ancak B2B is akislarini golgelememelidir.
 
 Her faz sonunda lint, test ve build kontrolu hedeflenir. Kritik is mantigi sadece frontend state icinde tutulmaz; domain sabitleri, validation, Prisma modelleri ve servis/server action katmani ayrilir.
+
+## Her Yeni Calisma Turunda Okunacak Dosyalar
+
+1. `docs/00-master-operating-context.md`
+2. `docs/01-roadmap.md`
+3. `docs/02-current-state.md`
+4. `docs/03-owner-collaboration-guide.md`
+5. Ilgili faz dosyasi
+6. `docs/security/security-baseline.md`
+
+Bu liste projenin hafizasidir. Yeni ozellik, refactor veya UI calismasina baslamadan once mevcut durum ve faz kapilari kontrol edilir.

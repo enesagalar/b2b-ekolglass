@@ -54,10 +54,28 @@ npx prisma migrate status
 
 - `docs/00-master-operating-context.md`
 - `docs/01-roadmap.md`
+- `docs/02-current-state.md`
+- `docs/03-owner-collaboration-guide.md`
+- `docs/security/security-baseline.md`
 - `docs/architecture/adr-0001-portal-admin-cms-integration-split.md`
 - `docs/architecture/cms-decision-matrix.md`
 - `docs/architecture/shipping-integration-contract.md`
 - `docs/research/2026-07-02-b2b-cms-shipping-research.md`
+
+## Proje Takibi
+
+Kod yazmayan proje sahibi icin en pratik takip sirasi:
+
+1. `docs/02-current-state.md` - su an ne calisiyor, ne eksik?
+2. `docs/01-roadmap.md` - fazlar hangi sirada?
+3. `docs/03-owner-collaboration-guide.md` - hangi kararlari sen vermelisin?
+4. `docs/security/security-baseline.md` - security kapilari neler?
+5. `docs/04-next-actions.md` - siradaki kodlama turunda ne yapilacak?
+
+Siradaki ana faz:
+
+- `docs/phases/phase-02-5-admin-ux-shell.md`
+- `docs/ux/admin-shell-spec.md`
 
 ## Not
 
