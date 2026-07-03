@@ -1,12 +1,18 @@
 import {
+  ArrowLeft,
+  ArrowRight,
   Boxes,
   CircleDollarSign,
+  Eye,
+  Filter,
   Layers3,
   PackagePlus,
   Save,
+  Search,
   Tags,
   Warehouse,
 } from "lucide-react";
+import Link from "next/link";
 
 import {
   currencies,
@@ -26,6 +32,7 @@ import {
   saveProductStock,
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +43,63 @@ const textareaClass =
   "min-h-20 w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-700";
 const labelClass = "grid gap-1.5 text-xs font-semibold text-slate-700";
 const panelClass = "rounded-lg border border-slate-200 bg-white p-5 shadow-sm";
+const pageSize = 25;
+
+type AdminProductsSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function getSearchParam(searchParams: Record<string, string | string[] | undefined>, key: string) {
+  const value = searchParams[key];
+
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function buildProductWhere({
+  query,
+  categoryId,
+  status,
+  stockStatus,
+}: {
+  query?: string;
+  categoryId?: string;
+  status?: string;
+  stockStatus?: string;
+}) {
+  const where: Prisma.ProductWhereInput = {};
+  const trimmedQuery = query?.trim();
+
+  if (trimmedQuery) {
+    where.OR = [
+      { code: { contains: trimmedQuery } },
+      { name: { contains: trimmedQuery } },
+      { vehicleBrand: { contains: trimmedQuery } },
+      { vehicleModel: { contains: trimmedQuery } },
+      { dimensions: { contains: trimmedQuery } },
+      { glassType: { contains: trimmedQuery } },
+      { compatibilityNotes: { contains: trimmedQuery } },
+    ];
+  }
+
+  if (categoryId) {
+    where.categoryId = categoryId;
+  }
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (stockStatus) {
+    where.stockItems = { some: { status: stockStatus } };
+  }
+
+  return where;
+}
+
+function buildPageHref(currentParams: URLSearchParams, page: number) {
+  const params = new URLSearchParams(currentParams);
+  params.set("page", String(page));
+
+  return `/admin/urunler?${params.toString()}`;
+}
 
 function SubmitButton({ label }: { label: string }) {
   return (
@@ -297,8 +361,23 @@ function PriceFields({
   );
 }
 
-export default async function AdminProductsPage() {
-  const [categories, priceLists, products, counts] = await Promise.all([
+export default async function AdminProductsPage({ searchParams }: { searchParams: AdminProductsSearchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const query = getSearchParam(resolvedSearchParams, "q")?.trim() ?? "";
+  const categoryId = getSearchParam(resolvedSearchParams, "categoryId") ?? "";
+  const status = getSearchParam(resolvedSearchParams, "status") ?? "";
+  const stockStatus = getSearchParam(resolvedSearchParams, "stockStatus") ?? "";
+  const page = Math.max(1, Number(getSearchParam(resolvedSearchParams, "page") ?? 1) || 1);
+  const listParams = new URLSearchParams();
+
+  if (query) listParams.set("q", query);
+  if (categoryId) listParams.set("categoryId", categoryId);
+  if (status) listParams.set("status", status);
+  if (stockStatus) listParams.set("stockStatus", stockStatus);
+
+  const productWhere = buildProductWhere({ query, categoryId, status, stockStatus });
+
+  const [categories, priceLists, products, counts, filteredProductCount] = await Promise.all([
     prisma.productCategory.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: { _count: { select: { products: true } } },
@@ -307,6 +386,7 @@ export default async function AdminProductsPage() {
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
     }),
     prisma.product.findMany({
+      where: productWhere,
       include: {
         category: true,
         stockItems: { orderBy: { warehouseCode: "asc" } },
@@ -316,7 +396,8 @@ export default async function AdminProductsPage() {
         },
       },
       orderBy: [{ updatedAt: "desc" }, { code: "asc" }],
-      take: 80,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     }),
     Promise.all([
       prisma.product.count(),
@@ -324,10 +405,13 @@ export default async function AdminProductsPage() {
       prisma.stockItem.count({ where: { status: { in: ["LOW_STOCK", "OUT_OF_STOCK"] } } }),
       prisma.priceList.count({ where: { isActive: true } }),
     ]),
+    prisma.product.count({ where: productWhere }),
   ]);
 
   const [totalProducts, activeProducts, stockAlerts, activePriceLists] = counts;
   const canCreateProduct = categories.length > 0 && priceLists.length > 0;
+  const totalPages = Math.max(1, Math.ceil(filteredProductCount / pageSize));
+  const hasActiveFilter = Boolean(query || categoryId || status || stockStatus);
 
   return (
     <div className="grid gap-6">
@@ -493,9 +577,74 @@ export default async function AdminProductsPage() {
         </div>
 
         <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-            <h2 className="text-lg font-semibold text-slate-950">Ürün kayıtları</h2>
-            <span className="text-xs font-medium text-slate-500">Son güncellenen 80 kayıt</span>
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-950">Urun kayitlari</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {filteredProductCount} kayit listeleniyor. Sayfa {Math.min(page, totalPages)} / {totalPages}.
+                </p>
+              </div>
+              {hasActiveFilter ? (
+                <Link href="/admin/urunler" className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700">
+                  Filtreleri temizle
+                </Link>
+              ) : null}
+            </div>
+            <form className="mt-5 grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 xl:grid-cols-[1.4fr_0.8fr_0.7fr_0.8fr_auto]" action="/admin/urunler">
+              <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
+                Arama
+                <span className="flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-3">
+                  <Search size={16} className="text-slate-400" aria-hidden="true" />
+                  <input
+                    name="q"
+                    defaultValue={query}
+                    className="w-full bg-transparent text-sm font-normal outline-none"
+                    placeholder="Kod, urun adi, marka, model, olcu"
+                  />
+                </span>
+              </label>
+              <label className={labelClass}>
+                Kategori
+                <select name="categoryId" defaultValue={categoryId} className={inputClass}>
+                  <option value="">Tum kategoriler</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={labelClass}>
+                Yayin
+                <select name="status" defaultValue={status} className={inputClass}>
+                  <option value="">Tum durumlar</option>
+                  {productStatuses.map((productStatus) => (
+                    <option key={productStatus} value={productStatus}>
+                      {getProductStatusLabel(productStatus)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={labelClass}>
+                Stok
+                <select name="stockStatus" defaultValue={stockStatus} className={inputClass}>
+                  <option value="">Tum stoklar</option>
+                  {stockStatuses.map((currentStockStatus) => (
+                    <option key={currentStockStatus} value={currentStockStatus}>
+                      {getStatusLabel(currentStockStatus)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900 xl:self-end"
+              >
+                <Filter size={16} aria-hidden="true" />
+                Filtrele
+              </button>
+            </form>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1160px] border-collapse text-left text-sm">
@@ -539,6 +688,13 @@ export default async function AdminProductsPage() {
                         <p className="mt-1 text-xs text-slate-500">{price ? price.priceList.name : "Liste satırı ekleyin"}</p>
                       </td>
                       <td className="px-4 py-4">
+                        <Link
+                          href={`/admin/urunler/${product.id}`}
+                          className="mb-3 inline-flex h-9 items-center gap-2 rounded-md bg-teal-800 px-3 text-xs font-semibold text-white transition hover:bg-teal-900"
+                        >
+                          <Eye size={14} aria-hidden="true" />
+                          Detay
+                        </Link>
                         <details className="group">
                           <summary className="cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800">
                             Düzenle
@@ -604,8 +760,42 @@ export default async function AdminProductsPage() {
                     </tr>
                   );
                 })}
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
+                      Bu filtrelerle eslesen urun bulunamadi.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-col justify-between gap-3 border-t border-slate-200 px-5 py-4 md:flex-row md:items-center">
+            <p className="text-xs font-medium text-slate-500">
+              {pageSize} kayit/sayfa. Toplam {filteredProductCount} kayit.
+            </p>
+            <div className="flex items-center gap-2">
+              <Link
+                href={buildPageHref(listParams, Math.max(1, page - 1))}
+                aria-disabled={page <= 1}
+                className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-semibold ${
+                  page <= 1 ? "pointer-events-none border-slate-200 text-slate-300" : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <ArrowLeft size={14} aria-hidden="true" />
+                Onceki
+              </Link>
+              <Link
+                href={buildPageHref(listParams, Math.min(totalPages, page + 1))}
+                aria-disabled={page >= totalPages}
+                className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-semibold ${
+                  page >= totalPages ? "pointer-events-none border-slate-200 text-slate-300" : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                Sonraki
+                <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </section>
     </div>

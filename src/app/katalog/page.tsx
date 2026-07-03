@@ -1,14 +1,74 @@
 import Link from "next/link";
 import { Filter, PackageSearch, Search } from "lucide-react";
 
+import { productGlassTypes } from "@/domain/catalog";
 import { getStatusLabel } from "@/domain/statuses";
+import { stockStatuses } from "@/domain/statuses";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function CatalogPage() {
-  const products = await prisma.product.findMany({
-    where: { status: "ACTIVE" },
+type CatalogSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function getSearchParam(searchParams: Record<string, string | string[] | undefined>, key: string) {
+  const value = searchParams[key];
+
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function buildCatalogWhere({
+  query,
+  categoryId,
+  glassType,
+  stockStatus,
+}: {
+  query?: string;
+  categoryId?: string;
+  glassType?: string;
+  stockStatus?: string;
+}) {
+  const where: Prisma.ProductWhereInput = { status: "ACTIVE" };
+  const trimmedQuery = query?.trim();
+
+  if (trimmedQuery) {
+    where.OR = [
+      { code: { contains: trimmedQuery } },
+      { name: { contains: trimmedQuery } },
+      { vehicleBrand: { contains: trimmedQuery } },
+      { vehicleModel: { contains: trimmedQuery } },
+      { dimensions: { contains: trimmedQuery } },
+      { compatibilityNotes: { contains: trimmedQuery } },
+    ];
+  }
+
+  if (categoryId) {
+    where.categoryId = categoryId;
+  }
+
+  if (glassType) {
+    where.glassType = glassType;
+  }
+
+  if (stockStatus) {
+    where.stockItems = { some: { status: stockStatus } };
+  }
+
+  return where;
+}
+
+export default async function CatalogPage({ searchParams }: { searchParams: CatalogSearchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const query = getSearchParam(resolvedSearchParams, "q")?.trim() ?? "";
+  const categoryId = getSearchParam(resolvedSearchParams, "categoryId") ?? "";
+  const glassType = getSearchParam(resolvedSearchParams, "glassType") ?? "";
+  const stockStatus = getSearchParam(resolvedSearchParams, "stockStatus") ?? "";
+  const where = buildCatalogWhere({ query, categoryId, glassType, stockStatus });
+  const hasActiveFilter = Boolean(query || categoryId || glassType || stockStatus);
+
+  const [products, categories] = await Promise.all([
+    prisma.product.findMany({
+      where,
     include: {
       category: true,
       stockItems: true,
@@ -18,7 +78,12 @@ export default async function CatalogPage() {
       },
     },
     orderBy: [{ category: { sortOrder: "asc" } }, { code: "asc" }],
-  });
+    }),
+    prisma.productCategory.findMany({
+      where: { products: { some: { status: "ACTIVE" } } },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+  ]);
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -54,18 +119,68 @@ export default async function CatalogPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <label htmlFor="catalogSearch" className="sr-only">
+        <form className="mt-8 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_auto]" action="/katalog">
+          <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
             Katalogda ara
+            <span className="flex h-11 items-center gap-3 rounded-md border border-slate-300 px-4">
+              <Search size={18} className="text-slate-400" aria-hidden="true" />
+              <input
+                name="q"
+                defaultValue={query}
+                placeholder="Urun kodu, marka, model, olcu veya OEM"
+                className="w-full bg-transparent text-sm font-normal outline-none"
+              />
+            </span>
           </label>
-          <div className="flex items-center gap-3 rounded-md border border-slate-300 px-4">
-            <Search size={18} className="text-slate-400" aria-hidden="true" />
-            <input
-              id="catalogSearch"
-              placeholder="Ürün kodu, marka, model, ölçü veya OEM referansı"
-              className="h-12 w-full bg-transparent text-sm outline-none"
-            />
+          <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
+            Kategori
+            <select name="categoryId" defaultValue={categoryId} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700">
+              <option value="">Tum kategoriler</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
+            Cam tipi
+            <select name="glassType" defaultValue={glassType} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700">
+              <option value="">Tum cam tipleri</option>
+              {productGlassTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
+            Stok
+            <select name="stockStatus" defaultValue={stockStatus} className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700">
+              <option value="">Tum stoklar</option>
+              {stockStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {getStatusLabel(status)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex gap-2 lg:self-end">
+            <button type="submit" className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900">
+              <Filter size={16} aria-hidden="true" />
+              Filtrele
+            </button>
+            {hasActiveFilter ? (
+              <Link href="/katalog" className="inline-flex h-11 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700">
+                Temizle
+              </Link>
+            ) : null}
           </div>
+        </form>
+
+        <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-600">
+          <span>{products.length} urun listeleniyor</span>
+          <span>Filtreler veritabanindan calisir</span>
         </div>
 
         <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -110,6 +225,13 @@ export default async function CatalogPage() {
                   </tr>
                 );
               })}
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
+                    Bu filtrelerle eslesen yayindaki urun bulunamadi.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>

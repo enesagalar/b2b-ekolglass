@@ -33,6 +33,9 @@ Son guncelleme: 2026-07-03
   - Operasyon dashboard
 - Admin CMS ayar ekrani.
 - Admin urun/kategori/fiyat/stok yonetimi.
+- Admin urun liste arama/filtre/sayfalama.
+- Admin urun detay sayfasi.
+- Public katalog arama/filtre.
 - City Lojistik adapter siniri, canli API bilgisi bekliyor.
 
 ## En Onemli Eksikler
@@ -42,11 +45,11 @@ Son guncelleme: 2026-07-03
    - Onaydan firma ve bayi kullanicisi uretme yok.
    - Firma bazli fiyat gorunurlugu yok.
 
-2. Urun yonetimi baslatildi ama UX ham:
-   - Liste arama/filtre yok.
-   - Detay sayfasi yok.
-   - Sekmeli urun duzeni yok.
-   - Medya/teknik dosya yok.
+2. Urun yonetimi ilerledi ama operasyon formlari daginik:
+   - Medya/teknik dosya ekleme UI'i yok.
+   - Stok/fiyat guncelleme formlari detay sayfasina tasinmadi.
+   - Kategori/fiyat listesi yan panelleri ayri alt ekrana bolunmedi.
+   - Bayi rolune gore fiyat/stok gorunurlugu yok.
 
 3. Teklif/siparis akisi yok:
    - Teklif sepeti yok.
@@ -59,12 +62,12 @@ Son guncelleme: 2026-07-03
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.1 uygulanacak: Urun ve Katalog UX Iyilestirme.
+Faz 3.1 devam edecek: Urun ve Katalog UX Iyilestirme.
 
-Admin shell tamamlandi. Siradaki adim, urun operasyonunu ham CRUD ekranindan arama/filtre/detay sekmeleri olan daha kullanisli bir admin deneyimine tasimaktir.
+Admin urun listesi ve public katalog filtreleri tamamlandi. Siradaki adim, urun detay sayfasini gercek duzenleme merkezi haline getirmek ve medya/teknik dosya yonetimini tamamlamaktir.
 
 Hedef ekranlar:
 
-- `/admin/urunler`
-- gelecekte `/admin/urunler/[id]`
-- `/katalog`
+- `/admin/urunler/[id]`
+- medya/teknik dosya yonetimi
+- bayi rolune gore katalog fiyat/stok gorunurlugu

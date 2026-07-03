@@ -8,29 +8,24 @@ Faz 3.1 - Urun ve Katalog UX Iyilestirme.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. `/admin/urunler` icin arama ve filtre query parametreleri eklenecek.
-2. Urun listesi ve urun olusturma bolumleri daha net ayrilacak.
-3. Urun detay sayfasi tasarlanacak:
-   - Genel bilgiler
-   - Stok
-   - Fiyatlar
-   - Uyumluluk
-   - Medya/teknik dosyalar
-4. Public katalog icin arama/filtre UX'i eklenecek.
-5. Browser ile admin urun akisi ve public katalog dogrulanacak.
+1. Urun detay sayfasina medya/teknik dosya ekleme UI'i eklenecek.
+2. Urun detay sayfasinda stok/fiyat guncelleme formlari ana listeden ayrilip detay ekranina tasinacak.
+3. Public katalog filtreleri bayi rolune gore fiyat/stok gorunurluguyle zenginlestirilecek.
+4. Admin urun listesinde kategori/fiyat/stok yan formlari daha kompakt alt ekranlara bolunecek.
+5. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
 6. `npm run check` calistirilacak.
 7. Commit ve GitHub push yapilacak.
 
 ## Son Tamamlanan Tur
 
-Faz 2.5 tamamlandi:
+Faz 3.1 kismen tamamlandi:
 
-- Ortak admin shell.
-- Sol sidebar.
-- Ust bar.
-- Mobil menu.
-- Operasyon dashboard.
-- Urun ve CMS ekranlarinin shell icine alinmasi.
+- `.env` lokal gelistirme icin tamamlandi; `.env.example` guvenli placeholder'a cekildi.
+- `/admin/urunler` query parametreli arama/filtre/sayfalama aldi.
+- `/admin/urunler/[id]` detay sayfasi eklendi.
+- Detay sayfasinda genel, stok, fiyat, uyumluluk, medya ve audit sekmeleri olustu.
+- `/katalog` public arama/filtre formu DB sorgusuna baglandi.
+- Admin smoke, HTTP urun/katalog smoke ve `npm run check` basarili calisti.
 
 ## Proje Sahibinden Beklenen Kararlar
 

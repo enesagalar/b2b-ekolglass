@@ -2,7 +2,7 @@
 
 ## Mevcut Durum
 
-`/admin/urunler` urun, kategori, fiyat listesi, fiyat ve stok kayitlarini yonetebiliyor. Ancak ekran ilk teknik CRUD seviyesinde.
+`/admin/urunler` urun, kategori, fiyat listesi, fiyat ve stok kayitlarini yonetebiliyor. Liste arama/filtre/sayfalama ve urun detay sayfasi baslatildi.
 
 ## Hedef
 
@@ -10,18 +10,20 @@ Urun operasyonunu gercek kullanicinin gunluk is akisina uygun hale getirmek.
 
 ## Kapsam
 
-- Urun listesi arama.
-- Kategori/status/stok durumu filtreleri.
-- Sayfalama.
-- Urun detay sayfasi:
+- [x] Urun listesi arama.
+- [x] Kategori/status/stok durumu filtreleri.
+- [x] Sayfalama.
+- [x] Urun detay sayfasi:
   - Genel bilgiler
   - Stok
   - Fiyatlar
   - Uyumluluk
   - Medya/teknik dosyalar
   - Audit gecmisi
-- Stok ve fiyat listelerini ayri alt ekranlara bolme.
-- Public katalog arama/filtre.
+- [ ] Stok ve fiyat guncelleme formlarini detay ekranina tasima.
+- [ ] Stok ve fiyat listelerini ayri alt ekranlara bolme.
+- [x] Public katalog arama/filtre.
+- [ ] Medya/teknik dosya ekleme ve yonetim UI'i.
 
 ## Cikis Kriterleri
 
