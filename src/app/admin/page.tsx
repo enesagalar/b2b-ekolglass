@@ -92,13 +92,22 @@ export default async function AdminPage() {
             <p className="text-sm font-medium text-teal-800">Operasyon paneli</p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-950">Satış, bayi, stok ve teklif takibi</h1>
           </div>
-          <Link
-            href="/admin/icerik"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white"
-          >
-            CMS içeriklerini yönet
-            <ArrowRight size={16} aria-hidden="true" />
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/admin/urunler"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white"
+            >
+              Ürünleri yönet
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+            <Link
+              href="/admin/icerik"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white"
+            >
+              CMS içeriklerini yönet
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
