@@ -41,7 +41,7 @@ Eksik kalanlar:
 
 ## Faz 2.5 - Admin UX Shell ve Operasyon Merkezi
 
-Durum: Siradaki ana faz.
+Durum: Tamamlandi.
 
 Kapsam:
 
@@ -58,6 +58,15 @@ Cikis kriteri:
 - Tum admin ekranlari ayni shell, sidebar ve sayfa basligi duzenini kullanir.
 - Dashboard verisi DB'den gelir ve bos durumlari duzgun tasarlanir.
 - Mobil/tablet/desktop kirilimlari bozulmaz.
+
+Tamamlananlar:
+
+- Ortak admin shell.
+- Sol sidebar.
+- Mobil menu.
+- Ust bar ve kullanici/rol alani.
+- Dashboard operasyon merkezi.
+- `/admin/urunler` ve `/admin/icerik` shell icine alindi.
 
 ## Faz 3 - Urun ve Katalog Operasyonu
 

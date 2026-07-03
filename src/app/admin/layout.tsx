@@ -1,9 +1,14 @@
 import type { ReactNode } from "react";
 
+import { AdminShell } from "@/features/admin/admin-shell";
 import { requireAdminUser } from "@/lib/auth";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  await requireAdminUser();
+  const user = await requireAdminUser();
 
-  return children;
+  return (
+    <AdminShell user={{ name: user.name, email: user.email, role: user.role }}>
+      {children}
+    </AdminShell>
+  );
 }

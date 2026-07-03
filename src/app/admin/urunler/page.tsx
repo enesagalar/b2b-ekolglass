@@ -1,6 +1,4 @@
-import Link from "next/link";
 import {
-  ArrowLeft,
   Boxes,
   CircleDollarSign,
   Layers3,
@@ -332,20 +330,7 @@ export default async function AdminProductsPage() {
   const canCreateProduct = categories.length > 0 && priceLists.length > 0;
 
   return (
-    <main className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
-          <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <ArrowLeft size={17} aria-hidden="true" />
-            Admin panel
-          </Link>
-          <Link href="/katalog" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
-            Katalogu görüntüle
-          </Link>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-7xl px-5 py-8 md:px-8">
+    <div className="grid gap-6">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
             <p className="text-sm font-medium text-teal-800">Ticari veri yönetimi</p>
@@ -357,7 +342,7 @@ export default async function AdminProductsPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-4">
           {[
             { label: "Toplam ürün", value: totalProducts, icon: Boxes },
             { label: "Yayındaki ürün", value: activeProducts, icon: PackagePlus },
@@ -623,7 +608,6 @@ export default async function AdminProductsPage() {
             </table>
           </div>
         </section>
-      </section>
-    </main>
+    </div>
   );
 }

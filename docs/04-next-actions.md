@@ -4,42 +4,45 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 2.5 - Admin UX Shell ve Operasyon Merkezi.
+Faz 3.1 - Urun ve Katalog UX Iyilestirme.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. `src/app/admin/layout.tsx` ortak admin shell'e donusturulecek.
-2. Sidebar component'i eklenecek.
-3. Admin menu config'i merkezi dosyaya alinacak.
-4. `/admin` dashboard operasyon merkezi olarak yeniden tasarlanacak.
-5. `/admin/urunler` shell icine alinacak.
-6. `/admin/icerik` shell icine alinacak.
-7. Desktop ve mobile browser smoke test yapilacak.
-8. `npm run check` calistirilacak.
-9. Commit ve GitHub push yapilacak.
+1. `/admin/urunler` icin arama ve filtre query parametreleri eklenecek.
+2. Urun listesi ve urun olusturma bolumleri daha net ayrilacak.
+3. Urun detay sayfasi tasarlanacak:
+   - Genel bilgiler
+   - Stok
+   - Fiyatlar
+   - Uyumluluk
+   - Medya/teknik dosyalar
+4. Public katalog icin arama/filtre UX'i eklenecek.
+5. Browser ile admin urun akisi ve public katalog dogrulanacak.
+6. `npm run check` calistirilacak.
+7. Commit ve GitHub push yapilacak.
 
-## Bu Turda Yeni Business Logic Eklenmeyecek
+## Son Tamamlanan Tur
 
-Bu fazin amaci:
+Faz 2.5 tamamlandi:
 
-- Navigasyon
-- Dashboard UX
-- Admin bilgi mimarisi
-- Profesyonel gorunum
-
-Yeni teklif/siparis, bayi onay veya City Lojistik is mantigi bu fazdan sonra gelecek.
+- Ortak admin shell.
+- Sol sidebar.
+- Ust bar.
+- Mobil menu.
+- Operasyon dashboard.
+- Urun ve CMS ekranlarinin shell icine alinmasi.
 
 ## Proje Sahibinden Beklenen Kararlar
 
 Asagidaki kararlar UI uygulanmadan once veya uygulama sirasinda netlesebilir:
 
-- Sidebar modul adlari uygun mu?
-- Dashboard'da ilk siradaki metrikler dogru mu?
-- Admin panel daha koyu/kurumsal mi, daha acik/sade mi ilerlesin?
-- Pasif moduller "Yakinda" etiketiyle gorunsun mu, yoksa tamamen gizlensin mi?
+- Urun detay sayfasinda hangi alanlar ilk sekmede olmali?
+- Public katalog filtreleri marka/model/yil mi, kategori/cam tipi mi oncelikli olmali?
+- Stok bayiye adet olarak mi, sade durum olarak mi gosterilmeli?
+- Fiyat gorunurlugu hangi rolde acilacak?
 
 Varsayilan karar:
 
-- Acik, sade, kurumsal operasyon paneli.
-- Pasif moduller "Yakinda" etiketiyle gorunecek.
-- Dashboard metrikleri is aksiyonu oncelikli olacak.
+- Admin urun detayinda sekmeli yapi kullanilacak.
+- Public katalogda kategori, marka, model, cam tipi ve stok durumu filtreleri olacak.
+- Bayiye stok ilk etapta sade durum olarak gosterilecek.

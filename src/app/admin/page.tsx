@@ -1,163 +1,351 @@
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowRight,
-  BarChart3,
   Boxes,
   ClipboardCheck,
-  Factory,
   FileText,
+  ShieldCheck,
   Truck,
   UsersRound,
 } from "lucide-react";
 
-import { logout } from "@/features/auth/actions";
+import { getStatusLabel } from "@/domain/statuses";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const iconMap = {
-  BarChart3,
-  Boxes,
-  ClipboardCheck,
-  FileText,
-  Truck,
-  UsersRound,
-};
+const panelClass = "rounded-lg border border-slate-200 bg-white shadow-sm";
 
-async function getAdminMetrics() {
-  const [pendingDealers, openQuotes, newOrders, lowStock, readyShipments, widgets] = await Promise.all([
+async function getDashboardData() {
+  const [
+    pendingDealers,
+    openQuotes,
+    approvalOrders,
+    lowStockCount,
+    readyShipments,
+    integrationWarnings,
+    recentApplications,
+    lowStockItems,
+    recentAuditLogs,
+    shippingProviders,
+  ] = await Promise.all([
     prisma.dealerApplication.count({ where: { status: { in: ["NEW", "IN_REVIEW"] } } }),
     prisma.quoteRequest.count({ where: { status: { in: ["NEW", "IN_REVIEW", "PRICED", "OFFER_SENT"] } } }),
     prisma.order.count({ where: { status: { in: ["SUBMITTED", "WAITING_FOR_APPROVAL", "CONFIRMED"] } } }),
     prisma.stockItem.count({ where: { status: { in: ["LOW_STOCK", "OUT_OF_STOCK"] } } }),
     prisma.order.count({ where: { status: "READY_FOR_SHIPMENT" } }),
-    prisma.dashboardWidget.findMany({
-      where: { isActive: true },
-      orderBy: [{ role: "asc" }, { sortOrder: "asc" }],
+    prisma.integrationLog.count({ where: { status: { in: ["FAILED", "RETRYING"] } } }),
+    prisma.dealerApplication.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.stockItem.findMany({
+      where: { status: { in: ["LOW_STOCK", "OUT_OF_STOCK", "ASK_FOR_AVAILABILITY"] } },
+      include: { product: true },
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      take: 6,
+    }),
+    prisma.auditLog.findMany({
+      include: { actor: true },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+    prisma.shippingProvider.findMany({
+      orderBy: [{ isActive: "desc" }, { name: "asc" }],
+      take: 4,
     }),
   ]);
 
-  const metricValues: Record<string, string> = {
-    NEW_DEALER_APPLICATIONS: String(pendingDealers),
-    OPEN_QUOTES: String(openQuotes),
-    NEW_ORDERS: String(newOrders),
-    LOW_STOCK: String(lowStock),
-    READY_FOR_SHIPMENT: String(readyShipments),
-    MONTHLY_SALES: "ERP bekliyor",
-  };
-
   return {
-    cards: [
-      { label: "Onay bekleyen bayi", value: String(pendingDealers), icon: UsersRound },
-      { label: "Açık teklif talebi", value: String(openQuotes), icon: FileText },
-      { label: "Yeni sipariş", value: String(newOrders), icon: ClipboardCheck },
-      { label: "Düşük stok alarmı", value: String(lowStock), icon: Boxes },
-      { label: "Sevke hazır", value: String(readyShipments), icon: Truck },
-      { label: "Aylık satış görünümü", value: "ERP bekliyor", icon: BarChart3 },
+    metrics: [
+      {
+        label: "Bekleyen bayi",
+        value: pendingDealers,
+        href: undefined,
+        icon: UsersRound,
+        tone: "teal",
+      },
+      {
+        label: "Açık teklif",
+        value: openQuotes,
+        href: undefined,
+        icon: FileText,
+        tone: "slate",
+      },
+      {
+        label: "Onay bekleyen sipariş",
+        value: approvalOrders,
+        href: undefined,
+        icon: ClipboardCheck,
+        tone: "slate",
+      },
+      {
+        label: "Stok alarmı",
+        value: lowStockCount,
+        href: "/admin/urunler",
+        icon: Boxes,
+        tone: lowStockCount > 0 ? "amber" : "teal",
+      },
+      {
+        label: "Sevke hazır",
+        value: readyShipments,
+        href: undefined,
+        icon: Truck,
+        tone: "slate",
+      },
+      {
+        label: "Entegrasyon uyarısı",
+        value: integrationWarnings,
+        href: undefined,
+        icon: AlertTriangle,
+        tone: integrationWarnings > 0 ? "red" : "teal",
+      },
     ],
-    widgets: widgets.map((widget) => ({
-      ...widget,
-      value: metricValues[widget.metricKey] ?? "-",
-      icon: iconMap[widget.icon as keyof typeof iconMap] ?? BarChart3,
-    })),
+    recentApplications,
+    lowStockItems,
+    recentAuditLogs,
+    shippingProviders,
   };
 }
 
+function toneClasses(tone: string) {
+  const tones: Record<string, string> = {
+    teal: "bg-teal-50 text-teal-800 ring-teal-100",
+    amber: "bg-amber-50 text-amber-800 ring-amber-100",
+    red: "bg-red-50 text-red-800 ring-red-100",
+    slate: "bg-slate-100 text-slate-700 ring-slate-200",
+  };
+
+  return tones[tone] ?? tones.slate;
+}
+
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(value);
+}
+
 export default async function AdminPage() {
-  const metrics = await getAdminMetrics();
+  const dashboard = await getDashboardData();
+
+  const pendingActions = [
+    {
+      title: "Bayi başvurularını incele",
+      description: "Başvuru onay ekranı sıradaki iş fazında aktif olacak.",
+      value: dashboard.metrics[0].value,
+      label: "bekleyen kayıt",
+      href: undefined,
+    },
+    {
+      title: "Stok alarmı olan ürünleri kontrol et",
+      description: "Stok satırları ürün yönetimi ekranından güncellenebilir.",
+      value: dashboard.metrics[3].value,
+      label: "stok uyarısı",
+      href: "/admin/urunler",
+    },
+    {
+      title: "Teklif ve sipariş akışını planla",
+      description: "Teklif/sipariş modülleri admin shell tamamlandıktan sonra geliştirilecek.",
+      value: dashboard.metrics[1].value + dashboard.metrics[2].value,
+      label: "operasyon kalemi",
+      href: undefined,
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
-          <div className="flex items-center gap-3">
-            <Factory size={22} className="text-teal-800" aria-hidden="true" />
-            <span className="font-semibold text-slate-950">EkolGlass Admin</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-sm font-medium text-slate-600">
-              Portala dön
-            </Link>
-            <form action={logout}>
-              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
-                Çıkış
-              </button>
-            </form>
-          </div>
+    <div className="grid gap-6">
+      <section className="flex flex-col justify-between gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-end">
+        <div>
+          <p className="text-sm font-semibold text-teal-800">Operasyon merkezi</p>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-950">Satış, bayi, stok ve sevkiyat akışı</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            Bu ekran bekleyen işleri tek yerde toplar. Henüz aktif olmayan modüller roadmap sırasına göre açılacak; aktif
+            veri ürün, stok, CMS, audit ve başvuru kayıtlarından gelir.
+          </p>
         </div>
-      </header>
-      <section className="mx-auto max-w-7xl px-5 py-8 md:px-8">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <p className="text-sm font-medium text-teal-800">Operasyon paneli</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-950">Satış, bayi, stok ve teklif takibi</h1>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/admin/urunler"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white"
-            >
-              Ürünleri yönet
-              <ArrowRight size={16} aria-hidden="true" />
-            </Link>
-            <Link
-              href="/admin/icerik"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white"
-            >
-              CMS içeriklerini yönet
-              <ArrowRight size={16} aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
+        <Link
+          href="/admin/urunler"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900"
+        >
+          Ürünleri yönet
+          <ArrowRight size={16} aria-hidden="true" />
+        </Link>
+      </section>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {metrics.cards.map((item) => {
-            const Icon = item.icon;
-            return (
-              <article key={item.label} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <Icon size={20} className="text-teal-800" aria-hidden="true" />
-                  <span className="text-2xl font-semibold text-slate-950">{item.value}</span>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        {dashboard.metrics.map((metric) => {
+          const Icon = metric.icon;
+          const content = (
+            <article className={`${panelClass} h-full p-4`}>
+              <div className="flex items-center justify-between gap-3">
+                <span className={`flex h-10 w-10 items-center justify-center rounded-md ring-1 ${toneClasses(metric.tone)}`}>
+                  <Icon size={19} aria-hidden="true" />
+                </span>
+                <span className="text-2xl font-semibold text-slate-950">{metric.value}</span>
+              </div>
+              <p className="mt-4 text-sm font-semibold text-slate-800">{metric.label}</p>
+            </article>
+          );
+
+          return metric.href ? (
+            <Link key={metric.label} href={metric.href} className="block transition hover:-translate-y-0.5">
+              {content}
+            </Link>
+          ) : (
+            <div key={metric.label}>{content}</div>
+          );
+        })}
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <div className={panelClass}>
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h3 className="text-base font-semibold text-slate-950">Bekleyen aksiyonlar</h3>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {pendingActions.map((action) => (
+              <div key={action.title} className="flex items-center justify-between gap-4 px-5 py-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-950">{action.title}</p>
+                  <p className="mt-1 text-sm leading-5 text-slate-500">{action.description}</p>
                 </div>
-                <p className="mt-4 text-sm font-medium text-slate-700">{item.label}</p>
-              </article>
-            );
-          })}
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="text-right">
+                    <span className="block text-xl font-semibold text-slate-950">{action.value}</span>
+                    <span className="block text-xs text-slate-500">{action.label}</span>
+                  </span>
+                  {action.href ? (
+                    <Link href={action.href} className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700">
+                      Aç
+                    </Link>
+                  ) : (
+                    <span className="rounded-md bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-500">Yakında</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-950">Role göre dashboard widgetları</h2>
-            <div className="mt-5 grid gap-3">
-              {metrics.widgets.map((widget) => {
-                const Icon = widget.icon;
-                return (
-                  <div key={widget.key} className="flex items-center justify-between rounded-md border border-slate-200 p-4">
-                    <div className="flex items-center gap-4">
-                      <span className="flex h-9 w-9 items-center justify-center rounded bg-teal-50 text-teal-800">
-                        <Icon size={18} aria-hidden="true" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">{widget.title}</p>
-                        <p className="text-xs text-slate-500">{widget.role}</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-700">{widget.value}</span>
+        <div className={panelClass}>
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+            <h3 className="text-base font-semibold text-slate-950">Stok alarm listesi</h3>
+            <Link href="/admin/urunler" className="text-sm font-semibold text-teal-800">
+              Ürünlere git
+            </Link>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {dashboard.lowStockItems.length > 0 ? (
+              dashboard.lowStockItems.map((item) => (
+                <div key={item.id} className="grid gap-2 px-5 py-4 md:grid-cols-[1fr_auto] md:items-center">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">{item.product.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {item.product.code} · {item.warehouseCode}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          </section>
-          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-950">Admin/CMS ayrımı</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Bu panel operasyon dashboard temelidir. İçerik, sayfa blokları ve medya `Page`, `PageBlock`,
-              `MediaAsset` ve `SiteSetting` modelleriyle ayrıldı; uzun vadede Payload CMS veya ayrı admin
-              subdomain üstünden yönetilecek.
-            </p>
-          </section>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-slate-900">{item.quantity - item.reservedQuantity} uygun</span>
+                    <span className="rounded bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">{getStatusLabel(item.status)}</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="px-5 py-8 text-sm text-slate-500">Stok alarmı yok.</p>
+            )}
+          </div>
         </div>
       </section>
-    </main>
+
+      <section className="grid gap-6 xl:grid-cols-[1fr_1fr_0.8fr]">
+        <div className={panelClass}>
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h3 className="text-base font-semibold text-slate-950">Son bayi başvuruları</h3>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {dashboard.recentApplications.length > 0 ? (
+              dashboard.recentApplications.map((application) => (
+                <div key={application.id} className="px-5 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate text-sm font-semibold text-slate-950">{application.companyName}</p>
+                    <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                      {getStatusLabel(application.status)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {application.contactName} · {application.city} · {formatDate(application.createdAt)}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="px-5 py-8 text-sm text-slate-500">Henüz başvuru yok.</p>
+            )}
+          </div>
+        </div>
+
+        <div className={panelClass}>
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h3 className="text-base font-semibold text-slate-950">Son audit hareketleri</h3>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {dashboard.recentAuditLogs.length > 0 ? (
+              dashboard.recentAuditLogs.map((log) => (
+                <div key={log.id} className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-teal-50 text-teal-800">
+                      <ShieldCheck size={16} aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-950">{log.action}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {log.actor?.name ?? "Sistem"} · {formatDate(log.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="px-5 py-8 text-sm text-slate-500">Audit hareketi yok.</p>
+            )}
+          </div>
+        </div>
+
+        <div className={panelClass}>
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h3 className="text-base font-semibold text-slate-950">Entegrasyon sağlığı</h3>
+          </div>
+          <div className="grid gap-3 p-5">
+            {dashboard.shippingProviders.length > 0 ? (
+              dashboard.shippingProviders.map((provider) => (
+                <div key={provider.id} className="rounded-md border border-slate-200 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-slate-950">{provider.name}</p>
+                    <span
+                      className={
+                        provider.isActive
+                          ? "rounded bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-800"
+                          : "rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500"
+                      }
+                    >
+                      {provider.isActive ? "Aktif" : "Pasif"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">{provider.providerType}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">Kargo sağlayıcı kaydı yok.</p>
+            )}
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              City Lojistik canlı API dokümanı ve test hesabı gelmeden canlı gönderi akışı açılmayacak.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
