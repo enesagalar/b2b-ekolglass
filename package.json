@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "smoke:admin": "node scripts/smoke-admin.mjs",
     "check": "npm run lint && npm run test && npm run build"
   },
   "dependencies": {
