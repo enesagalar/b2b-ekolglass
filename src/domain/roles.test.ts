@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { hasPermission, isAdminRole, roles } from "./roles";
+import { hasPermission, isAdminRole, isKnownRole, roles } from "./roles";
 
 describe("role permissions", () => {
   it("keeps the expected B2B role surface", () => {
@@ -20,5 +20,10 @@ describe("role permissions", () => {
   it("separates internal admin roles from dealer roles", () => {
     expect(isAdminRole("SALES_STAFF")).toBe(true);
     expect(isAdminRole("DEALER_OWNER")).toBe(false);
+  });
+
+  it("narrows unknown persisted role values", () => {
+    expect(isKnownRole("DEALER_OWNER")).toBe(true);
+    expect(isKnownRole("LEGACY_ROLE")).toBe(false);
   });
 });

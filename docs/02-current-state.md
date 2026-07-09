@@ -39,6 +39,7 @@ Son guncelleme: 2026-07-09
 - Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
 - Admin urun detayinda uyumluluk/OEM ekleme ve guncelleme.
 - Public katalog arama/filtre.
+- Public katalogda role-based fiyat/stok gorunurlugu.
 - Arka plan Codex advisor rapor hatti:
   - `scripts/codex-advisor.ps1`
   - `docs/agent-reports/`
@@ -54,7 +55,7 @@ Son guncelleme: 2026-07-09
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
    - Medya kayitlari icin silme/pasife alma karar modeli yok.
    - Kategori/fiyat listesi yan panelleri ayri alt ekrana bolunmedi.
-   - Bayi rolune gore fiyat/stok gorunurlugu yok.
+   - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
 3. Teklif/siparis akisi yok:
    - Teklif sepeti yok.
@@ -69,9 +70,10 @@ Son guncelleme: 2026-07-09
 
 Faz 3.1 devam edecek: Urun ve Katalog UX Iyilestirme.
 
-Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Siradaki adim, bayi rolune gore katalog fiyat/stok gorunurlugunu tamamlamaktir.
+Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Siradaki adim, urun operasyon alt ekranlarini bolmek ve medya/uyumluluk karar modellerini netlestirmektir.
 
 Hedef ekranlar:
 
-- bayi rolune gore katalog fiyat/stok gorunurlugu
 - kategori/fiyat listesi alt ekranlari
+- medya soft-delete/pasiflestirme modeli
+- uyumluluk duplicate/delete ve test modeli

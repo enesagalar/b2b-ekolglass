@@ -1,10 +1,18 @@
 import Link from "next/link";
 import { Filter, PackageSearch, Search } from "lucide-react";
 
-import { productGlassTypes } from "@/domain/catalog";
+import {
+  canViewCatalogPrices,
+  productGlassTypes,
+  resolveCatalogStockSummary,
+  selectCatalogPrice,
+  type CatalogViewer,
+} from "@/domain/catalog";
+import { isKnownRole } from "@/domain/roles";
 import { getStatusLabel } from "@/domain/statuses";
 import { stockStatuses } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +47,18 @@ function buildCatalogWhere({
       { vehicleModel: { contains: trimmedQuery } },
       { dimensions: { contains: trimmedQuery } },
       { compatibilityNotes: { contains: trimmedQuery } },
+      {
+        compatibilities: {
+          some: {
+            OR: [
+              { vehicleBrand: { contains: trimmedQuery } },
+              { vehicleModel: { contains: trimmedQuery } },
+              { oemReference: { contains: trimmedQuery } },
+              { notes: { contains: trimmedQuery } },
+            ],
+          },
+        },
+      },
     ];
   }
 
@@ -65,19 +85,32 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   const stockStatus = getSearchParam(resolvedSearchParams, "stockStatus") ?? "";
   const where = buildCatalogWhere({ query, categoryId, glassType, stockStatus });
   const hasActiveFilter = Boolean(query || categoryId || glassType || stockStatus);
+  const currentUser = await getCurrentUser();
+  const userCompany = currentUser?.companyId
+    ? await prisma.company.findUnique({
+        where: { id: currentUser.companyId },
+        select: { customerGroupId: true },
+      })
+    : null;
+  const viewer: CatalogViewer = {
+    role: isKnownRole(currentUser?.role) ? currentUser.role : "GUEST",
+    companyId: currentUser?.companyId,
+    customerGroupId: userCompany?.customerGroupId,
+  };
+  const canSeePrices = canViewCatalogPrices(viewer);
 
   const [products, categories] = await Promise.all([
     prisma.product.findMany({
       where,
-    include: {
-      category: true,
-      stockItems: true,
-      prices: {
-        include: { priceList: true },
-        orderBy: { minQuantity: "asc" },
+      include: {
+        category: true,
+        stockItems: true,
+        prices: {
+          include: { priceList: true },
+          orderBy: { minQuantity: "asc" },
+        },
       },
-    },
-    orderBy: [{ category: { sortOrder: "asc" } }, { code: "asc" }],
+      orderBy: [{ category: { sortOrder: "asc" } }, { code: "asc" }],
     }),
     prisma.productCategory.findMany({
       where: { products: { some: { status: "ACTIVE" } } },
@@ -102,9 +135,13 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
           <div>
             <p className="text-sm font-medium text-teal-800">Ürün kataloğu</p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-950">Araç, kod, ölçü ve cam tipine göre arama</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            <p className="hidden">
               Ürünler, kategori, stok ve fiyat listesi ilişkileriyle veritabanından okunur. Fiyat görünürlüğü
               bir sonraki auth fazında bayi yetkisine göre uygulanacak.
+            </p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              Urunler kategori, stok ve fiyat listesi iliskileriyle veritabanindan okunur. Fiyat ve stok detaylari
+              oturumdaki bayi veya ekip rolune gore gosterilir.
             </p>
           </div>
           <div className="flex gap-2">
@@ -180,7 +217,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
 
         <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-600">
           <span>{products.length} urun listeleniyor</span>
-          <span>Filtreler veritabanindan calisir</span>
+          <span>{canSeePrices ? "Fiyatlar yetkine gore listeleniyor" : "Fiyatlar bayi girisiyle gorunur"}</span>
         </div>
 
         <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -199,8 +236,9 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
             </thead>
             <tbody>
               {products.map((product) => {
-                const stock = product.stockItems[0];
-                const firstPrice = product.prices[0];
+                const stock = resolveCatalogStockSummary(product.stockItems, viewer);
+                const selectedPrice = selectCatalogPrice(product.prices, viewer);
+                const firstPrice = selectedPrice;
                 const vehicle = [product.vehicleBrand, product.vehicleModel].filter(Boolean).join(" ");
                 return (
                   <tr key={product.code} className="border-t border-slate-200">
@@ -211,8 +249,9 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
                     <td className="px-4 py-4 text-slate-600">{product.glassType}</td>
                     <td className="px-4 py-4">
                       <span className="rounded bg-teal-50 px-2 py-1 text-xs font-medium text-teal-800">
-                        {stock ? getStatusLabel(stock.status) : "Stok sorunuz"}
+                        {stock.label}
                       </span>
+                      <span className="mt-1 block text-xs text-slate-500">{stock.detail}</span>
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {firstPrice ? `${firstPrice.priceList.currency} ${firstPrice.amount.toString()}` : "Yetkiye bağlı"}

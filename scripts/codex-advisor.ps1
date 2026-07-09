@@ -56,7 +56,7 @@ Use concrete file paths. Keep it actionable. Do not wrap the report in a code fe
   $ErrorActionPreference = "Continue"
   try {
     Get-Content -LiteralPath $promptPath -Raw |
-      & $codexPath exec --ignore-user-config --skip-git-repo-check -C $repoRoot -m gpt-5.5 -c model_reasoning_effort=high --sandbox workspace-write --color never - *>&1 |
+      & $codexPath exec --ignore-user-config --skip-git-repo-check -C $repoRoot -m gpt-5.5 -c model_reasoning_effort=high --sandbox read-only --color never - *>&1 |
       Set-Content -LiteralPath $logPath -Encoding UTF8
     $codexExitCode = $LASTEXITCODE
   } finally {

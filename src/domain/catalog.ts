@@ -1,3 +1,6 @@
+import { hasPermission, isAdminRole, type Role } from "./roles";
+import { getStatusLabel } from "./statuses";
+
 export const productStatuses = ["ACTIVE", "DRAFT", "DISCONTINUED"] as const;
 export const productOrderModes = ["QUOTE_OR_ORDER", "QUOTE_ONLY", "ORDER_ONLY"] as const;
 export const productGlassTypes = ["Lamine", "Temperli", "Rezistanslı", "Akustik", "Proje Bazlı"] as const;
@@ -69,6 +72,95 @@ export function deriveStockStatus(quantity: number, reservedQuantity: number) {
   }
 
   return "IN_STOCK";
+}
+
+export type CatalogViewer = {
+  role: Role;
+  companyId?: string | null;
+  customerGroupId?: string | null;
+};
+
+export type CatalogPriceCandidate = {
+  amount: { toString(): string };
+  minQuantity: number;
+  priceList: {
+    currency: string;
+    companyId?: string | null;
+    customerGroupId?: string | null;
+    startsAt?: Date;
+    endsAt?: Date | null;
+    isActive: boolean;
+  };
+};
+
+export type CatalogStockCandidate = {
+  quantity: number;
+  reservedQuantity: number;
+  visibility: string;
+  status: string;
+  warehouseCode?: string;
+};
+
+export function canViewCatalogPrices(viewer: CatalogViewer) {
+  return hasPermission(viewer.role, "price.read");
+}
+
+export function canViewDetailedCatalogStock(viewer: CatalogViewer) {
+  return hasPermission(viewer.role, "stock.read.detailed");
+}
+
+function isPriceListInWindow(priceList: CatalogPriceCandidate["priceList"], now: Date) {
+  const startsAt = priceList.startsAt ?? new Date(0);
+
+  return priceList.isActive && startsAt <= now && (!priceList.endsAt || priceList.endsAt >= now);
+}
+
+export function selectCatalogPrice(
+  prices: CatalogPriceCandidate[],
+  viewer: CatalogViewer,
+  now = new Date(),
+) {
+  if (!canViewCatalogPrices(viewer)) {
+    return null;
+  }
+
+  const activePrices = prices
+    .filter((price) => isPriceListInWindow(price.priceList, now))
+    .sort((left, right) => left.minQuantity - right.minQuantity);
+
+  return (
+    activePrices.find((price) => price.priceList.companyId && price.priceList.companyId === viewer.companyId) ??
+    activePrices.find(
+      (price) => price.priceList.customerGroupId && price.priceList.customerGroupId === viewer.customerGroupId,
+    ) ??
+    activePrices.find((price) => !price.priceList.companyId && !price.priceList.customerGroupId) ??
+    (isAdminRole(viewer.role) ? activePrices[0] : null) ??
+    null
+  );
+}
+
+export function resolveCatalogStockSummary(stockItems: CatalogStockCandidate[], viewer: CatalogViewer) {
+  if (canViewDetailedCatalogStock(viewer)) {
+    const totalQuantity = stockItems.reduce((sum, item) => sum + item.quantity, 0);
+    const totalReserved = stockItems.reduce((sum, item) => sum + item.reservedQuantity, 0);
+    const availableQuantity = Math.max(0, totalQuantity - totalReserved);
+
+    return {
+      label: totalQuantity > 0 ? `${availableQuantity} uygun / ${totalQuantity} stok` : "Stok sorunuz",
+      detail: stockItems.length > 0 ? `${stockItems.length} depo` : "Depo kaydi yok",
+      status: deriveStockStatus(totalQuantity, totalReserved),
+      isDetailed: true,
+    };
+  }
+
+  const simplifiedStock = stockItems.find((item) => item.visibility === "SIMPLIFIED");
+
+  return {
+    label: simplifiedStock ? getStatusLabel(simplifiedStock.status) : "Stok sorunuz",
+    detail: "Net adet yetkiye bagli",
+    status: simplifiedStock?.status ?? "ASK_FOR_AVAILABILITY",
+    isDetailed: false,
+  };
 }
 
 export function getProductStatusLabel(status: string) {

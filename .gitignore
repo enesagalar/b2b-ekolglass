@@ -34,6 +34,7 @@ yarn-error.log*
 .next-dev*.log
 docs/agent-reports/*.log
 docs/agent-reports/*.prompt.txt
+docs/agent-reports/advisor-*.md
 
 # local database
 dev.db

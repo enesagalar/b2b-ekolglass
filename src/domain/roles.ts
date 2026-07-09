@@ -85,6 +85,10 @@ export function hasPermission(role: Role, permission: Permission) {
   return rolePermissions[role].includes(permission);
 }
 
+export function isKnownRole(value: string | null | undefined): value is Role {
+  return roles.includes(value as Role);
+}
+
 export function isAdminRole(role: Role) {
   return [
     "SUPER_ADMIN",

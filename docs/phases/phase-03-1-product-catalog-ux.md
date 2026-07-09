@@ -25,7 +25,10 @@ Urun operasyonunu gercek kullanicinin gunluk is akisina uygun hale getirmek.
 - [x] Public katalog arama/filtre.
 - [x] Medya/teknik dosya ekleme ve yonetim UI'i.
 - [x] Uyumluluk/OEM ekleme ve yonetim UI'i.
-- [ ] Bayi rolune gore public katalog fiyat/stok gorunurlugu.
+- [x] Bayi rolune gore public katalog fiyat/stok gorunurlugu.
+- [x] OEM/uyumluluk aramasini public katalog sorgusuna dahil etme.
+- [ ] Uyumluluk/OEM duplicate/delete karar modeli.
+- [ ] Medya pasife alma/silme karar modeli.
 
 ## Cikis Kriterleri
 

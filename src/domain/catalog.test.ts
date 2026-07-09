@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveStockStatus,
+  resolveCatalogStockSummary,
+  selectCatalogPrice,
   normalizeProductCode,
   parseOptionalDecimal,
   parseOptionalInt,
@@ -30,6 +32,102 @@ describe("catalog helpers", () => {
     expect(deriveStockStatus(8, 8)).toBe("RESERVED");
     expect(deriveStockStatus(5, 3)).toBe("LOW_STOCK");
     expect(deriveStockStatus(10, 1)).toBe("IN_STOCK");
+  });
+
+  it("hides catalog prices from guests", () => {
+    const price = selectCatalogPrice(
+      [
+        {
+          amount: { toString: () => "1250" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", isActive: true },
+        },
+      ],
+      { role: "GUEST" },
+    );
+
+    expect(price).toBeNull();
+  });
+
+  it("prefers company price before customer group and public list", () => {
+    const price = selectCatalogPrice(
+      [
+        {
+          amount: { toString: () => "1300" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", isActive: true },
+        },
+        {
+          amount: { toString: () => "1200" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", companyId: "company-1", isActive: true },
+        },
+        {
+          amount: { toString: () => "1250" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", customerGroupId: "group-1", isActive: true },
+        },
+      ],
+      { role: "DEALER_OWNER", companyId: "company-1", customerGroupId: "group-1" },
+    );
+
+    expect(price?.amount.toString()).toBe("1200");
+  });
+
+  it("lets internal price readers inspect the first active list without a company", () => {
+    const price = selectCatalogPrice(
+      [
+        {
+          amount: { toString: () => "1250" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", customerGroupId: "group-1", isActive: true },
+        },
+      ],
+      { role: "SUPER_ADMIN" },
+    );
+
+    expect(price?.amount.toString()).toBe("1250");
+  });
+
+  it("does not fallback to group prices for dealers without a company context", () => {
+    const price = selectCatalogPrice(
+      [
+        {
+          amount: { toString: () => "1250" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", customerGroupId: "group-1", isActive: true },
+        },
+      ],
+      { role: "DEALER_OWNER" },
+    );
+
+    expect(price).toBeNull();
+  });
+
+  it("keeps non-detailed stock visibility simplified", () => {
+    const stock = resolveCatalogStockSummary(
+      [
+        { quantity: 10, reservedQuantity: 2, visibility: "DETAILED", status: "IN_STOCK" },
+        { quantity: 4, reservedQuantity: 0, visibility: "SIMPLIFIED", status: "LOW_STOCK" },
+      ],
+      { role: "DEALER_OWNER" },
+    );
+
+    expect(stock.isDetailed).toBe(false);
+    expect(stock.label).toBe("Az Stok");
+  });
+
+  it("shows detailed stock totals to internal stock readers", () => {
+    const stock = resolveCatalogStockSummary(
+      [
+        { quantity: 10, reservedQuantity: 2, visibility: "DETAILED", status: "IN_STOCK" },
+        { quantity: 4, reservedQuantity: 1, visibility: "HIDDEN", status: "LOW_STOCK" },
+      ],
+      { role: "WAREHOUSE_STAFF" },
+    );
+
+    expect(stock.isDetailed).toBe(true);
+    expect(stock.label).toBe("11 uygun / 14 stok");
   });
 });
 
