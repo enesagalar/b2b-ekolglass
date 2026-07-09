@@ -35,6 +35,8 @@ Son guncelleme: 2026-07-03
 - Admin urun/kategori/fiyat/stok yonetimi.
 - Admin urun liste arama/filtre/sayfalama.
 - Admin urun detay sayfasi.
+- Admin urun detayinda stok/fiyat guncelleme formlari.
+- Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
 - Public katalog arama/filtre.
 - City Lojistik adapter siniri, canli API bilgisi bekliyor.
 
@@ -45,9 +47,9 @@ Son guncelleme: 2026-07-03
    - Onaydan firma ve bayi kullanicisi uretme yok.
    - Firma bazli fiyat gorunurlugu yok.
 
-2. Urun yonetimi ilerledi ama operasyon formlari daginik:
-   - Medya/teknik dosya ekleme UI'i yok.
-   - Stok/fiyat guncelleme formlari detay sayfasina tasinmadi.
+2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
+   - Uyumluluk/OEM ekleme UI'i yok.
+   - Medya kayitlari icin silme/pasife alma karar modeli yok.
    - Kategori/fiyat listesi yan panelleri ayri alt ekrana bolunmedi.
    - Bayi rolune gore fiyat/stok gorunurlugu yok.
 
@@ -64,10 +66,10 @@ Son guncelleme: 2026-07-03
 
 Faz 3.1 devam edecek: Urun ve Katalog UX Iyilestirme.
 
-Admin urun listesi ve public katalog filtreleri tamamlandi. Siradaki adim, urun detay sayfasini gercek duzenleme merkezi haline getirmek ve medya/teknik dosya yonetimini tamamlamaktir.
+Admin urun detay sayfasi stok, fiyat ve medya icin duzenleme merkezi olmaya basladi. Siradaki adim, bayi rolune gore katalog fiyat/stok gorunurlugunu ve uyumluluk/OEM ekleme akisini tamamlamaktir.
 
 Hedef ekranlar:
 
-- `/admin/urunler/[id]`
-- medya/teknik dosya yonetimi
 - bayi rolune gore katalog fiyat/stok gorunurlugu
+- `/admin/urunler/[id]` uyumluluk/OEM ekleme
+- kategori/fiyat listesi alt ekranlari

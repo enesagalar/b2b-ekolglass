@@ -7,12 +7,17 @@ import {
   FileText,
   History,
   Image,
+  LinkIcon,
+  Plus,
+  Save,
   ShieldCheck,
   Warehouse,
 } from "lucide-react";
 
-import { getOrderModeLabel, getProductStatusLabel } from "@/domain/catalog";
-import { getStatusLabel } from "@/domain/statuses";
+import { getOrderModeLabel, getProductStatusLabel, stockVisibilities } from "@/domain/catalog";
+import { getStatusLabel, stockStatuses } from "@/domain/statuses";
+import { saveProductMedia, saveProductPrice, saveProductStock } from "@/features/catalog-management/actions";
+import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +33,22 @@ const tabs = [
   { key: "medya", label: "Medya", icon: Image },
   { key: "audit", label: "Audit", icon: History },
 ];
+
+const inputClass =
+  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-teal-700";
+const labelClass = "grid gap-1.5 text-xs font-semibold text-slate-700";
+
+function SubmitButton({ label }: { label: string }) {
+  return (
+    <button
+      type="submit"
+      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+    >
+      <Save size={16} aria-hidden="true" />
+      {label}
+    </button>
+  );
+}
 
 function getSearchParam(searchParams: Record<string, string | string[] | undefined>, key: string) {
   const value = searchParams[key];
@@ -73,19 +94,24 @@ export default async function AdminProductDetailPage({
   const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
   const activeTab = getSearchParam(resolvedSearchParams, "tab") ?? "genel";
 
-  const product = await prisma.product.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      stockItems: { orderBy: { warehouseCode: "asc" } },
-      prices: {
-        include: { priceList: true },
-        orderBy: [{ priceList: { name: "asc" } }, { minQuantity: "asc" }],
+  const [product, priceLists] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        stockItems: { orderBy: { warehouseCode: "asc" } },
+        prices: {
+          include: { priceList: true },
+          orderBy: [{ priceList: { name: "asc" } }, { minQuantity: "asc" }],
+        },
+        compatibilities: { orderBy: [{ vehicleBrand: "asc" }, { vehicleModel: "asc" }] },
+        mediaAssets: { orderBy: [{ isActive: "desc" }, { title: "asc" }] },
       },
-      compatibilities: { orderBy: [{ vehicleBrand: "asc" }, { vehicleModel: "asc" }] },
-      mediaAssets: { orderBy: [{ isActive: "desc" }, { title: "asc" }] },
-    },
-  });
+    }),
+    prisma.priceList.findMany({
+      orderBy: [{ isActive: "desc" }, { name: "asc" }],
+    }),
+  ]);
 
   if (!product) {
     notFound();
@@ -180,70 +206,150 @@ export default async function AdminProductDetailPage({
       ) : null}
 
       {activeTab === "stok" ? (
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          {product.stockItems.length > 0 ? (
-            <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-              <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
-                <tr>
-                  <th className="px-4 py-3">Depo</th>
-                  <th className="px-4 py-3">Stok</th>
-                  <th className="px-4 py-3">Rezerve</th>
-                  <th className="px-4 py-3">Uygun</th>
-                  <th className="px-4 py-3">Gorunurluk</th>
-                  <th className="px-4 py-3">Durum</th>
-                </tr>
-              </thead>
-              <tbody>
-                {product.stockItems.map((stock) => (
-                  <tr key={stock.id} className="border-t border-slate-200">
-                    <td className="px-4 py-4 font-semibold text-slate-950">{stock.warehouseCode}</td>
-                    <td className="px-4 py-4">{stock.quantity}</td>
-                    <td className="px-4 py-4">{stock.reservedQuantity}</td>
-                    <td className="px-4 py-4">{Math.max(0, stock.quantity - stock.reservedQuantity)}</td>
-                    <td className="px-4 py-4">{stock.visibility}</td>
-                    <td className="px-4 py-4">
-                      <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
-                        {getStatusLabel(stock.status)}
-                      </span>
-                    </td>
+        <section className="grid gap-4">
+          <CatalogActionForm action={saveProductStock} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+              <Plus size={16} aria-hidden="true" />
+              Depo stok satiri ekle veya guncelle
+            </div>
+            <input type="hidden" name="productId" value={product.id} />
+            <div className="grid gap-3 lg:grid-cols-6">
+              <label className={labelClass}>
+                Depo
+                <input name="warehouseCode" required defaultValue={product.stockItems[0]?.warehouseCode ?? "MERKEZ"} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Stok
+                <input name="quantity" type="number" min={0} required defaultValue={product.stockItems[0]?.quantity ?? 0} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Rezerve
+                <input name="reservedQuantity" type="number" min={0} defaultValue={product.stockItems[0]?.reservedQuantity ?? 0} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Gorunurluk
+                <select name="visibility" defaultValue={product.stockItems[0]?.visibility ?? "SIMPLIFIED"} className={inputClass}>
+                  {stockVisibilities.map((visibility) => (
+                    <option key={visibility} value={visibility}>
+                      {visibility}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={labelClass}>
+                Durum
+                <select name="status" defaultValue={product.stockItems[0]?.status ?? "ASK_FOR_AVAILABILITY"} className={inputClass}>
+                  {stockStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {getStatusLabel(status)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex items-end">
+                <SubmitButton label="Stok kaydet" />
+              </div>
+            </div>
+          </CatalogActionForm>
+
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            {product.stockItems.length > 0 ? (
+              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+                <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
+                  <tr>
+                    <th className="px-4 py-3">Depo</th>
+                    <th className="px-4 py-3">Stok</th>
+                    <th className="px-4 py-3">Rezerve</th>
+                    <th className="px-4 py-3">Uygun</th>
+                    <th className="px-4 py-3">Gorunurluk</th>
+                    <th className="px-4 py-3">Durum</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <EmptyState title="Stok satiri yok" body="Bu urune depo bazli stok eklenince burada gorunecek." />
-          )}
+                </thead>
+                <tbody>
+                  {product.stockItems.map((stock) => (
+                    <tr key={stock.id} className="border-t border-slate-200">
+                      <td className="px-4 py-4 font-semibold text-slate-950">{stock.warehouseCode}</td>
+                      <td className="px-4 py-4">{stock.quantity}</td>
+                      <td className="px-4 py-4">{stock.reservedQuantity}</td>
+                      <td className="px-4 py-4">{Math.max(0, stock.quantity - stock.reservedQuantity)}</td>
+                      <td className="px-4 py-4">{stock.visibility}</td>
+                      <td className="px-4 py-4">
+                        <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                          {getStatusLabel(stock.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <EmptyState title="Stok satiri yok" body="Bu urune depo bazli stok eklenince burada gorunecek." />
+            )}
+          </div>
         </section>
       ) : null}
 
       {activeTab === "fiyat" ? (
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          {product.prices.length > 0 ? (
-            <table className="w-full min-w-[700px] border-collapse text-left text-sm">
-              <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
-                <tr>
-                  <th className="px-4 py-3">Liste</th>
-                  <th className="px-4 py-3">Para birimi</th>
-                  <th className="px-4 py-3">Min. adet</th>
-                  <th className="px-4 py-3">Fiyat</th>
-                  <th className="px-4 py-3">Durum</th>
-                </tr>
-              </thead>
-              <tbody>
-                {product.prices.map((price) => (
-                  <tr key={price.id} className="border-t border-slate-200">
-                    <td className="px-4 py-4 font-semibold text-slate-950">{price.priceList.name}</td>
-                    <td className="px-4 py-4">{price.priceList.currency}</td>
-                    <td className="px-4 py-4">{price.minQuantity}</td>
-                    <td className="px-4 py-4 font-semibold">{price.amount.toString()}</td>
-                    <td className="px-4 py-4">{price.priceList.isActive ? "Aktif" : "Pasif"}</td>
+        <section className="grid gap-4">
+          <CatalogActionForm action={saveProductPrice} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+              <Plus size={16} aria-hidden="true" />
+              Fiyat satiri ekle veya guncelle
+            </div>
+            <input type="hidden" name="productId" value={product.id} />
+            <div className="grid gap-3 lg:grid-cols-[1.4fr_0.7fr_0.7fr_auto]">
+              <label className={labelClass}>
+                Fiyat listesi
+                <select name="priceListId" required defaultValue={product.prices[0]?.priceListId ?? priceLists[0]?.id} className={inputClass}>
+                  {priceLists.map((priceList) => (
+                    <option key={priceList.id} value={priceList.id}>
+                      {priceList.name} ({priceList.currency})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={labelClass}>
+                Fiyat
+                <input name="amount" inputMode="decimal" required defaultValue={product.prices[0]?.amount.toString() ?? ""} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Min. adet
+                <input name="minQuantity" type="number" min={1} required defaultValue={product.prices[0]?.minQuantity ?? 1} className={inputClass} />
+              </label>
+              <div className="flex items-end">
+                <SubmitButton label="Fiyat kaydet" />
+              </div>
+            </div>
+          </CatalogActionForm>
+
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            {product.prices.length > 0 ? (
+              <table className="w-full min-w-[700px] border-collapse text-left text-sm">
+                <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
+                  <tr>
+                    <th className="px-4 py-3">Liste</th>
+                    <th className="px-4 py-3">Para birimi</th>
+                    <th className="px-4 py-3">Min. adet</th>
+                    <th className="px-4 py-3">Fiyat</th>
+                    <th className="px-4 py-3">Durum</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <EmptyState title="Fiyat satiri yok" body="Bu urune fiyat listesi baglaninca burada gorunecek." />
-          )}
+                </thead>
+                <tbody>
+                  {product.prices.map((price) => (
+                    <tr key={price.id} className="border-t border-slate-200">
+                      <td className="px-4 py-4 font-semibold text-slate-950">{price.priceList.name}</td>
+                      <td className="px-4 py-4">{price.priceList.currency}</td>
+                      <td className="px-4 py-4">{price.minQuantity}</td>
+                      <td className="px-4 py-4 font-semibold">{price.amount.toString()}</td>
+                      <td className="px-4 py-4">{price.priceList.isActive ? "Aktif" : "Pasif"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <EmptyState title="Fiyat satiri yok" body="Bu urune fiyat listesi baglaninca burada gorunecek." />
+            )}
+          </div>
         </section>
       ) : null}
 
@@ -269,21 +375,103 @@ export default async function AdminProductDetailPage({
       ) : null}
 
       {activeTab === "medya" ? (
-        <section className="grid gap-4 md:grid-cols-2">
-          {product.mediaAssets.length > 0 ? (
-            product.mediaAssets.map((asset) => (
-              <article key={asset.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-sm font-semibold text-slate-950">{asset.title}</p>
-                <p className="mt-2 text-xs font-semibold text-slate-500">{asset.usage}</p>
-                <a href={asset.url} className="mt-4 inline-flex text-sm font-semibold text-teal-800">
-                  Dosyayi ac
-                </a>
-              </article>
-            ))
-          ) : (
-            <div className="md:col-span-2">
-              <EmptyState title="Medya veya teknik dosya yok" body="Gorsel, katalog PDF ve teknik dosya modeli var; yonetim UI sonraki alt fazda tamamlanacak." />
+        <section className="grid gap-4">
+          <CatalogActionForm action={saveProductMedia} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+              <Plus size={16} aria-hidden="true" />
+              Medya veya teknik dosya ekle
             </div>
+            <input type="hidden" name="productId" value={product.id} />
+            <div className="grid gap-3 lg:grid-cols-[1fr_1fr_0.7fr]">
+              <label className={labelClass}>
+                Baslik
+                <input name="title" required className={inputClass} placeholder="Teknik cizim PDF" />
+              </label>
+              <label className={labelClass}>
+                URL
+                <input name="url" required type="url" className={inputClass} placeholder="https://..." />
+              </label>
+              <label className={labelClass}>
+                Kullanim
+                <select name="usage" defaultValue="TECHNICAL_DOCUMENT" className={inputClass}>
+                  <option value="PRODUCT_IMAGE">Urun gorseli</option>
+                  <option value="TECHNICAL_DOCUMENT">Teknik dokuman</option>
+                  <option value="CATALOG_PDF">Katalog PDF</option>
+                  <option value="CERTIFICATE">Sertifika</option>
+                </select>
+              </label>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-[1fr_0.7fr_auto]">
+              <label className={labelClass}>
+                Alternatif metin
+                <input name="altText" required className={inputClass} placeholder={`${product.name} teknik dosyasi`} />
+              </label>
+              <label className={labelClass}>
+                Opsiyonel key
+                <input name="key" className={inputClass} placeholder="Bos birakilabilir" />
+              </label>
+              <div className="flex items-end gap-4">
+                <label className="inline-flex h-10 items-center gap-2 text-sm font-medium text-slate-700">
+                  <input type="checkbox" name="isActive" defaultChecked className="h-4 w-4 rounded border-slate-300" />
+                  Aktif
+                </label>
+                <SubmitButton label="Medya ekle" />
+              </div>
+            </div>
+          </CatalogActionForm>
+
+          {product.mediaAssets.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {product.mediaAssets.map((asset) => (
+                <CatalogActionForm key={asset.id} action={saveProductMedia} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                  <input type="hidden" name="id" value={asset.id} />
+                  <input type="hidden" name="productId" value={product.id} />
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{asset.title}</p>
+                      <p className="mt-2 text-xs font-semibold text-slate-500">{asset.usage}</p>
+                    </div>
+                    <a href={asset.url} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700">
+                      <LinkIcon size={14} aria-hidden="true" />
+                      Ac
+                    </a>
+                  </div>
+                  <div className="grid gap-3">
+                    <label className={labelClass}>
+                      Baslik
+                      <input name="title" required defaultValue={asset.title} className={inputClass} />
+                    </label>
+                    <label className={labelClass}>
+                      URL
+                      <input name="url" required type="url" defaultValue={asset.url} className={inputClass} />
+                    </label>
+                    <label className={labelClass}>
+                      Alternatif metin
+                      <input name="altText" required defaultValue={asset.altText} className={inputClass} />
+                    </label>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className={labelClass}>
+                        Kullanim
+                        <input name="usage" required defaultValue={asset.usage} className={inputClass} />
+                      </label>
+                      <label className={labelClass}>
+                        Key
+                        <input name="key" defaultValue={asset.key} className={inputClass} />
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                        <input type="checkbox" name="isActive" defaultChecked={asset.isActive} className="h-4 w-4 rounded border-slate-300" />
+                        Aktif
+                      </label>
+                      <SubmitButton label="Medya guncelle" />
+                    </div>
+                  </div>
+                </CatalogActionForm>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="Medya veya teknik dosya yok" body="Gorsel, katalog PDF ve teknik dosya URL'i ekleyerek urun dokumanlarini bayiye hazirlayabilirsin." />
           )}
         </section>
       ) : null}

@@ -1,9 +1,11 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 
 import {
   categoryFormSchema,
+  mediaAssetFormSchema,
   priceListFormSchema,
   productFormSchema,
   productPriceFormSchema,
@@ -59,6 +61,24 @@ async function writeAuditLog(userId: string, action: string, entityType: string,
 
 function nullable<T>(value: T | undefined) {
   return value ?? null;
+}
+
+function normalizeMediaKey(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+function revalidateProductSurfaces(productId?: string) {
+  revalidatePath("/admin/urunler");
+  revalidatePath("/katalog");
+
+  if (productId) {
+    revalidatePath(`/admin/urunler/${productId}`);
+  }
 }
 
 export async function saveCategory(input: CatalogActionInput, maybeFormData?: FormData): Promise<CatalogActionState> {
@@ -302,8 +322,7 @@ export async function saveProductBundle(
       result.id,
       { code: result.code },
     );
-    revalidatePath("/admin/urunler");
-    revalidatePath("/katalog");
+    revalidateProductSurfaces(result.id);
 
     return success(productParsed.data.id ? "Ürün güncellendi." : "Ürün, stok ve fiyat kaydı oluşturuldu.");
   } catch (error) {
@@ -362,8 +381,7 @@ export async function saveProductStock(
     await writeAuditLog(user.id, "stock.upsert", "StockItem", parsed.data.productId, {
       warehouseCode: parsed.data.warehouseCode,
     });
-    revalidatePath("/admin/urunler");
-    revalidatePath("/katalog");
+    revalidateProductSurfaces(parsed.data.productId);
 
     return success("Stok güncellendi.");
   } catch (error) {
@@ -417,10 +435,78 @@ export async function saveProductPrice(
       priceListId: parsed.data.priceListId,
       minQuantity: parsed.data.minQuantity,
     });
-    revalidatePath("/admin/urunler");
-    revalidatePath("/katalog");
+    revalidateProductSurfaces(parsed.data.productId);
 
     return success("Fiyat güncellendi.");
+  } catch (error) {
+    return failure(mapCatalogMutationError(error));
+  }
+}
+
+export async function saveProductMedia(
+  input: CatalogActionInput,
+  maybeFormData?: FormData,
+): Promise<CatalogActionState> {
+  const user = await requireAdminUser();
+  const formData = resolveFormData(input, maybeFormData);
+
+  if (!formData) {
+    return failure("Form verisi alinamadi.");
+  }
+
+  const parsed = mediaAssetFormSchema.safeParse({
+    id: formData.get("id") || undefined,
+    productId: formData.get("productId"),
+    key: formData.get("key") || undefined,
+    title: formData.get("title"),
+    url: formData.get("url"),
+    altText: formData.get("altText"),
+    usage: formData.get("usage"),
+    isActive: formData.get("isActive"),
+  });
+
+  if (!parsed.success) {
+    return failure(getFirstValidationMessage(parsed.error.issues[0]?.message ?? ""));
+  }
+
+  const fallbackKey = `product-${parsed.data.productId}-${normalizeMediaKey(parsed.data.title) || "media"}-${randomBytes(4).toString("hex")}`;
+  const normalizedKey = parsed.data.key ? normalizeMediaKey(parsed.data.key) : "";
+  const key = normalizedKey || fallbackKey;
+
+  try {
+    const mediaAsset = parsed.data.id
+      ? await prisma.mediaAsset.update({
+          where: { id: parsed.data.id },
+          data: {
+            key,
+            title: parsed.data.title,
+            url: parsed.data.url,
+            altText: parsed.data.altText,
+            usage: parsed.data.usage,
+            isActive: parsed.data.isActive,
+            productId: parsed.data.productId,
+          },
+        })
+      : await prisma.mediaAsset.create({
+          data: {
+            key,
+            title: parsed.data.title,
+            url: parsed.data.url,
+            altText: parsed.data.altText,
+            usage: parsed.data.usage,
+            isActive: parsed.data.isActive,
+            productId: parsed.data.productId,
+          },
+        });
+
+    await writeAuditLog(user.id, parsed.data.id ? "media_asset.update" : "media_asset.create", "Product", parsed.data.productId, {
+      mediaAssetId: mediaAsset.id,
+      key: mediaAsset.key,
+      usage: mediaAsset.usage,
+    });
+    revalidateProductSurfaces(parsed.data.productId);
+
+    return success(parsed.data.id ? "Medya kaydi guncellendi." : "Medya kaydi eklendi.");
   } catch (error) {
     return failure(mapCatalogMutationError(error));
   }
@@ -444,4 +530,8 @@ export async function saveProductStockForm(formData: FormData) {
 
 export async function saveProductPriceForm(formData: FormData) {
   await saveProductPrice(formData);
+}
+
+export async function saveProductMediaForm(formData: FormData) {
+  await saveProductMedia(formData);
 }

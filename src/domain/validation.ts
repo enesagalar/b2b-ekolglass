@@ -34,6 +34,17 @@ export const dealerApplicationSchema = z.object({
   message: z.string().max(1200).optional(),
 });
 
+export const mediaAssetFormSchema = z.object({
+  id: optionalText(120),
+  productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+  key: optionalText(120),
+  title: z.string().trim().min(2, "Medya basligi zorunludur.").max(160),
+  url: z.url("Gecerli bir medya URL'i girin.").max(1000),
+  altText: z.string().trim().min(2, "Alternatif metin zorunludur.").max(200),
+  usage: z.string().trim().min(2, "Kullanim tipi zorunludur.").max(80),
+  isActive: checkboxBoolean.default(false),
+});
+
 export const siteSettingSchema = z.object({
   key: z.string().min(3).max(120),
   value: z.string().min(1).max(2000),
