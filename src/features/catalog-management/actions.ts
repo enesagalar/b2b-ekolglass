@@ -7,6 +7,7 @@ import {
   categoryFormSchema,
   mediaAssetFormSchema,
   priceListFormSchema,
+  productCompatibilityFormSchema,
   productFormSchema,
   productPriceFormSchema,
   stockFormSchema,
@@ -443,6 +444,88 @@ export async function saveProductPrice(
   }
 }
 
+export async function saveProductCompatibility(
+  input: CatalogActionInput,
+  maybeFormData?: FormData,
+): Promise<CatalogActionState> {
+  const user = await requireAdminUser();
+  const formData = resolveFormData(input, maybeFormData);
+
+  if (!formData) {
+    return failure("Form verisi alinamadi.");
+  }
+
+  const parsed = productCompatibilityFormSchema.safeParse({
+    id: formData.get("id") || undefined,
+    productId: formData.get("productId"),
+    vehicleBrand: formData.get("vehicleBrand"),
+    vehicleModel: formData.get("vehicleModel"),
+    yearStart: formData.get("yearStart") || undefined,
+    yearEnd: formData.get("yearEnd") || undefined,
+    oemReference: formData.get("oemReference") || undefined,
+    notes: formData.get("notes") || undefined,
+  });
+
+  if (!parsed.success) {
+    return failure(getFirstValidationMessage(parsed.error.issues[0]?.message ?? ""));
+  }
+
+  try {
+    if (parsed.data.id) {
+      const existing = await prisma.productCompatibility.findFirst({
+        where: { id: parsed.data.id, productId: parsed.data.productId },
+        select: { id: true },
+      });
+
+      if (!existing) {
+        return failure("Uyumluluk kaydi bu urune ait degil veya bulunamadi.");
+      }
+    }
+
+    const compatibility = parsed.data.id
+      ? await prisma.productCompatibility.update({
+          where: { id: parsed.data.id },
+          data: {
+            vehicleBrand: parsed.data.vehicleBrand,
+            vehicleModel: parsed.data.vehicleModel,
+            yearStart: nullable(parsed.data.yearStart),
+            yearEnd: nullable(parsed.data.yearEnd),
+            oemReference: nullable(parsed.data.oemReference),
+            notes: nullable(parsed.data.notes),
+          },
+        })
+      : await prisma.productCompatibility.create({
+          data: {
+            productId: parsed.data.productId,
+            vehicleBrand: parsed.data.vehicleBrand,
+            vehicleModel: parsed.data.vehicleModel,
+            yearStart: nullable(parsed.data.yearStart),
+            yearEnd: nullable(parsed.data.yearEnd),
+            oemReference: nullable(parsed.data.oemReference),
+            notes: nullable(parsed.data.notes),
+          },
+        });
+
+    await writeAuditLog(
+      user.id,
+      parsed.data.id ? "product_compatibility.update" : "product_compatibility.create",
+      "Product",
+      parsed.data.productId,
+      {
+        compatibilityId: compatibility.id,
+        vehicleBrand: compatibility.vehicleBrand,
+        vehicleModel: compatibility.vehicleModel,
+        oemReference: compatibility.oemReference,
+      },
+    );
+    revalidateProductSurfaces(parsed.data.productId);
+
+    return success(parsed.data.id ? "Uyumluluk kaydi guncellendi." : "Uyumluluk kaydi eklendi.");
+  } catch (error) {
+    return failure(mapCatalogMutationError(error));
+  }
+}
+
 export async function saveProductMedia(
   input: CatalogActionInput,
   maybeFormData?: FormData,
@@ -530,6 +613,10 @@ export async function saveProductStockForm(formData: FormData) {
 
 export async function saveProductPriceForm(formData: FormData) {
   await saveProductPrice(formData);
+}
+
+export async function saveProductCompatibilityForm(formData: FormData) {
+  await saveProductCompatibility(formData);
 }
 
 export async function saveProductMediaForm(formData: FormData) {

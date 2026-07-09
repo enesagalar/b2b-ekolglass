@@ -32,6 +32,8 @@ yarn-error.log*
 .pnpm-debug.log*
 .codex-logs/
 .next-dev*.log
+docs/agent-reports/*.log
+docs/agent-reports/*.prompt.txt
 
 # local database
 dev.db

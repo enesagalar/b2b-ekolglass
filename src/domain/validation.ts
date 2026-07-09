@@ -112,6 +112,31 @@ export const productFormSchema = z
     }
   });
 
+export const productCompatibilityFormSchema = z
+  .object({
+    id: optionalText(120),
+    productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+    vehicleBrand: z.string().trim().min(2, "Marka zorunludur.").max(80),
+    vehicleModel: z.string().trim().min(1, "Model zorunludur.").max(100),
+    yearStart: optionalInt,
+    yearEnd: optionalInt,
+    oemReference: optionalText(120),
+    notes: optionalText(1000),
+  })
+  .superRefine((data, context) => {
+    if (data.yearStart !== undefined && (data.yearStart < 1900 || data.yearStart > 2100)) {
+      context.addIssue({ code: "custom", message: "Baslangic yili 1900-2100 arasinda olmalidir.", path: ["yearStart"] });
+    }
+
+    if (data.yearEnd !== undefined && (data.yearEnd < 1900 || data.yearEnd > 2100)) {
+      context.addIssue({ code: "custom", message: "Bitis yili 1900-2100 arasinda olmalidir.", path: ["yearEnd"] });
+    }
+
+    if (data.yearStart !== undefined && data.yearEnd !== undefined && data.yearEnd < data.yearStart) {
+      context.addIssue({ code: "custom", message: "Bitis yili baslangic yilindan kucuk olamaz.", path: ["yearEnd"] });
+    }
+  });
+
 export const stockFormSchema = z
   .object({
     productId: optionalText(120),

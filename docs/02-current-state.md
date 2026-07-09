@@ -1,6 +1,6 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-03
+Son guncelleme: 2026-07-09
 
 ## Git Durumu
 
@@ -37,7 +37,11 @@ Son guncelleme: 2026-07-03
 - Admin urun detay sayfasi.
 - Admin urun detayinda stok/fiyat guncelleme formlari.
 - Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
+- Admin urun detayinda uyumluluk/OEM ekleme ve guncelleme.
 - Public katalog arama/filtre.
+- Arka plan Codex advisor rapor hatti:
+  - `scripts/codex-advisor.ps1`
+  - `docs/agent-reports/`
 - City Lojistik adapter siniri, canli API bilgisi bekliyor.
 
 ## En Onemli Eksikler
@@ -48,7 +52,6 @@ Son guncelleme: 2026-07-03
    - Firma bazli fiyat gorunurlugu yok.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
-   - Uyumluluk/OEM ekleme UI'i yok.
    - Medya kayitlari icin silme/pasife alma karar modeli yok.
    - Kategori/fiyat listesi yan panelleri ayri alt ekrana bolunmedi.
    - Bayi rolune gore fiyat/stok gorunurlugu yok.
@@ -66,10 +69,9 @@ Son guncelleme: 2026-07-03
 
 Faz 3.1 devam edecek: Urun ve Katalog UX Iyilestirme.
 
-Admin urun detay sayfasi stok, fiyat ve medya icin duzenleme merkezi olmaya basladi. Siradaki adim, bayi rolune gore katalog fiyat/stok gorunurlugunu ve uyumluluk/OEM ekleme akisini tamamlamaktir.
+Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Siradaki adim, bayi rolune gore katalog fiyat/stok gorunurlugunu tamamlamaktir.
 
 Hedef ekranlar:
 
 - bayi rolune gore katalog fiyat/stok gorunurlugu
-- `/admin/urunler/[id]` uyumluluk/OEM ekleme
 - kategori/fiyat listesi alt ekranlari

@@ -10,11 +10,10 @@ Faz 3.1 - Urun ve Katalog UX Iyilestirme.
 
 1. Public katalog filtreleri bayi rolune gore fiyat/stok gorunurluguyle zenginlestirilecek.
 2. Admin urun listesinde kategori/fiyat/stok yan formlari daha kompakt alt ekranlara bolunecek.
-3. Urun detay sayfasinda uyumluluk/OEM ekleme UI'i tamamlanacak.
-4. Medya kayitlari icin silme/pasife alma karar modeli netlestirilecek.
-5. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
-6. `npm run check` calistirilacak.
-7. Commit ve GitHub push yapilacak.
+3. Medya kayitlari icin silme/pasife alma karar modeli netlestirilecek.
+4. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
+5. `npm run check` calistirilacak.
+6. Commit ve GitHub push yapilacak.
 
 ## Son Tamamlanan Tur
 
@@ -27,8 +26,11 @@ Faz 3.1 kismen tamamlandi:
 - Detay sayfasina stok ve fiyat guncelleme formlari tasindi.
 - Medya/teknik dosya ekleme ve guncelleme UI'i eklendi.
 - Medya kayitlari icin validation, server action, audit log ve revalidation eklendi.
+- Uyumluluk/OEM kayitlari icin validation, server action, audit log, ekleme ve guncelleme UI'i eklendi.
+- `scripts/codex-advisor.ps1` ve `docs/agent-reports/` ile arka plan Codex advisor rapor hatti kuruldu.
+- `docs/agent-reports/advisor-20260709-152751.md` ilk agent raporu olarak proje hafizasina eklendi.
 - `/katalog` public arama/filtre formu DB sorgusuna baglandi.
-- Admin smoke, HTTP urun/katalog smoke ve `npm run check` basarili calisti.
+- Admin smoke, HTTP urun/katalog/uyumluluk smoke ve `npm run check` basarili calisti.
 
 ## Proje Sahibinden Beklenen Kararlar
 
@@ -38,6 +40,7 @@ Asagidaki kararlar UI uygulanmadan once veya uygulama sirasinda netlesebilir:
 - Public katalog filtreleri marka/model/yil mi, kategori/cam tipi mi oncelikli olmali?
 - Stok bayiye adet olarak mi, sade durum olarak mi gosterilmeli?
 - Fiyat gorunurlugu hangi rolde acilacak?
+- Arka plan advisor calismasi 30 dakikalik periyotlarla mi, yoksa sadece her kodlama turu basinda tek seferlik mi calissin?
 
 Varsayilan karar:
 

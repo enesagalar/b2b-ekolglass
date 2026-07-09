@@ -16,7 +16,12 @@ import {
 
 import { getOrderModeLabel, getProductStatusLabel, stockVisibilities } from "@/domain/catalog";
 import { getStatusLabel, stockStatuses } from "@/domain/statuses";
-import { saveProductMedia, saveProductPrice, saveProductStock } from "@/features/catalog-management/actions";
+import {
+  saveProductCompatibility,
+  saveProductMedia,
+  saveProductPrice,
+  saveProductStock,
+} from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
 import { prisma } from "@/lib/prisma";
 
@@ -355,21 +360,101 @@ export default async function AdminProductDetailPage({
 
       {activeTab === "uyumluluk" ? (
         <section className="grid gap-4">
+          <CatalogActionForm action={saveProductCompatibility} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+              <Plus size={16} aria-hidden="true" />
+              Uyumluluk veya OEM referansi ekle
+            </div>
+            <input type="hidden" name="productId" value={product.id} />
+            <div className="grid gap-3 lg:grid-cols-[1fr_1fr_0.5fr_0.5fr]">
+              <label className={labelClass}>
+                Marka
+                <input name="vehicleBrand" required defaultValue={product.vehicleBrand ?? ""} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Model
+                <input name="vehicleModel" required defaultValue={product.vehicleModel ?? ""} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Baslangic
+                <input name="yearStart" type="number" min={1900} max={2100} defaultValue={product.yearStart ?? ""} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Bitis
+                <input name="yearEnd" type="number" min={1900} max={2100} defaultValue={product.yearEnd ?? ""} className={inputClass} />
+              </label>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-[0.8fr_1.4fr_auto]">
+              <label className={labelClass}>
+                OEM referansi
+                <input name="oemReference" className={inputClass} placeholder="OEM / muadil kod" />
+              </label>
+              <label className={labelClass}>
+                Not
+                <input name="notes" className={inputClass} placeholder="Montaj, kasa veya teknik not" />
+              </label>
+              <div className="flex items-end">
+                <SubmitButton label="Uyumluluk ekle" />
+              </div>
+            </div>
+          </CatalogActionForm>
+
           {product.compatibilities.length > 0 ? (
-            product.compatibilities.map((compatibility) => (
-              <article key={compatibility.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-sm font-semibold text-slate-950">
-                  {compatibility.vehicleBrand} {compatibility.vehicleModel}
-                </p>
-                <p className="mt-2 text-sm text-slate-500">
-                  {[compatibility.yearStart, compatibility.yearEnd].filter(Boolean).join(" - ") || "Yil araligi yok"}
-                </p>
-                <p className="mt-2 text-sm text-slate-600">{compatibility.oemReference || "OEM referansi yok"}</p>
-                {compatibility.notes ? <p className="mt-3 text-sm leading-6 text-slate-600">{compatibility.notes}</p> : null}
-              </article>
-            ))
+            <div className="grid gap-4 md:grid-cols-2">
+              {product.compatibilities.map((compatibility) => (
+                <CatalogActionForm
+                  key={compatibility.id}
+                  action={saveProductCompatibility}
+                  className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <input type="hidden" name="id" value={compatibility.id} />
+                  <input type="hidden" name="productId" value={product.id} />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {compatibility.vehicleBrand} {compatibility.vehicleModel}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      {[compatibility.yearStart, compatibility.yearEnd].filter(Boolean).join(" - ") || "Yil araligi yok"}
+                    </p>
+                  </div>
+                  <div className="grid gap-3">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className={labelClass}>
+                        Marka
+                        <input name="vehicleBrand" required defaultValue={compatibility.vehicleBrand} className={inputClass} />
+                      </label>
+                      <label className={labelClass}>
+                        Model
+                        <input name="vehicleModel" required defaultValue={compatibility.vehicleModel} className={inputClass} />
+                      </label>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className={labelClass}>
+                        Baslangic
+                        <input name="yearStart" type="number" min={1900} max={2100} defaultValue={compatibility.yearStart ?? ""} className={inputClass} />
+                      </label>
+                      <label className={labelClass}>
+                        Bitis
+                        <input name="yearEnd" type="number" min={1900} max={2100} defaultValue={compatibility.yearEnd ?? ""} className={inputClass} />
+                      </label>
+                    </div>
+                    <label className={labelClass}>
+                      OEM referansi
+                      <input name="oemReference" defaultValue={compatibility.oemReference ?? ""} className={inputClass} />
+                    </label>
+                    <label className={labelClass}>
+                      Not
+                      <input name="notes" defaultValue={compatibility.notes ?? ""} className={inputClass} />
+                    </label>
+                    <div className="flex justify-end">
+                      <SubmitButton label="Uyumluluk guncelle" />
+                    </div>
+                  </div>
+                </CatalogActionForm>
+              ))}
+            </div>
           ) : (
-            <EmptyState title="Uyumluluk kaydi yok" body="Marka/model veya OEM referanslari sonraki alt fazda yonetilecek." />
+            <EmptyState title="Uyumluluk kaydi yok" body="Marka/model veya OEM referanslari eklendiginde burada yonetilecek." />
           )}
         </section>
       ) : null}
