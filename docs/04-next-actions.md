@@ -8,12 +8,11 @@ Faz 3.1 - Urun ve Katalog UX Iyilestirme.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Admin urun listesinde kategori/fiyat/stok yan formlari daha kompakt alt ekranlara bolunecek.
-2. Medya kayitlari icin silme/pasife alma karar modeli netlestirilecek.
-3. Uyumluluk/OEM kayitlari icin duplicate/delete karar modeli ve server action testleri eklenecek.
-4. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
-5. `npm run check` calistirilacak.
-6. Commit ve GitHub push yapilacak.
+1. Medya kayitlari icin silme/pasife alma karar modeli netlestirilecek.
+2. Uyumluluk/OEM kayitlari icin duplicate/delete karar modeli ve server action testleri eklenecek.
+3. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
+4. `npm run check` calistirilacak.
+5. Commit ve GitHub push yapilacak.
 
 ## Son Tamamlanan Tur
 
@@ -33,6 +32,10 @@ Faz 3.1 kismen tamamlandi:
 - `/katalog` fiyat gorunurlugu role gore kapatildi: guest fiyat gormez, bayi firma/grup eslesmesine gore gorur, ic ekip fiyat okuyabilir.
 - `/katalog` stok gorunurlugu role gore ayrildi: guest/bayi sade stok, detayli stok yetkisi olan ic ekip toplam uygun/depo ozeti gorur.
 - OEM/uyumluluk aramasi `ProductCompatibility` kayitlarini da kapsayacak sekilde genisletildi.
+- `/admin/urunler/kategoriler` kategori yonetimi alt ekrani eklendi.
+- `/admin/urunler/fiyat-listeleri` fiyat listesi yonetimi alt ekrani eklendi ve admin menudeki fiyat listeleri linki aktif hale getirildi.
+- `/admin/urunler` ana ekrani urun olusturma, urun listesi ve alt ekran kisayollari odakli sade hale getirildi.
+- `scripts/smoke-admin.mjs` kategori ve fiyat listesi alt ekranlarini da dogrulayacak sekilde genisletildi.
 - Admin smoke, HTTP urun/katalog/uyumluluk smoke ve `npm run check` basarili calisti.
 
 ## Proje Sahibinden Beklenen Kararlar

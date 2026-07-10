@@ -56,7 +56,7 @@ const navigationSections: AdminNavSection[] = [
     items: [
       { label: "Ürünler", href: "/admin/urunler", icon: PackageSearch, description: "Katalog ve teknik veri" },
       { label: "Stok", icon: Boxes, description: "Depo görünürlüğü", soon: true },
-      { label: "Fiyat Listeleri", icon: FileText, description: "Bayi fiyatları", soon: true },
+      { label: "Fiyat Listeleri", href: "/admin/urunler/fiyat-listeleri", icon: FileText, description: "Bayi fiyatları" },
       { label: "Teklifler", icon: ClipboardCheck, description: "Satış akışı", soon: true },
       { label: "Siparişler", icon: DatabaseZap, description: "Onay ve durumlar", soon: true },
     ],

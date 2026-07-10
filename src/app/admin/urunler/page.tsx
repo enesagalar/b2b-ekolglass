@@ -478,7 +478,30 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             )}
           </section>
 
-          <aside className="grid gap-6">
+          <aside className="grid gap-4 self-start">
+            <Link
+              href="/admin/urunler/kategoriler"
+              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
+            >
+              <p className="text-sm font-semibold text-slate-950">Kategori yonetimi</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {categories.length} kategori, urun listesi ekrani disinda daha rahat duzenlenir.
+              </p>
+              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Kategori ekranina git</span>
+            </Link>
+            <Link
+              href="/admin/urunler/fiyat-listeleri"
+              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
+            >
+              <p className="text-sm font-semibold text-slate-950">Fiyat listeleri</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {priceLists.length} fiyat listesi, bayi gruplari ve ileride firma bazli fiyatlar icin temel veri.
+              </p>
+              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Fiyat listelerine git</span>
+            </Link>
+          </aside>
+
+          <aside className="hidden">
             <section className={panelClass}>
               <div className="flex items-center gap-3">
                 <Layers3 size={19} className="text-teal-800" aria-hidden="true" />

@@ -94,12 +94,51 @@ const adminHtml = await adminResponse.text();
 assert(adminHtml.includes("Operasyon merkezi"), "Admin operations dashboard content not rendered");
 assert(adminHtml.includes("Bayi Başvuruları"), "Admin sidebar navigation not rendered");
 
+const productsResponse = await request("/admin/urunler", {
+  headers: {
+    Cookie: serializeCookies(cookieJar),
+  },
+});
+assert(productsResponse.status === 200, `Authenticated /admin/urunler failed with ${productsResponse.status}`);
+const productsHtml = await productsResponse.text();
+assert(productsHtml.includes("Kategori ekranina git"), "Admin category shortcut not rendered");
+assert(productsHtml.includes("Fiyat listelerine git"), "Admin price list shortcut not rendered");
+
+const categoriesResponse = await request("/admin/urunler/kategoriler", {
+  headers: {
+    Cookie: serializeCookies(cookieJar),
+  },
+});
+assert(categoriesResponse.status === 200, `Authenticated /admin/urunler/kategoriler failed with ${categoriesResponse.status}`);
+const categoriesHtml = await categoriesResponse.text();
+assert(categoriesHtml.includes("Kategori yonetimi"), "Admin product categories screen not rendered");
+assert(categoriesHtml.includes("Kategori ekle"), "Admin category create form not rendered");
+
+const priceListsResponse = await request("/admin/urunler/fiyat-listeleri", {
+  headers: {
+    Cookie: serializeCookies(cookieJar),
+  },
+});
+assert(priceListsResponse.status === 200, `Authenticated /admin/urunler/fiyat-listeleri failed with ${priceListsResponse.status}`);
+const priceListsHtml = await priceListsResponse.text();
+assert(priceListsHtml.includes("Fiyat listeleri"), "Admin price lists screen not rendered");
+assert(priceListsHtml.includes("Fiyat listesi ekle"), "Admin price list create form not rendered");
+
 console.log(
   JSON.stringify(
     {
       status: "ok",
       baseUrl,
-      checks: ["health", "guest-admin-redirect", "login-form", "admin-login", "authenticated-admin-dashboard"],
+      checks: [
+        "health",
+        "guest-admin-redirect",
+        "login-form",
+        "admin-login",
+        "authenticated-admin-dashboard",
+        "authenticated-product-management",
+        "authenticated-product-categories",
+        "authenticated-price-lists",
+      ],
     },
     null,
     2,

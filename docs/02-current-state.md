@@ -1,6 +1,6 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-09
+Son guncelleme: 2026-07-10
 
 ## Git Durumu
 
@@ -34,6 +34,8 @@ Son guncelleme: 2026-07-09
 - Admin CMS ayar ekrani.
 - Admin urun/kategori/fiyat/stok yonetimi.
 - Admin urun liste arama/filtre/sayfalama.
+- Admin kategori yonetimi alt ekrani: `/admin/urunler/kategoriler`.
+- Admin fiyat listesi alt ekrani: `/admin/urunler/fiyat-listeleri`.
 - Admin urun detay sayfasi.
 - Admin urun detayinda stok/fiyat guncelleme formlari.
 - Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
@@ -54,7 +56,6 @@ Son guncelleme: 2026-07-09
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
    - Medya kayitlari icin silme/pasife alma karar modeli yok.
-   - Kategori/fiyat listesi yan panelleri ayri alt ekrana bolunmedi.
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
 3. Teklif/siparis akisi yok:
@@ -70,10 +71,9 @@ Son guncelleme: 2026-07-09
 
 Faz 3.1 devam edecek: Urun ve Katalog UX Iyilestirme.
 
-Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Siradaki adim, urun operasyon alt ekranlarini bolmek ve medya/uyumluluk karar modellerini netlestirmektir.
+Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Kategori ve fiyat listesi yonetimi alt ekranlara ayrildi. Siradaki adim, medya/uyumluluk karar modellerini netlestirmektir.
 
 Hedef ekranlar:
 
-- kategori/fiyat listesi alt ekranlari
 - medya soft-delete/pasiflestirme modeli
 - uyumluluk duplicate/delete ve test modeli

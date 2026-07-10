@@ -2,7 +2,7 @@
 
 ## Mevcut Durum
 
-`/admin/urunler` urun, kategori, fiyat listesi, fiyat ve stok kayitlarini yonetebiliyor. Liste arama/filtre/sayfalama, urun detay sayfasi, stok/fiyat formlari, medya/teknik dosya yonetimi ve uyumluluk/OEM yonetimi baslatildi.
+`/admin/urunler` urun, fiyat ve stok kayitlarini yonetebiliyor. Kategori ve fiyat listesi yonetimi alt ekranlara ayrildi. Liste arama/filtre/sayfalama, urun detay sayfasi, stok/fiyat formlari, medya/teknik dosya yonetimi ve uyumluluk/OEM yonetimi baslatildi.
 
 ## Hedef
 
@@ -21,7 +21,7 @@ Urun operasyonunu gercek kullanicinin gunluk is akisina uygun hale getirmek.
   - Medya/teknik dosyalar
   - Audit gecmisi
 - [x] Stok ve fiyat guncelleme formlarini detay ekranina tasima.
-- [ ] Stok ve fiyat listelerini ayri alt ekranlara bolme.
+- [x] Kategori ve fiyat listelerini ayri alt ekranlara bolme.
 - [x] Public katalog arama/filtre.
 - [x] Medya/teknik dosya ekleme ve yonetim UI'i.
 - [x] Uyumluluk/OEM ekleme ve yonetim UI'i.
