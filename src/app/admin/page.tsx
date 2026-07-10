@@ -62,7 +62,7 @@ async function getDashboardData() {
       {
         label: "Bekleyen bayi",
         value: pendingDealers,
-        href: undefined,
+        href: "/admin/bayi-basvurulari",
         icon: UsersRound,
         tone: "teal",
       },
@@ -135,10 +135,10 @@ export default async function AdminPage() {
   const pendingActions = [
     {
       title: "Bayi başvurularını incele",
-      description: "Başvuru onay ekranı sıradaki iş fazında aktif olacak.",
+      description: "Yeni başvuruları inceleyin, ticari koşulları belirleyin ve firma hesabını açın.",
       value: dashboard.metrics[0].value,
       label: "bekleyen kayıt",
-      href: undefined,
+      href: "/admin/bayi-basvurulari",
     },
     {
       title: "Stok alarmı olan ürünleri kontrol et",
@@ -263,13 +263,20 @@ export default async function AdminPage() {
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr_0.8fr]">
         <div className={panelClass}>
-          <div className="border-b border-slate-200 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
             <h3 className="text-base font-semibold text-slate-950">Son bayi başvuruları</h3>
+            <Link href="/admin/bayi-basvurulari" className="text-sm font-semibold text-teal-800">
+              Tümünü aç
+            </Link>
           </div>
           <div className="divide-y divide-slate-200">
             {dashboard.recentApplications.length > 0 ? (
               dashboard.recentApplications.map((application) => (
-                <div key={application.id} className="px-5 py-4">
+                <Link
+                  key={application.id}
+                  href={`/admin/bayi-basvurulari/${application.id}`}
+                  className="block px-5 py-4 transition hover:bg-slate-50"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <p className="truncate text-sm font-semibold text-slate-950">{application.companyName}</p>
                     <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
@@ -279,7 +286,7 @@ export default async function AdminPage() {
                   <p className="mt-1 text-xs text-slate-500">
                     {application.contactName} · {application.city} · {formatDate(application.createdAt)}
                   </p>
-                </div>
+                </Link>
               ))
             ) : (
               <p className="px-5 py-8 text-sm text-slate-500">Henüz başvuru yok.</p>

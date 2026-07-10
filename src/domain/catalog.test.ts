@@ -11,6 +11,7 @@ import {
 } from "./catalog";
 import {
   categoryFormSchema,
+  dealerApplicationReviewSchema,
   mediaAssetFormSchema,
   mediaAssetStatusFormSchema,
   productCompatibilityDeleteFormSchema,
@@ -141,6 +142,42 @@ describe("catalog helpers", () => {
 });
 
 describe("catalog validation schemas", () => {
+  it("requires a customer group when approving dealer applications", () => {
+    const rejected = dealerApplicationReviewSchema.safeParse({
+      id: "application-1",
+      expectedUpdatedAt: "2026-07-10T10:00:00.000Z",
+      status: "APPROVED",
+      creditLimit: "250000",
+    });
+    const accepted = dealerApplicationReviewSchema.safeParse({
+      id: "application-1",
+      expectedUpdatedAt: "2026-07-10T10:00:00.000Z",
+      status: "APPROVED",
+      customerGroupId: "group-1",
+      creditLimit: "250000",
+    });
+
+    expect(rejected.success).toBe(false);
+    expect(accepted.success).toBe(true);
+  });
+
+  it("rejects negative dealer credit limits and invalid application versions", () => {
+    const negativeLimit = dealerApplicationReviewSchema.safeParse({
+      id: "application-1",
+      expectedUpdatedAt: "2026-07-10T10:00:00.000Z",
+      status: "IN_REVIEW",
+      creditLimit: "-1",
+    });
+    const invalidVersion = dealerApplicationReviewSchema.safeParse({
+      id: "application-1",
+      expectedUpdatedAt: "not-a-date",
+      status: "IN_REVIEW",
+    });
+
+    expect(negativeLimit.success).toBe(false);
+    expect(invalidVersion.success).toBe(false);
+  });
+
   it("generates category slug from name when slug is blank", () => {
     const parsed = categoryFormSchema.parse({
       name: "Özel Üretim Cam",

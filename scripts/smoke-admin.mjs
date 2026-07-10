@@ -95,6 +95,69 @@ const adminHtml = await adminResponse.text();
 assert(adminHtml.includes("Operasyon merkezi"), "Admin operations dashboard content not rendered");
 assert(adminHtml.includes("Bayi Başvuruları"), "Admin sidebar navigation not rendered");
 
+const smokeDealerApplicationId = `smoke-dealer-${Date.now()}`;
+const smokeDealerCompanyName = `Smoke Cam ${Date.now()}`;
+const smokeDealerTimestamp = new Date().toISOString();
+const dealerDb = new Database("dev.db");
+dealerDb
+  .prepare(
+    `
+      insert into DealerApplication (
+        id,
+        companyName,
+        contactName,
+        email,
+        phone,
+        city,
+        customerType,
+        status,
+        createdAt,
+        updatedAt
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+  )
+  .run(
+    smokeDealerApplicationId,
+    smokeDealerCompanyName,
+    "Smoke Yetkili",
+    `smoke-${Date.now()}@example.com`,
+    "+90 212 000 00 00",
+    "İstanbul",
+    "Bayi",
+    "NEW",
+    smokeDealerTimestamp,
+    smokeDealerTimestamp,
+  );
+dealerDb.close();
+
+try {
+  const dealerApplicationsResponse = await request("/admin/bayi-basvurulari", {
+    headers: {
+      Cookie: serializeCookies(cookieJar),
+    },
+  });
+  assert(dealerApplicationsResponse.status === 200, `Authenticated dealer applications failed with ${dealerApplicationsResponse.status}`);
+  const dealerApplicationsHtml = await dealerApplicationsResponse.text();
+  assert(dealerApplicationsHtml.includes("Bayi başvuruları"), "Dealer application list heading not rendered");
+  assert(dealerApplicationsHtml.includes(smokeDealerCompanyName), "Smoke dealer application not rendered in list");
+  assert(dealerApplicationsHtml.includes("İncele"), "Dealer application detail action not rendered");
+
+  const dealerApplicationDetailResponse = await request(`/admin/bayi-basvurulari/${smokeDealerApplicationId}`, {
+    headers: {
+      Cookie: serializeCookies(cookieJar),
+    },
+  });
+  assert(dealerApplicationDetailResponse.status === 200, `Authenticated dealer application detail failed with ${dealerApplicationDetailResponse.status}`);
+  const dealerApplicationDetailHtml = await dealerApplicationDetailResponse.text();
+  assert(dealerApplicationDetailHtml.includes(smokeDealerCompanyName), "Dealer application detail did not render company");
+  assert(dealerApplicationDetailHtml.includes("Durum ve ticari koşullar"), "Dealer review panel not rendered");
+  assert(dealerApplicationDetailHtml.includes("Kararı kaydet"), "Dealer review submit action not rendered");
+} finally {
+  const dealerCleanupDb = new Database("dev.db");
+  dealerCleanupDb.prepare("delete from DealerApplication where id = ?").run(smokeDealerApplicationId);
+  dealerCleanupDb.close();
+}
+
 const productsResponse = await request("/admin/urunler", {
   headers: {
     Cookie: serializeCookies(cookieJar),
@@ -196,6 +259,8 @@ console.log(
         "login-form",
         "admin-login",
         "authenticated-admin-dashboard",
+        "authenticated-dealer-application-list",
+        "authenticated-dealer-application-detail",
         "authenticated-product-management",
         "authenticated-product-categories",
         "authenticated-price-lists",

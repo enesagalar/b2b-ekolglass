@@ -11,7 +11,7 @@ import {
   slugifyProductCategoryName,
   stockVisibilities,
 } from "./catalog";
-import { stockStatuses } from "./statuses";
+import { dealerApplicationStatuses, stockStatuses } from "./statuses";
 
 const optionalText = (max: number) =>
   z.preprocess((value) => {
@@ -33,6 +33,26 @@ export const dealerApplicationSchema = z.object({
   customerType: z.string().min(2, "Müşteri tipi zorunludur.").max(80),
   message: z.string().max(1200).optional(),
 });
+
+export const dealerApplicationReviewSchema = z
+  .object({
+    id: z.string().trim().min(1, "Başvuru seçimi zorunludur."),
+    expectedUpdatedAt: z.string().trim().refine((value) => !Number.isNaN(Date.parse(value)), "Başvuru sürümü geçersiz."),
+    status: z.enum(dealerApplicationStatuses),
+    internalNotes: optionalText(2000),
+    customerGroupId: optionalText(120),
+    paymentTerms: optionalText(200),
+    creditLimit: z.preprocess(parseOptionalDecimal, z.number().nonnegative("Kredi limiti negatif olamaz.").optional()),
+  })
+  .superRefine((data, context) => {
+    if (data.status === "APPROVED" && !data.customerGroupId) {
+      context.addIssue({
+        code: "custom",
+        message: "Onaylanan bayi için müşteri grubu seçilmelidir.",
+        path: ["customerGroupId"],
+      });
+    }
+  });
 
 export const mediaAssetFormSchema = z.object({
   id: optionalText(120),

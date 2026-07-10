@@ -8,16 +8,30 @@ Faz 3.2 - Bayi Basvurusu, Firma ve Kullanici Akisi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. `/admin/bayi-basvurulari` liste ve detay ekrani eklenecek.
-2. Basvuru durum degistirme server action'i audit log ile eklenecek.
-3. Onaydan `Company` ve bayi kullanicisi uretme akisi tasarlanip ilk dar kapsam uygulanacak.
-4. Browser/HTTP smoke ile admin basvuru akisi dogrulanacak.
-5. `npm run check` calistirilacak.
-6. Commit ve GitHub push yapilacak.
+1. Davet/aktivasyon token modeli ve migration'i eklenecek.
+2. Bayinin ilk sifresini belirleyecegi aktivasyon ekrani ve action'i yazilacak.
+3. `/admin/firmalar` liste/detay ekraninin ilk dilimi acilacak.
+4. Gercek `DEALER_OWNER` oturumu ile firma ve fiyat izolasyonu integration test edilecek.
+5. Browser/HTTP smoke aktivasyon ve firma akisiyla genisletilecek.
+6. `npm run check` calistirilip commit/GitHub push yapilacak.
 
 ## Son Tamamlanan Tur
 
-Faz 3.1 tamamlandi:
+Faz 3.2 admin inceleme/provisioning dilimi tamamlandi:
+
+- `/admin/bayi-basvurulari` liste, arama, durum filtresi, sayfalama ve KPI ekranlari eklendi.
+- `/admin/bayi-basvurulari/[id]` inceleme ve ticari kosul ekrani eklendi.
+- Admin menusu ve dashboard bayi basvurusu ekranlarina baglandi.
+- `dealer.application.review` permission'i hem sayfa okumalarinda hem server action'da zorunlu hale getirildi.
+- Durum gecis tablosu ve `expectedUpdatedAt` optimistic concurrency kontrolu eklendi.
+- Onaydan tek transaction ile `Company`, `DEALER_OWNER/INVITED`, basvuru baglantisi ve audit kaydi uretiliyor.
+- Musteri grubu onayda zorunlu; payment terms ve credit limit firma kaydina yaziliyor.
+- E-posta/firma/vergi numarasi ve mevcut rol cakismalari otomatik provisioning'i guvenli sekilde durduruyor.
+- Public basvuru e-postasi lowercase normalize ediliyor.
+- DealerApplication ve AuditLog sorgu indeksleri migration ile eklendi ve lokal DB'ye uygulandi.
+- 6 test dosyasinda 45 test, gercek SQLite tekrar onay testi, admin HTTP smoke ve responsive browser QA basarili.
+
+Faz 3.1 onceki turda tamamlandi:
 
 - `.env` lokal gelistirme icin tamamlandi; `.env.example` guvenli placeholder'a cekildi.
 - `/admin/urunler` query parametreli arama/filtre/sayfalama aldi.
@@ -65,3 +79,4 @@ Varsayilan karar:
 - Bayiye stok ilk etapta sade durum olarak gosterilecek.
 - Fiyatlar guest/PENDING icin kapali; bayi rollerinde firma veya musteri grubu eslesmesiyle, ic ekip rollerinde fiyat okuma yetkisiyle acik olacak.
 - Faz 3.2'de ilk uygulama, onaylanan basvurudan tek `Company` ve bir `DEALER_OWNER` kullanicisi uretme varsayimiyla ilerleyecek.
+- Ilk bayi kullanicisi gecici parola ile `ACTIVE` yapilmayacak; `INVITED` olusacak ve sifresini tek kullanimlik aktivasyon akisinda kendi belirleyecek.

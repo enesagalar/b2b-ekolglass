@@ -96,6 +96,9 @@ model DealerApplication {
   internalNotes String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([companyId])
 }
 
 model Address {
@@ -446,6 +449,8 @@ model AuditLog {
   entityId    String?
   metadata    String?
   createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
 }
 
 model IntegrationLog {

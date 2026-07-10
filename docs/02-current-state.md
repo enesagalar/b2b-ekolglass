@@ -27,6 +27,10 @@ Son guncelleme: 2026-07-10
 - Public ana sayfa.
 - Public katalog.
 - Bayi basvuru formu.
+- Admin bayi basvurusu liste/detay ekranlari.
+- Permission kontrollu bayi inceleme ve durum gecis akisi.
+- Onaydan transaction tabanli firma ve `DEALER_OWNER/INVITED` kullanici uretimi.
+- Musteri grubu, odeme kosulu ve kredi limiti atamasi.
 - Admin dashboard temeli.
 - Admin shell:
   - Sol menu
@@ -59,10 +63,8 @@ Son guncelleme: 2026-07-10
 ## En Onemli Eksikler
 
 1. Bayi kabul akisi eksik:
-   - Bayi basvurusu admin liste/detay ekrani yok.
-   - Basvurudan firma uretme akisi yok.
-   - Basvurudan bayi kullanicisi uretme akisi yok.
-   - Customer group, payment terms ve credit limit atamasi yok.
+   - Davet/aktivasyon token ve ilk sifre belirleme akisi yok.
+   - `/admin/firmalar` liste/detay ve kullanici yonetimi yok.
    - Gercek bayi oturumu ile firma bazli fiyat gorunurlugu testi yok.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
@@ -79,11 +81,12 @@ Son guncelleme: 2026-07-10
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.2 baslayacak: Bayi Basvurusu, Firma ve Kullanici Akisi.
+Faz 3.2 devam edecek: Bayi Aktivasyonu, Firma Yonetimi ve Izolasyon Testleri.
 
-Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi oldu. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Kategori ve fiyat listesi yonetimi alt ekranlara ayrildi. Medya icin soft aktif/pasif, uyumluluk/OEM icin duplicate/delete karar modeli tamamlandi. Siradaki adim, bayi basvurusunu admin onay ve firma/kullanici uretim akisina baglamaktir.
+Admin bayi basvurusu liste/detay, permission kontrollu durum yonetimi ve onaydan atomik firma/kullanici uretimi tamamlandi. Kullanici guvenli varsayimla `INVITED` ve parolasiz olusuyor. Siradaki adim tek kullanimlik aktivasyon token'i, ilk sifre belirleme ekrani ve gercek bayi oturumuyla firma/fiyat izolasyon testidir.
 
-Hedef ekranlar:
+Siradaki hedef ekranlar:
 
-- `/admin/bayi-basvurulari`
-- `/admin/bayi-basvurulari/[id]`
+- `/aktivasyon/[token]`
+- `/admin/firmalar`
+- `/admin/firmalar/[id]`

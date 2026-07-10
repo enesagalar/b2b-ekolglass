@@ -4,7 +4,7 @@ import { randomBytes, createHash } from "crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { isAdminRole, type Role } from "@/domain/roles";
+import { hasPermission, isAdminRole, isKnownRole, type Permission, type Role } from "@/domain/roles";
 import { prisma } from "@/lib/prisma";
 
 export const SESSION_COOKIE = "ekolglass_session";
@@ -89,6 +89,20 @@ export async function requireAdminUser() {
 
   if (!user || !isAdminRole(user.role as Role)) {
     redirect("/giris?next=/admin");
+  }
+
+  return user;
+}
+
+export async function requirePermissionUser(permission: Permission, nextPath = "/admin") {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect(`/giris?next=${encodeURIComponent(nextPath)}`);
+  }
+
+  if (!isKnownRole(user.role) || !hasPermission(user.role, permission)) {
+    redirect("/admin");
   }
 
   return user;

@@ -47,7 +47,7 @@ const navigationSections: AdminNavSection[] = [
     label: "Ana",
     items: [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard, description: "Operasyon merkezi" },
-      { label: "Bayi Başvuruları", icon: UsersRound, description: "Onay ve inceleme", soon: true },
+      { label: "Bayi Başvuruları", href: "/admin/bayi-basvurulari", icon: UsersRound, description: "Onay ve inceleme" },
       { label: "Firmalar", icon: Building2, description: "Bayi hesapları", soon: true },
     ],
   },

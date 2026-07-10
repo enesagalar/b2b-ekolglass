@@ -33,7 +33,11 @@ export async function createDealerApplication(
   }
 
   await prisma.dealerApplication.create({
-    data: parsed.data,
+    data: {
+      ...parsed.data,
+      email: parsed.data.email.trim().toLowerCase(),
+      taxNumber: parsed.data.taxNumber?.trim() || undefined,
+    },
   });
 
   revalidatePath("/admin/bayi-basvurulari");

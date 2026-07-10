@@ -70,7 +70,7 @@ Tamamlananlar:
 
 ## Faz 3 - Urun ve Katalog Operasyonu
 
-Durum: Faz 3.1 tamamlandi, Faz 3.2 baslayacak.
+Durum: Faz 3.1 tamamlandi, Faz 3.2 devam ediyor.
 
 Kapsam:
 
@@ -93,11 +93,15 @@ Tamamlananlar:
 - Kategori ve fiyat listesi alt ekranlari.
 - Medya soft aktif/pasif karar modeli.
 - Uyumluluk/OEM duplicate/delete karar modeli.
+- Bayi basvurusu admin liste/detay ve inceleme akisi.
+- Onaydan transaction tabanli firma ve davet bekleyen bayi sahibi uretimi.
+- Musteri grubu, odeme kosulu, kredi limiti ve audit kaydi.
+- Permission, optimistic concurrency ve cakisma kontrolleri.
 
 Eksik kalanlar:
 
-- Bayi basvurusu admin inceleme/onay akisi.
-- Onaydan firma ve bayi kullanicisi uretme.
+- Bayi davet/aktivasyon ve ilk sifre belirleme akisi.
+- Admin firma/kullanici yonetimi.
 - Gercek bayi oturumu ile firma/fiyat izolasyonu testleri.
 
 ## Faz 4 - Teklif ve Siparis Akisi
