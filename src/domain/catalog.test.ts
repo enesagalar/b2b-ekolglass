@@ -9,7 +9,14 @@ import {
   parseOptionalInt,
   slugifyProductCategoryName,
 } from "./catalog";
-import { categoryFormSchema, productFormSchema, productPriceFormSchema, stockFormSchema } from "./validation";
+import {
+  categoryFormSchema,
+  mediaAssetFormSchema,
+  mediaAssetStatusFormSchema,
+  productFormSchema,
+  productPriceFormSchema,
+  stockFormSchema,
+} from "./validation";
 
 describe("catalog helpers", () => {
   it("normalizes product codes", () => {
@@ -232,5 +239,29 @@ describe("catalog validation schemas", () => {
 
     expect(parsed.amount).toBe(1250.75);
     expect(parsed.minQuantity).toBe(2);
+  });
+
+  it("validates media asset data and active state", () => {
+    const parsed = mediaAssetFormSchema.parse({
+      productId: "product-1",
+      title: "Teknik PDF",
+      url: "https://cdn.example.com/teknik.pdf",
+      altText: "Teknik dokuman",
+      usage: "TECHNICAL_DOCUMENT",
+      isActive: "on",
+    });
+
+    expect(parsed.isActive).toBe(true);
+    expect(parsed.key).toBeUndefined();
+  });
+
+  it("validates media active/passive status changes", () => {
+    const parsed = mediaAssetStatusFormSchema.parse({
+      id: "media-1",
+      productId: "product-1",
+      isActive: "false",
+    });
+
+    expect(parsed.isActive).toBe(false);
   });
 });

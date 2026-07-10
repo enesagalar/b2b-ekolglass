@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import {
   categoryFormSchema,
   mediaAssetFormSchema,
+  mediaAssetStatusFormSchema,
   priceListFormSchema,
   productCompatibilityFormSchema,
   productFormSchema,
@@ -557,6 +558,17 @@ export async function saveProductMedia(
   const key = normalizedKey || fallbackKey;
 
   try {
+    if (parsed.data.id) {
+      const existing = await prisma.mediaAsset.findFirst({
+        where: { id: parsed.data.id, productId: parsed.data.productId },
+        select: { id: true },
+      });
+
+      if (!existing) {
+        return failure("Medya kaydi bu urune ait degil veya bulunamadi.");
+      }
+    }
+
     const mediaAsset = parsed.data.id
       ? await prisma.mediaAsset.update({
           where: { id: parsed.data.id },
@@ -595,6 +607,62 @@ export async function saveProductMedia(
   }
 }
 
+export async function setProductMediaStatus(
+  input: CatalogActionInput,
+  maybeFormData?: FormData,
+): Promise<CatalogActionState> {
+  const user = await requireAdminUser();
+  const formData = resolveFormData(input, maybeFormData);
+
+  if (!formData) {
+    return failure("Form verisi alinamadi.");
+  }
+
+  const parsed = mediaAssetStatusFormSchema.safeParse({
+    id: formData.get("id"),
+    productId: formData.get("productId"),
+    isActive: formData.get("isActive"),
+  });
+
+  if (!parsed.success) {
+    return failure(getFirstValidationMessage(parsed.error.issues[0]?.message ?? ""));
+  }
+
+  try {
+    const existing = await prisma.mediaAsset.findFirst({
+      where: { id: parsed.data.id, productId: parsed.data.productId },
+      select: { id: true, isActive: true, key: true, usage: true },
+    });
+
+    if (!existing) {
+      return failure("Medya kaydi bu urune ait degil veya bulunamadi.");
+    }
+
+    const mediaAsset = await prisma.mediaAsset.update({
+      where: { id: parsed.data.id },
+      data: { isActive: parsed.data.isActive },
+    });
+
+    await writeAuditLog(
+      user.id,
+      parsed.data.isActive ? "media_asset.activate" : "media_asset.deactivate",
+      "Product",
+      parsed.data.productId,
+      {
+        mediaAssetId: mediaAsset.id,
+        key: mediaAsset.key,
+        usage: mediaAsset.usage,
+        previousIsActive: existing.isActive,
+      },
+    );
+    revalidateProductSurfaces(parsed.data.productId);
+
+    return success(parsed.data.isActive ? "Medya kaydi aktif edildi." : "Medya kaydi pasife alindi.");
+  } catch (error) {
+    return failure(mapCatalogMutationError(error));
+  }
+}
+
 export async function saveCategoryForm(formData: FormData) {
   await saveCategory(formData);
 }
@@ -621,4 +689,8 @@ export async function saveProductCompatibilityForm(formData: FormData) {
 
 export async function saveProductMediaForm(formData: FormData) {
   await saveProductMedia(formData);
+}
+
+export async function setProductMediaStatusForm(formData: FormData) {
+  await setProductMediaStatus(formData);
 }

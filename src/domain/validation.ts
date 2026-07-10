@@ -45,6 +45,12 @@ export const mediaAssetFormSchema = z.object({
   isActive: checkboxBoolean.default(false),
 });
 
+export const mediaAssetStatusFormSchema = z.object({
+  id: z.string().trim().min(1, "Medya kaydi secimi zorunludur."),
+  productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+  isActive: checkboxBoolean.default(false),
+});
+
 export const siteSettingSchema = z.object({
   key: z.string().min(3).max(120),
   value: z.string().min(1).max(2000),

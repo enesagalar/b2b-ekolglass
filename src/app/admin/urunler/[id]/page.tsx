@@ -21,6 +21,7 @@ import {
   saveProductMedia,
   saveProductPrice,
   saveProductStock,
+  setProductMediaStatus,
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
 import { prisma } from "@/lib/prisma";
@@ -511,13 +512,18 @@ export default async function AdminProductDetailPage({
                 <CatalogActionForm key={asset.id} action={saveProductMedia} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                   <input type="hidden" name="id" value={asset.id} />
                   <input type="hidden" name="productId" value={product.id} />
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-950">{asset.title}</p>
-                      <p className="mt-2 text-xs font-semibold text-slate-500">{asset.usage}</p>
-                    </div>
-                    <a href={asset.url} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700">
-                      <LinkIcon size={14} aria-hidden="true" />
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950">{asset.title}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-semibold text-slate-500">{asset.usage}</p>
+                          <span className={asset.isActive ? "rounded bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-800" : "rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600"}>
+                            {asset.isActive ? "Aktif" : "Pasif"}
+                          </span>
+                        </div>
+                      </div>
+                      <a href={asset.url} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700">
+                        <LinkIcon size={14} aria-hidden="true" />
                       Ac
                     </a>
                   </div>
@@ -558,6 +564,29 @@ export default async function AdminProductDetailPage({
           ) : (
             <EmptyState title="Medya veya teknik dosya yok" body="Gorsel, katalog PDF ve teknik dosya URL'i ekleyerek urun dokumanlarini bayiye hazirlayabilirsin." />
           )}
+          {product.mediaAssets.length > 0 ? (
+            <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-950">Pasife alma modeli</p>
+              <p className="text-sm leading-6 text-slate-600">
+                Medya kayitlari silinmez; audit ve CMS referanslari korunarak aktif/pasif durumuyla yayindan kaldirilir.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {product.mediaAssets.map((asset) => (
+                  <CatalogActionForm key={`status-${asset.id}`} action={setProductMediaStatus} className="inline-flex">
+                    <input type="hidden" name="id" value={asset.id} />
+                    <input type="hidden" name="productId" value={product.id} />
+                    <input type="hidden" name="isActive" value={asset.isActive ? "false" : "true"} />
+                    <button
+                      type="submit"
+                      className="inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      {asset.isActive ? "Pasife al" : "Aktif et"}: {asset.title}
+                    </button>
+                  </CatalogActionForm>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : null}
 

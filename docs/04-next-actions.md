@@ -8,11 +8,10 @@ Faz 3.1 - Urun ve Katalog UX Iyilestirme.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Medya kayitlari icin silme/pasife alma karar modeli netlestirilecek.
-2. Uyumluluk/OEM kayitlari icin duplicate/delete karar modeli ve server action testleri eklenecek.
-3. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
-4. `npm run check` calistirilacak.
-5. Commit ve GitHub push yapilacak.
+1. Uyumluluk/OEM kayitlari icin duplicate/delete karar modeli ve server action testleri eklenecek.
+2. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
+3. `npm run check` calistirilacak.
+4. Commit ve GitHub push yapilacak.
 
 ## Son Tamamlanan Tur
 
@@ -36,6 +35,10 @@ Faz 3.1 kismen tamamlandi:
 - `/admin/urunler/fiyat-listeleri` fiyat listesi yonetimi alt ekrani eklendi ve admin menudeki fiyat listeleri linki aktif hale getirildi.
 - `/admin/urunler` ana ekrani urun olusturma, urun listesi ve alt ekran kisayollari odakli sade hale getirildi.
 - `scripts/smoke-admin.mjs` kategori ve fiyat listesi alt ekranlarini da dogrulayacak sekilde genisletildi.
+- Medya kayitlari icin hard delete acilmadi; `MediaAsset.isActive` uzerinden soft aktif/pasif karar modeli netlestirildi.
+- `setProductMediaStatus` server action'i eklendi; medya kayitlari audit log ile aktif/pasif yapilabilir.
+- `saveProductMedia` update path'ine `id + productId` sahiplik kontrolu eklendi.
+- Medya validation testleri ve admin medya tab smoke kontrolu eklendi.
 - Admin smoke, HTTP urun/katalog/uyumluluk smoke ve `npm run check` basarili calisti.
 
 ## Proje Sahibinden Beklenen Kararlar

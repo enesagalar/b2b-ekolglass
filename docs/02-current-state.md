@@ -7,9 +7,11 @@ Son guncelleme: 2026-07-10
 - Aktif branch: `main`
 - Remote: `https://github.com/enesagalar/b2b-ekolglass.git`
 - Son bilinen commitler:
-  - `e4d665e Document admin UX roadmap and security gates`
-  - `d8f8584 Add admin product catalog management`
-  - `ac88f85 Add database-backed admin authentication`
+  - `d6a5666 Split product category and price list admin screens`
+  - `2934cc0 Enforce catalog price and stock visibility`
+  - `68bf9a7 Add product compatibility management and advisor reports`
+  - `4ead9a0 Add codex fleet operating guide`
+  - `069ffdf Move product operations into detail tabs`
 
 ## Calisan Temel Parcalar
 
@@ -39,6 +41,7 @@ Son guncelleme: 2026-07-10
 - Admin urun detay sayfasi.
 - Admin urun detayinda stok/fiyat guncelleme formlari.
 - Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
+- Admin urun detayinda medya/teknik dosya soft aktif/pasif yonetimi.
 - Admin urun detayinda uyumluluk/OEM ekleme ve guncelleme.
 - Public katalog arama/filtre.
 - Public katalogda role-based fiyat/stok gorunurlugu.
@@ -55,8 +58,8 @@ Son guncelleme: 2026-07-10
    - Firma bazli fiyat gorunurlugu yok.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
-   - Medya kayitlari icin silme/pasife alma karar modeli yok.
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
+   - Uyumluluk/OEM kayitlari icin duplicate/delete karar modeli yok.
 
 3. Teklif/siparis akisi yok:
    - Teklif sepeti yok.
@@ -71,9 +74,8 @@ Son guncelleme: 2026-07-10
 
 Faz 3.1 devam edecek: Urun ve Katalog UX Iyilestirme.
 
-Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Kategori ve fiyat listesi yonetimi alt ekranlara ayrildi. Siradaki adim, medya/uyumluluk karar modellerini netlestirmektir.
+Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Kategori ve fiyat listesi yonetimi alt ekranlara ayrildi. Medya icin soft aktif/pasif karar modeli tamamlandi. Siradaki adim, uyumluluk duplicate/delete ve test modelini netlestirmektir.
 
 Hedef ekranlar:
 
-- medya soft-delete/pasiflestirme modeli
 - uyumluluk duplicate/delete ve test modeli

@@ -1,4 +1,5 @@
 import { JSDOM } from "jsdom";
+import Database from "better-sqlite3";
 
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const adminEmail = process.env.SMOKE_ADMIN_EMAIL ?? process.env.SEED_ADMIN_EMAIL ?? "admin@ekolglass.local";
@@ -124,6 +125,21 @@ const priceListsHtml = await priceListsResponse.text();
 assert(priceListsHtml.includes("Fiyat listeleri"), "Admin price lists screen not rendered");
 assert(priceListsHtml.includes("Fiyat listesi ekle"), "Admin price list create form not rendered");
 
+const db = new Database("dev.db", { readonly: true });
+const firstProduct = db.prepare("select id, name from Product order by createdAt asc limit 1").get();
+db.close();
+assert(firstProduct, "Smoke database has no product");
+
+const mediaResponse = await request(`/admin/urunler/${firstProduct.id}?tab=medya`, {
+  headers: {
+    Cookie: serializeCookies(cookieJar),
+  },
+});
+assert(mediaResponse.status === 200, `Authenticated product media tab failed with ${mediaResponse.status}`);
+const mediaHtml = await mediaResponse.text();
+assert(mediaHtml.includes("Medya veya teknik dosya ekle"), "Product media create form not rendered");
+assert(mediaHtml.includes("Medya ekle"), "Product media submit action not rendered");
+
 console.log(
   JSON.stringify(
     {
@@ -138,6 +154,7 @@ console.log(
         "authenticated-product-management",
         "authenticated-product-categories",
         "authenticated-price-lists",
+        "authenticated-product-media-tab",
       ],
     },
     null,
