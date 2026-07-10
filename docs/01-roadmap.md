@@ -70,7 +70,7 @@ Tamamlananlar:
 
 ## Faz 3 - Urun ve Katalog Operasyonu
 
-Durum: Baslatildi.
+Durum: Faz 3.1 tamamlandi, Faz 3.2 baslayacak.
 
 Kapsam:
 
@@ -85,14 +85,20 @@ Tamamlananlar:
 - Urun, kategori, fiyat listesi, fiyat ve stok icin admin CRUD/upsert temeli.
 - Validation ve helper testleri.
 - Audit log yazimi.
-
-Eksik kalanlar:
-
 - Urun liste arama/filtre/sayfalama.
 - Urun detay sayfasi ve sekmeli UX.
 - Medya/teknik dosya yonetimi.
 - Bayi rolune gore fiyat gorunurlugu.
 - Public katalog arama ve filtreleme.
+- Kategori ve fiyat listesi alt ekranlari.
+- Medya soft aktif/pasif karar modeli.
+- Uyumluluk/OEM duplicate/delete karar modeli.
+
+Eksik kalanlar:
+
+- Bayi basvurusu admin inceleme/onay akisi.
+- Onaydan firma ve bayi kullanicisi uretme.
+- Gercek bayi oturumu ile firma/fiyat izolasyonu testleri.
 
 ## Faz 4 - Teklif ve Siparis Akisi
 

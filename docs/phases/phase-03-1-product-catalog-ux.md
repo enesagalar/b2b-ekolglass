@@ -27,7 +27,7 @@ Urun operasyonunu gercek kullanicinin gunluk is akisina uygun hale getirmek.
 - [x] Uyumluluk/OEM ekleme ve yonetim UI'i.
 - [x] Bayi rolune gore public katalog fiyat/stok gorunurlugu.
 - [x] OEM/uyumluluk aramasini public katalog sorgusuna dahil etme.
-- [ ] Uyumluluk/OEM duplicate/delete karar modeli.
+- [x] Uyumluluk/OEM duplicate/delete karar modeli.
 - [x] Medya pasife alma/silme karar modeli.
 
 ## Cikis Kriterleri

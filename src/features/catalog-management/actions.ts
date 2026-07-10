@@ -8,6 +8,7 @@ import {
   mediaAssetFormSchema,
   mediaAssetStatusFormSchema,
   priceListFormSchema,
+  productCompatibilityDeleteFormSchema,
   productCompatibilityFormSchema,
   productFormSchema,
   productPriceFormSchema,
@@ -72,6 +73,29 @@ function normalizeMediaKey(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+function normalizeCompatibilityKeyPart(value?: string | null) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function getCompatibilityDuplicateKey(input: {
+  vehicleBrand: string;
+  vehicleModel: string;
+  yearStart?: number | null;
+  yearEnd?: number | null;
+  oemReference?: string | null;
+}) {
+  return [
+    normalizeCompatibilityKeyPart(input.vehicleBrand),
+    normalizeCompatibilityKeyPart(input.vehicleModel),
+    input.yearStart ?? "",
+    input.yearEnd ?? "",
+    normalizeCompatibilityKeyPart(input.oemReference),
+  ].join("|");
 }
 
 function revalidateProductSurfaces(productId?: string) {
@@ -483,6 +507,27 @@ export async function saveProductCompatibility(
       }
     }
 
+    const duplicateKey = getCompatibilityDuplicateKey(parsed.data);
+    const existingCompatibilities = await prisma.productCompatibility.findMany({
+      where: { productId: parsed.data.productId },
+      select: {
+        id: true,
+        vehicleBrand: true,
+        vehicleModel: true,
+        yearStart: true,
+        yearEnd: true,
+        oemReference: true,
+      },
+    });
+    const duplicate = existingCompatibilities.find(
+      (compatibility) =>
+        compatibility.id !== parsed.data.id && getCompatibilityDuplicateKey(compatibility) === duplicateKey,
+    );
+
+    if (duplicate) {
+      return failure("Ayni marka/model/yil/OEM kombinasyonu bu urunde zaten kayitli.");
+    }
+
     const compatibility = parsed.data.id
       ? await prisma.productCompatibility.update({
           where: { id: parsed.data.id },
@@ -522,6 +567,60 @@ export async function saveProductCompatibility(
     revalidateProductSurfaces(parsed.data.productId);
 
     return success(parsed.data.id ? "Uyumluluk kaydi guncellendi." : "Uyumluluk kaydi eklendi.");
+  } catch (error) {
+    return failure(mapCatalogMutationError(error));
+  }
+}
+
+export async function deleteProductCompatibility(
+  input: CatalogActionInput,
+  maybeFormData?: FormData,
+): Promise<CatalogActionState> {
+  const user = await requireAdminUser();
+  const formData = resolveFormData(input, maybeFormData);
+
+  if (!formData) {
+    return failure("Form verisi alinamadi.");
+  }
+
+  const parsed = productCompatibilityDeleteFormSchema.safeParse({
+    id: formData.get("id"),
+    productId: formData.get("productId"),
+  });
+
+  if (!parsed.success) {
+    return failure(getFirstValidationMessage(parsed.error.issues[0]?.message ?? ""));
+  }
+
+  try {
+    const existing = await prisma.productCompatibility.findFirst({
+      where: { id: parsed.data.id, productId: parsed.data.productId },
+      select: {
+        id: true,
+        vehicleBrand: true,
+        vehicleModel: true,
+        yearStart: true,
+        yearEnd: true,
+        oemReference: true,
+      },
+    });
+
+    if (!existing) {
+      return failure("Uyumluluk kaydi bu urune ait degil veya bulunamadi.");
+    }
+
+    await prisma.productCompatibility.delete({ where: { id: parsed.data.id } });
+    await writeAuditLog(user.id, "product_compatibility.delete", "Product", parsed.data.productId, {
+      compatibilityId: existing.id,
+      vehicleBrand: existing.vehicleBrand,
+      vehicleModel: existing.vehicleModel,
+      yearStart: existing.yearStart,
+      yearEnd: existing.yearEnd,
+      oemReference: existing.oemReference,
+    });
+    revalidateProductSurfaces(parsed.data.productId);
+
+    return success("Uyumluluk kaydi silindi.");
   } catch (error) {
     return failure(mapCatalogMutationError(error));
   }
@@ -685,6 +784,10 @@ export async function saveProductPriceForm(formData: FormData) {
 
 export async function saveProductCompatibilityForm(formData: FormData) {
   await saveProductCompatibility(formData);
+}
+
+export async function deleteProductCompatibilityForm(formData: FormData) {
+  await deleteProductCompatibility(formData);
 }
 
 export async function saveProductMediaForm(formData: FormData) {

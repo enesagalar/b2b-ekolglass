@@ -143,6 +143,11 @@ export const productCompatibilityFormSchema = z
     }
   });
 
+export const productCompatibilityDeleteFormSchema = z.object({
+  id: z.string().trim().min(1, "Uyumluluk kaydi secimi zorunludur."),
+  productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+});
+
 export const stockFormSchema = z
   .object({
     productId: optionalText(120),

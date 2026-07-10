@@ -4,18 +4,20 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.1 - Urun ve Katalog UX Iyilestirme.
+Faz 3.2 - Bayi Basvurusu, Firma ve Kullanici Akisi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Uyumluluk/OEM kayitlari icin duplicate/delete karar modeli ve server action testleri eklenecek.
-2. Browser/HTTP smoke ile admin urun akisi ve public katalog tekrar dogrulanacak.
-3. `npm run check` calistirilacak.
-4. Commit ve GitHub push yapilacak.
+1. `/admin/bayi-basvurulari` liste ve detay ekrani eklenecek.
+2. Basvuru durum degistirme server action'i audit log ile eklenecek.
+3. Onaydan `Company` ve bayi kullanicisi uretme akisi tasarlanip ilk dar kapsam uygulanacak.
+4. Browser/HTTP smoke ile admin basvuru akisi dogrulanacak.
+5. `npm run check` calistirilacak.
+6. Commit ve GitHub push yapilacak.
 
 ## Son Tamamlanan Tur
 
-Faz 3.1 kismen tamamlandi:
+Faz 3.1 tamamlandi:
 
 - `.env` lokal gelistirme icin tamamlandi; `.env.example` guvenli placeholder'a cekildi.
 - `/admin/urunler` query parametreli arama/filtre/sayfalama aldi.
@@ -39,6 +41,10 @@ Faz 3.1 kismen tamamlandi:
 - `setProductMediaStatus` server action'i eklendi; medya kayitlari audit log ile aktif/pasif yapilabilir.
 - `saveProductMedia` update path'ine `id + productId` sahiplik kontrolu eklendi.
 - Medya validation testleri ve admin medya tab smoke kontrolu eklendi.
+- Uyumluluk/OEM kayitlari icin normalized duplicate karar modeli eklendi.
+- Uyumluluk/OEM kayitlari icin audit log yazan silme action'i ve admin UI'i eklendi.
+- Uyumluluk/OEM duplicate/delete server action testleri eklendi.
+- Admin uyumluluk tab smoke kontrolu ve public katalog OEM arama smoke kontrolu eklendi.
 - Admin smoke, HTTP urun/katalog/uyumluluk smoke ve `npm run check` basarili calisti.
 
 ## Proje Sahibinden Beklenen Kararlar
@@ -49,6 +55,8 @@ Asagidaki kararlar UI uygulanmadan once veya uygulama sirasinda netlesebilir:
 - Public katalog filtreleri marka/model/yil mi, kategori/cam tipi mi oncelikli olmali?
 - Stok bayiye adet olarak mi, sade durum olarak mi gosterilmeli?
 - Arka plan advisor calismasi 30 dakikalik periyotlarla mi, yoksa sadece her kodlama turu basinda tek seferlik mi calissin?
+- Onaylanan bayiye ilk sifre nasil verilecek?
+- Bayi onayi tek firma sahibi mi, yoksa bir firmada birden fazla bayi kullanicisi mi uretecek?
 
 Varsayilan karar:
 
@@ -56,3 +64,4 @@ Varsayilan karar:
 - Public katalogda kategori, marka, model, cam tipi ve stok durumu filtreleri olacak.
 - Bayiye stok ilk etapta sade durum olarak gosterilecek.
 - Fiyatlar guest/PENDING icin kapali; bayi rollerinde firma veya musteri grubu eslesmesiyle, ic ekip rollerinde fiyat okuma yetkisiyle acik olacak.
+- Faz 3.2'de ilk uygulama, onaylanan basvurudan tek `Company` ve bir `DEALER_OWNER` kullanicisi uretme varsayimiyla ilerleyecek.

@@ -11,12 +11,14 @@ import {
   Plus,
   Save,
   ShieldCheck,
+  Trash2,
   Warehouse,
 } from "lucide-react";
 
 import { getOrderModeLabel, getProductStatusLabel, stockVisibilities } from "@/domain/catalog";
 import { getStatusLabel, stockStatuses } from "@/domain/statuses";
 import {
+  deleteProductCompatibility,
   saveProductCompatibility,
   saveProductMedia,
   saveProductPrice,
@@ -403,55 +405,64 @@ export default async function AdminProductDetailPage({
           {product.compatibilities.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {product.compatibilities.map((compatibility) => (
-                <CatalogActionForm
-                  key={compatibility.id}
-                  action={saveProductCompatibility}
-                  className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                  <input type="hidden" name="id" value={compatibility.id} />
-                  <input type="hidden" name="productId" value={product.id} />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">
-                      {compatibility.vehicleBrand} {compatibility.vehicleModel}
-                    </p>
-                    <p className="mt-2 text-xs font-semibold text-slate-500">
-                      {[compatibility.yearStart, compatibility.yearEnd].filter(Boolean).join(" - ") || "Yil araligi yok"}
-                    </p>
-                  </div>
-                  <div className="grid gap-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <label className={labelClass}>
-                        Marka
-                        <input name="vehicleBrand" required defaultValue={compatibility.vehicleBrand} className={inputClass} />
-                      </label>
-                      <label className={labelClass}>
-                        Model
-                        <input name="vehicleModel" required defaultValue={compatibility.vehicleModel} className={inputClass} />
-                      </label>
+                <article key={compatibility.id} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                  <CatalogActionForm action={saveProductCompatibility} className="grid gap-4">
+                    <input type="hidden" name="id" value={compatibility.id} />
+                    <input type="hidden" name="productId" value={product.id} />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {compatibility.vehicleBrand} {compatibility.vehicleModel}
+                      </p>
+                      <p className="mt-2 text-xs font-semibold text-slate-500">
+                        {[compatibility.yearStart, compatibility.yearEnd].filter(Boolean).join(" - ") || "Yil araligi yok"}
+                      </p>
                     </div>
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className="grid gap-3">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <label className={labelClass}>
+                          Marka
+                          <input name="vehicleBrand" required defaultValue={compatibility.vehicleBrand} className={inputClass} />
+                        </label>
+                        <label className={labelClass}>
+                          Model
+                          <input name="vehicleModel" required defaultValue={compatibility.vehicleModel} className={inputClass} />
+                        </label>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <label className={labelClass}>
+                          Baslangic
+                          <input name="yearStart" type="number" min={1900} max={2100} defaultValue={compatibility.yearStart ?? ""} className={inputClass} />
+                        </label>
+                        <label className={labelClass}>
+                          Bitis
+                          <input name="yearEnd" type="number" min={1900} max={2100} defaultValue={compatibility.yearEnd ?? ""} className={inputClass} />
+                        </label>
+                      </div>
                       <label className={labelClass}>
-                        Baslangic
-                        <input name="yearStart" type="number" min={1900} max={2100} defaultValue={compatibility.yearStart ?? ""} className={inputClass} />
+                        OEM referansi
+                        <input name="oemReference" defaultValue={compatibility.oemReference ?? ""} className={inputClass} />
                       </label>
                       <label className={labelClass}>
-                        Bitis
-                        <input name="yearEnd" type="number" min={1900} max={2100} defaultValue={compatibility.yearEnd ?? ""} className={inputClass} />
+                        Not
+                        <input name="notes" defaultValue={compatibility.notes ?? ""} className={inputClass} />
                       </label>
+                      <div className="flex justify-end">
+                        <SubmitButton label="Uyumluluk guncelle" />
+                      </div>
                     </div>
-                    <label className={labelClass}>
-                      OEM referansi
-                      <input name="oemReference" defaultValue={compatibility.oemReference ?? ""} className={inputClass} />
-                    </label>
-                    <label className={labelClass}>
-                      Not
-                      <input name="notes" defaultValue={compatibility.notes ?? ""} className={inputClass} />
-                    </label>
-                    <div className="flex justify-end">
-                      <SubmitButton label="Uyumluluk guncelle" />
-                    </div>
-                  </div>
-                </CatalogActionForm>
+                  </CatalogActionForm>
+                  <CatalogActionForm action={deleteProductCompatibility} className="flex justify-end">
+                    <input type="hidden" name="id" value={compatibility.id} />
+                    <input type="hidden" name="productId" value={product.id} />
+                    <button
+                      type="submit"
+                      className="inline-flex h-9 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                    >
+                      <Trash2 size={14} aria-hidden="true" />
+                      Uyumlulugu sil
+                    </button>
+                  </CatalogActionForm>
+                </article>
               ))}
             </div>
           ) : (

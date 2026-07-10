@@ -125,10 +125,55 @@ const priceListsHtml = await priceListsResponse.text();
 assert(priceListsHtml.includes("Fiyat listeleri"), "Admin price lists screen not rendered");
 assert(priceListsHtml.includes("Fiyat listesi ekle"), "Admin price list create form not rendered");
 
-const db = new Database("dev.db", { readonly: true });
-const firstProduct = db.prepare("select id, name from Product order by createdAt asc limit 1").get();
+const db = new Database("dev.db");
+const firstProduct = db.prepare("select id, code, name from Product order by createdAt asc limit 1").get();
 db.close();
 assert(firstProduct, "Smoke database has no product");
+
+const smokeCompatibilityId = `smoke-compat-${Date.now()}`;
+const smokeOemReference = `SMOKE-OEM-${Date.now()}`;
+
+const compatibilityDb = new Database("dev.db");
+compatibilityDb
+  .prepare(
+    `
+      insert into ProductCompatibility (
+        id,
+        productId,
+        vehicleBrand,
+        vehicleModel,
+        yearStart,
+        yearEnd,
+        oemReference,
+        notes
+      ) values (?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+  )
+  .run(smokeCompatibilityId, firstProduct.id, "Smoke Marka", "Smoke Model", 2020, 2026, smokeOemReference, "Smoke uyumluluk kaydi");
+compatibilityDb.close();
+
+try {
+  const compatibilityResponse = await request(`/admin/urunler/${firstProduct.id}?tab=uyumluluk`, {
+    headers: {
+      Cookie: serializeCookies(cookieJar),
+    },
+  });
+  assert(compatibilityResponse.status === 200, `Authenticated product compatibility tab failed with ${compatibilityResponse.status}`);
+  const compatibilityHtml = await compatibilityResponse.text();
+  assert(compatibilityHtml.includes("Uyumluluk veya OEM referansi ekle"), "Product compatibility create form not rendered");
+  assert(compatibilityHtml.includes("Uyumluluk ekle"), "Product compatibility submit action not rendered");
+  assert(compatibilityHtml.includes("Uyumlulugu sil"), "Product compatibility delete action not rendered");
+  assert(compatibilityHtml.includes(smokeOemReference), "Product compatibility smoke OEM reference not rendered");
+
+  const catalogCompatibilityResponse = await request(`/katalog?q=${encodeURIComponent(smokeOemReference)}`);
+  assert(catalogCompatibilityResponse.status === 200, `Catalog compatibility search failed with ${catalogCompatibilityResponse.status}`);
+  const catalogCompatibilityHtml = await catalogCompatibilityResponse.text();
+  assert(catalogCompatibilityHtml.includes(firstProduct.code), "Catalog compatibility search did not render owning product");
+} finally {
+  const cleanupDb = new Database("dev.db");
+  cleanupDb.prepare("delete from ProductCompatibility where id = ?").run(smokeCompatibilityId);
+  cleanupDb.close();
+}
 
 const mediaResponse = await request(`/admin/urunler/${firstProduct.id}?tab=medya`, {
   headers: {
@@ -154,6 +199,8 @@ console.log(
         "authenticated-product-management",
         "authenticated-product-categories",
         "authenticated-price-lists",
+        "authenticated-product-compatibility-tab",
+        "public-catalog-compatibility-search",
         "authenticated-product-media-tab",
       ],
     },

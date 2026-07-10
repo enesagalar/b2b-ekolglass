@@ -8,10 +8,10 @@ Son guncelleme: 2026-07-10
 - Remote: `https://github.com/enesagalar/b2b-ekolglass.git`
 - Son bilinen commitler:
   - `d6a5666 Split product category and price list admin screens`
+  - `bc4625d Add media soft deactivation workflow`
   - `2934cc0 Enforce catalog price and stock visibility`
   - `68bf9a7 Add product compatibility management and advisor reports`
   - `4ead9a0 Add codex fleet operating guide`
-  - `069ffdf Move product operations into detail tabs`
 
 ## Calisan Temel Parcalar
 
@@ -43,8 +43,14 @@ Son guncelleme: 2026-07-10
 - Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
 - Admin urun detayinda medya/teknik dosya soft aktif/pasif yonetimi.
 - Admin urun detayinda uyumluluk/OEM ekleme ve guncelleme.
+- Admin urun detayinda uyumluluk/OEM duplicate engeli ve audit log'lu silme.
 - Public katalog arama/filtre.
 - Public katalogda role-based fiyat/stok gorunurlugu.
+- Public katalogda OEM/uyumluluk kayitlari uzerinden arama.
+- Catalog server action testleri:
+  - Uyumluluk duplicate engeli
+  - Uyumluluk silme sahiplik kontrolu
+  - Uyumluluk audit/revalidation
 - Arka plan Codex advisor rapor hatti:
   - `scripts/codex-advisor.ps1`
   - `docs/agent-reports/`
@@ -52,14 +58,15 @@ Son guncelleme: 2026-07-10
 
 ## En Onemli Eksikler
 
-1. Bayi ve firma operasyonu eksik:
-   - Bayi basvurusu inceleme/onay ekrani yok.
-   - Onaydan firma ve bayi kullanicisi uretme yok.
-   - Firma bazli fiyat gorunurlugu yok.
+1. Bayi kabul akisi eksik:
+   - Bayi basvurusu admin liste/detay ekrani yok.
+   - Basvurudan firma uretme akisi yok.
+   - Basvurudan bayi kullanicisi uretme akisi yok.
+   - Customer group, payment terms ve credit limit atamasi yok.
+   - Gercek bayi oturumu ile firma bazli fiyat gorunurlugu testi yok.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
-   - Uyumluluk/OEM kayitlari icin duplicate/delete karar modeli yok.
 
 3. Teklif/siparis akisi yok:
    - Teklif sepeti yok.
@@ -72,10 +79,11 @@ Son guncelleme: 2026-07-10
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.1 devam edecek: Urun ve Katalog UX Iyilestirme.
+Faz 3.2 baslayacak: Bayi Basvurusu, Firma ve Kullanici Akisi.
 
-Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi olmaya basladi. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Kategori ve fiyat listesi yonetimi alt ekranlara ayrildi. Medya icin soft aktif/pasif karar modeli tamamlandi. Siradaki adim, uyumluluk duplicate/delete ve test modelini netlestirmektir.
+Admin urun detay sayfasi stok, fiyat, medya ve uyumluluk/OEM icin duzenleme merkezi oldu. Public katalogda fiyat/stok gorunurlugu role gore ayrildi. Kategori ve fiyat listesi yonetimi alt ekranlara ayrildi. Medya icin soft aktif/pasif, uyumluluk/OEM icin duplicate/delete karar modeli tamamlandi. Siradaki adim, bayi basvurusunu admin onay ve firma/kullanici uretim akisina baglamaktir.
 
 Hedef ekranlar:
 
-- uyumluluk duplicate/delete ve test modeli
+- `/admin/bayi-basvurulari`
+- `/admin/bayi-basvurulari/[id]`

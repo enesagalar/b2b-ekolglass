@@ -13,6 +13,8 @@ import {
   categoryFormSchema,
   mediaAssetFormSchema,
   mediaAssetStatusFormSchema,
+  productCompatibilityDeleteFormSchema,
+  productCompatibilityFormSchema,
   productFormSchema,
   productPriceFormSchema,
   stockFormSchema,
@@ -263,5 +265,39 @@ describe("catalog validation schemas", () => {
     });
 
     expect(parsed.isActive).toBe(false);
+  });
+
+  it("validates compatibility data and delete requests", () => {
+    const parsed = productCompatibilityFormSchema.parse({
+      productId: "product-1",
+      vehicleBrand: " Fiat ",
+      vehicleModel: " Ducato ",
+      yearStart: "2020",
+      yearEnd: "2026",
+      oemReference: "EGL-123",
+      notes: "",
+    });
+    const deleteParsed = productCompatibilityDeleteFormSchema.parse({
+      id: "compatibility-1",
+      productId: "product-1",
+    });
+
+    expect(parsed.vehicleBrand).toBe("Fiat");
+    expect(parsed.vehicleModel).toBe("Ducato");
+    expect(parsed.yearStart).toBe(2020);
+    expect(parsed.notes).toBeUndefined();
+    expect(deleteParsed.id).toBe("compatibility-1");
+  });
+
+  it("rejects compatibility yearEnd before yearStart", () => {
+    const parsed = productCompatibilityFormSchema.safeParse({
+      productId: "product-1",
+      vehicleBrand: "Fiat",
+      vehicleModel: "Ducato",
+      yearStart: "2026",
+      yearEnd: "2020",
+    });
+
+    expect(parsed.success).toBe(false);
   });
 });
