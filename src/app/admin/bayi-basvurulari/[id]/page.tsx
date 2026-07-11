@@ -107,13 +107,16 @@ export default async function DealerApplicationDetailPage({ params }: PageProps<
           <p className="mt-2 text-sm text-slate-600">Başvuru #{application.id.slice(-8)} · {formatDate(application.createdAt)}</p>
         </div>
         {application.company ? (
-          <div className="flex items-center gap-3 rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-teal-900">
+          <Link
+            href={`/admin/firmalar/${application.company.id}`}
+            className="flex items-center gap-3 rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-teal-900 transition hover:bg-teal-100"
+          >
             <BadgeCheck size={20} aria-hidden="true" />
             <div>
               <p className="text-xs font-semibold uppercase">Firma hesabı</p>
               <p className="text-sm font-semibold">{application.company.displayName}</p>
             </div>
-          </div>
+          </Link>
         ) : null}
       </section>
 

@@ -4,18 +4,32 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.2 - Bayi Basvurusu, Firma ve Kullanici Akisi.
+Faz 3.3 - Dealer Context, Bayi Dashboard ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Davet/aktivasyon token modeli ve migration'i eklenecek.
-2. Bayinin ilk sifresini belirleyecegi aktivasyon ekrani ve action'i yazilacak.
-3. `/admin/firmalar` liste/detay ekraninin ilk dilimi acilacak.
-4. Gercek `DEALER_OWNER` oturumu ile firma ve fiyat izolasyonu integration test edilecek.
-5. Browser/HTTP smoke aktivasyon ve firma akisiyla genisletilecek.
-6. `npm run check` calistirilip commit/GitHub push yapilacak.
+1. Merkezi `dealer-context` DAL eklenecek; ACTIVE dealer + APPROVED company kosulu tek yerde uygulanacak.
+2. `/bayi` dashboard ve firma hesap ozeti acilacak.
+3. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
+4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+5. Teklif/siparis sorgulari icin company ownership test temeli hazirlanacak.
+6. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz 3.2 aktivasyon/firma/izolasyon dilimi tamamlandi:
+
+- `UserActivationToken` migration'i, 48 saatlik hash token, consume/revoke akisi eklendi.
+- `/aktivasyon/[token]` ilk parola belirleme ekrani eklendi.
+- `/admin/firmalar` liste/detay ve firma kullanicisi davet akisi eklendi.
+- Dealer login `/katalog`a, ic roller `/admin`e yonlendiriliyor.
+- Dealer session ile `/admin` erisimi smoke testte reddediliyor.
+- Katalog fiyatlari DB seviyesinde firma/grup/public scope ile filtreleniyor.
+- Auth DAL `passwordHash` dondurmuyor ve render sirasinda DB mutasyonu yapmiyor.
+- Production manuel aktivasyon linki varsayilan kapali.
+- 9 test dosyasi, 50 test, SQLite aktivasyon ve cross-company fiyat izolasyonu basarili.
+- Admin firma/aktivasyon HTTP smoke ve responsive browser QA basarili.
+- `www.ekolglass.com` + B2B + ortak CMS vizyonu resmi architecture dokumanina yazildi.
 
 Faz 3.2 admin inceleme/provisioning dilimi tamamlandi:
 
@@ -69,8 +83,10 @@ Asagidaki kararlar UI uygulanmadan once veya uygulama sirasinda netlesebilir:
 - Public katalog filtreleri marka/model/yil mi, kategori/cam tipi mi oncelikli olmali?
 - Stok bayiye adet olarak mi, sade durum olarak mi gosterilmeli?
 - Arka plan advisor calismasi 30 dakikalik periyotlarla mi, yoksa sadece her kodlama turu basinda tek seferlik mi calissin?
-- Onaylanan bayiye ilk sifre nasil verilecek?
+- Transactional e-posta saglayicisi hangisi olacak?
 - Bayi onayi tek firma sahibi mi, yoksa bir firmada birden fazla bayi kullanicisi mi uretecek?
+- Canonical host `www` mi apex mi olacak?
+- B2B host `portal.ekolglass.com` mu `b2b.ekolglass.com` mu olacak?
 
 Varsayilan karar:
 
@@ -80,3 +96,5 @@ Varsayilan karar:
 - Fiyatlar guest/PENDING icin kapali; bayi rollerinde firma veya musteri grubu eslesmesiyle, ic ekip rollerinde fiyat okuma yetkisiyle acik olacak.
 - Faz 3.2'de ilk uygulama, onaylanan basvurudan tek `Company` ve bir `DEALER_OWNER` kullanicisi uretme varsayimiyla ilerleyecek.
 - Ilk bayi kullanicisi gecici parola ile `ACTIVE` yapilmayacak; `INVITED` olusacak ve sifresini tek kullanimlik aktivasyon akisinda kendi belirleyecek.
+- Birlesik platform varsayimi: `www` gateway/kurumsal, `portal` B2B, `/admin` ortak yonetim.
+- Root gateway SEO envanteri ve redirect haritasi tamamlanmadan canliya alinmayacak.

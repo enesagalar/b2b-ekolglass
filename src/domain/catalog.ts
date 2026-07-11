@@ -102,7 +102,15 @@ export type CatalogStockCandidate = {
 };
 
 export function canViewCatalogPrices(viewer: CatalogViewer) {
-  return hasPermission(viewer.role, "price.read");
+  if (!hasPermission(viewer.role, "price.read")) {
+    return false;
+  }
+
+  if (["DEALER_OWNER", "DEALER_STAFF"].includes(viewer.role)) {
+    return Boolean(viewer.companyId);
+  }
+
+  return true;
 }
 
 export function canViewDetailedCatalogStock(viewer: CatalogViewer) {

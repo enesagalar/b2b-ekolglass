@@ -6,6 +6,8 @@ export const dealerApplicationStatuses = [
   "NEEDS_INFO",
 ] as const;
 
+export const userStatuses = ["INVITED", "ACTIVE", "SUSPENDED", "DISABLED"] as const;
+
 export const quoteStatuses = [
   "NEW",
   "IN_REVIEW",
@@ -42,6 +44,10 @@ export const stockStatuses = [
 ] as const;
 
 export const statusLabels: Record<string, string> = {
+  INVITED: "Aktivasyon Bekliyor",
+  ACTIVE: "Aktif",
+  SUSPENDED: "Askıda",
+  DISABLED: "Devre Dışı",
   NEW: "Yeni",
   IN_REVIEW: "İncelemede",
   APPROVED: "Onaylandı",

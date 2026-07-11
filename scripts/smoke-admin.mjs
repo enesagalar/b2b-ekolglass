@@ -1,5 +1,6 @@
 import { JSDOM } from "jsdom";
 import Database from "better-sqlite3";
+import { hash } from "bcryptjs";
 
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const adminEmail = process.env.SMOKE_ADMIN_EMAIL ?? process.env.SEED_ADMIN_EMAIL ?? "admin@ekolglass.local";
@@ -94,6 +95,116 @@ assert(adminResponse.status === 200, `Authenticated /admin failed with ${adminRe
 const adminHtml = await adminResponse.text();
 assert(adminHtml.includes("Operasyon merkezi"), "Admin operations dashboard content not rendered");
 assert(adminHtml.includes("Bayi Başvuruları"), "Admin sidebar navigation not rendered");
+
+const smokeInvitedUserId = `smoke-invited-user-${Date.now()}`;
+const smokeActiveDealerId = `smoke-active-dealer-${Date.now()}`;
+const smokeInvitedEmail = `smoke-invited-${Date.now()}@example.com`;
+const smokeDealerEmail = `smoke-dealer-${Date.now()}@example.com`;
+const smokeDealerPassword = "SmokeDealer2026!";
+const smokeDealerPasswordHash = await hash(smokeDealerPassword, 12);
+const smokeUserTimestamp = new Date().toISOString();
+const companyUserDb = new Database("dev.db");
+companyUserDb
+  .prepare(
+    `
+      insert into User (id, email, name, role, status, passwordHash, companyId, createdAt, updatedAt)
+      values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+  )
+  .run(
+    smokeInvitedUserId,
+    smokeInvitedEmail,
+    "Smoke Davet Kullanıcısı",
+    "DEALER_OWNER",
+    "INVITED",
+    null,
+    "seed-ekolglass-demo-dealer",
+    smokeUserTimestamp,
+    smokeUserTimestamp,
+  );
+companyUserDb
+  .prepare(
+    `
+      insert into User (id, email, name, role, status, passwordHash, companyId, createdAt, updatedAt)
+      values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+  )
+  .run(
+    smokeActiveDealerId,
+    smokeDealerEmail,
+    "Smoke Aktif Bayi",
+    "DEALER_OWNER",
+    "ACTIVE",
+    smokeDealerPasswordHash,
+    "seed-ekolglass-demo-dealer",
+    smokeUserTimestamp,
+    smokeUserTimestamp,
+  );
+companyUserDb.close();
+
+try {
+  const companiesResponse = await request("/admin/firmalar", {
+    headers: { Cookie: serializeCookies(cookieJar) },
+  });
+  assert(companiesResponse.status === 200, `Authenticated companies screen failed with ${companiesResponse.status}`);
+  const companiesHtml = await companiesResponse.text();
+  assert(companiesHtml.includes("Firmalar ve bayi hesapları"), "Companies screen heading not rendered");
+  assert(companiesHtml.includes("Anadolu Oto Cam"), "Seed company not rendered");
+
+  const companyDetailResponse = await request("/admin/firmalar/seed-ekolglass-demo-dealer", {
+    headers: { Cookie: serializeCookies(cookieJar) },
+  });
+  assert(companyDetailResponse.status === 200, `Authenticated company detail failed with ${companyDetailResponse.status}`);
+  const companyDetailHtml = await companyDetailResponse.text();
+  assert(companyDetailHtml.includes("Firma kullanıcıları"), "Company users panel not rendered");
+  assert(companyDetailHtml.includes(smokeInvitedEmail), "Invited company user not rendered");
+  assert(companyDetailHtml.includes("Aktivasyon bağlantısı üret"), "Activation invitation action not rendered");
+
+  const invalidActivationResponse = await request(`/aktivasyon/${"x".repeat(43)}`);
+  assert(invalidActivationResponse.status === 200, `Invalid activation page failed with ${invalidActivationResponse.status}`);
+  const invalidActivationHtml = await invalidActivationResponse.text();
+  assert(invalidActivationHtml.includes("Aktivasyon bağlantısı kullanılamıyor"), "Invalid activation state not rendered");
+
+  const dealerCookieJar = new Map();
+  const dealerLoginResponse = await request("/giris");
+  assert(dealerLoginResponse.status === 200, `Dealer login page failed with ${dealerLoginResponse.status}`);
+  mergeCookies(dealerCookieJar, getSetCookieHeaders(dealerLoginResponse));
+  const dealerLoginDom = new JSDOM(await dealerLoginResponse.text());
+  const dealerLoginForm = dealerLoginDom.window.document.querySelector("form");
+  assert(dealerLoginForm, "Dealer login form not found");
+  const dealerFormData = new FormData();
+  for (const input of dealerLoginForm.querySelectorAll("input")) {
+    const name = input.getAttribute("name");
+    if (name) dealerFormData.append(name, input.getAttribute("value") ?? "");
+  }
+  dealerFormData.set("email", smokeDealerEmail);
+  dealerFormData.set("password", smokeDealerPassword);
+
+  const dealerLoginSubmitResponse = await request("/giris", {
+    method: "POST",
+    headers: { Cookie: serializeCookies(dealerCookieJar) },
+    body: dealerFormData,
+  });
+  mergeCookies(dealerCookieJar, getSetCookieHeaders(dealerLoginSubmitResponse));
+  assert(dealerLoginSubmitResponse.status === 303, `Dealer login should redirect, got ${dealerLoginSubmitResponse.status}`);
+  assert(dealerLoginSubmitResponse.headers.get("location") === "/katalog", `Dealer login redirected to ${dealerLoginSubmitResponse.headers.get("location")}`);
+  assert(dealerCookieJar.has("ekolglass_session"), "Dealer login did not set session cookie");
+
+  const dealerAdminResponse = await request("/admin", {
+    headers: { Cookie: serializeCookies(dealerCookieJar) },
+  });
+  assert(dealerAdminResponse.status === 307, `Dealer /admin should redirect, got ${dealerAdminResponse.status}`);
+  assert(new URL(dealerAdminResponse.headers.get("location") ?? "", baseUrl).pathname === "/giris", "Dealer admin access was not rejected");
+} finally {
+  const companyUserCleanupDb = new Database("dev.db");
+  companyUserCleanupDb
+    .prepare("delete from AuditLog where actorUserId in (?, ?) or metadata like ? or metadata like ?")
+    .run(smokeInvitedUserId, smokeActiveDealerId, `%${smokeInvitedEmail}%`, `%${smokeDealerEmail}%`);
+  companyUserCleanupDb.prepare("delete from AuthSession where userId in (?, ?)").run(smokeInvitedUserId, smokeActiveDealerId);
+  companyUserCleanupDb.prepare("delete from UserActivationToken where userId in (?, ?)").run(smokeInvitedUserId, smokeActiveDealerId);
+  companyUserCleanupDb.prepare("delete from User where id in (?, ?)").run(smokeInvitedUserId, smokeActiveDealerId);
+  companyUserCleanupDb.close();
+}
 
 const smokeDealerApplicationId = `smoke-dealer-${Date.now()}`;
 const smokeDealerCompanyName = `Smoke Cam ${Date.now()}`;
@@ -261,6 +372,11 @@ console.log(
         "authenticated-admin-dashboard",
         "authenticated-dealer-application-list",
         "authenticated-dealer-application-detail",
+        "authenticated-company-list",
+        "authenticated-company-detail",
+        "invalid-activation-state",
+        "dealer-login-role-redirect",
+        "dealer-admin-access-rejected",
         "authenticated-product-management",
         "authenticated-product-categories",
         "authenticated-price-lists",

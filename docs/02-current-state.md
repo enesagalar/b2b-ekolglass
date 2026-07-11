@@ -1,6 +1,6 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-10
+Son guncelleme: 2026-07-11
 
 ## Git Durumu
 
@@ -31,6 +31,10 @@ Son guncelleme: 2026-07-10
 - Permission kontrollu bayi inceleme ve durum gecis akisi.
 - Onaydan transaction tabanli firma ve `DEALER_OWNER/INVITED` kullanici uretimi.
 - Musteri grubu, odeme kosulu ve kredi limiti atamasi.
+- `/admin/firmalar` liste/detay ve aktivasyon daveti yonetimi.
+- `/aktivasyon/[token]` ilk parola ve hesap aktivasyonu.
+- Dealer login role-based `/katalog` yonlendirmesi.
+- DB seviyesinde firma/musteri grubu fiyat izolasyonu.
 - Admin dashboard temeli.
 - Admin shell:
   - Sol menu
@@ -62,10 +66,10 @@ Son guncelleme: 2026-07-10
 
 ## En Onemli Eksikler
 
-1. Bayi kabul akisi eksik:
-   - Davet/aktivasyon token ve ilk sifre belirleme akisi yok.
-   - `/admin/firmalar` liste/detay ve kullanici yonetimi yok.
-   - Gercek bayi oturumu ile firma bazli fiyat gorunurlugu testi yok.
+1. Bayi platformu eksik:
+   - Transactional e-posta teslim adapteri yok.
+   - Merkezi dealer context DAL ve `/bayi` dashboard yok.
+   - Teklif/siparis/sevkiyat company ownership testleri yok.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
@@ -79,14 +83,19 @@ Son guncelleme: 2026-07-10
    - City Lojistik canli API dokumani gerekli.
    - ERP/MES entegrasyonu henuz taslak.
 
+5. Birlesik kurumsal web/CMS gecisi planlandi ama uygulanmadi:
+   - Root gateway henuz acilmadi.
+   - Canli URL/SEO/medya envanteri ve redirect haritasi gerekli.
+   - CMS navigation, redirect, locale/path ve genis SEO modelleri eksik.
+
 ## Bir Sonraki Dogru Adim
 
-Faz 3.2 devam edecek: Bayi Aktivasyonu, Firma Yonetimi ve Izolasyon Testleri.
+Faz 3.3 baslayacak: Dealer Context, Bayi Dashboard ve E-posta Teslim Siniri.
 
-Admin bayi basvurusu liste/detay, permission kontrollu durum yonetimi ve onaydan atomik firma/kullanici uretimi tamamlandi. Kullanici guvenli varsayimla `INVITED` ve parolasiz olusuyor. Siradaki adim tek kullanimlik aktivasyon token'i, ilk sifre belirleme ekrani ve gercek bayi oturumuyla firma/fiyat izolasyon testidir.
+Admin bayi basvurusu, firma provisioning, aktivasyon, ilk parola ve DB seviyesinde fiyat izolasyonu tamamlandi. Siradaki adim dealer baglamini tek DAL'da merkezilestirmek, `/bayi` operasyon dashboard'unu acmak ve e-posta davet teslim adapterini baglamaktir. Birlesik web/B2B/CMS hedefi `docs/architecture/unified-web-b2b-cms.md` icinde kalici proje karari olarak kaydedildi.
 
 Siradaki hedef ekranlar:
 
-- `/aktivasyon/[token]`
-- `/admin/firmalar`
-- `/admin/firmalar/[id]`
+- `/bayi`
+- `/bayi/hesabim`
+- E-posta invitation adapteri

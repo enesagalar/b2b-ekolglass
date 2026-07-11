@@ -8,22 +8,39 @@ datasource db {
 }
 
 model User {
-  id             String         @id @default(cuid())
-  email          String         @unique
-  name           String
-  role           String
-  status         String         @default("ACTIVE")
-  passwordHash   String?
-  lastLoginAt    DateTime?
-  companyId      String?
-  company        Company?       @relation(fields: [companyId], references: [id])
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  createdOrders  Order[]        @relation("OrderCreatedBy")
-  approvedOrders Order[]        @relation("OrderApprovedBy")
-  pageRevisions  PageRevision[]
-  sessions       AuthSession[]
-  auditLogs      AuditLog[]
+  id               String                @id @default(cuid())
+  email            String                @unique
+  name             String
+  role             String
+  status           String                @default("ACTIVE")
+  passwordHash     String?
+  lastLoginAt      DateTime?
+  companyId        String?
+  company          Company?              @relation(fields: [companyId], references: [id])
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  createdOrders    Order[]               @relation("OrderCreatedBy")
+  approvedOrders   Order[]               @relation("OrderApprovedBy")
+  pageRevisions    PageRevision[]
+  sessions         AuthSession[]
+  auditLogs        AuditLog[]
+  activationTokens UserActivationToken[]
+
+  @@index([companyId, role, status])
+}
+
+model UserActivationToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, consumedAt, revokedAt])
+  @@index([expiresAt])
 }
 
 model AuthSession {

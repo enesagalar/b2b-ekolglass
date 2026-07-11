@@ -54,7 +54,21 @@ export async function getCurrentUser() {
 
   const session = await prisma.authSession.findUnique({
     where: { tokenHash: hashSessionToken(token) },
-    include: { user: true },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          status: true,
+          companyId: true,
+          lastLoginAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
   });
 
   if (!session || session.user.status !== "ACTIVE") {
@@ -62,9 +76,6 @@ export async function getCurrentUser() {
   }
 
   if (session.expiresAt <= new Date()) {
-    await prisma.authSession.deleteMany({
-      where: { id: session.id },
-    });
     return null;
   }
 

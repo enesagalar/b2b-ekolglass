@@ -1,6 +1,6 @@
 # Faz 3.2 - Bayi Basvurusu, Firma ve Kullanici Akisi
 
-Durum: Devam ediyor. Admin inceleme ve firma/kullanici provisioning dilimi tamamlandi; aktivasyon ve gercek bayi izolasyon testi siradaki dilimdir.
+Durum: Temel kapsam tamamlandi. E-posta teslim adapteri ve genis dealer portal izolasyonu sonraki faza devredildi.
 
 ## Hedef
 
@@ -34,7 +34,7 @@ Bayi basvurusu formunu gercek B2B musteri kabul surecine baglamak.
 - [x] Admin basvuruyu inceleyebilir.
 - [x] Onaylanan basvurudan firma kaydi uretilir.
 - [x] Firma kullanicisi bayi roluyle olusturulur.
-- Bayi baska firmanin verisine erisemez.
+- [x] Bayi katalog sorgusunda baska firmanin veya grubun fiyatina erisemez.
 
 ## Tamamlanan Ilk Dilim
 
@@ -49,10 +49,20 @@ Bayi basvurusu formunu gercek B2B musteri kabul surecine baglamak.
 - Liste ve audit sorgulari icin veritabani indeks migration'i eklendi.
 - Unit, gercek SQLite integration, HTTP smoke ve responsive browser kontrolleri basarili.
 
-## Siradaki Dilim
+## Tamamlanan Ikinci Dilim
 
-1. Tek kullanimlik, suresi dolan aktivasyon token modeli.
-2. Bayinin ilk sifresini kendi belirledigi aktivasyon ekrani.
-3. `/admin/firmalar` liste/detay ve firma kullanicisi yonetimi.
-4. Gercek `DEALER_OWNER` oturumuyla firma/fiyat veri izolasyonu entegrasyon testi.
-5. Davet e-postasi adapter siniri; SMTP saglayicisi gelene kadar log veya ekranda token tutulmayacak.
+- Tek kullanimlik, hash'li ve 48 saatlik aktivasyon token modeli/migration'i.
+- `/aktivasyon/[token]` guclu ilk parola belirleme ekrani.
+- `/admin/firmalar` liste/detay, ticari kosul, kullanici ve audit gorunumu.
+- Davet yenilemede eski tokenlari revoke eden permission kontrollu action.
+- Dealer login icin role gore `/katalog` yonlendirmesi ve `/admin` erisim reddi.
+- Fiyat listelerini DB seviyesinde firma/grup/public scope ile sinirlayan catalog DAL.
+- Gercek SQLite aktivasyon ve cross-company fiyat izolasyonu testleri.
+- Production manuel aktivasyon linki varsayilan kapali; e-posta adapteri deployment on kosulu.
+
+## Sonraki Faza Devredilenler
+
+1. Transactional e-posta adapteri.
+2. Merkezi dealer context DAL.
+3. `/bayi` dashboard ve firma kullanicisi yonetim komutlari.
+4. Teklif, siparis ve sevkiyat sorgularinda company ownership testleri.

@@ -70,7 +70,7 @@ Tamamlananlar:
 
 ## Faz 3 - Urun ve Katalog Operasyonu
 
-Durum: Faz 3.1 tamamlandi, Faz 3.2 devam ediyor.
+Durum: Faz 3.1 ve Faz 3.2 temel kapsami tamamlandi.
 
 Kapsam:
 
@@ -97,12 +97,32 @@ Tamamlananlar:
 - Onaydan transaction tabanli firma ve davet bekleyen bayi sahibi uretimi.
 - Musteri grubu, odeme kosulu, kredi limiti ve audit kaydi.
 - Permission, optimistic concurrency ve cakisma kontrolleri.
+- Tek kullanimlik bayi aktivasyonu ve ilk parola belirleme.
+- Admin firma liste/detay ve kullanici davet yonetimi.
+- DB seviyesinde firma/grup fiyat izolasyonu.
 
 Eksik kalanlar:
 
-- Bayi davet/aktivasyon ve ilk sifre belirleme akisi.
-- Admin firma/kullanici yonetimi.
-- Gercek bayi oturumu ile firma/fiyat izolasyonu testleri.
+- Transactional e-posta teslim adapteri.
+- Merkezi dealer context DAL ve bayi dashboard.
+- Teklif/siparis/sevkiyat tenant izolasyonu.
+
+## Faz 3.5 - Birlesik Kurumsal Site, B2B Gateway ve CMS
+
+Durum: Mimari hedef tanimlandi; implementasyon baslamadi.
+
+Kapsam:
+
+- `www.ekolglass.com` marka gateway ve kurumsal site.
+- `portal.ekolglass.com` B2B yuzeyi.
+- Tek admin/CMS, medya kutuphanesi ve veritabani.
+- Site/locale/path kapsamli Page ve SiteSetting modeli.
+- Navigation, redirect, SEO, preview, publish ve revision akislari.
+- Mevcut `.html`, `/en/**` ve anchor URL'leri icin SEO redirect plani.
+
+Mimari referans:
+
+- `docs/architecture/unified-web-b2b-cms.md`
 
 ## Faz 4 - Teklif ve Siparis Akisi
 

@@ -10,6 +10,7 @@ import {
   slugifyProductCategoryName,
 } from "./catalog";
 import {
+  accountActivationSchema,
   categoryFormSchema,
   dealerApplicationReviewSchema,
   mediaAssetFormSchema,
@@ -142,6 +143,28 @@ describe("catalog helpers", () => {
 });
 
 describe("catalog validation schemas", () => {
+  it("validates strong matching activation passwords and byte length", () => {
+    const accepted = accountActivationSchema.safeParse({
+      token: "a".repeat(43),
+      password: "EkolGlass2026Secure",
+      passwordConfirm: "EkolGlass2026Secure",
+    });
+    const mismatched = accountActivationSchema.safeParse({
+      token: "a".repeat(43),
+      password: "EkolGlass2026Secure",
+      passwordConfirm: "EkolGlass2026Different",
+    });
+    const tooManyBytes = accountActivationSchema.safeParse({
+      token: "a".repeat(43),
+      password: `Aa1${"ş".repeat(40)}`,
+      passwordConfirm: `Aa1${"ş".repeat(40)}`,
+    });
+
+    expect(accepted.success).toBe(true);
+    expect(mismatched.success).toBe(false);
+    expect(tooManyBytes.success).toBe(false);
+  });
+
   it("requires a customer group when approving dealer applications", () => {
     const rejected = dealerApplicationReviewSchema.safeParse({
       id: "application-1",

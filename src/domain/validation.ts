@@ -81,6 +81,29 @@ export const loginSchema = z.object({
   password: z.string().min(8, "Şifre en az 8 karakter olmalıdır.").max(120),
 });
 
+export const activationInvitationSchema = z.object({
+  userId: z.string().trim().min(1, "Kullanıcı seçimi zorunludur."),
+});
+
+export const accountActivationSchema = z
+  .object({
+    token: z.string().trim().min(32, "Aktivasyon bağlantısı geçersiz.").max(256),
+    password: z
+      .string()
+      .min(12, "Parola en az 12 karakter olmalıdır.")
+      .max(120)
+      .refine((value) => new TextEncoder().encode(value).length <= 72, "Parola UTF-8 olarak en fazla 72 byte olabilir.")
+      .regex(/[a-z]/, "Parola en az bir küçük harf içermelidir.")
+      .regex(/[A-Z]/, "Parola en az bir büyük harf içermelidir.")
+      .regex(/[0-9]/, "Parola en az bir rakam içermelidir."),
+    passwordConfirm: z.string(),
+  })
+  .superRefine((data, context) => {
+    if (data.password !== data.passwordConfirm) {
+      context.addIssue({ code: "custom", message: "Parola tekrarı eşleşmiyor.", path: ["passwordConfirm"] });
+    }
+  });
+
 export const categoryFormSchema = z
   .object({
     id: optionalText(120),

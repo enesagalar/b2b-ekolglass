@@ -8,7 +8,8 @@ import {
   selectCatalogPrice,
   type CatalogViewer,
 } from "@/domain/catalog";
-import { isKnownRole } from "@/domain/roles";
+import { buildCatalogPriceWhere } from "@/data/catalog-access";
+import { isAdminRole, isKnownRole } from "@/domain/roles";
 import { getStatusLabel } from "@/domain/statuses";
 import { stockStatuses } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
@@ -89,15 +90,18 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   const userCompany = currentUser?.companyId
     ? await prisma.company.findUnique({
         where: { id: currentUser.companyId },
-        select: { customerGroupId: true },
+        select: { customerGroupId: true, status: true },
       })
     : null;
+  const resolvedRole = isKnownRole(currentUser?.role) ? currentUser.role : "GUEST";
+  const hasApprovedCompanyContext = isAdminRole(resolvedRole) || userCompany?.status === "APPROVED";
   const viewer: CatalogViewer = {
-    role: isKnownRole(currentUser?.role) ? currentUser.role : "GUEST",
-    companyId: currentUser?.companyId,
-    customerGroupId: userCompany?.customerGroupId,
+    role: resolvedRole,
+    companyId: hasApprovedCompanyContext ? currentUser?.companyId : undefined,
+    customerGroupId: hasApprovedCompanyContext ? userCompany?.customerGroupId : undefined,
   };
   const canSeePrices = canViewCatalogPrices(viewer);
+  const priceWhere = buildCatalogPriceWhere(viewer);
 
   const [products, categories] = await Promise.all([
     prisma.product.findMany({
@@ -106,6 +110,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
         category: true,
         stockItems: true,
         prices: {
+          where: priceWhere,
           include: { priceList: true },
           orderBy: { minQuantity: "asc" },
         },
