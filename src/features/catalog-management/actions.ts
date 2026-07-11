@@ -100,7 +100,8 @@ function getCompatibilityDuplicateKey(input: {
 
 function revalidateProductSurfaces(productId?: string) {
   revalidatePath("/admin/urunler");
-  revalidatePath("/katalog");
+  revalidatePath("/urunler");
+  revalidatePath("/bayi/urunler");
 
   if (productId) {
     revalidatePath(`/admin/urunler/${productId}`);
@@ -151,7 +152,8 @@ export async function saveCategory(input: CatalogActionInput, maybeFormData?: Fo
       slug: category.slug,
     });
     revalidatePath("/admin/urunler");
-    revalidatePath("/katalog");
+    revalidatePath("/urunler");
+    revalidatePath("/bayi/urunler");
 
     return success(parsed.data.id ? "Kategori güncellendi." : "Kategori oluşturuldu.");
   } catch (error) {
@@ -200,7 +202,8 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
       currency: priceList.currency,
     });
     revalidatePath("/admin/urunler");
-    revalidatePath("/katalog");
+    revalidatePath("/urunler");
+    revalidatePath("/bayi/urunler");
 
     return success(parsed.data.id ? "Fiyat listesi güncellendi." : "Fiyat listesi oluşturuldu.");
   } catch (error) {

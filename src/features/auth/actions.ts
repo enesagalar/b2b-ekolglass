@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { loginSchema } from "@/domain/validation";
-import { isAdminRole, isDealerRole, isKnownRole } from "@/domain/roles";
+import { isAdminRole, isDealerRole, isKnownRole, type Role } from "@/domain/roles";
 import { clearCurrentSession, createUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -15,6 +15,7 @@ export type LoginState = {
 
 const FAILED_LOGIN_WINDOW_MINUTES = 15;
 const MAX_FAILED_LOGIN_ATTEMPTS = 8;
+type AuthenticationResult = { error: string } | { user: { id: string; role: Role } };
 
 async function getFailedLoginCount(email: string) {
   const since = new Date(Date.now() - FAILED_LOGIN_WINDOW_MINUTES * 60 * 1000);
@@ -58,14 +59,26 @@ async function recordLoginAttempt({
   });
 }
 
-export async function loginWithPassword(_previousState: LoginState, formData: FormData): Promise<LoginState> {
+function resolveSafeNext(value: FormDataEntryValue | null, audience: "dealer" | "admin") {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
+    return audience === "dealer" ? "/" : "/admin";
+  }
+
+  const allowed = audience === "dealer"
+    ? value === "/" || value === "/urunler" || value.startsWith("/urunler?") || value === "/bayi" || value.startsWith("/bayi/")
+    : value === "/admin" || value.startsWith("/admin/");
+
+  return allowed ? value : audience === "dealer" ? "/" : "/admin";
+}
+
+async function authenticateWithPassword(formData: FormData, audience: "dealer" | "admin"): Promise<AuthenticationResult> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { message: parsed.error.issues[0]?.message ?? "Giriş bilgileri geçersiz." };
+    return { error: parsed.error.issues[0]?.message ?? "Giriş bilgileri geçersiz." };
   }
 
   const email = parsed.data.email.toLowerCase();
@@ -78,22 +91,25 @@ export async function loginWithPassword(_previousState: LoginState, formData: Fo
       reason: "too_many_failed_attempts",
     });
 
-    return { message: "Çok fazla hatalı deneme yapıldı. Lütfen daha sonra tekrar deneyin." };
+    return { error: "Çok fazla hatalı deneme yapıldı. Lütfen daha sonra tekrar deneyin." };
   }
 
   const user = await prisma.user.findUnique({
     where: { email },
   });
 
-  if (!user || !user.passwordHash || user.status !== "ACTIVE") {
+  const role = isKnownRole(user?.role) ? user.role : null;
+  const hasAudienceRole = role && (audience === "dealer" ? isDealerRole(role) : isAdminRole(role));
+
+  if (!user || !user.passwordHash || user.status !== "ACTIVE" || !hasAudienceRole) {
     await recordLoginAttempt({
       email,
       userId: user?.id,
       status: "failed",
-      reason: "invalid_user_or_status",
+      reason: "invalid_user_status_or_audience",
     });
 
-    return { message: "E-posta veya şifre hatalı." };
+    return { error: "E-posta veya şifre hatalı." };
   }
 
   const passwordMatches = await compare(parsed.data.password, user.passwordHash);
@@ -106,7 +122,7 @@ export async function loginWithPassword(_previousState: LoginState, formData: Fo
       reason: "invalid_password",
     });
 
-    return { message: "E-posta veya şifre hatalı." };
+    return { error: "E-posta veya şifre hatalı." };
   }
 
   await prisma.user.update({
@@ -120,15 +136,28 @@ export async function loginWithPassword(_previousState: LoginState, formData: Fo
     userId: user.id,
     status: "succeeded",
   });
-  if (isKnownRole(user.role) && isAdminRole(user.role)) {
-    redirect("/admin");
+
+  return { user: { id: user.id, role: user.role as Role } };
+}
+
+export async function loginWithPassword(_previousState: LoginState, formData: FormData): Promise<LoginState> {
+  const result = await authenticateWithPassword(formData, "dealer");
+
+  if ("error" in result) {
+    return { message: result.error };
   }
 
-  if (isKnownRole(user.role) && isDealerRole(user.role)) {
-    redirect("/bayi");
+  redirect(resolveSafeNext(formData.get("next"), "dealer"));
+}
+
+export async function loginAdminWithPassword(_previousState: LoginState, formData: FormData): Promise<LoginState> {
+  const result = await authenticateWithPassword(formData, "admin");
+
+  if ("error" in result) {
+    return { message: result.error };
   }
 
-  redirect("/katalog");
+  redirect(resolveSafeNext(formData.get("next"), "admin"));
 }
 
 export async function logout() {

@@ -1,12 +1,12 @@
 import { ImageIcon, Save } from "lucide-react";
 
-import { updateSiteSetting } from "@/features/site-settings/actions";
+import { updateHomepageHeroMedia, updateSiteSetting } from "@/features/site-settings/actions";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminContentPage() {
-  const [settings, pages] = await Promise.all([
+  const [settings, pages, heroMedia] = await Promise.all([
     prisma.siteSetting.findMany({
       where: { group: "homepage", isEditable: true },
       orderBy: { key: "asc" },
@@ -15,6 +15,7 @@ export default async function AdminContentPage() {
       include: { blocks: true },
       orderBy: { updatedAt: "desc" },
     }),
+    prisma.mediaAsset.findUnique({ where: { key: "homepage.hero.visual" } }),
   ]);
 
   return (
@@ -55,6 +56,16 @@ export default async function AdminContentPage() {
             </button>
           </form>
         ))}
+      </section>
+
+      <section className="grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="min-h-72 bg-slate-900 bg-cover bg-center" style={{ backgroundImage: `url(${heroMedia?.url ?? "/ekolglass-commerce-hero.png"})` }} role="img" aria-label={heroMedia?.altText ?? "Ana sayfa banner önizlemesi"} />
+        <form action={updateHomepageHeroMedia} className="grid content-center gap-4 p-5">
+          <div><p className="text-sm font-semibold text-teal-800">Ana banner görseli</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Görsel ve alternatif metin</h3></div>
+          <label className="grid gap-2 text-sm font-semibold text-slate-800">Görsel yolu veya URL<input name="url" defaultValue={heroMedia?.url ?? "/ekolglass-commerce-hero.png"} required className="h-11 rounded-md border border-slate-300 px-3 text-sm font-normal outline-none focus:border-teal-700" /></label>
+          <label className="grid gap-2 text-sm font-semibold text-slate-800">Alternatif metin<input name="altText" defaultValue={heroMedia?.altText ?? "EkolGlass otomotiv cam üretim hattı"} required className="h-11 rounded-md border border-slate-300 px-3 text-sm font-normal outline-none focus:border-teal-700" /></label>
+          <button className="inline-flex h-10 w-fit items-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white"><Save size={16}/>Görseli kaydet</button>
+        </form>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white shadow-sm">

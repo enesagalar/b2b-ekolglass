@@ -227,11 +227,11 @@ async function main() {
   await Promise.all([
     prisma.siteSetting.upsert({
       where: { key: "homepage.hero.title" },
-      update: { value: "EkolGlass B2B Bayi Portalı" },
+      update: { value: "EkolGlass Otomotiv Cam Çözümleri" },
       create: {
         key: "homepage.hero.title",
         label: "Ana banner başlığı",
-        value: "EkolGlass B2B Bayi Portalı",
+        value: "EkolGlass Otomotiv Cam Çözümleri",
         valueType: "TEXT",
         group: "homepage",
         description: "Public ana sayfadaki ana banner başlığı.",
@@ -241,13 +241,13 @@ async function main() {
       where: { key: "homepage.hero.subtitle" },
       update: {
         value:
-          "Otomotiv, karavan, otobüs-minibüs ve özel üretim cam siparişlerini tek merkezden yönetin.",
+          "Araç ve ürün koduna göre camı bulun, stok durumunu ve bayi fiyatınızı görüntüleyin.",
       },
       create: {
         key: "homepage.hero.subtitle",
         label: "Ana banner açıklaması",
         value:
-          "Otomotiv, karavan, otobüs-minibüs ve özel üretim cam siparişlerini tek merkezden yönetin.",
+          "Araç ve ürün koduna göre camı bulun, stok durumunu ve bayi fiyatınızı görüntüleyin.",
         valueType: "TEXT",
         group: "homepage",
       },
@@ -258,18 +258,18 @@ async function main() {
       create: {
         key: "homepage.hero.visual",
         title: "EkolGlass üretim ve bayi operasyon görseli",
-        url: "/hero-glass-workshop.svg",
+        url: "/ekolglass-commerce-hero.png",
         altText: "Endüstriyel otomotiv cam üretimi ve B2B sipariş operasyonu",
         usage: "HOMEPAGE_HERO",
       },
     }),
     prisma.siteSetting.upsert({
       where: { key: "homepage.hero.cta" },
-      update: { value: "Bayi başvurusu yap" },
+      update: { value: "Ürünlerde Ara" },
       create: {
         key: "homepage.hero.cta",
         label: "Birincil aksiyon metni",
-        value: "Bayi başvurusu yap",
+        value: "Ürünlerde Ara",
         valueType: "TEXT",
         group: "homepage",
       },
@@ -283,7 +283,7 @@ async function main() {
       status: "PUBLISHED",
       publishedAt: new Date(),
       seoTitle: "EkolGlass B2B Bayi Portalı",
-      seoDescription: "EkolGlass bayi, teklif, sipariş ve katalog operasyon portalı.",
+      seoDescription: "EkolGlass bayi, teklif, sipariş ve ürün operasyon portalı.",
     },
     create: {
       slug: "home",
@@ -291,7 +291,7 @@ async function main() {
       status: "PUBLISHED",
       publishedAt: new Date(),
       seoTitle: "EkolGlass B2B Bayi Portalı",
-      seoDescription: "EkolGlass bayi, teklif, sipariş ve katalog operasyon portalı.",
+      seoDescription: "EkolGlass bayi, teklif, sipariş ve ürün operasyon portalı.",
     },
   });
 
@@ -300,7 +300,7 @@ async function main() {
     update: {
       title: "B2B operasyonu tek merkezde toplayın",
       body:
-        "Bayi onayı, katalog, teklif, sipariş, stok ve sevkiyat iş akışları aynı veri modeli üzerinde ilerler.",
+        "Bayi onayı, ürün, teklif, sipariş, stok ve sevkiyat iş akışları aynı veri modeli üzerinde ilerler.",
     },
     create: {
       id: "seed-home-b2b-value-block",
@@ -310,9 +310,9 @@ async function main() {
       eyebrow: "Operasyonel temel",
       title: "B2B operasyonu tek merkezde toplayın",
       body:
-        "Bayi onayı, katalog, teklif, sipariş, stok ve sevkiyat iş akışları aynı veri modeli üzerinde ilerler.",
+        "Bayi onayı, ürün, teklif, sipariş, stok ve sevkiyat iş akışları aynı veri modeli üzerinde ilerler.",
       ctaLabel: "Kataloğu incele",
-      ctaHref: "/katalog",
+      ctaHref: "/urunler",
     },
   });
 

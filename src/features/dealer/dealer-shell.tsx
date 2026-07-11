@@ -28,8 +28,8 @@ type DealerNavItem = {
 };
 
 const navigation: DealerNavItem[] = [
-  { label: "Genel Bakış", href: "/bayi", icon: LayoutDashboard, description: "Firma operasyon özeti" },
-  { label: "Ürün Kataloğu", href: "/katalog", icon: PackageSearch, description: "Fiyat ve stok görünümü" },
+  { label: "Operasyon", href: "/bayi", icon: LayoutDashboard, description: "Firma operasyon özeti" },
+  { label: "Ürün ve Fiyatlar", href: "/bayi/urunler", icon: PackageSearch, description: "Bayi ürün görünümü" },
   { label: "Tekliflerim", href: "/bayi/teklifler", icon: FileText, description: "Teklif talepleri" },
   { label: "Siparişlerim", href: "/bayi/siparisler", icon: ClipboardList, description: "Sipariş ve sevkiyat" },
   { label: "Firma Hesabı", href: "/bayi/hesabim", icon: Building2, description: "Ticari ve iletişim bilgileri" },
@@ -43,7 +43,7 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
   return (
     <div className="flex h-full flex-col bg-slate-950 text-white">
       <div className="border-b border-white/10 px-5 py-5">
-        <Link href="/bayi" onClick={onNavigate} className="flex items-center gap-3">
+        <Link href="/" onClick={onNavigate} className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-md bg-teal-400 text-slate-950">
             <ShieldCheck size={22} aria-hidden="true" />
           </span>
@@ -89,7 +89,7 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
           className="flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
         >
           <Home size={17} aria-hidden="true" />
-          EkolGlass web sitesine dön
+          Ticaret ana sayfasına dön
         </Link>
       </div>
     </div>

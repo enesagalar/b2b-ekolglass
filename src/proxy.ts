@@ -7,7 +7,7 @@ export function proxy(request: NextRequest) {
   const hasSessionCookie = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
 
   if (isAdminRoute && !hasSessionCookie) {
-    const loginUrl = new URL("/giris", request.url);
+    const loginUrl = new URL("/yonetim/giris", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
 
     return NextResponse.redirect(loginUrl);

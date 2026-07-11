@@ -13,8 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EkolGlass B2B Bayi Portalı",
-  description: "EkolGlass için profesyonel B2B bayi, teklif, sipariş ve katalog portalı.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: { default: "EkolGlass | Otomotiv Cam Çözümleri", template: "%s | EkolGlass" },
+  description: "EkolGlass otomotiv, otobüs, karavan, marine ve özel üretim cam çözümleri.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    siteName: "EkolGlass",
+    images: [{ url: "/ekolglass-commerce-hero.png", width: 1897, height: 829, alt: "EkolGlass otomotiv cam üretimi" }],
+  },
 };
 
 export default function RootLayout({

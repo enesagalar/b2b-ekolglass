@@ -47,7 +47,7 @@ const adminGuestResponse = await request("/admin");
 assert(adminGuestResponse.status === 307, `Guest /admin should redirect, got ${adminGuestResponse.status}`);
 const guestRedirectUrl = new URL(adminGuestResponse.headers.get("location") ?? "", baseUrl);
 assert(
-  guestRedirectUrl.pathname === "/giris" && guestRedirectUrl.searchParams.get("next") === "/admin",
+  guestRedirectUrl.pathname === "/yonetim/giris" && guestRedirectUrl.searchParams.get("next") === "/admin",
   `Guest /admin redirected to ${adminGuestResponse.headers.get("location")}`,
 );
 
@@ -59,7 +59,19 @@ assert(
   `Guest /bayi redirected to ${dealerGuestResponse.headers.get("location")}`,
 );
 
-const loginResponse = await request("/giris?next=/admin");
+const publicHomeResponse = await request("/");
+assert(publicHomeResponse.status === 200, `Public home failed with ${publicHomeResponse.status}`);
+const publicHomeHtml = await publicHomeResponse.text();
+assert(publicHomeHtml.includes("EkolGlass Otomotiv Cam Çözümleri"), "Commerce home banner not rendered");
+assert(!publicHomeHtml.includes('href="/admin"'), "Public home exposed an admin link");
+
+const sitemapResponse = await request("/sitemap.xml");
+assert(sitemapResponse.status === 200, `Sitemap failed with ${sitemapResponse.status}`);
+const sitemapXml = await sitemapResponse.text();
+assert(sitemapXml.includes("/urunler"), "Sitemap does not include public products");
+assert(!sitemapXml.includes("/admin") && !sitemapXml.includes("/bayi/") && !sitemapXml.includes("/giris"), "Sitemap exposed private routes");
+
+const loginResponse = await request("/yonetim/giris?next=/admin");
 assert(loginResponse.status === 200, `Login page failed with ${loginResponse.status}`);
 mergeCookies(cookieJar, getSetCookieHeaders(loginResponse));
 
@@ -80,7 +92,7 @@ for (const input of form.querySelectorAll("input")) {
 formData.set("email", adminEmail);
 formData.set("password", adminPassword);
 
-const loginSubmitResponse = await request("/giris?next=/admin", {
+const loginSubmitResponse = await request("/yonetim/giris?next=/admin", {
   method: "POST",
   headers: {
     Cookie: serializeCookies(cookieJar),
@@ -201,8 +213,18 @@ try {
   });
   mergeCookies(dealerCookieJar, getSetCookieHeaders(dealerLoginSubmitResponse));
   assert(dealerLoginSubmitResponse.status === 303, `Dealer login should redirect, got ${dealerLoginSubmitResponse.status}`);
-  assert(dealerLoginSubmitResponse.headers.get("location") === "/bayi", `Dealer login redirected to ${dealerLoginSubmitResponse.headers.get("location")}`);
+  assert(dealerLoginSubmitResponse.headers.get("location") === "/", `Dealer login redirected to ${dealerLoginSubmitResponse.headers.get("location")}`);
   assert(dealerCookieJar.has("ekolglass_session"), "Dealer login did not set session cookie");
+
+  const dealerHomeResponse = await request("/", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  assert(dealerHomeResponse.status === 200, `Authenticated dealer home failed with ${dealerHomeResponse.status}`);
+  const dealerHomeHtml = await dealerHomeResponse.text();
+  assert(dealerHomeHtml.includes("Anadolu Oto Cam"), "Authenticated home did not render dealer company identity");
+  assert(dealerHomeHtml.includes("Siparişlerim"), "Authenticated commerce navigation not rendered");
+
+  const dealerProductsResponse = await request("/bayi/urunler", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  assert(dealerProductsResponse.status === 200, `Dealer products failed with ${dealerProductsResponse.status}`);
+  assert((await dealerProductsResponse.text()).includes("Bayi ürün ve fiyatları"), "Dealer products context not rendered");
 
   const dealerPortalResponse = await request("/bayi", {
     headers: { Cookie: serializeCookies(dealerCookieJar) },
@@ -226,7 +248,7 @@ try {
     headers: { Cookie: serializeCookies(dealerCookieJar) },
   });
   assert(dealerAdminResponse.status === 307, `Dealer /admin should redirect, got ${dealerAdminResponse.status}`);
-  assert(new URL(dealerAdminResponse.headers.get("location") ?? "", baseUrl).pathname === "/giris", "Dealer admin access was not rejected");
+  assert(new URL(dealerAdminResponse.headers.get("location") ?? "", baseUrl).pathname === "/", "Dealer admin access was not rejected");
 } finally {
   const companyUserCleanupDb = new Database("dev.db");
   companyUserCleanupDb
@@ -371,7 +393,7 @@ try {
   assert(compatibilityHtml.includes("Uyumlulugu sil"), "Product compatibility delete action not rendered");
   assert(compatibilityHtml.includes(smokeOemReference), "Product compatibility smoke OEM reference not rendered");
 
-  const catalogCompatibilityResponse = await request(`/katalog?q=${encodeURIComponent(smokeOemReference)}`);
+  const catalogCompatibilityResponse = await request(`/urunler?q=${encodeURIComponent(smokeOemReference)}`);
   assert(catalogCompatibilityResponse.status === 200, `Catalog compatibility search failed with ${catalogCompatibilityResponse.status}`);
   const catalogCompatibilityHtml = await catalogCompatibilityResponse.text();
   assert(catalogCompatibilityHtml.includes(firstProduct.code), "Catalog compatibility search did not render owning product");
@@ -398,6 +420,8 @@ console.log(
       baseUrl,
       checks: [
         "health",
+        "public-commerce-home",
+        "public-sitemap-boundary",
         "guest-admin-redirect",
         "guest-dealer-redirect",
         "login-form",
@@ -410,6 +434,8 @@ console.log(
         "authenticated-company-detail",
         "invalid-activation-state",
         "dealer-login-role-redirect",
+        "authenticated-dealer-commerce-home",
+        "authenticated-dealer-products",
         "authenticated-dealer-dashboard",
         "authenticated-dealer-orders",
         "authenticated-dealer-quotes",

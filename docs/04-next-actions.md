@@ -4,18 +4,29 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.3 - Dealer Context, Bayi Dashboard ve Davet Teslimi.
+Faz 3.3 - Teklif/Siparis Olusturma, Detay Akislari ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Authenticated katalog ortak bilesene ayrilip bayi shell icinde `/bayi/katalog` olarak acilacak.
-2. Siparis/teklif listelerine filtre, sayfalama ve company-scoped detay rotalari eklenecek.
+1. Siparis/teklif listelerine filtre, sayfalama ve company-scoped detay rotalari eklenecek.
+2. Teklif sepeti ve server-side fiyatlanan taslak siparis olusturma akisi baslatilacak.
 3. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
 4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-5. Teklif talebi ve server-side fiyatlanan taslak siparis olusturma akisi baslatilacak.
+5. Urun detay sayfasi ve gercek urun medya galerisi eklenecek.
 6. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz disi UX/IA konsolidasyonu tamamlandi:
+
+- `/` CMS banner, genel arama, kategori ve urun kartlariyla ticaret ana sayfasina donusturuldu.
+- Bayi oturumu ana sayfada firma kimligi ve operasyon baglantilariyla gorunur hale geldi.
+- `/urunler` public kesif, `/bayi/urunler` firma fiyatli bayi deneyimi olarak ayrildi.
+- `/katalog` eski linkler icin `/urunler`e kalici yonlendirildi.
+- Public bayi girisi ile noindex ic ekip girisi ayrildi; public admin baglantilari kaldirildi.
+- Sitemap, robots ve metadata politikasi indekslenebilir public rotalara gore duzenlendi.
+- CMS hero gorseli admin icerik ekranindan yonetilebilir hale geldi.
+- Iki bagimsiz agent UX ve kullanici yolculugu incelemesi proje hafizasina kaydedildi.
 
 Faz 3.3 ilk bayi portal dilimi tamamlandi:
 

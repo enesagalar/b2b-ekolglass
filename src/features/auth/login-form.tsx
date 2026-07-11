@@ -9,11 +9,12 @@ const initialState: LoginState = {
   message: "",
 };
 
-export function LoginForm() {
+export function LoginForm({ nextPath = "/" }: { nextPath?: string }) {
   const [state, formAction, pending] = useActionState(loginWithPassword, initialState);
 
   return (
     <form action={formAction} className="grid gap-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <input type="hidden" name="next" value={nextPath} />
       <div className="grid gap-2">
         <label htmlFor="email" className="text-sm font-medium text-slate-800">
           E-posta

@@ -43,7 +43,8 @@ Her anlamli faz sonunda:
 ## Proje Sahibinin Kontrol Edebilecegi Basit Seyler
 
 - `http://localhost:3000/` public ana sayfa.
-- `http://localhost:3000/katalog` katalog.
+- `http://localhost:3000/urunler` herkese açık ürün keşfi.
+- `http://localhost:3000/bayi/urunler` oturum açmış bayiye özel ürün ve fiyat ekranı.
 - `http://localhost:3000/giris` admin girisi.
 - `http://localhost:3000/admin` admin dashboard.
 - `http://localhost:3000/admin/urunler` urun operasyonu.

@@ -31,7 +31,7 @@ export default async function DealerDashboardPage() {
           </p>
         </div>
         <Link
-          href="/katalog"
+          href="/bayi/urunler"
           className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900"
         >
           <PackageSearch size={17} aria-hidden="true" />
@@ -91,7 +91,7 @@ export default async function DealerDashboardPage() {
               <div className="px-5 py-10 text-center">
                 <ClipboardList className="mx-auto text-slate-300" size={28} aria-hidden="true" />
                 <p className="mt-3 text-sm font-semibold text-slate-800">Henüz sipariş bulunmuyor</p>
-                <p className="mt-1 text-xs text-slate-500">Siparişe uygun ürünleri katalogdan inceleyebilirsiniz.</p>
+                      <p className="mt-1 text-xs text-slate-500">Siparişe uygun ürünleri ürün ve fiyatlar ekranından inceleyebilirsiniz.</p>
               </div>
             )}
           </div>

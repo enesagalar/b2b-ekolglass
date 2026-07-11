@@ -76,6 +76,11 @@ export const siteSettingSchema = z.object({
   value: z.string().min(1).max(2000),
 });
 
+export const homepageHeroMediaSchema = z.object({
+  url: z.string().trim().min(1, "Banner görseli zorunludur.").max(1000).refine((value) => value.startsWith("/") || z.url().safeParse(value).success, "Geçerli bir görsel yolu veya URL girin."),
+  altText: z.string().trim().min(5, "Alternatif metin zorunludur.").max(200),
+});
+
 export const loginSchema = z.object({
   email: z.email("Geçerli bir e-posta girin."),
   password: z.string().min(8, "Şifre en az 8 karakter olmalıdır.").max(120),

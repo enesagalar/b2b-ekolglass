@@ -98,8 +98,12 @@ export async function clearCurrentSession() {
 export async function requireAdminUser() {
   const user = await getCurrentUser();
 
-  if (!user || !isAdminRole(user.role as Role)) {
-    redirect("/giris?next=/admin");
+  if (!user) {
+    redirect("/yonetim/giris?next=/admin");
+  }
+
+  if (!isAdminRole(user.role as Role)) {
+    redirect("/");
   }
 
   return user;
@@ -109,7 +113,7 @@ export async function requirePermissionUser(permission: Permission, nextPath = "
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect(`/giris?next=${encodeURIComponent(nextPath)}`);
+    redirect(`/yonetim/giris?next=${encodeURIComponent(nextPath)}`);
   }
 
   if (!isKnownRole(user.role) || !hasPermission(user.role, permission)) {

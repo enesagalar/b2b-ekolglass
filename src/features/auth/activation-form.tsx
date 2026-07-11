@@ -25,7 +25,7 @@ export function AccountActivationForm({ token }: { token: string }) {
           <p className="mt-2 text-sm leading-6 text-slate-600">{state.message}</p>
         </div>
         <Link
-          href="/giris"
+          href="/giris?activated=1&next=/"
           className="inline-flex h-11 items-center justify-center rounded-md bg-teal-800 px-5 text-sm font-semibold text-white transition hover:bg-teal-900"
         >
           Giriş ekranına git

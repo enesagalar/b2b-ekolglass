@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 export type DealerApplicationState = {
   ok: boolean;
   message: string;
+  reference?: string;
 };
 
 export async function createDealerApplication(
@@ -32,7 +33,7 @@ export async function createDealerApplication(
     };
   }
 
-  await prisma.dealerApplication.create({
+  const application = await prisma.dealerApplication.create({
     data: {
       ...parsed.data,
       email: parsed.data.email.trim().toLowerCase(),
@@ -45,5 +46,6 @@ export async function createDealerApplication(
   return {
     ok: true,
     message: "Başvurunuz alındı. EkolGlass satış ekibi inceleme sonrası sizinle iletişime geçecek.",
+    reference: `BAS-${application.id.slice(-8).toUpperCase()}`,
   };
 }

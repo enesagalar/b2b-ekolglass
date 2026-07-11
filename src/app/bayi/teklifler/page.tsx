@@ -22,11 +22,11 @@ export default async function DealerQuotesPage() {
           </p>
         </div>
         <Link
-          href="/katalog"
+          href="/bayi/urunler"
           className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900"
         >
           <FilePlus2 size={17} aria-hidden="true" />
-          Katalogdan talep başlat
+          Ürünlerden talep başlat
         </Link>
       </section>
 
@@ -82,8 +82,8 @@ export default async function DealerQuotesPage() {
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
               Özel ölçü, proje ve fiyatlandırma talepleri oluşturulduğunda yalnızca firmanıza ait kayıtlar burada listelenir.
             </p>
-            <Link href="/katalog" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-800">
-              <PackageSearch size={17} aria-hidden="true" /> Kataloğu incele
+            <Link href="/bayi/urunler" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-800">
+              <PackageSearch size={17} aria-hidden="true" /> Ürünleri incele
             </Link>
           </div>
         )}

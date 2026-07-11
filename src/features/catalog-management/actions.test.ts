@@ -198,7 +198,8 @@ describe("catalog management actions", () => {
       }),
     );
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/urunler");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/katalog");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/urunler");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/bayi/urunler");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/urunler/product-1");
   });
 });

@@ -25,7 +25,11 @@ Son guncelleme: 2026-07-11
 - Admin route guard.
 - Audit log modeli ve kritik admin action loglari.
 - Public ana sayfa.
-- Public katalog.
+- Oturum duyarlı, CMS banner'li public ticaret ana sayfasi.
+- Public urun kesfi: `/urunler`.
+- Bayi shell icinde firma fiyatli urun ekrani: `/bayi/urunler`.
+- Bayi ve ic ekip icin ayrilmis giris akislari.
+- Public sitemap ve private route robots/noindex politikalari.
 - Bayi basvuru formu.
 - Admin bayi basvurusu liste/detay ekranlari.
 - Permission kontrollu bayi inceleme ve durum gecis akisi.
@@ -33,7 +37,7 @@ Son guncelleme: 2026-07-11
 - Musteri grubu, odeme kosulu ve kredi limiti atamasi.
 - `/admin/firmalar` liste/detay ve aktivasyon daveti yonetimi.
 - `/aktivasyon/[token]` ilk parola ve hesap aktivasyonu.
-- Dealer login role-based `/bayi` yonlendirmesi.
+- Dealer login role-based `/` yonlendirmesi; firma kimligi header'da gorunur.
 - Merkezi dealer context: ACTIVE dealer + APPROVED company.
 - Bayi operasyon dashboardu ve responsive bayi shell.
 - Bayi siparis, teklif ve firma hesap ekranlari.
@@ -70,10 +74,9 @@ Son guncelleme: 2026-07-11
 
 ## En Onemli Eksikler
 
-1. Bayi platformu eksik:
+1. Bayi platformunda kalanlar:
    - Transactional e-posta teslim adapteri yok.
-   - Authenticated katalog bayi shell icinde degil.
-   - Siparis/teklif detay ve olusturma akislari yok.
+   - Siparis/teklif detay, sepet ve olusturma akislari yok.
    - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
@@ -95,9 +98,9 @@ Son guncelleme: 2026-07-11
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: Dealer Portal Detaylari, Authenticated Katalog ve E-posta Teslim Siniri.
+Faz 3.3 devam edecek: Dealer Portal Detaylari, Teklif/Siparis Olusturma ve E-posta Teslim Siniri.
 
-Admin bayi basvurusu, firma provisioning, aktivasyon, ilk parola, merkezi dealer context, `/bayi` dashboard ve DB seviyesinde operasyon/fiyat izolasyonu tamamlandi. Siradaki adim authenticated katalogu bayi shell icine almak, company-scoped detay/olusturma akislarini kurmak ve e-posta davet teslim adapterini baglamaktir. Birlesik web/B2B/CMS hedefi `docs/architecture/unified-web-b2b-cms.md` icinde kalici proje karari olarak kaydedildi.
+UX/IA konsolidasyonu tamamlandi: public urun kesfi, bayi urun/fiyat alani, oturum duyarlı ana sayfa ve ayrik yonetim girisi devrede. Siradaki adim company-scoped detay/olusturma akislarini kurmak ve e-posta davet teslim adapterini baglamaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 
 Siradaki hedef ekranlar:
 

@@ -11,8 +11,8 @@ export default function DealerApplicationPage() {
           <Link href="/" className="font-semibold text-slate-950">
             EkolGlass B2B
           </Link>
-          <Link href="/katalog" className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">
-            Katalog
+          <Link href="/urunler" className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">
+            Ürünler
           </Link>
         </div>
       </header>
