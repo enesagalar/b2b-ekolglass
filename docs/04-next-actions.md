@@ -8,14 +8,24 @@ Faz 3.3 - Dealer Context, Bayi Dashboard ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Merkezi `dealer-context` DAL eklenecek; ACTIVE dealer + APPROVED company kosulu tek yerde uygulanacak.
-2. `/bayi` dashboard ve firma hesap ozeti acilacak.
+1. Authenticated katalog ortak bilesene ayrilip bayi shell icinde `/bayi/katalog` olarak acilacak.
+2. Siparis/teklif listelerine filtre, sayfalama ve company-scoped detay rotalari eklenecek.
 3. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
 4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-5. Teklif/siparis sorgulari icin company ownership test temeli hazirlanacak.
+5. Teklif talebi ve server-side fiyatlanan taslak siparis olusturma akisi baslatilacak.
 6. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 ilk bayi portal dilimi tamamlandi:
+
+- Merkezi ACTIVE dealer + APPROVED company context DAL eklendi.
+- Dealer login `/bayi`ye yonlendiriliyor.
+- `/bayi`, `/bayi/siparisler`, `/bayi/teklifler`, `/bayi/hesabim` gercek DB verisiyle calisiyor.
+- Firma A/Firma B order/quote izolasyonu SQLite entegrasyon testiyle dogrulandi.
+- Operasyon sorgu indeksleri migration ile eklendi.
+- Mobil listeler kompakt kayit duzenine cevrildi; body overflow ve konsol hatasi yok.
+- Cari bakiye/teklif tutari gibi modelde olmayan veriler uydurulmuyor.
 
 Faz 3.2 aktivasyon/firma/izolasyon dilimi tamamlandi:
 

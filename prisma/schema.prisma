@@ -132,6 +132,8 @@ model Address {
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([companyId, isDefault])
 }
 
 model ProductCategory {
@@ -254,6 +256,9 @@ model QuoteRequest {
   items               QuoteRequestItem[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+
+  @@index([companyId, status, createdAt])
+  @@index([companyId, createdAt])
 }
 
 model QuoteRequestItem {
@@ -267,6 +272,8 @@ model QuoteRequestItem {
   dimensions     String?
   glassType      String?
   notes          String?
+
+  @@index([quoteRequestId])
 }
 
 model Order {
@@ -290,6 +297,9 @@ model Order {
   shipment          Shipment?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
+
+  @@index([companyId, status, createdAt])
+  @@index([companyId, createdAt])
 }
 
 model OrderItem {
@@ -301,6 +311,8 @@ model OrderItem {
   quantity  Int
   unitPrice Decimal?
   notes     String?
+
+  @@index([orderId])
 }
 
 model OrderStatusHistory {
@@ -332,6 +344,8 @@ model Shipment {
   events             ShipmentEvent[]
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+
+  @@index([status, updatedAt])
 }
 
 model ShipmentEvent {

@@ -99,3 +99,7 @@ export function isAdminRole(role: Role) {
     "ACCOUNTING_STAFF",
   ].includes(role);
 }
+
+export function isDealerRole(role: Role) {
+  return role === "DEALER_OWNER" || role === "DEALER_STAFF";
+}

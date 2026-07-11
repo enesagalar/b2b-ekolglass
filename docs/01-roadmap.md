@@ -35,8 +35,6 @@ Kapsam:
 Eksik kalanlar:
 
 - Password reset akisi.
-- Dealer portal route guard.
-- Firma bazli veri izolasyonu testleri.
 - Auth/session entegrasyon testleri.
 
 ## Faz 2.5 - Admin UX Shell ve Operasyon Merkezi
@@ -100,12 +98,34 @@ Tamamlananlar:
 - Tek kullanimlik bayi aktivasyonu ve ilk parola belirleme.
 - Admin firma liste/detay ve kullanici davet yonetimi.
 - DB seviyesinde firma/grup fiyat izolasyonu.
+- Merkezi ACTIVE dealer + APPROVED company context DAL.
+- Bayi operasyon dashboard, siparis, teklif ve firma hesap ekranlari.
+- DB seviyesinde order/quote tenant izolasyonu ve SQLite testi.
+- Dealer portal operasyon sorgu indeksleri.
 
 Eksik kalanlar:
 
 - Transactional e-posta teslim adapteri.
-- Merkezi dealer context DAL ve bayi dashboard.
-- Teklif/siparis/sevkiyat tenant izolasyonu.
+- Authenticated katalogun bayi shell icinde ortak bilesene alinmasi.
+- Teklif/siparis detay ve olusturma action tenant izolasyonu.
+- Liste filtreleri ve sayfalama.
+
+## Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
+
+Durum: Ilk dilim tamamlandi; detay ve olusturma akislari devam ediyor.
+
+Tamamlananlar:
+
+- `/bayi` responsive operasyon shell ve dashboard.
+- `/bayi/siparisler`, `/bayi/teklifler`, `/bayi/hesabim`.
+- Session kaynakli merkezi company context.
+- Company-scoped order, quote ve shipment sorgulari.
+- Cross-company entegrasyon testi ve HTTP smoke kapsami.
+- Mobil kompakt operasyon listeleri.
+
+Referans:
+
+- `docs/phases/phase-03-3-dealer-context-dashboard.md`
 
 ## Faz 3.5 - Birlesik Kurumsal Site, B2B Gateway ve CMS
 

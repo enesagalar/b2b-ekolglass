@@ -51,6 +51,14 @@ assert(
   `Guest /admin redirected to ${adminGuestResponse.headers.get("location")}`,
 );
 
+const dealerGuestResponse = await request("/bayi");
+assert(dealerGuestResponse.status === 307, `Guest /bayi should redirect, got ${dealerGuestResponse.status}`);
+const dealerGuestRedirectUrl = new URL(dealerGuestResponse.headers.get("location") ?? "", baseUrl);
+assert(
+  dealerGuestRedirectUrl.pathname === "/giris" && dealerGuestRedirectUrl.searchParams.get("next") === "/bayi",
+  `Guest /bayi redirected to ${dealerGuestResponse.headers.get("location")}`,
+);
+
 const loginResponse = await request("/giris?next=/admin");
 assert(loginResponse.status === 200, `Login page failed with ${loginResponse.status}`);
 mergeCookies(cookieJar, getSetCookieHeaders(loginResponse));
@@ -95,6 +103,12 @@ assert(adminResponse.status === 200, `Authenticated /admin failed with ${adminRe
 const adminHtml = await adminResponse.text();
 assert(adminHtml.includes("Operasyon merkezi"), "Admin operations dashboard content not rendered");
 assert(adminHtml.includes("Bayi Başvuruları"), "Admin sidebar navigation not rendered");
+
+const adminDealerResponse = await request("/bayi", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(adminDealerResponse.status === 307, `Admin /bayi should redirect, got ${adminDealerResponse.status}`);
+assert(new URL(adminDealerResponse.headers.get("location") ?? "", baseUrl).pathname === "/admin", "Admin dealer access was not redirected");
 
 const smokeInvitedUserId = `smoke-invited-user-${Date.now()}`;
 const smokeActiveDealerId = `smoke-active-dealer-${Date.now()}`;
@@ -187,8 +201,26 @@ try {
   });
   mergeCookies(dealerCookieJar, getSetCookieHeaders(dealerLoginSubmitResponse));
   assert(dealerLoginSubmitResponse.status === 303, `Dealer login should redirect, got ${dealerLoginSubmitResponse.status}`);
-  assert(dealerLoginSubmitResponse.headers.get("location") === "/katalog", `Dealer login redirected to ${dealerLoginSubmitResponse.headers.get("location")}`);
+  assert(dealerLoginSubmitResponse.headers.get("location") === "/bayi", `Dealer login redirected to ${dealerLoginSubmitResponse.headers.get("location")}`);
   assert(dealerCookieJar.has("ekolglass_session"), "Dealer login did not set session cookie");
+
+  const dealerPortalResponse = await request("/bayi", {
+    headers: { Cookie: serializeCookies(dealerCookieJar) },
+  });
+  assert(dealerPortalResponse.status === 200, `Dealer dashboard failed with ${dealerPortalResponse.status}`);
+  const dealerPortalHtml = await dealerPortalResponse.text();
+  assert(dealerPortalHtml.includes("Operasyon özeti"), "Dealer dashboard heading not rendered");
+  assert(dealerPortalHtml.includes("Anadolu Oto Cam"), "Dealer company context not rendered");
+
+  for (const [path, expectedText] of [
+    ["/bayi/siparisler", "Sipariş ve sevkiyat takibi"],
+    ["/bayi/teklifler", "Teklif talepleri"],
+    ["/bayi/hesabim", "Ticari koşullar"],
+  ]) {
+    const response = await request(path, { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+    assert(response.status === 200, `Dealer page ${path} failed with ${response.status}`);
+    assert((await response.text()).includes(expectedText), `Dealer page ${path} did not render ${expectedText}`);
+  }
 
   const dealerAdminResponse = await request("/admin", {
     headers: { Cookie: serializeCookies(dealerCookieJar) },
@@ -367,15 +399,21 @@ console.log(
       checks: [
         "health",
         "guest-admin-redirect",
+        "guest-dealer-redirect",
         "login-form",
         "admin-login",
         "authenticated-admin-dashboard",
+        "admin-dealer-redirect",
         "authenticated-dealer-application-list",
         "authenticated-dealer-application-detail",
         "authenticated-company-list",
         "authenticated-company-detail",
         "invalid-activation-state",
         "dealer-login-role-redirect",
+        "authenticated-dealer-dashboard",
+        "authenticated-dealer-orders",
+        "authenticated-dealer-quotes",
+        "authenticated-dealer-account",
         "dealer-admin-access-rejected",
         "authenticated-product-management",
         "authenticated-product-categories",

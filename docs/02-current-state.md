@@ -33,7 +33,11 @@ Son guncelleme: 2026-07-11
 - Musteri grubu, odeme kosulu ve kredi limiti atamasi.
 - `/admin/firmalar` liste/detay ve aktivasyon daveti yonetimi.
 - `/aktivasyon/[token]` ilk parola ve hesap aktivasyonu.
-- Dealer login role-based `/katalog` yonlendirmesi.
+- Dealer login role-based `/bayi` yonlendirmesi.
+- Merkezi dealer context: ACTIVE dealer + APPROVED company.
+- Bayi operasyon dashboardu ve responsive bayi shell.
+- Bayi siparis, teklif ve firma hesap ekranlari.
+- Company-scoped order/quote DAL ve cross-company SQLite testi.
 - DB seviyesinde firma/musteri grubu fiyat izolasyonu.
 - Admin dashboard temeli.
 - Admin shell:
@@ -68,8 +72,9 @@ Son guncelleme: 2026-07-11
 
 1. Bayi platformu eksik:
    - Transactional e-posta teslim adapteri yok.
-   - Merkezi dealer context DAL ve `/bayi` dashboard yok.
-   - Teklif/siparis/sevkiyat company ownership testleri yok.
+   - Authenticated katalog bayi shell icinde degil.
+   - Siparis/teklif detay ve olusturma akislari yok.
+   - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
@@ -90,9 +95,9 @@ Son guncelleme: 2026-07-11
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 baslayacak: Dealer Context, Bayi Dashboard ve E-posta Teslim Siniri.
+Faz 3.3 devam edecek: Dealer Portal Detaylari, Authenticated Katalog ve E-posta Teslim Siniri.
 
-Admin bayi basvurusu, firma provisioning, aktivasyon, ilk parola ve DB seviyesinde fiyat izolasyonu tamamlandi. Siradaki adim dealer baglamini tek DAL'da merkezilestirmek, `/bayi` operasyon dashboard'unu acmak ve e-posta davet teslim adapterini baglamaktir. Birlesik web/B2B/CMS hedefi `docs/architecture/unified-web-b2b-cms.md` icinde kalici proje karari olarak kaydedildi.
+Admin bayi basvurusu, firma provisioning, aktivasyon, ilk parola, merkezi dealer context, `/bayi` dashboard ve DB seviyesinde operasyon/fiyat izolasyonu tamamlandi. Siradaki adim authenticated katalogu bayi shell icine almak, company-scoped detay/olusturma akislarini kurmak ve e-posta davet teslim adapterini baglamaktir. Birlesik web/B2B/CMS hedefi `docs/architecture/unified-web-b2b-cms.md` icinde kalici proje karari olarak kaydedildi.
 
 Siradaki hedef ekranlar:
 

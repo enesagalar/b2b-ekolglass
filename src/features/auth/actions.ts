@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { loginSchema } from "@/domain/validation";
-import { isAdminRole, isKnownRole } from "@/domain/roles";
+import { isAdminRole, isDealerRole, isKnownRole } from "@/domain/roles";
 import { clearCurrentSession, createUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -122,6 +122,10 @@ export async function loginWithPassword(_previousState: LoginState, formData: Fo
   });
   if (isKnownRole(user.role) && isAdminRole(user.role)) {
     redirect("/admin");
+  }
+
+  if (isKnownRole(user.role) && isDealerRole(user.role)) {
+    redirect("/bayi");
   }
 
   redirect("/katalog");
