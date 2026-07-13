@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 
 import { QuoteOperationError } from "@/data/quote-operations";
+import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
 
 type QuoteConversionActor = { userId: string };
@@ -366,6 +367,32 @@ export async function convertApprovedQuoteToOrder(
           metadata: JSON.stringify({ quoteId: quote.id, offerRevisionId: quote.activeOfferRevision.id, itemCount: snapshots.length }),
         },
       ],
+    });
+    await enqueueIntegrationEvent(tx, {
+      topic: "commerce.quote.converted_to_order.v1",
+      eventType: "QUOTE_CONVERTED_TO_ORDER",
+      aggregateType: "QuoteRequest",
+      aggregateId: quote.id,
+      payload: {
+        quoteId: quote.id,
+        orderId: order.id,
+        offerRevisionId: quote.activeOfferRevision.id,
+        resultVersion,
+      },
+      idempotencyKey: `quote:${quote.id}:converted:${resultVersion}`,
+    });
+    await enqueueIntegrationEvent(tx, {
+      topic: "commerce.order.submitted.v1",
+      eventType: "ORDER_SUBMITTED",
+      aggregateType: "Order",
+      aggregateId: order.id,
+      payload: {
+        orderId: order.id,
+        companyId: quote.companyId,
+        source: "QUOTE_CONVERSION",
+        sourceQuoteId: quote.id,
+      },
+      idempotencyKey: `order:${order.id}:submitted:v1`,
     });
 
     return { id: order.id, replayed: false };

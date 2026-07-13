@@ -96,6 +96,8 @@ Son guncelleme: 2026-07-13
   - `scripts/codex-advisor.ps1`
   - `docs/agent-reports/`
 - City Lojistik adapter siniri, canli API bilgisi bekliyor.
+- Lease/retry/dead-letter destekli transactional entegrasyon outbox'i.
+- Siparis ve teklif transaction'larindan versiyonlu outbox olaylari.
 
 ## En Onemli Eksikler
 
@@ -108,7 +110,7 @@ Son guncelleme: 2026-07-13
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
 3. Teklif/siparis akisinda kalanlar:
-   - Teklif ve siparis bildirimleri icin transactional e-posta/outbox hatti eksik.
+   - Outbox hazir; bildirim olaylarini teslim edecek transactional e-posta adapteri eksik.
 
 4. Entegrasyonlar hazirlik seviyesinde:
    - City Lojistik canli API dokumani gerekli.
@@ -121,11 +123,11 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: Transactional E-posta ve City Lojistik Outbox Siniri.
+Faz 3.3 devam edecek: stok DB constraint'leri ve transactional e-posta adapter siniri.
 
 UX/IA konsolidasyonu ve tekliften siparise donusum tamamlandi. Siradaki adim entegrasyon outbox sinirini ve transactional bildirim adapterini kurmaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 
 Siradaki hedefler:
 
-- City Lojistik saglayici bagimsiz outbox modeli.
+- Outbox admin retry/dead-letter operasyon ekrani.
 - E-posta invitation ve operasyon bildirim adapteri.

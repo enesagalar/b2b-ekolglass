@@ -8,14 +8,24 @@ Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
-2. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
-3. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
+1. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
+2. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
+3. Outbox dead-letter/retry gorunumu icin permission kontrollu admin entegrasyon ekrani kurulacak.
 4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
 5. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
 6. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 transactional entegrasyon outbox dilimi tamamlandi:
+
+- Is kaydi ve versiyonlu domain olayi ayni Prisma transaction'inda commit/rollback oluyor.
+- Claim tek atomik SQLite `UPDATE ... RETURNING` ifadesiyle yapiliyor.
+- Lease token/expiry, exponential retry, dead-letter ve attempt log modeli eklendi.
+- Siparis/teklif olusumu, donusumu ve durum gecisleri olay uretiyor.
+- City sevkiyat istegi kuyruklaniyor; dogrulanmis API ve provider idempotency davranisi olmadan ag handler'i acilmiyor.
+- Admin uyarisi gecmis hata loglari yerine guncel retry/dead durumlarini sayiyor.
+- 24 test dosyasi, 116 test, production build, sifirdan 18 migration ve admin HTTP smoke kontrolu basarili.
 
 Faz 3.3 tekliften siparise donusum dilimi tamamlandi:
 

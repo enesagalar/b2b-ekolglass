@@ -45,8 +45,8 @@ async function getDashboardData() {
       where: { status: { in: ["LOW_STOCK", "OUT_OF_STOCK"] } },
     }),
     prisma.order.count({ where: { status: "READY_FOR_SHIPMENT" } }),
-    prisma.integrationLog.count({
-      where: { status: { in: ["FAILED", "RETRYING"] } },
+    prisma.integrationOutboxEvent.count({
+      where: { status: { in: ["RETRY", "DEAD"] } },
     }),
     prisma.dealerApplication.findMany({
       orderBy: { createdAt: "desc" },

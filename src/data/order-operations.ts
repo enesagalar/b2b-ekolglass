@@ -7,6 +7,7 @@ import {
 } from "@/domain/order-transitions";
 import { getStatusLabel } from "@/domain/statuses";
 import { prisma } from "@/lib/prisma";
+import { enqueueIntegrationEvent } from "@/integrations/outbox";
 
 export type OrderTransitionInput = {
   orderId: string;
@@ -441,6 +442,33 @@ export async function transitionOrderStatus(
         }),
       },
     });
+    await enqueueIntegrationEvent(tx, {
+      topic: "commerce.order.status_changed.v1",
+      eventType: "ORDER_STATUS_CHANGED",
+      aggregateType: "Order",
+      aggregateId: order.id,
+      payload: {
+        orderId: order.id,
+        fromStatus: order.status,
+        toStatus: input.targetStatus,
+        resultVersion,
+      },
+      idempotencyKey: `order:${order.id}:status:${resultVersion}`,
+    });
+    if (
+      input.targetStatus === "READY_FOR_SHIPMENT" &&
+      order.shipmentMethod === "CITY_LOJISTIK"
+    ) {
+      await enqueueIntegrationEvent(tx, {
+        topic: "shipping.shipment_create_requested.v1",
+        eventType: "SHIPMENT_CREATE_REQUESTED",
+        aggregateType: "Order",
+        aggregateId: order.id,
+        providerCode: "CITY_LOJISTIK",
+        payload: { orderId: order.id, orderVersion: resultVersion },
+        idempotencyKey: `shipment:${order.id}:create:v1`,
+      });
+    }
 
     return {
       id: order.id,

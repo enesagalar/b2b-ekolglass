@@ -30,7 +30,11 @@ type ItemFixture = {
   }>;
 };
 
-async function createOrder(status: string, items: ItemFixture[] = []) {
+async function createOrder(
+  status: string,
+  items: ItemFixture[] = [],
+  shipmentMethod = "ROAD",
+) {
   const id = `order-operations-order-${randomUUID()}`;
   orderIds.add(id);
 
@@ -41,7 +45,7 @@ async function createOrder(status: string, items: ItemFixture[] = []) {
       companyId: ids.company,
       createdById: ids.user,
       status,
-      shipmentMethod: "ROAD",
+      shipmentMethod,
       items: {
         create: items.map((item) => ({
           productId: item.productId,
@@ -118,6 +122,9 @@ async function expectHistoryAndAudit(
 
 async function cleanupRuntimeFixtures() {
   const currentOrderIds = [...orderIds];
+  await prisma.integrationOutboxEvent.deleteMany({
+    where: { aggregateId: { in: currentOrderIds } },
+  });
   await prisma.auditLog.deleteMany({
     where: {
       OR: [
@@ -593,6 +600,32 @@ describe("order status operations", () => {
     ).toMatchObject({
       status: "WAITING_FOR_APPROVAL",
       version: 2,
+    });
+  });
+
+  it("enqueues City shipment creation only after the ready transition commits", async () => {
+    const order = await createOrder("PREPARING", [], "CITY_LOJISTIK");
+
+    await transitionOrderStatus(actor, {
+      orderId: order.id,
+      expectedStatus: "PREPARING",
+      expectedVersion: order.version,
+      targetStatus: "READY_FOR_SHIPMENT",
+      idempotencyKey: randomUUID(),
+    });
+
+    const events = await prisma.integrationOutboxEvent.findMany({
+      where: { aggregateId: order.id },
+      orderBy: { createdAt: "asc" },
+    });
+    expect(events.map((event) => event.topic)).toEqual([
+      "commerce.order.status_changed.v1",
+      "shipping.shipment_create_requested.v1",
+    ]);
+    expect(events[1]).toMatchObject({
+      providerCode: "CITY_LOJISTIK",
+      status: "PENDING",
+      attempts: 0,
     });
   });
 

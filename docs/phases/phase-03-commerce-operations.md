@@ -35,7 +35,6 @@ Tamamlandi:
 
 Siradaki dilim:
 
-- City Lojistik adapterine outbox uzerinden siparis/sevkiyat aktarimi.
 - Transactional e-posta teslim adapteri.
 - Stok invariant'lari icin DB check constraint'leri.
 
@@ -79,3 +78,17 @@ Tamamlandi:
 - Hash kontrollu idempotent command ledger, quote version CAS ve tek siparis unique garantisi.
 - Dondurulmus revizyon, yetersiz stok, farkli payload ve replay entegrasyon testleri.
 - Admin tekliften siparise ve siparisten teklife; bayi teklif/siparis detaylari arasinda izlenebilir baglantilar.
+
+## 2026-07-13 Entegrasyon Outbox Dilimi
+
+Tamamlandi:
+
+- Siparis/teklif transaction'lariyla atomik, provider-bagimsiz outbox modeli.
+- Tek SQL `UPDATE ... RETURNING` ile yarisa dayanikli claim ve acik lease bitis zamani.
+- Token kontrollu success/failure finalize, exponential retry ve dead-letter gecisi.
+- Her teslim denemesi icin `IntegrationLog` baglantisi.
+- Siparis, teklif, donusum ve durum degisikligi icin versiyonlu domain olaylari.
+- City Lojistik sevkiyata hazir olayinin adapter kapaliyken dahi guvenli kuyruklanmasi.
+- Transaction rollback, idempotency, cift worker, stale lease, eski token ve retry testleri.
+- City API ve provider idempotency sozlesmesi gelmeden canli handler'in fail-closed tutulmasi.
+- 24 test dosyasi, 116 test, production build, sifirdan 18 migration ve admin HTTP smoke kontrolu.

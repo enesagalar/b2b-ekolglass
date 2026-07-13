@@ -50,6 +50,13 @@ const actorB = {
 };
 
 async function clearRuntimeRecords() {
+  const orders = await prisma.order.findMany({
+    where: { companyId: { in: companyIds } },
+    select: { id: true },
+  });
+  await prisma.integrationOutboxEvent.deleteMany({
+    where: { aggregateId: { in: orders.map((order) => order.id) } },
+  });
   await prisma.auditLog.deleteMany({ where: { actorUserId: { in: userIds } } });
   await prisma.stockReservation.deleteMany({
     where: { orderItem: { order: { companyId: { in: companyIds } } } },
@@ -442,6 +449,14 @@ describe("order cart submission and tenant isolation", () => {
     });
 
     expect(replay.id).toBe(first.id);
+    expect(
+      await prisma.integrationOutboxEvent.count({
+        where: {
+          aggregateId: first.id,
+          topic: "commerce.order.submitted.v1",
+        },
+      }),
+    ).toBe(1);
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: first.id },
       include: { items: true },

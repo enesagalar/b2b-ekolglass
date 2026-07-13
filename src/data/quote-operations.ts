@@ -6,6 +6,7 @@ import {
 } from "@/domain/quote-transitions";
 import { getStatusLabel } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
+import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
 
 export type QuoteOperationActor = { userId: string };
@@ -216,6 +217,20 @@ export async function transitionQuoteStatus(
           note: input.note ?? null,
         }),
       },
+    });
+    await enqueueIntegrationEvent(tx, {
+      topic: "commerce.quote.status_changed.v1",
+      eventType: "QUOTE_STATUS_CHANGED",
+      aggregateType: "QuoteRequest",
+      aggregateId: quote.id,
+      payload: {
+        quoteId: quote.id,
+        fromStatus: quote.status,
+        toStatus: input.targetStatus,
+        resultVersion,
+        activeOfferRevisionId: quote.activeOfferRevisionId,
+      },
+      idempotencyKey: `quote:${quote.id}:status:${resultVersion}`,
     });
 
     return {

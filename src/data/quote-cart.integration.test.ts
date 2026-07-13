@@ -37,6 +37,8 @@ describe("quote cart pricing and tenant isolation", () => {
   });
 
   afterAll(async () => {
+    const quotes = await prisma.quoteRequest.findMany({ where: { companyId: { in: [ids.companyA, ids.companyB] } }, select: { id: true } });
+    await prisma.integrationOutboxEvent.deleteMany({ where: { aggregateId: { in: quotes.map((quote) => quote.id) } } });
     await prisma.auditLog.deleteMany({ where: { actorUserId: { in: [ids.userA, ids.userB] } } });
     await prisma.quoteStatusHistory.deleteMany({ where: { quote: { companyId: { in: [ids.companyA, ids.companyB] } } } });
     await prisma.quoteRequest.deleteMany({ where: { companyId: { in: [ids.companyA, ids.companyB] } } });
@@ -60,6 +62,14 @@ describe("quote cart pricing and tenant isolation", () => {
     const first = await submitQuoteCart(actorA, input);
     const second = await submitQuoteCart(actorA, input);
     expect(second.id).toBe(first.id);
+    expect(
+      await prisma.integrationOutboxEvent.count({
+        where: {
+          aggregateId: first.id,
+          topic: "commerce.quote.submitted.v1",
+        },
+      }),
+    ).toBe(1);
     await expect(submitQuoteCart(actorA, { ...input, requesterName: "Forged Name" })).rejects.toThrow("farklı bir teklif isteğiyle");
 
     const quote = await prisma.quoteRequest.findUniqueOrThrow({ where: { id: first.id }, include: { items: true } });

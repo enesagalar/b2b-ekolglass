@@ -8,6 +8,7 @@ import {
   type CatalogViewer,
 } from "@/domain/catalog";
 import { Prisma } from "@/generated/prisma/client";
+import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
 
 export type OrderActor = {
@@ -512,6 +513,18 @@ export async function submitOrderCart(
           currency: currencies[0],
         }),
       },
+    });
+    await enqueueIntegrationEvent(tx, {
+      topic: "commerce.order.submitted.v1",
+      eventType: "ORDER_SUBMITTED",
+      aggregateType: "Order",
+      aggregateId: order.id,
+      payload: {
+        orderId: order.id,
+        companyId: actor.companyId,
+        source: "ORDER_CART",
+      },
+      idempotencyKey: `order:${order.id}:submitted:v1`,
     });
     const removedCart = await tx.orderCart.deleteMany({
       where: { id: cart.id, version: input.cartVersion },

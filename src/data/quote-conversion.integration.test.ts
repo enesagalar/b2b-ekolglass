@@ -106,6 +106,11 @@ describe("approved quote to order conversion", () => {
   afterAll(async () => {
     const orders = await prisma.order.findMany({ where: { companyId: ids.company }, select: { id: true } });
     const orderIds = orders.map((order) => order.id);
+    await prisma.integrationOutboxEvent.deleteMany({
+      where: {
+        aggregateId: { in: [...quoteIds, ...orderIds] },
+      },
+    });
     await prisma.quoteOperationCommand.deleteMany({ where: { quoteId: { in: quoteIds } } });
     await prisma.orderTransitionCommand.deleteMany({ where: { orderId: { in: orderIds } } });
     await prisma.orderStatusHistory.deleteMany({ where: { orderId: { in: orderIds } } });
@@ -141,6 +146,11 @@ describe("approved quote to order conversion", () => {
     const first = await convertApprovedQuoteToOrder({ userId: ids.actor }, input);
     const replay = await convertApprovedQuoteToOrder({ userId: ids.actor }, input);
     expect(replay).toEqual({ id: first.id, replayed: true });
+    expect(
+      await prisma.integrationOutboxEvent.count({
+        where: { aggregateId: { in: [quote.id, first.id] } },
+      }),
+    ).toBe(2);
     await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, notes: "Different note" })).rejects.toMatchObject<Partial<QuoteOperationError>>({ code: "CONFLICT" });
 
     const order = await prisma.order.findUniqueOrThrow({

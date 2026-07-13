@@ -5,6 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { buildCatalogPriceWhere } from "@/data/catalog-access";
 import { selectCatalogPriceForQuantity, type CatalogViewer } from "@/domain/catalog";
 import { Prisma } from "@/generated/prisma/client";
+import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
 
 type DealerActor = {
@@ -186,6 +187,14 @@ export async function submitQuoteCart(actor: DealerActor, input: { cartId: strin
       select: { id: true },
     });
     await tx.auditLog.create({ data: { actorUserId: actor.userId, action: "dealer.quote.submitted", entityType: "QuoteRequest", entityId: quote.id, metadata: JSON.stringify({ companyId: actor.companyId, itemCount: snapshots.length }) } });
+    await enqueueIntegrationEvent(tx, {
+      topic: "commerce.quote.submitted.v1",
+      eventType: "QUOTE_SUBMITTED",
+      aggregateType: "QuoteRequest",
+      aggregateId: quote.id,
+      payload: { quoteId: quote.id, companyId: actor.companyId },
+      idempotencyKey: `quote:${quote.id}:submitted:v1`,
+    });
     const consumed = await tx.quoteCart.deleteMany({ where: { id: cart.id, version: input.cartVersion } });
     if (consumed.count !== 1) throw new Error("Teklif sepetiniz değişti. Güncel sayfayı yükleyin.");
     return quote;

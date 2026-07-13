@@ -65,6 +65,9 @@ describe("quote operations", () => {
   });
 
   afterAll(async () => {
+    await prisma.integrationOutboxEvent.deleteMany({
+      where: { aggregateId: { in: quoteIds } },
+    });
     await prisma.quoteRequest.updateMany({
       where: { id: { in: quoteIds } },
       data: { activeOfferRevisionId: null },
@@ -199,6 +202,14 @@ describe("quote operations", () => {
     const replay = await transitionQuoteStatus({ userId: actorId }, input);
     expect(first).toMatchObject({ status: "OFFER_SENT", version: 3, replayed: false });
     expect(replay).toMatchObject({ status: "OFFER_SENT", version: 3, replayed: true });
+    expect(
+      await prisma.integrationOutboxEvent.count({
+        where: {
+          aggregateId: quote.id,
+          topic: "commerce.quote.status_changed.v1",
+        },
+      }),
+    ).toBe(1);
     expect(
       await prisma.quoteStatusHistory.count({ where: { quoteId: quote.id } }),
     ).toBe(2);
