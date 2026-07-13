@@ -4,6 +4,7 @@ import {
   deriveStockStatus,
   resolveCatalogStockSummary,
   selectCatalogPrice,
+  selectCatalogPriceForQuantity,
   normalizeProductCode,
   parseOptionalDecimal,
   parseOptionalInt,
@@ -19,6 +20,7 @@ import {
   productCompatibilityFormSchema,
   productFormSchema,
   productPriceFormSchema,
+  quoteSubmitSchema,
   stockFormSchema,
 } from "./validation";
 
@@ -83,6 +85,18 @@ describe("catalog helpers", () => {
     );
 
     expect(price?.amount.toString()).toBe("1200");
+  });
+
+  it("selects the highest eligible quantity tier deterministically", () => {
+    const startsAt = new Date("2026-01-01T00:00:00.000Z");
+    const price = selectCatalogPriceForQuantity([
+      { id: "tier-1", amount: { toString: () => "100" }, minQuantity: 1, priceList: { id: "list-1", currency: "TRY", companyId: "company-1", startsAt, isActive: true, priority: 0 } },
+      { id: "tier-10", amount: { toString: () => "80" }, minQuantity: 10, priceList: { id: "list-1", currency: "TRY", companyId: "company-1", startsAt, isActive: true, priority: 0 } },
+      { id: "public", amount: { toString: () => "70" }, minQuantity: 1, priceList: { id: "public-list", currency: "TRY", startsAt, isActive: true, priority: 99 } },
+    ], { role: "DEALER_OWNER", companyId: "company-1" }, 10);
+
+    expect(price?.amount.toString()).toBe("80");
+    expect(price?.minQuantity).toBe(10);
   });
 
   it("lets internal price readers inspect the first active list without a company", () => {
@@ -301,6 +315,17 @@ describe("catalog validation schemas", () => {
 
     expect(parsed.amount).toBe(1250.75);
     expect(parsed.minQuantity).toBe(2);
+  });
+
+  it("rejects forged invalid quote delivery dates", () => {
+    const parsed = quoteSubmitSchema.safeParse({
+      requesterName: "Bayi Yetkilisi",
+      requesterEmail: "bayi@example.com",
+      desiredDeliveryDate: "2026-99-99",
+      idempotencyKey: crypto.randomUUID(),
+    });
+
+    expect(parsed.success).toBe(false);
   });
 
   it("validates media asset data and active state", () => {

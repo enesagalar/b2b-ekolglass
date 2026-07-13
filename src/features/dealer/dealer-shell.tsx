@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   PackageSearch,
+  ShoppingBasket,
   ShieldCheck,
   X,
 } from "lucide-react";
@@ -30,6 +31,7 @@ type DealerNavItem = {
 const navigation: DealerNavItem[] = [
   { label: "Operasyon", href: "/bayi", icon: LayoutDashboard, description: "Firma operasyon özeti" },
   { label: "Ürün ve Fiyatlar", href: "/bayi/urunler", icon: PackageSearch, description: "Bayi ürün görünümü" },
+  { label: "Teklif Sepeti", href: "/bayi/teklif-sepeti", icon: ShoppingBasket, description: "Talep hazırlama alanı" },
   { label: "Tekliflerim", href: "/bayi/teklifler", icon: FileText, description: "Teklif talepleri" },
   { label: "Siparişlerim", href: "/bayi/siparisler", icon: ClipboardList, description: "Sipariş ve sevkiyat" },
   { label: "Firma Hesabı", href: "/bayi/hesabim", icon: Building2, description: "Ticari ve iletişim bilgileri" },

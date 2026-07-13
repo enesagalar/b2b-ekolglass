@@ -110,6 +110,21 @@ export function getDealerQuotes(companyId: string) {
   });
 }
 
+export function getDealerQuoteDetail(companyId: string, quoteId: string) {
+  return prisma.quoteRequest.findFirst({
+    where: { id: quoteId, companyId },
+    select: {
+      id: true, quoteNumber: true, status: true, requesterName: true, requesterEmail: true, requesterPhone: true,
+      desiredDeliveryDate: true, notes: true, currency: true, estimatedSubtotal: true, hasUnpricedItems: true,
+      submittedAt: true, pricedAt: true, createdAt: true, updatedAt: true,
+      items: { orderBy: { id: "asc" }, select: {
+        id: true, quantity: true, unitPrice: true, lineTotal: true, dimensions: true, glassType: true, notes: true,
+        product: { select: { id: true, code: true, name: true } },
+      } },
+    },
+  });
+}
+
 export function getDealerAccountData(companyId: string) {
   return prisma.company.findUniqueOrThrow({
     where: { id: companyId },

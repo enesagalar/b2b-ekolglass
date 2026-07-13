@@ -41,6 +41,10 @@ Son guncelleme: 2026-07-11
 - Merkezi dealer context: ACTIVE dealer + APPROVED company.
 - Bayi operasyon dashboardu ve responsive bayi shell.
 - Bayi siparis, teklif ve firma hesap ekranlari.
+- Public ve bayi urun detay ekranlari; aktif medya, teknik ozellik ve uyumluluk gorunumu.
+- Kullanici+firma kapsamli kalici teklif sepeti.
+- Gonderim aninda DB'den yeniden fiyatlanan, fiyat kaynagi/kademe snapshot'li teklif talebi.
+- Company-scoped teklif detay ve tekrar erisilebilir basari ekrani.
 - Company-scoped order/quote DAL ve cross-company SQLite testi.
 - DB seviyesinde firma/musteri grubu fiyat izolasyonu.
 - Admin dashboard temeli.
@@ -76,16 +80,17 @@ Son guncelleme: 2026-07-11
 
 1. Bayi platformunda kalanlar:
    - Transactional e-posta teslim adapteri yok.
-   - Siparis/teklif detay, sepet ve olusturma akislari yok.
+   - Siparis detay ve taslak siparis olusturma akislari yok.
+   - Teklif listesinde filtre ve sayfalama yok.
    - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
-3. Teklif/siparis akisi yok:
-   - Teklif sepeti yok.
+3. Teklif/siparis akisinda kalanlar:
+   - Teklif sepeti ve teklif talebi tamamlandi; admin fiyatlandirma/durum gecis operasyonu eksik.
    - Siparis durum gecmisi ekrani yok.
-   - Bayi portal yok.
+   - Taslak siparis ve teslimat adresi secimi yok.
 
 4. Entegrasyonlar hazirlik seviyesinde:
    - City Lojistik canli API dokumani gerekli.
@@ -98,7 +103,7 @@ Son guncelleme: 2026-07-11
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: Dealer Portal Detaylari, Teklif/Siparis Olusturma ve E-posta Teslim Siniri.
+Faz 3.3 devam edecek: Siparis Detayi/Taslagi, Teklif Liste Operasyonlari ve E-posta Teslim Siniri.
 
 UX/IA konsolidasyonu tamamlandi: public urun kesfi, bayi urun/fiyat alani, oturum duyarlı ana sayfa ve ayrik yonetim girisi devrede. Siradaki adim company-scoped detay/olusturma akislarini kurmak ve e-posta davet teslim adapterini baglamaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 

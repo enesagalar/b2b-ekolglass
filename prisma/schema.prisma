@@ -25,6 +25,8 @@ model User {
   sessions         AuthSession[]
   auditLogs        AuditLog[]
   activationTokens UserActivationToken[]
+  quoteRequests    QuoteRequest[]        @relation("QuoteRequester")
+  quoteCarts       QuoteCart[]
 
   @@index([companyId, role, status])
 }
@@ -78,6 +80,7 @@ model Company {
   addresses           Address[]
   dealerApplications  DealerApplication[]
   quoteRequests       QuoteRequest[]
+  quoteCarts          QuoteCart[]
   orders              Order[]
   priceLists          PriceList[]
   createdAt           DateTime            @default(now())
@@ -173,6 +176,7 @@ model Product {
   prices             ProductPrice[]
   compatibilities    ProductCompatibility[]
   quoteItems         QuoteRequestItem[]
+  quoteCartItems     QuoteCartItem[]
   orderItems         OrderItem[]
   mediaAssets        MediaAsset[]
   createdAt          DateTime               @default(now())
@@ -207,6 +211,7 @@ model PriceList {
   startsAt        DateTime       @default(now())
   endsAt          DateTime?
   isActive        Boolean        @default(true)
+  priority        Int            @default(0)
   prices          ProductPrice[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -245,6 +250,8 @@ model QuoteRequest {
   quoteNumber         String             @unique
   companyId           String?
   company             Company?           @relation(fields: [companyId], references: [id])
+  requesterUserId     String?
+  requester           User?               @relation("QuoteRequester", fields: [requesterUserId], references: [id])
   requesterName       String
   requesterEmail      String
   requesterPhone      String?
@@ -253,12 +260,19 @@ model QuoteRequest {
   status              String             @default("NEW")
   notes               String?
   internalNotes       String?
+  currency            String             @default("TRY")
+  estimatedSubtotal   Decimal?
+  hasUnpricedItems    Boolean            @default(false)
+  submittedAt         DateTime?
+  pricedAt            DateTime?
+  idempotencyKey      String?             @unique
   items               QuoteRequestItem[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 
   @@index([companyId, status, createdAt])
   @@index([companyId, createdAt])
+  @@index([requesterUserId, status, createdAt])
 }
 
 model QuoteRequestItem {
@@ -269,11 +283,46 @@ model QuoteRequestItem {
   product        Product?     @relation(fields: [productId], references: [id])
   customTitle    String?
   quantity       Int          @default(1)
+  unitPrice      Decimal?
+  lineTotal     Decimal?
+  priceListId   String?
+  priceMinQuantity Int?
+  priceScope    String?
   dimensions     String?
   glassType      String?
   notes          String?
 
   @@index([quoteRequestId])
+  @@unique([quoteRequestId, productId])
+}
+
+model QuoteCart {
+  id          String          @id @default(cuid())
+  companyId   String
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ownerUserId String
+  ownerUser   User            @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  items       QuoteCartItem[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([companyId, ownerUserId])
+  @@index([ownerUserId])
+}
+
+model QuoteCartItem {
+  id        String    @id @default(cuid())
+  cartId    String
+  cart      QuoteCart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  quantity  Int       @default(1)
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
 }
 
 model Order {

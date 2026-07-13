@@ -8,14 +8,27 @@ Faz 3.3 - Teklif/Siparis Olusturma, Detay Akislari ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Siparis/teklif listelerine filtre, sayfalama ve company-scoped detay rotalari eklenecek.
-2. Teklif sepeti ve server-side fiyatlanan taslak siparis olusturma akisi baslatilacak.
+1. Siparis ve teklif listelerine filtre ve sayfalama eklenecek.
+2. Company-scoped siparis detay ve server-side fiyatlanan taslak siparis olusturma akisi baslatilacak.
 3. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
 4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-5. Urun detay sayfasi ve gercek urun medya galerisi eklenecek.
+5. Admin teklif inceleme, fiyatlandirma ve durum gecis ekrani tasarlanacak.
 6. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 teklif talebi dilimi tamamlandi:
+
+- Public `/urunler/[id]` ve bayi `/bayi/urunler/[id]` urun detaylari eklendi.
+- Aktif urun medyasi, teknik ozellik, OEM/uyumluluk ve role gore fiyat/stok gorunumu acildi.
+- `QuoteCart` ve `QuoteCartItem` ile kullanici+firma kapsamli kalici sepet olusturuldu.
+- Teklif gonderiminde urun aktifligi, order mode ve firma fiyatlari transaction icinde yeniden okunuyor.
+- Miktar kademesi; firma, musteri grubu ve public scope onceligiyle deterministik seciliyor.
+- Fiyat, toplam, fiyat listesi, kademe ve scope snapshot'i `QuoteRequestItem`a yaziliyor.
+- Idempotency anahtari cift gonderimde ikinci teklif olusmasini engelliyor.
+- `/bayi/teklifler/[id]` company-scoped sonuc/detay ekrani ve liste baglantilari eklendi.
+- Firma A/Firma B sepet mutasyonu, fiyat kademesi ve idempotency SQLite entegrasyon testiyle dogrulandi.
+- 11 test dosyasi, 53 test, production build, genisletilmis HTTP smoke ve gercek browser akisi basarili.
 
 Faz disi UX/IA konsolidasyonu tamamlandi:
 
@@ -31,7 +44,7 @@ Faz disi UX/IA konsolidasyonu tamamlandi:
 Faz 3.3 ilk bayi portal dilimi tamamlandi:
 
 - Merkezi ACTIVE dealer + APPROVED company context DAL eklendi.
-- Dealer login `/bayi`ye yonlendiriliyor.
+- Dealer login `/` ticaret ana sayfasina yonlendiriliyor; firma kimligi header'da gorunuyor.
 - `/bayi`, `/bayi/siparisler`, `/bayi/teklifler`, `/bayi/hesabim` gercek DB verisiyle calisiyor.
 - Firma A/Firma B order/quote izolasyonu SQLite entegrasyon testiyle dogrulandi.
 - Operasyon sorgu indeksleri migration ile eklendi.
@@ -43,7 +56,7 @@ Faz 3.2 aktivasyon/firma/izolasyon dilimi tamamlandi:
 - `UserActivationToken` migration'i, 48 saatlik hash token, consume/revoke akisi eklendi.
 - `/aktivasyon/[token]` ilk parola belirleme ekrani eklendi.
 - `/admin/firmalar` liste/detay ve firma kullanicisi davet akisi eklendi.
-- Dealer login `/katalog`a, ic roller `/admin`e yonlendiriliyor.
+- Bu dilimdeki gecici dealer `/katalog` yonlendirmesi sonraki UX/IA konsolidasyonunda `/` olarak degistirildi.
 - Dealer session ile `/admin` erisimi smoke testte reddediliyor.
 - Katalog fiyatlari DB seviyesinde firma/grup/public scope ile filtreleniyor.
 - Auth DAL `passwordHash` dondurmuyor ve render sirasinda DB mutasyonu yapmiyor.
@@ -100,7 +113,6 @@ Faz 3.1 onceki turda tamamlandi:
 
 Asagidaki kararlar UI uygulanmadan once veya uygulama sirasinda netlesebilir:
 
-- Urun detay sayfasinda hangi alanlar ilk sekmede olmali?
 - Public katalog filtreleri marka/model/yil mi, kategori/cam tipi mi oncelikli olmali?
 - Stok bayiye adet olarak mi, sade durum olarak mi gosterilmeli?
 - Arka plan advisor calismasi 30 dakikalik periyotlarla mi, yoksa sadece her kodlama turu basinda tek seferlik mi calissin?

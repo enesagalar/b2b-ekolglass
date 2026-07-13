@@ -41,8 +41,9 @@ export async function getProductBrowserData(params: ProductSearchParams, viewer:
       select: {
         id: true, code: true, name: true, vehicleBrand: true, vehicleModel: true, yearStart: true, yearEnd: true,
         dimensions: true, glassType: true, tint: true, orderMode: true, category: { select: { id: true, name: true } },
+        mediaAssets: { where: { isActive: true }, orderBy: { title: "asc" }, take: 4, select: { url: true, altText: true, usage: true } },
         stockItems: { select: { quantity: true, reservedQuantity: true, status: true, visibility: true } },
-        prices: { where: buildCatalogPriceWhere(viewer), orderBy: { minQuantity: "asc" }, select: { amount: true, minQuantity: true, priceList: { select: { name: true, currency: true, companyId: true, customerGroupId: true, startsAt: true, endsAt: true, isActive: true } } } },
+        prices: { where: buildCatalogPriceWhere(viewer), orderBy: { minQuantity: "asc" }, select: { id: true, productId: true, amount: true, minQuantity: true, priceList: { select: { id: true, name: true, currency: true, companyId: true, customerGroupId: true, startsAt: true, endsAt: true, isActive: true, priority: true } } } },
       },
     }),
     prisma.product.count({ where }),

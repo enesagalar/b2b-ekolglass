@@ -226,3 +226,31 @@ export const productPriceFormSchema = z.object({
   amount: z.preprocess(parseOptionalDecimal, z.number().positive("Fiyat pozitif olmalıdır.")),
   minQuantity: z.coerce.number().int().min(1, "Minimum adet en az 1 olmalıdır.").default(1),
 });
+
+export const quoteCartAddSchema = z.object({
+  productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
+  quantity: z.coerce.number().int().min(1, "Adet en az 1 olmalıdır.").max(999, "Adet en fazla 999 olabilir."),
+  notes: optionalText(500),
+});
+
+export const quoteCartUpdateSchema = z.object({
+  itemId: z.string().trim().min(1, "Sepet kalemi zorunludur."),
+  quantity: z.coerce.number().int().min(1, "Adet en az 1 olmalıdır.").max(999, "Adet en fazla 999 olabilir."),
+  notes: optionalText(500),
+});
+
+export const quoteCartRemoveSchema = z.object({
+  itemId: z.string().trim().min(1, "Sepet kalemi zorunludur."),
+});
+
+export const quoteSubmitSchema = z.object({
+  requesterName: z.string().trim().min(2, "Yetkili adı zorunludur.").max(120),
+  requesterEmail: z.string().trim().email("Geçerli bir e-posta girin.").max(180),
+  requesterPhone: optionalText(40),
+  desiredDeliveryDate: z.string().trim().max(20).optional().transform((value) => value || undefined).refine(
+    (value) => !value || (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T12:00:00.000Z`))),
+    "İstenen teslim tarihi geçersiz.",
+  ),
+  notes: optionalText(1000),
+  idempotencyKey: z.string().uuid("Gönderim anahtarı geçersiz."),
+});

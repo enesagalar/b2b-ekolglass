@@ -130,6 +130,8 @@ const smokeDealerPassword = "SmokeDealer2026!";
 const smokeDealerPasswordHash = await hash(smokeDealerPassword, 12);
 const smokeUserTimestamp = new Date().toISOString();
 const companyUserDb = new Database("dev.db");
+const smokeProduct = companyUserDb.prepare("select id, code from Product where status = 'ACTIVE' order by createdAt asc limit 1").get();
+assert(smokeProduct, "Active smoke product not found");
 companyUserDb
   .prepare(
     `
@@ -225,6 +227,18 @@ try {
   const dealerProductsResponse = await request("/bayi/urunler", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
   assert(dealerProductsResponse.status === 200, `Dealer products failed with ${dealerProductsResponse.status}`);
   assert((await dealerProductsResponse.text()).includes("Bayi ürün ve fiyatları"), "Dealer products context not rendered");
+
+  const publicProductDetailResponse = await request(`/urunler/${smokeProduct.id}`);
+  assert(publicProductDetailResponse.status === 200, `Public product detail failed with ${publicProductDetailResponse.status}`);
+  assert((await publicProductDetailResponse.text()).includes(smokeProduct.code), "Public product detail did not render product code");
+
+  const dealerProductDetailResponse = await request(`/bayi/urunler/${smokeProduct.id}`, { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  assert(dealerProductDetailResponse.status === 200, `Dealer product detail failed with ${dealerProductDetailResponse.status}`);
+  assert((await dealerProductDetailResponse.text()).includes("Teklife ekle"), "Dealer product detail did not render quote cart action");
+
+  const dealerQuoteCartResponse = await request("/bayi/teklif-sepeti", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  assert(dealerQuoteCartResponse.status === 200, `Dealer quote cart failed with ${dealerQuoteCartResponse.status}`);
+  assert((await dealerQuoteCartResponse.text()).includes("Teklif sepetiniz boş"), "Dealer empty quote cart state not rendered");
 
   const dealerPortalResponse = await request("/bayi", {
     headers: { Cookie: serializeCookies(dealerCookieJar) },
@@ -436,6 +450,9 @@ console.log(
         "dealer-login-role-redirect",
         "authenticated-dealer-commerce-home",
         "authenticated-dealer-products",
+        "public-product-detail",
+        "authenticated-dealer-product-detail",
+        "authenticated-dealer-quote-cart",
         "authenticated-dealer-dashboard",
         "authenticated-dealer-orders",
         "authenticated-dealer-quotes",

@@ -38,7 +38,7 @@ export default async function DealerQuotesPage() {
                 <article key={quote.id} className="grid gap-3 px-4 py-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950">{quote.quoteNumber}</p>
+                      <Link href={`/bayi/teklifler/${quote.id}`} className="truncate text-sm font-semibold text-slate-950 hover:text-teal-800">{quote.quoteNumber}</Link>
                       <p className="mt-1 text-xs text-slate-500">{formatPortalDate(quote.createdAt)} · {quote._count.items} kalem</p>
                     </div>
                     <PortalStatus status={quote.status} />
@@ -64,7 +64,7 @@ export default async function DealerQuotesPage() {
               <tbody className="divide-y divide-slate-200">
                 {quotes.map((quote) => (
                   <tr key={quote.id} className="text-sm text-slate-700">
-                    <td className="px-5 py-4 font-semibold text-slate-950">{quote.quoteNumber}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-950"><Link href={`/bayi/teklifler/${quote.id}`} className="hover:text-teal-800">{quote.quoteNumber}</Link></td>
                     <td className="px-5 py-4"><PortalStatus status={quote.status} /></td>
                     <td className="px-5 py-4">{quote._count.items}</td>
                     <td className="px-5 py-4 text-slate-500">{formatPortalDate(quote.createdAt)}</td>

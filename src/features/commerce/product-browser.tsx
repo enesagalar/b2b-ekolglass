@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CarFront, Filter, PackageSearch, Search } from "lucide-react";
+import { ArrowRight, CarFront, Filter, PackageSearch, Search } from "lucide-react";
 
 import { canViewCatalogPrices, productGlassTypes, resolveCatalogStockSummary, selectCatalogPrice, type CatalogViewer } from "@/domain/catalog";
 import { getStatusLabel, stockStatuses } from "@/domain/statuses";
@@ -13,6 +13,23 @@ function pageHref(basePath: string, params: ProductSearchParams, page: number) {
   }
   next.set("page", String(page));
   return `${basePath}?${next.toString()}`;
+}
+
+function activeCardImage(mediaAssets: { url: string; altText: string; usage: string }[]) {
+  return mediaAssets.find((media) => {
+    const usage = media.usage.toLocaleLowerCase("tr-TR");
+    const pathname = media.url.split(/[?#]/, 1)[0].toLowerCase();
+    const isImage = /(görsel|gorsel|image|foto|photo|gallery)/.test(usage) || /\.(avif|gif|jpe?g|png|webp)$/.test(pathname);
+
+    if (!isImage) return false;
+    if (media.url.startsWith("/")) return true;
+
+    try {
+      return ["http:", "https:"].includes(new URL(media.url).protocol);
+    } catch {
+      return false;
+    }
+  });
 }
 
 export async function ProductBrowser({ searchParams, viewer, basePath, embedded = false }: { searchParams: ProductSearchParams; viewer: CatalogViewer; basePath: string; embedded?: boolean }) {
@@ -40,14 +57,24 @@ export async function ProductBrowser({ searchParams, viewer, basePath, embedded 
             const stock = resolveCatalogStockSummary(product.stockItems, viewer);
             const price = selectCatalogPrice(product.prices, viewer);
             const vehicle = [product.vehicleBrand, product.vehicleModel].filter(Boolean).join(" ");
+            const detailHref = `${basePath}/${product.id}`;
+            const media = activeCardImage(product.mediaAssets);
             return (
               <article key={product.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md">
-                <div className={`relative flex aspect-[16/8] items-center justify-center ${index % 3 === 0 ? "bg-slate-900 text-teal-200" : index % 3 === 1 ? "bg-teal-50 text-teal-800" : "bg-slate-100 text-slate-700"}`}><CarFront size={44} strokeWidth={1.3}/><span className="absolute left-3 top-3 rounded bg-white/90 px-2 py-1 text-[11px] font-semibold text-slate-700">{product.category.name}</span></div>
+                <Link href={detailHref} className={`relative flex aspect-[16/8] items-center justify-center overflow-hidden ${index % 3 === 0 ? "bg-slate-900 text-teal-200" : index % 3 === 1 ? "bg-teal-50 text-teal-800" : "bg-slate-100 text-slate-700"}`}>
+                  {media ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={media.url} alt={media.altText} className="h-full w-full object-cover transition duration-300 hover:scale-[1.02]" />
+                    </>
+                  ) : <CarFront size={44} strokeWidth={1.3}/>}<span className="absolute left-3 top-3 rounded bg-white/90 px-2 py-1 text-[11px] font-semibold text-slate-700">{product.category.name}</span>
+                </Link>
                 <div className="p-4">
                   <p className="font-mono text-xs font-semibold text-teal-800">{product.code}</p>
-                  <h2 className="mt-2 min-h-12 text-sm font-semibold leading-6 text-slate-950">{product.name}</h2>
+                  <h2 className="mt-2 min-h-12 text-sm font-semibold leading-6 text-slate-950"><Link href={detailHref} className="transition hover:text-teal-800">{product.name}</Link></h2>
                   <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 text-xs"><div><dt className="text-slate-400">Araç</dt><dd className="mt-1 truncate font-medium text-slate-700">{vehicle || "Proje bazlı"}</dd></div><div><dt className="text-slate-400">Cam tipi</dt><dd className="mt-1 truncate font-medium text-slate-700">{product.glassType}</dd></div><div><dt className="text-slate-400">Ölçü</dt><dd className="mt-1 truncate font-medium text-slate-700">{product.dimensions || "Teknik teyit"}</dd></div><div><dt className="text-slate-400">Stok</dt><dd className="mt-1 truncate font-medium text-emerald-700">{stock.label}</dd></div></dl>
-                  <div className="mt-4 flex min-h-12 items-end justify-between gap-3 border-t border-slate-100 pt-3"><div><p className="text-[11px] text-slate-400">{canSeePrices ? "Bayi fiyatı" : "Fiyat"}</p><p className="mt-1 text-base font-semibold text-slate-950">{price ? `${price.priceList.currency} ${Number(price.amount).toLocaleString("tr-TR")}` : canSeePrices ? "Fiyat tanımlı değil" : "Giriş sonrası görünür"}</p></div>{viewer.role === "GUEST" ? <Link href={`/giris?next=${encodeURIComponent(basePath)}`} className="inline-flex h-9 items-center rounded-md border border-teal-700 px-3 text-xs font-semibold text-teal-800">Bayi girişi</Link> : <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">{product.orderMode === "QUOTE_ONLY" ? "Teklif ürünü" : "Siparişe uygun"}</span>}</div>
+                  <div className="mt-4 flex min-h-12 items-end justify-between gap-3 border-t border-slate-100 pt-3"><div><p className="text-[11px] text-slate-400">{canSeePrices ? "Bayi fiyatı" : "Fiyat"}</p><p className="mt-1 text-base font-semibold text-slate-950">{price ? `${price.priceList.currency} ${Number(price.amount).toLocaleString("tr-TR")}` : canSeePrices ? "Fiyat tanımlı değil" : "Giriş sonrası görünür"}</p></div>{viewer.role === "GUEST" ? <Link href={`/giris?next=${encodeURIComponent(detailHref)}`} className="inline-flex h-9 items-center rounded-md border border-teal-700 px-3 text-xs font-semibold text-teal-800">Bayi girişi</Link> : <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">{product.orderMode === "QUOTE_ONLY" ? "Teklif ürünü" : "Siparişe uygun"}</span>}</div>
+                  <Link href={detailHref} className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950">Ürün detayını incele<ArrowRight size={14} aria-hidden="true" /></Link>
                 </div>
               </article>
             );

@@ -1,6 +1,6 @@
 # Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
 
-Durum: Devam ediyor - ilk dilim tamamlandi.
+Durum: Devam ediyor - portal, urun detayi ve teklif talebi dilimleri tamamlandi.
 
 ## Hedef
 
@@ -10,7 +10,7 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 
 - `requireDealerContext` ile ACTIVE dealer + APPROVED company kosulu tek DAL'da toplandi.
 - Tenant kimligi URL veya formdan degil, sunucu oturumundan turetiliyor.
-- Bayi login yonlendirmesi `/bayi` olarak degistirildi.
+- Bayi login yonlendirmesi UX/IA konsolidasyonu sonrasinda `/` ticaret ana sayfasi olarak sabitlendi.
 - `/bayi` operasyon dashboardu eklendi.
 - `/bayi/siparisler`, `/bayi/teklifler` ve `/bayi/hesabim` eklendi.
 - Sol menulu responsive bayi shell eklendi.
@@ -37,17 +37,27 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 
 ## Siradaki Dilim
 
-1. Authenticated katalog bayi shell icinde ortak katalog bileseniyle acilacak.
-2. Siparis ve teklif liste sayfalama/filtreleri eklenecek.
-3. Company-scoped siparis ve teklif detay sayfalari eklenecek.
-4. Teklif talebi ve taslak siparis olusturma akislarina gecilecek.
-5. `QuoteRequest.requestedById` ve gercek delivery address relation sema sertlestirmesi planlanacak.
-6. Transactional aktivasyon e-posta adapteri uygulanacak.
+1. Siparis ve teklif liste sayfalama/filtreleri eklenecek.
+2. Company-scoped siparis detay sayfasi eklenecek.
+3. Server-side fiyatlanan taslak siparis ve delivery address secimi uygulanacak.
+4. Admin teklif inceleme/fiyatlandirma/durum gecis operasyonu eklenecek.
+5. Transactional aktivasyon e-posta adapteri uygulanacak.
+
+## Tamamlanan Teklif Talebi Dilimi
+
+- Authenticated urunler bayi shell icinde `/bayi/urunler` ve `/bayi/urunler/[id]` olarak calisiyor.
+- Sepet, gonderilmis teklif kaydindan ayrilan `QuoteCart`/`QuoteCartItem` modellerini kullaniyor.
+- Sepet tenant siniri `companyId + ownerUserId` unique anahtariyla korunuyor.
+- Gonderimde istemci fiyati kabul edilmiyor; aktif fiyatlar ayni `pricedAt` aninda yeniden cozuluyor.
+- Firma, musteri grubu, public scope; priority ve miktar kademesi deterministik seciliyor.
+- Teklif, kalem snapshot'lari, audit log ve sepet tuketimi tek transaction icinde.
+- Idempotency anahtari ayni gonderimin iki teklif uretmesini engelliyor.
+- Teklif detayi her zaman `id + companyId` ile okunuyor; internal notlar bayi DTO'suna girmiyor.
 
 ## Kabul Durumu
 
 - Lint: basarili.
-- Test: 10 dosya, 51 test basarili.
+- Test: 11 dosya, 53 test basarili.
 - Production build: basarili.
-- HTTP smoke: dealer dashboard ve alt ekranlar dahil basarili.
-- Browser QA: desktop/mobile body overflow yok; konsol warning/error yok.
+- HTTP smoke: urun detay ve teklif sepeti dahil basarili.
+- Browser QA: login -> urun detay -> 2 adet sepet -> teklif sonucu desktop/mobile basarili; body overflow yok.

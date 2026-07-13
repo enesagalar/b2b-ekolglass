@@ -81,15 +81,18 @@ export type CatalogViewer = {
 };
 
 export type CatalogPriceCandidate = {
+  id?: string;
   amount: { toString(): string };
   minQuantity: number;
   priceList: {
+    id?: string;
     currency: string;
     companyId?: string | null;
     customerGroupId?: string | null;
     startsAt?: Date;
     endsAt?: Date | null;
     isActive: boolean;
+    priority?: number;
   };
 };
 
@@ -128,23 +131,36 @@ export function selectCatalogPrice(
   viewer: CatalogViewer,
   now = new Date(),
 ) {
+  return selectCatalogPriceForQuantity(prices, viewer, 1, now);
+}
+
+export function selectCatalogPriceForQuantity(
+  prices: CatalogPriceCandidate[],
+  viewer: CatalogViewer,
+  quantity: number,
+  now = new Date(),
+) {
   if (!canViewCatalogPrices(viewer)) {
     return null;
   }
 
   const activePrices = prices
-    .filter((price) => isPriceListInWindow(price.priceList, now))
-    .sort((left, right) => left.minQuantity - right.minQuantity);
+    .filter((price) => isPriceListInWindow(price.priceList, now) && price.minQuantity <= quantity)
+    .sort((left, right) => {
+      const scopeRank = (price: CatalogPriceCandidate) => {
+        if (price.priceList.companyId === viewer.companyId && viewer.companyId) return 0;
+        if (price.priceList.customerGroupId === viewer.customerGroupId && viewer.customerGroupId) return 1;
+        if (!price.priceList.companyId && !price.priceList.customerGroupId) return 2;
+        return isAdminRole(viewer.role) ? 3 : 4;
+      };
+      return scopeRank(left) - scopeRank(right)
+        || (right.priceList.priority ?? 0) - (left.priceList.priority ?? 0)
+        || right.minQuantity - left.minQuantity
+        || (right.priceList.startsAt ?? new Date(0)).getTime() - (left.priceList.startsAt ?? new Date(0)).getTime()
+        || (left.priceList.id ?? left.id ?? "").localeCompare(right.priceList.id ?? right.id ?? "");
+    });
 
-  return (
-    activePrices.find((price) => price.priceList.companyId && price.priceList.companyId === viewer.companyId) ??
-    activePrices.find(
-      (price) => price.priceList.customerGroupId && price.priceList.customerGroupId === viewer.customerGroupId,
-    ) ??
-    activePrices.find((price) => !price.priceList.companyId && !price.priceList.customerGroupId) ??
-    (isAdminRole(viewer.role) ? activePrices[0] : null) ??
-    null
-  );
+  return activePrices[0] ?? null;
 }
 
 export function resolveCatalogStockSummary(stockItems: CatalogStockCandidate[], viewer: CatalogViewer) {
