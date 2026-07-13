@@ -8,32 +8,33 @@ datasource db {
 }
 
 model User {
-  id                      String                   @id @default(cuid())
-  email                   String                   @unique
-  name                    String
-  role                    String
-  status                  String                   @default("ACTIVE")
-  passwordHash            String?
-  lastLoginAt             DateTime?
-  companyId               String?
-  company                 Company?                 @relation(fields: [companyId], references: [id])
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  createdOrders           Order[]                  @relation("OrderCreatedBy")
-  approvedOrders          Order[]                  @relation("OrderApprovedBy")
-  pageRevisions           PageRevision[]
-  sessions                AuthSession[]
-  auditLogs               AuditLog[]
-  activationTokens        UserActivationToken[]
-  passwordResetTokens     UserPasswordResetToken[]
-  quoteRequests           QuoteRequest[]           @relation("QuoteRequester")
-  quoteCarts              QuoteCart[]
-  orderCarts              OrderCart[]
-  orderStatusChanges      OrderStatusHistory[]     @relation("OrderStatusChangedBy")
-  orderTransitionCommands OrderTransitionCommand[] @relation("OrderTransitionCommandCreatedBy")
-  quoteStatusChanges      QuoteStatusHistory[]     @relation("QuoteStatusChangedBy")
-  quoteOperationCommands  QuoteOperationCommand[]  @relation("QuoteOperationCommandCreatedBy")
-  quoteOfferRevisions     QuoteOfferRevision[]     @relation("QuoteOfferRevisionCreatedBy")
+  id                        String                     @id @default(cuid())
+  email                     String                     @unique
+  name                      String
+  role                      String
+  status                    String                     @default("ACTIVE")
+  passwordHash              String?
+  lastLoginAt               DateTime?
+  companyId                 String?
+  company                   Company?                   @relation(fields: [companyId], references: [id])
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  createdOrders             Order[]                    @relation("OrderCreatedBy")
+  approvedOrders            Order[]                    @relation("OrderApprovedBy")
+  pageRevisions             PageRevision[]
+  sessions                  AuthSession[]
+  auditLogs                 AuditLog[]
+  activationTokens          UserActivationToken[]
+  passwordResetTokens       UserPasswordResetToken[]
+  quoteRequests             QuoteRequest[]             @relation("QuoteRequester")
+  quoteCarts                QuoteCart[]
+  orderCarts                OrderCart[]
+  orderStatusChanges        OrderStatusHistory[]       @relation("OrderStatusChangedBy")
+  orderTransitionCommands   OrderTransitionCommand[]   @relation("OrderTransitionCommandCreatedBy")
+  quoteStatusChanges        QuoteStatusHistory[]       @relation("QuoteStatusChangedBy")
+  quoteOperationCommands    QuoteOperationCommand[]    @relation("QuoteOperationCommandCreatedBy")
+  quoteOfferRevisions       QuoteOfferRevision[]       @relation("QuoteOfferRevisionCreatedBy")
+  integrationReplayCommands IntegrationReplayCommand[]
 
   @@index([companyId, role, status])
 }
@@ -779,29 +780,48 @@ model IntegrationLog {
 }
 
 model IntegrationOutboxEvent {
-  id             String           @id @default(cuid())
+  id             String                     @id @default(cuid())
   topic          String
   eventType      String
   aggregateType  String
   aggregateId    String
   providerCode   String?
   payload        String
-  idempotencyKey String           @unique
-  status         String           @default("PENDING")
-  attempts       Int              @default(0)
-  maxAttempts    Int              @default(8)
-  availableAt    DateTime         @default(now())
+  idempotencyKey String                     @unique
+  status         String                     @default("PENDING")
+  attempts       Int                        @default(0)
+  maxAttempts    Int                        @default(8)
+  availableAt    DateTime                   @default(now())
   lockedAt       DateTime?
   leaseExpiresAt DateTime?
   lockToken      String?
   processedAt    DateTime?
   lastError      String?
   logs           IntegrationLog[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  replayCommands IntegrationReplayCommand[]
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
 
   @@index([status, availableAt, createdAt])
   @@index([status, leaseExpiresAt])
   @@index([topic, status, availableAt])
   @@index([aggregateType, aggregateId, createdAt])
+}
+
+model IntegrationReplayCommand {
+  id            String                 @id @default(cuid())
+  requestId     String                 @unique
+  requestHash   String
+  outboxEventId String
+  outboxEvent   IntegrationOutboxEvent @relation(fields: [outboxEventId], references: [id], onDelete: Restrict)
+  actorUserId   String
+  actor         User                   @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  operation     String
+  fromStatus    String
+  resultStatus  String
+  reason        String?
+  createdAt     DateTime               @default(now())
+
+  @@index([outboxEventId, createdAt])
+  @@index([actorUserId, createdAt])
 }

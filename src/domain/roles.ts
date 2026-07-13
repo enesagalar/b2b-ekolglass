@@ -44,6 +44,8 @@ export const permissions = [
   "order.cancel.fulfillment",
   "order.track",
   "report.read",
+  "integration.read",
+  "integration.replay",
 ] as const;
 
 export type Permission = (typeof permissions)[number];
@@ -79,6 +81,8 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "order.cancel.fulfillment",
     "order.track",
     "report.read",
+    "integration.read",
+    "integration.replay",
   ],
   SALES_MANAGER: [
     "admin.dashboard.read",
@@ -100,6 +104,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "order.cancel",
     "order.track",
     "report.read",
+    "integration.read",
   ],
   SALES_STAFF: [
     "admin.dashboard.read",

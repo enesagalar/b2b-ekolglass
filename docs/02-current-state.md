@@ -100,6 +100,9 @@ Son guncelleme: 2026-07-13
 - City Lojistik adapter siniri, canli API bilgisi bekliyor.
 - Lease/retry/dead-letter destekli transactional entegrasyon outbox'i.
 - Siparis ve teklif transaction'larindan versiyonlu outbox olaylari.
+- Permission kontrollu `/admin/entegrasyonlar` operasyon ekrani.
+- Idempotent ve audit log'lu dead-letter replay/retry-now komutlari.
+- Backlog, expired lease, dead-letter ve isleyicisiz topic durumlarini kapsayan outbox health metrigi.
 
 ## En Onemli Eksikler
 
@@ -112,7 +115,7 @@ Son guncelleme: 2026-07-13
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
 3. Teklif/siparis akisinda kalanlar:
-   - SMTP teslim hatti hazir; outbox retry/dead-letter admin operasyon ekrani eksik.
+   - SMTP teslim ve outbox operasyon hatti hazir; production credential, scheduler ve alarm kanali kurulumu bekliyor.
 
 4. Entegrasyonlar hazirlik seviyesinde:
    - City Lojistik canli API dokumani gerekli.
@@ -125,11 +128,11 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: outbox operasyon ekrani, replay yetkisi ve backlog alarmlari.
+Faz 3.3 devam edecek: login rate-limit sertlestirmesi ve production operasyon runbook'u.
 
-UX/IA konsolidasyonu ve tekliften siparise donusum tamamlandi. Siradaki adim entegrasyon outbox sinirini ve transactional bildirim adapterini kurmaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
+UX/IA konsolidasyonu, tekliften siparise donusum, transactional e-posta ve outbox operasyon siniri tamamlandi. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` ve `docs/architecture/transactional-email-outbox.md` icindedir.
 
 Siradaki hedefler:
 
-- Outbox admin retry/dead-letter operasyon ekrani.
-- E-posta backlog/DEAD gozlemlenebilirligi ve production scheduler runbook'u.
+- E-posta + IP anahtarli, indeksli login rate-limit modeli.
+- Production SMTP scheduler, alarm kanali ve secret rotasyon runbook'u.

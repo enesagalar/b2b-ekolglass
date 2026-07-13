@@ -30,6 +30,16 @@ Production icin `EMAIL_PROVIDER=smtp`, `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, o
 
 Bilinen placeholder secret degerleri runtime tarafindan reddedilir. `CREDENTIAL_LINK_SECRET` rotasyonu acik credential baglantilarini gecersizlestirdigi icin en uzun token suresi olan 48 saatlik kontrollu gecis penceresi ve davet yeniden uretimiyle yapilir; production'da `AUTH_SECRET` fallback'i kullanilmaz.
 
-## Sonraki Operasyon Dilimi
+## Admin Operasyon Sozlesmesi
 
-`/admin/entegrasyonlar` ekraninda PENDING/RETRY/DEAD sayilari, topic ve hata kodu bazli filtre, yetkili replay ve backlog alarm esikleri gorunur hale getirilecektir. Ham payload, credential ve tam provider cevabi arayuzde gosterilmeyecektir.
+- `/admin/entegrasyonlar` yalniz `integration.read` yetkisiyle kuyruk ozeti ve guvenli olay metadata'si gosterir.
+- Ham payload, lock tokeni, credential ve tam provider cevabi admin sorgusuna alinmaz.
+- `DEAD` replay yalniz `integration.replay` yetkisi ve en az 10 karakterlik operasyon gerekcesiyle calisir; attempt sayaci sifirlanir.
+- `RETRY` icin `Simdi dene` komutu attempt ve `lastError` kanitini korur, yalniz `availableAt` degerini erkene alir.
+- Her komut UUID request ID, canonical request hash ve event status/attempt/updatedAt compare-and-swap kontroluyle korunur.
+- Komut ledger'i ve audit kaydi event guncellemesiyle ayni transaction'da yazilir.
+- Aktif adapteri olmayan topic replay edilemez; provider kapaliyken UI fail-closed davranir.
+
+## Saglik ve Alarm Sozlesmesi
+
+Public `/api/health`, ham DB hatasi sizdirmadan `ok` veya `degraded` dondurur. Gecikmis PENDING/RETRY kaydi, expired PROCESSING lease, DEAD kaydi veya aktif worker'i olmayan due topic degraded sebebidir. Esik `OUTBOX_BACKLOG_THRESHOLD_MINUTES` ile ayarlanir; bos kuyruk `empty` olarak ayri raporlanir.

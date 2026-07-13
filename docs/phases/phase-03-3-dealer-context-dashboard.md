@@ -1,6 +1,6 @@
 # Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
 
-Durum: Devam ediyor - portal, urun detayi ve teklif talebi dilimleri tamamlandi.
+Durum: Devam ediyor - portal, ticaret, transactional e-posta ve entegrasyon operasyon dilimleri tamamlandi.
 
 ## Hedef
 
@@ -37,11 +37,10 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 
 ## Siradaki Dilim
 
-1. Siparis ve teklif liste sayfalama/filtreleri eklenecek.
-2. Company-scoped siparis detay sayfasi eklenecek.
-3. Server-side fiyatlanan taslak siparis ve delivery address secimi uygulanacak.
-4. Admin teklif inceleme/fiyatlandirma/durum gecis operasyonu eklenecek.
-5. Transactional aktivasyon e-posta adapteri uygulandi; production SMTP ve scheduler kurulumu deployment adimidir.
+1. Login rate-limit e-posta + IP anahtarli, indeksli modele tasinacak.
+2. Siparis ve teklif liste sayfalama/filtreleri tamamlanacak.
+3. Production SMTP scheduler, alarm kanali ve secret rotasyon runbook'u yazilacak.
+4. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
 
 ## Tamamlanan Teklif Talebi Dilimi
 
@@ -54,10 +53,20 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 - Idempotency anahtari ayni gonderimin iki teklif uretmesini engelliyor.
 - Teklif detayi her zaman `id + companyId` ile okunuyor; internal notlar bayi DTO'suna girmiyor.
 
+## Tamamlanan Entegrasyon Operasyon Dilimi
+
+- `/admin/entegrasyonlar` yalniz `integration.read` yetkisiyle erisilebilir.
+- Replay islemleri ayri `integration.replay` yetkisi, stale-state CAS ve idempotent command ledger ile korunur.
+- `DEAD` olaylar gerekceyle yeniden acilir; `RETRY` olaylar attempt ve son hata kanitini kaybetmeden erkene alinir.
+- Admin DTO'su payload, lock tokeni ve ham provider cevabini secmez.
+- Backlog, dead-letter, expired lease ve isleyicisiz topic health durumunu `degraded` yapar.
+- Admin shell tum ic rollerde permission bazli menu uretir.
+
 ## Kabul Durumu
 
 - Lint: basarili.
-- Test: 11 dosya, 53 test basarili.
+- Test: 31 dosya, 143 test basarili.
 - Production build: basarili.
 - HTTP smoke: urun detay ve teklif sepeti dahil basarili.
 - Browser QA: login -> urun detay -> 2 adet sepet -> teklif sonucu desktop/mobile basarili; body overflow yok.
+- Entegrasyon QA: admin entegrasyon rotasi, permission-aware menu ve 390x844 responsive yerlesim dogrulandi.

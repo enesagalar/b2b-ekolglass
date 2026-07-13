@@ -4,17 +4,28 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
+Faz 3.3 - Kimlik dogrulama rate-limit sertlestirmesi ve production operasyon hazirligi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Outbox dead-letter/retry gorunumu icin permission kontrollu admin entegrasyon ekrani kurulacak.
-2. E-posta outbox backlog/DEAD metrikleri health ve operasyon alarmina baglanacak.
-3. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-4. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
+1. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+2. Production SMTP credential, scheduler ve alarm esikleri deployment runbook'una baglanacak.
+3. City Lojistik canli API sozlesmesi temin edilirse adapter mapping ve sandbox akisi uygulanacak.
+4. Bayi siparis/teklif listelerine filtre ve sayfalama eklenecek.
 5. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 entegrasyon operasyonlari dilimi tamamlandi:
+
+- `/admin/entegrasyonlar` kuyruk sagligi, topic/durum filtreleri, sayfalama ve guvenli olay ozetleriyle acildi.
+- Admin navigasyonu role/permission bazli filtreleniyor; entegrasyon okuma ve replay yetkileri ayrildi.
+- `DEAD` replay gerekceli, `RETRY` hizlandirma ise attempt ve hata kanitini koruyacak sekilde uygulandi.
+- Replay komutlari UUID istek anahtari, canonical hash ve compare-and-swap ile idempotent hale getirildi.
+- Ham payload, lock tokeni ve provider cevabi admin sorgularina alinmiyor.
+- Gecikmis olay, suresi dolmus lease, dead-letter ve isleyicisiz topic durumlari public health sonucunu `degraded` yapiyor.
+- Outbox durum/attempt/lease invariantlari SQLite `CHECK` constraint'leriyle korundu.
+- 31 test dosyasi, 143 test, production build ve admin entegrasyon smoke/browser akisi dogrulandi.
 
 Faz 3.3 transactional e-posta teslim dilimi tamamlandi:
 

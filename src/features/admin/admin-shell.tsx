@@ -28,12 +28,18 @@ import type { LucideIcon } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 
 import { logout } from "@/features/auth/actions";
+import {
+  hasPermission,
+  isKnownRole,
+  type Permission,
+} from "@/domain/roles";
 
 type AdminNavItem = {
   label: string;
   href?: string;
   icon: LucideIcon;
   description: string;
+  permission: Permission;
   soon?: boolean;
 };
 
@@ -51,18 +57,21 @@ const navigationSections: AdminNavSection[] = [
         href: "/admin",
         icon: LayoutDashboard,
         description: "Operasyon merkezi",
+        permission: "admin.dashboard.read",
       },
       {
         label: "Bayi Başvuruları",
         href: "/admin/bayi-basvurulari",
         icon: UsersRound,
         description: "Onay ve inceleme",
+        permission: "dealer.application.review",
       },
       {
         label: "Firmalar",
         href: "/admin/firmalar",
         icon: Building2,
         description: "Bayi hesapları",
+        permission: "company.manage",
       },
     ],
   },
@@ -74,11 +83,13 @@ const navigationSections: AdminNavSection[] = [
         href: "/admin/urunler",
         icon: PackageSearch,
         description: "Katalog ve teknik veri",
+        permission: "product.read",
       },
       {
         label: "Stok",
         icon: Boxes,
         description: "Depo görünürlüğü",
+        permission: "stock.read.detailed",
         soon: true,
       },
       {
@@ -86,18 +97,21 @@ const navigationSections: AdminNavSection[] = [
         href: "/admin/urunler/fiyat-listeleri",
         icon: FileText,
         description: "Bayi fiyatları",
+        permission: "price.read",
       },
       {
         label: "Teklifler",
         href: "/admin/teklifler",
         icon: ClipboardCheck,
         description: "Satış akışı",
+        permission: "quote.review",
       },
       {
         label: "Siparişler",
         href: "/admin/siparisler",
         icon: DatabaseZap,
         description: "Onay ve durumlar",
+        permission: "order.track",
       },
     ],
   },
@@ -108,18 +122,21 @@ const navigationSections: AdminNavSection[] = [
         label: "Sevkiyat",
         icon: Truck,
         description: "Kargo ve takip",
+        permission: "order.ship",
         soon: true,
       },
       {
         label: "Entegrasyonlar",
+        href: "/admin/entegrasyonlar",
         icon: Gauge,
-        description: "City/ERP/MES",
-        soon: true,
+        description: "Kuyruk ve teslimat",
+        permission: "integration.read",
       },
       {
         label: "Raporlar",
         icon: BarChart3,
         description: "Satış ve stok",
+        permission: "report.read",
         soon: true,
       },
     ],
@@ -132,19 +149,31 @@ const navigationSections: AdminNavSection[] = [
         href: "/admin/icerik",
         icon: Layers3,
         description: "Banner ve içerik",
+        permission: "admin.content.manage",
       },
       {
         label: "Ayarlar",
         icon: Settings,
         description: "Sistem yönetimi",
+        permission: "admin.dashboard.read",
         soon: true,
       },
     ],
   },
 ];
 
-function getActiveItem(pathname: string) {
-  const items = navigationSections.flatMap((section) => section.items);
+function getVisibleNavigationSections(role: string) {
+  if (!isKnownRole(role)) return [];
+  return navigationSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => hasPermission(role, item.permission)),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+function getActiveItem(pathname: string, role: string) {
+  const items = getVisibleNavigationSections(role).flatMap((section) => section.items);
 
   return (
     items
@@ -160,9 +189,11 @@ function getActiveItem(pathname: string) {
 
 function SidebarContent({
   pathname,
+  role,
   onNavigate,
 }: {
   pathname: string;
+  role: string;
   onNavigate?: () => void;
 }) {
   return (
@@ -185,7 +216,7 @@ function SidebarContent({
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <div className="grid gap-5">
-          {navigationSections.map((section) => (
+          {getVisibleNavigationSections(role).map((section) => (
             <section key={section.label}>
               <p className="px-2 text-xs font-semibold uppercase text-slate-500">
                 {section.label}
@@ -287,13 +318,16 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const activeItem = useMemo(() => getActiveItem(pathname), [pathname]);
+  const activeItem = useMemo(
+    () => getActiveItem(pathname, user.role),
+    [pathname, user.role],
+  );
   const ActiveIcon = activeItem.icon;
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[272px] lg:block">
-        <SidebarContent pathname={pathname} />
+        <SidebarContent pathname={pathname} role={user.role} />
       </aside>
 
       {isMobileMenuOpen ? (
@@ -317,6 +351,7 @@ export function AdminShell({
             </div>
             <SidebarContent
               pathname={pathname}
+              role={user.role}
               onNavigate={() => setIsMobileMenuOpen(false)}
             />
           </aside>

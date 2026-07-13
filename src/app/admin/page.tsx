@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { getStatusLabel } from "@/domain/statuses";
+import { getOutboxHealth } from "@/integrations/outbox-health";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -45,9 +46,7 @@ async function getDashboardData() {
       where: { status: { in: ["LOW_STOCK", "OUT_OF_STOCK"] } },
     }),
     prisma.order.count({ where: { status: "READY_FOR_SHIPMENT" } }),
-    prisma.integrationOutboxEvent.count({
-      where: { status: { in: ["RETRY", "DEAD"] } },
-    }),
+    getOutboxHealth(),
     prisma.dealerApplication.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -72,6 +71,11 @@ async function getDashboardData() {
   ]);
 
   return {
+    integrationWarnings:
+      integrationWarnings.dead +
+      integrationWarnings.overdue +
+      integrationWarnings.expiredLeases +
+      integrationWarnings.unsupportedReady,
     metrics: [
       {
         label: "Bekleyen bayi",
@@ -110,10 +114,14 @@ async function getDashboardData() {
       },
       {
         label: "Entegrasyon uyarısı",
-        value: integrationWarnings,
-        href: undefined,
+        value:
+          integrationWarnings.dead +
+          integrationWarnings.overdue +
+          integrationWarnings.expiredLeases +
+          integrationWarnings.unsupportedReady,
+        href: "/admin/entegrasyonlar",
         icon: AlertTriangle,
-        tone: integrationWarnings > 0 ? "red" : "teal",
+        tone: integrationWarnings.status === "degraded" ? "red" : "teal",
       },
     ],
     recentApplications,

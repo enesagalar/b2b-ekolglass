@@ -176,6 +176,19 @@ assert(
 );
 
 const adminHtml = await adminResponse.text();
+const adminIntegrationsResponse = await request("/admin/entegrasyonlar", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  adminIntegrationsResponse.status === 200,
+  `Authenticated admin integrations failed with ${adminIntegrationsResponse.status}`,
+);
+const adminIntegrationsHtml = await adminIntegrationsResponse.text();
+assert(
+  adminIntegrationsHtml.includes("Entegrasyon kuyruğu") &&
+    adminIntegrationsHtml.includes('href="/admin/entegrasyonlar"'),
+  "Admin integrations page or navigation not rendered",
+);
 const adminOrdersResponse = await request("/admin/siparisler", {
   headers: { Cookie: serializeCookies(cookieJar) },
 });
@@ -945,6 +958,7 @@ console.log(
         "login-form",
         "admin-login",
         "authenticated-admin-dashboard",
+        "authenticated-admin-integrations",
         "authenticated-admin-orders",
         "authenticated-admin-order-detail",
         "authenticated-admin-quotes",
