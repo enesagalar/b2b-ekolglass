@@ -290,7 +290,10 @@ model QuoteRequest {
   hasUnpricedItems      Boolean                 @default(false)
   submittedAt           DateTime?
   pricedAt              DateTime?
-  idempotencyKey        String?                 @unique
+  idempotencyKey        String?
+  requestHash           String?
+  sourceCartId          String?
+  sourceCartVersion     Int?
   items                 QuoteRequestItem[]
   version               Int                     @default(1)
   statusHistory         QuoteStatusHistory[]
@@ -301,6 +304,7 @@ model QuoteRequest {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
 
+  @@unique([companyId, idempotencyKey])
   @@index([companyId, status, createdAt])
   @@index([companyId, createdAt])
   @@index([requesterUserId, status, createdAt])
@@ -400,6 +404,7 @@ model QuoteCart {
   ownerUserId String
   ownerUser   User            @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
   items       QuoteCartItem[]
+  version     Int             @default(1)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

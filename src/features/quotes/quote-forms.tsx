@@ -19,10 +19,12 @@ export function AddToQuoteCartForm({ productId, compact = false }: { productId: 
   );
 }
 
-export function SubmitQuoteForm({ user, company, idempotencyKey }: { user: { name: string; email: string }; company: { phone: string }; idempotencyKey: string }) {
+export function SubmitQuoteForm({ user, company, cartId, cartVersion, idempotencyKey }: { user: { name: string; email: string }; company: { phone: string }; cartId: string; cartVersion: number; idempotencyKey: string }) {
   const [state, action, pending] = useActionState(submitQuoteCartAction, {});
   return (
     <form action={action} className="grid gap-4">
+      <input type="hidden" name="cartId" value={cartId}/>
+      <input type="hidden" name="cartVersion" value={cartVersion}/>
       <input type="hidden" name="idempotencyKey" value={idempotencyKey}/>
       <div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-1.5 text-xs font-semibold text-slate-700">Yetkili adı<input required name="requesterName" defaultValue={user.name} className="h-11 rounded-md border border-slate-300 px-3 text-sm font-normal"/></label><label className="grid gap-1.5 text-xs font-semibold text-slate-700">E-posta<input required type="email" name="requesterEmail" defaultValue={user.email} className="h-11 rounded-md border border-slate-300 px-3 text-sm font-normal"/></label></div>
       <div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-1.5 text-xs font-semibold text-slate-700">Telefon<input name="requesterPhone" defaultValue={company.phone} className="h-11 rounded-md border border-slate-300 px-3 text-sm font-normal"/></label><label className="grid gap-1.5 text-xs font-semibold text-slate-700">İstenen teslim tarihi<input type="date" name="desiredDeliveryDate" className="h-11 rounded-md border border-slate-300 px-3 text-sm font-normal"/></label></div>

@@ -46,6 +46,7 @@ export async function removeQuoteCartItemAction(formData: FormData) {
 
 export async function submitQuoteCartAction(_state: QuoteActionState, formData: FormData): Promise<QuoteActionState> {
   const parsed = quoteSubmitSchema.safeParse({
+    cartId: formData.get("cartId"), cartVersion: formData.get("cartVersion"),
     requesterName: formData.get("requesterName"), requesterEmail: formData.get("requesterEmail"), requesterPhone: formData.get("requesterPhone"),
     desiredDeliveryDate: formData.get("desiredDeliveryDate"), notes: formData.get("notes"), idempotencyKey: formData.get("idempotencyKey"),
   });

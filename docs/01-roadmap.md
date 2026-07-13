@@ -127,18 +127,18 @@ Referans:
 
 - `docs/phases/phase-03-3-dealer-context-dashboard.md`
 
-## Faz 3.5 - Birlesik Kurumsal Site, B2B Gateway ve CMS
+## Faz 3.5 - Bagimsiz B2B Portali ve Kurumsal Site Gecis Baglantisi
 
-Durum: Mimari hedef tanimlandi; implementasyon baslamadi.
+Durum: Sistem siniri kesinlesti; host ve production dagitim ayrintilari bekliyor.
 
 Kapsam:
 
-- `www.ekolglass.com` marka gateway ve kurumsal site.
-- `portal.ekolglass.com` B2B yuzeyi.
-- Tek admin/CMS, medya kutuphanesi ve veritabani.
-- Site/locale/path kapsamli Page ve SiteSetting modeli.
-- Navigation, redirect, SEO, preview, publish ve revision akislari.
-- Mevcut `.html`, `/en/**` ve anchor URL'leri icin SEO redirect plani.
+- Mevcut `www.ekolglass.com`, hostingi, CMS'si ve adminiyle korunacak.
+- Kurumsal sitenin masaustu ve mobil navigasyonuna `Bayi Portali` butonu eklenecek.
+- B2B uygulamasi `portal.ekolglass.com` veya kesinlesecek diger subdomain'de bagimsiz yayinlanacak.
+- B2B admini, veritabani, CMS ayarlari ve entegrasyonlari kurumsal sistemden izole kalacak.
+- DNS, TLS, environment, backup, rollback, robots/noindex ve cross-domain gecisleri dogrulanacak.
+- Split-screen, root gateway, ortak CMS ve kurumsal siteyi yeniden kurma bu fazin kapsami disindadir.
 
 Mimari referans:
 

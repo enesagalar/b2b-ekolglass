@@ -1,107 +1,62 @@
-# Birlesik EkolGlass Web, B2B ve CMS Mimarisi
+# EkolGlass Kurumsal Site ve Bagimsiz B2B Portal Siniri
 
-Tarih: 2026-07-11
+Tarih: 2026-07-13
 
-## Urun Vizyonu
+Durum: Onceki birlesik platform karari kullanici karariyla gecersiz kilindi.
 
-EkolGlass tek bir dijital platform olarak yonetilecek. Ziyaretci ana alan adina geldiginde iki ana yolu ayni marka deneyiminde gorecek:
+## Karar
 
-1. Kurumsal site: cozumler, uretim, katalog, galeri, hakkimizda, iletisim ve teklif.
-2. B2B portal: bayi girisi, firma katalog/fiyatlari, teklifler, siparisler, stok ve sevkiyat.
+`www.ekolglass.com` mevcut hosting, sayfa yapisi, CMS ve admin paneliyle calismaya devam eder. Bu depo kurumsal siteyi yeniden kurmaz ve kurumsal sitenin veritabanini ya da yonetim panelini devralmaz.
 
-Her iki yuzey ayni admin paneli, CMS, medya kutuphanesi, kullanici sistemi ve veritabani tarafindan yonetilecek.
+B2B uygulamasi bagimsiz deploy edilen bir portal olarak yayinlanir. Calisma varsayimi `portal.ekolglass.com` adresidir; `b2b.ekolglass.com` secenegi DNS kurulumu oncesinde kesinlestirilecektir.
 
-## Hedef Alan Adi ve Route Modeli
+Kurumsal sitedeki tek zorunlu degisiklik, masaustu ve mobil navigasyonda gorunur bir `Bayi Portali` butonudur. Ana sayfa split-screen, gateway veya iki yol secim ekranina donusturulmez.
+
+## Sistem Sinirlari
 
 ```text
 www.ekolglass.com
-|- /                       Marka gateway + indekslenebilir faaliyet ozeti
-|- /kurumsal               Kurumsal ana sayfa
-|- /cozumler
-|- /cozumler/[slug]
-|- /uretim
-|- /e-katalog              Kurumsal katalog
-|- /galeri
-|- /hakkimizda
-|- /iletisim
-`- /teklif
+|- mevcut kurumsal sayfalar
+|- mevcut kurumsal CMS/admin
+`- Bayi Portali butonu -> https://portal.ekolglass.com
 
 portal.ekolglass.com
-|- /                       Bayi portal dashboard
-|- /giris
-|- /katalog                Firma/fiyat kontrollu B2B katalog
-|- /teklifler
-|- /siparisler
-`- /sevkiyatlar
-
-Ayni uygulama icinde ilk asama
-`- /admin                  Ortak CMS ve operasyon paneli
+|- public urun kesfi ve bayi girisi
+|- bayi katalog, teklif, siparis ve hesap alani
+|- B2B uygulamasina ait /admin
+`- B2B veritabani, CMS ayarlari ve entegrasyonlar
 ```
 
-`admin.ekolglass.com` ileride ayrilabilir. Ilk geciste mevcut `/admin` cookie ve auth sinirini tasimamak daha dusuk risklidir.
+- Kurumsal site ile B2B uygulamasi ortak session veya cookie kullanmaz.
+- Kurumsal admin ile B2B admin arasinda ortak yetkilendirme ya da yonetim ekrani yoktur.
+- B2B CMS yalniz B2B portalina ait banner, katalog, duyuru ve operasyon ayarlarini yonetir.
+- Kurumsal sitenin canonical, sitemap, legacy URL ve SEO davranisi degistirilmez.
+- Portal aktivasyon, bayi ve admin rotalari `noindex` olur.
 
-## Gateway Tasarim Karari
+## Faz 3.5 Teslim Kapsami
 
-- Koku yalniz iki buyuk butondan olusan bos bir secim ekrani yapmayacagiz.
-- Ilk viewportta EkolGlass markasi, gercek uretim/cam gorseli ve iki belirgin yol olacak.
-- Kurumsal yol "EkolGlass'i ve uretim cozumlerini kesfet" amacini tasiyacak.
-- B2B yol "Bayi girisi, fiyat, teklif ve siparis operasyonu" amacini tasiyacak.
-- Kisa marka/faaliyet ozeti indekslenebilir kalacak; mevcut ana sayfanin SEO konu otoritesi tamamen kaybedilmeyecek.
-- Mobilde iki yol sirali ve tam okunabilir olacak; masaustunde iki yuzey ayni sahneyi paylasacak.
+1. Kesin portal hostunun secilmesi.
+2. B2B uygulamasinin bagimsiz production ortamina alinmasi.
+3. DNS, TLS, environment, backup ve rollback prosedurlerinin dogrulanmasi.
+4. Kurumsal siteye masaustu ve mobil `Bayi Portali` butonunun eklenmesi.
+5. Portal ile kurumsal site arasinda geri donus baglantilarinin kurulmasi.
+6. B2B admin ve bayi route'larinin rol izolasyonunun E2E test edilmesi.
+7. Portal robots/noindex ve sitemap sinirlarinin dogrulanmasi.
+8. Ana site butonu, login, aktivasyon ve mobil gecis icin smoke testlerinin calistirilmasi.
 
-## Canli Site Icerik Envanteri
+## Kabul Kriterleri
 
-2026-07-11 tarihinde `www.ekolglass.com` uzerinde gorulen ana icerik alanlari:
-
-- "Camin Ekolu" marka mesaji.
-- Otomobil, otobus, karavan, yat ve ozel uretim cozumleri.
-- Uretim gucu ve proses anlatimi.
-- E-katalog ve PDF katalog.
-- Fabrika videosu ve galeri.
-- Teklif ve iletisim akislari.
-- Turkce ve Ingilizce yuzeyler.
-
-Bu icerikler yeniden yazilmadan once mevcut URL, medya, form hedefi, analytics ve Search Console envanteri alinacak.
-
-## CMS Hedefi
-
-Mevcut `Page`, `PageBlock`, `PageRevision`, `MediaAsset` ve `SiteSetting` modelleri additive migration ile genisletilecek:
-
-- `siteKey/channel`, locale ve tam path.
-- Sayfa tipi, template ve parent/navigation yapisi.
-- Canonical, robots, OG gorseli, hreflang ve structured data.
-- Menu, footer, redirect ve reusable content modelleri.
-- Tum aktif bloklari render eden blok registry.
-- Preview, publish/unpublish, revision restore ve planli yayin.
-- Medya MIME, boyut, storage key/provider, focal point ve varyant bilgileri.
-- Site/locale kapsamli ayarlar.
-
-Mevcut tablolar yikici sekilde yeniden adlandirilmayacak; once yeni alanlar eklenip veri tasinacak.
-
-## SEO ve Cutover Kurallari
-
-- `www` ve apex alan adlarindan biri canonical secilecek; digeri 308 yonlendirilecek.
-- `hakkimizda.html`, `teklifal.html`, `katalog.html`, cozum sayfalari ve `/en/**` icin birebir redirect haritasi cikacak.
-- Mevcut `/#services`, `/#production`, `/#catalog`, `/#gallery`, `/#contact` anchor hedefleri gecis boyunca korunacak.
-- Kurumsal sayfalar sitemap'e girecek; portal, aktivasyon ve admin `noindex` olacak.
-- Mevcut `/katalog` B2B sozlesmesi cutover oncesi degistirilmeyecek.
-- Kök gateway, redirectler, canonical, sitemap ve robots ayni release icinde acilacak.
-
-## Fazli Uygulama
-
-1. URL, SEO, medya, form ve analytics envanteri.
-2. Additive CMS schema ve navigation/redirect modelleri.
-3. CMS renderer, preview, publish ve medya yonetimi.
-4. Kurumsal icerigin `/kurumsal/**` altinda paralel kurulumu.
-5. B2B route'larinin portal host sozlesmesine hazirlanmasi.
-6. Gateway ve legacy redirect cutover'u.
-7. 404, canonical, index coverage ve form conversion izlemesi.
+- Mevcut kurumsal site ve admin kesintisiz calisir.
+- Kurumsal sitedeki buton secilen HTTPS portal hostuna gider.
+- B2B uygulamasi ve B2B admini bagimsiz deploy edilir.
+- Bayi hesabi B2B admin alanina erisemez.
+- Kurumsal ve B2B oturumlari birbirine sizmaz.
+- Ortak CMS, ortak medya kutuphanesi veya ortak veritabani kabul edilmis varsayim degildir.
+- Ana site, portal ve admin gecisleri masaustu ve mobil E2E testleriyle kanitlanir.
 
 ## Acik Kararlar
 
-- Canonical host `www.ekolglass.com` mu, `ekolglass.com` mu olacak?
-- B2B kesin hedefi `portal.ekolglass.com` mu, `b2b.ekolglass.com` mu olacak?
-- Kurumsal sitenin mevcut hosting ve medya dosyalari nasil devralinacak?
-- Transactional e-posta saglayicisi hangisi olacak?
+- Kesin host: `portal.ekolglass.com` veya `b2b.ekolglass.com`.
+- B2B admini portal altinda `/admin` olarak mi, ayri bir admin subdomaininde mi yayinlanacak?
 
-Varsayilan teknik yon: `www` gateway/kurumsal, `portal` B2B, `/admin` ortak yonetim.
+Varsayilan teknik yon: `portal.ekolglass.com` B2B uygulamasi, `portal.ekolglass.com/admin` B2B operasyon paneli.

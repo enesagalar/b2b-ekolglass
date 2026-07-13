@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { buildCatalogPriceWhere } from "@/data/catalog-access";
 import { selectCatalogPriceForQuantity, type CatalogViewer } from "@/domain/catalog";
@@ -26,11 +26,16 @@ function viewerFor(actor: DealerActor): CatalogViewer {
   return { role: actor.role, companyId: actor.companyId, customerGroupId: actor.customerGroupId };
 }
 
+function canonicalText(value?: string) {
+  return value?.normalize("NFC").replace(/\r\n?/g, "\n").trim() || null;
+}
+
 export function getQuoteCart(actor: DealerActor) {
   return prisma.quoteCart.findUnique({
     where: { companyId_ownerUserId: { companyId: actor.companyId, ownerUserId: actor.userId } },
     select: {
       id: true,
+      version: true,
       items: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -64,53 +69,87 @@ export async function addQuoteCartProduct(actor: DealerActor, input: { productId
       select: { id: true },
     });
     const existing = await tx.quoteCartItem.findUnique({ where: { cartId_productId: { cartId: cart.id, productId: product.id } }, select: { id: true, quantity: true } });
-    if (existing) {
-      return tx.quoteCartItem.update({ where: { id: existing.id }, data: { quantity: Math.min(999, existing.quantity + input.quantity), notes: input.notes ?? undefined } });
-    }
-    return tx.quoteCartItem.create({ data: { cartId: cart.id, productId: product.id, quantity: input.quantity, notes: input.notes } });
+    const item = existing
+      ? await tx.quoteCartItem.update({ where: { id: existing.id }, data: { quantity: Math.min(999, existing.quantity + input.quantity), notes: input.notes ?? undefined } })
+      : await tx.quoteCartItem.create({ data: { cartId: cart.id, productId: product.id, quantity: input.quantity, notes: input.notes } });
+    await tx.quoteCart.update({ where: { id: cart.id }, data: { version: { increment: 1 } } });
+    return item;
   });
 }
 
 export async function updateQuoteCartProduct(actor: DealerActor, input: { itemId: string; quantity: number; notes?: string }) {
   return prisma.$transaction(async (tx) => {
     await assertActiveDealer(tx, actor);
-    const item = await tx.quoteCartItem.findFirst({ where: { id: input.itemId, cart: { companyId: actor.companyId, ownerUserId: actor.userId } }, select: { id: true } });
+    const item = await tx.quoteCartItem.findFirst({ where: { id: input.itemId, cart: { companyId: actor.companyId, ownerUserId: actor.userId } }, select: { id: true, cartId: true } });
     if (!item) throw new Error("Sepet kalemi bulunamadı.");
-    return tx.quoteCartItem.update({ where: { id: item.id }, data: { quantity: input.quantity, notes: input.notes } });
+    const updated = await tx.quoteCartItem.update({ where: { id: item.id }, data: { quantity: input.quantity, notes: input.notes } });
+    await tx.quoteCart.update({ where: { id: item.cartId }, data: { version: { increment: 1 } } });
+    return updated;
   });
 }
 
 export async function removeQuoteCartProduct(actor: DealerActor, itemId: string) {
   return prisma.$transaction(async (tx) => {
     await assertActiveDealer(tx, actor);
-    const item = await tx.quoteCartItem.findFirst({ where: { id: itemId, cart: { companyId: actor.companyId, ownerUserId: actor.userId } }, select: { id: true } });
+    const item = await tx.quoteCartItem.findFirst({ where: { id: itemId, cart: { companyId: actor.companyId, ownerUserId: actor.userId } }, select: { id: true, cartId: true } });
     if (!item) throw new Error("Sepet kalemi bulunamadı.");
-    return tx.quoteCartItem.delete({ where: { id: item.id } });
+    const removed = await tx.quoteCartItem.delete({ where: { id: item.id } });
+    await tx.quoteCart.update({ where: { id: item.cartId }, data: { version: { increment: 1 } } });
+    return removed;
   });
 }
 
-export async function submitQuoteCart(actor: DealerActor, input: { requesterName: string; requesterEmail: string; requesterPhone?: string; desiredDeliveryDate?: string; notes?: string; idempotencyKey: string }) {
+export async function submitQuoteCart(actor: DealerActor, input: { cartId: string; cartVersion: number; requesterName: string; requesterEmail: string; requesterPhone?: string; desiredDeliveryDate?: string; notes?: string; idempotencyKey: string }) {
+  const requesterName = canonicalText(input.requesterName)!;
+  const requesterEmail = canonicalText(input.requesterEmail)!.toLowerCase();
+  const requesterPhone = canonicalText(input.requesterPhone);
+  const desiredDeliveryDate = canonicalText(input.desiredDeliveryDate);
+  const notes = canonicalText(input.notes);
+  const requestHash = createHash("sha256").update(JSON.stringify({
+    schemaVersion: 1,
+    operation: "QUOTE_CART_SUBMIT",
+    companyId: actor.companyId,
+    requesterUserId: actor.userId,
+    cartId: input.cartId,
+    cartVersion: input.cartVersion,
+    requesterName,
+    requesterEmail,
+    requesterPhone,
+    desiredDeliveryDate,
+    notes,
+  })).digest("hex");
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.quoteRequest.findUnique({ where: { idempotencyKey: input.idempotencyKey }, select: { id: true, companyId: true } });
+    await tx.checkoutLock.upsert({
+      where: { id: "quote-checkout" },
+      update: { version: { increment: 1 } },
+      create: { id: "quote-checkout", version: 1 },
+    });
+    const existing = await tx.quoteRequest.findUnique({
+      where: { companyId_idempotencyKey: { companyId: actor.companyId, idempotencyKey: input.idempotencyKey } },
+      select: { id: true, requesterUserId: true, requestHash: true },
+    });
     if (existing) {
-      if (existing.companyId !== actor.companyId) throw new Error("Gönderim anahtarı başka bir firmaya ait.");
+      if (existing.requesterUserId !== actor.userId || existing.requestHash !== requestHash) {
+        throw new Error("Gönderim anahtarı farklı bir teklif isteğiyle kullanılmış.");
+      }
       return existing;
     }
 
     await assertActiveDealer(tx, actor);
     const pricedAt = new Date();
     const viewer = viewerFor(actor);
-    const cart = await tx.quoteCart.findUnique({
-      where: { companyId_ownerUserId: { companyId: actor.companyId, ownerUserId: actor.userId } },
+    const cart = await tx.quoteCart.findFirst({
+      where: { id: input.cartId, companyId: actor.companyId, ownerUserId: actor.userId, version: input.cartVersion },
       select: {
         id: true,
+        version: true,
         items: { select: { quantity: true, notes: true, product: { select: {
           id: true, name: true, dimensions: true, glassType: true, status: true, orderMode: true, isCustomAvailable: true,
           prices: { where: buildCatalogPriceWhere(viewer, pricedAt), select: { id: true, amount: true, minQuantity: true, priceList: { select: { id: true, currency: true, companyId: true, customerGroupId: true, startsAt: true, endsAt: true, isActive: true, priority: true } } } },
         } } } },
       },
     });
-    if (!cart?.items.length) throw new Error("Teklif sepetiniz boş.");
+    if (!cart?.items.length) throw new Error("Teklif sepetiniz değişti. Güncel sayfayı yükleyin.");
 
     const snapshots = cart.items.map((item) => {
       if (item.product.status !== "ACTIVE" || item.product.orderMode === "ORDER_ONLY") throw new Error(`${item.product.name} artık teklif talebine uygun değil.`);
@@ -132,10 +171,11 @@ export async function submitQuoteCart(actor: DealerActor, input: { requesterName
     const quote = await tx.quoteRequest.create({
       data: {
         quoteNumber: `TKL-${pricedAt.toISOString().slice(0, 10).replaceAll("-", "")}-${randomUUID().slice(0, 8).toUpperCase()}`,
-        companyId: actor.companyId, requesterUserId: actor.userId, requesterName: input.requesterName, requesterEmail: input.requesterEmail.toLowerCase(),
-        requesterPhone: input.requesterPhone, desiredDeliveryDate: input.desiredDeliveryDate ? new Date(`${input.desiredDeliveryDate}T12:00:00.000Z`) : null,
-        notes: input.notes, status: "NEW", currency: currencies[0] ?? "TRY", estimatedSubtotal: pricedSnapshots.length ? subtotal : null,
+        companyId: actor.companyId, requesterUserId: actor.userId, requesterName, requesterEmail,
+        requesterPhone, desiredDeliveryDate: desiredDeliveryDate ? new Date(`${desiredDeliveryDate}T12:00:00.000Z`) : null,
+        notes, status: "NEW", currency: currencies[0] ?? "TRY", estimatedSubtotal: pricedSnapshots.length ? subtotal : null,
         hasUnpricedItems: snapshots.some((item) => !item.unitPrice), submittedAt: pricedAt, pricedAt: null, idempotencyKey: input.idempotencyKey,
+        requestHash, sourceCartId: cart.id, sourceCartVersion: cart.version,
         statusHistory: { create: { toStatus: "NEW", changedById: actor.userId, note: "Bayi teklif talebini gönderdi." } },
         items: { create: snapshots.map((item) => ({
           productId: item.productId, quantity: item.quantity, notes: item.notes, dimensions: item.dimensions,
@@ -146,7 +186,8 @@ export async function submitQuoteCart(actor: DealerActor, input: { requesterName
       select: { id: true },
     });
     await tx.auditLog.create({ data: { actorUserId: actor.userId, action: "dealer.quote.submitted", entityType: "QuoteRequest", entityId: quote.id, metadata: JSON.stringify({ companyId: actor.companyId, itemCount: snapshots.length }) } });
-    await tx.quoteCart.delete({ where: { id: cart.id } });
+    const consumed = await tx.quoteCart.deleteMany({ where: { id: cart.id, version: input.cartVersion } });
+    if (consumed.count !== 1) throw new Error("Teklif sepetiniz değişti. Güncel sayfayı yükleyin.");
     return quote;
   });
 }

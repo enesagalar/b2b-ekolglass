@@ -1,5 +1,7 @@
 # Agent Raporu - Birlesik Platform Mimarisi
 
+> Durum notu (2026-07-13): Bu tarihsel onerideki tek uygulama, ortak CMS/admin ve gateway varsayimi sonraki kullanici karariyla gecersiz kilindi. Guncel karar icin `docs/architecture/unified-web-b2b-cms.md` belgesine bakin.
+
 Tarih: 2026-07-11
 
 ## Ana Sonuc

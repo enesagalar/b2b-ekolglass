@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { addQuoteCartProduct, removeQuoteCartProduct, submitQuoteCart } from "@/data/quote-cart";
+import { addQuoteCartProduct, getQuoteCart, removeQuoteCartProduct, submitQuoteCart, updateQuoteCartProduct } from "@/data/quote-cart";
 import { prisma } from "@/lib/prisma";
 
 const suffix = Date.now().toString();
@@ -53,10 +53,14 @@ describe("quote cart pricing and tenant isolation", () => {
     const item = await addQuoteCartProduct(actorA, { productId: ids.product, quantity: 10 });
     await expect(removeQuoteCartProduct(actorB, item.id)).rejects.toThrow("Sepet kalemi bulunamadı");
 
+    const cart = await getQuoteCart(actorA);
+    expect(cart).not.toBeNull();
     const idempotencyKey = crypto.randomUUID();
-    const first = await submitQuoteCart(actorA, { requesterName: "User A", requesterEmail: `quote-user-a-${suffix}@example.com`, idempotencyKey });
-    const second = await submitQuoteCart(actorA, { requesterName: "Forged Name", requesterEmail: "forged@example.com", idempotencyKey });
+    const input = { cartId: cart!.id, cartVersion: cart!.version, requesterName: "User A", requesterEmail: `quote-user-a-${suffix}@example.com`, idempotencyKey };
+    const first = await submitQuoteCart(actorA, input);
+    const second = await submitQuoteCart(actorA, input);
     expect(second.id).toBe(first.id);
+    await expect(submitQuoteCart(actorA, { ...input, requesterName: "Forged Name" })).rejects.toThrow("farklı bir teklif isteğiyle");
 
     const quote = await prisma.quoteRequest.findUniqueOrThrow({ where: { id: first.id }, include: { items: true } });
     expect(quote.companyId).toBe(ids.companyA);
@@ -65,6 +69,53 @@ describe("quote cart pricing and tenant isolation", () => {
     expect(quote.items[0]?.unitPrice?.toString()).toBe("80");
     expect(quote.items[0]?.priceMinQuantity).toBe(10);
     expect(quote.items[0]?.priceScope).toBe("COMPANY");
+    expect(quote.requestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(quote.sourceCartId).toBe(cart!.id);
+    expect(quote.sourceCartVersion).toBe(cart!.version);
     expect(await prisma.quoteCart.count({ where: { companyId: ids.companyA, ownerUserId: ids.userA } })).toBe(0);
+  });
+
+  it("rejects a stale quote cart version and preserves the current cart", async () => {
+    const item = await addQuoteCartProduct(actorA, { productId: ids.product, quantity: 1 });
+    const staleCart = await getQuoteCart(actorA);
+    await updateQuoteCartProduct(actorA, { itemId: item.id, quantity: 2 });
+
+    await expect(submitQuoteCart(actorA, {
+      cartId: staleCart!.id,
+      cartVersion: staleCart!.version,
+      requesterName: "User A",
+      requesterEmail: `quote-user-a-${suffix}@example.com`,
+      idempotencyKey: crypto.randomUUID(),
+    })).rejects.toThrow("Teklif sepetiniz değişti");
+
+    const currentCart = await getQuoteCart(actorA);
+    expect(currentCart?.version).toBe(staleCart!.version + 1);
+    expect(currentCart?.items[0]?.quantity).toBe(2);
+  });
+
+  it("scopes idempotency keys by company", async () => {
+    await addQuoteCartProduct(actorB, { productId: ids.product, quantity: 1 });
+    const [cartA, cartB] = await Promise.all([getQuoteCart(actorA), getQuoteCart(actorB)]);
+    const idempotencyKey = crypto.randomUUID();
+
+    const [quoteA, quoteB] = await Promise.all([
+      submitQuoteCart(actorA, { cartId: cartA!.id, cartVersion: cartA!.version, requesterName: "User A", requesterEmail: `quote-user-a-${suffix}@example.com`, idempotencyKey }),
+      submitQuoteCart(actorB, { cartId: cartB!.id, cartVersion: cartB!.version, requesterName: "User B", requesterEmail: `quote-user-b-${suffix}@example.com`, idempotencyKey }),
+    ]);
+
+    expect(quoteA.id).not.toBe(quoteB.id);
+    expect(await prisma.quoteRequest.count({ where: { idempotencyKey } })).toBe(2);
+  });
+
+  it("increments the cart version once per successful mutation", async () => {
+    const item = await addQuoteCartProduct(actorA, { productId: ids.product, quantity: 1 });
+    const afterAdd = await getQuoteCart(actorA);
+    await updateQuoteCartProduct(actorA, { itemId: item.id, quantity: 3 });
+    const afterUpdate = await getQuoteCart(actorA);
+    await removeQuoteCartProduct(actorA, item.id);
+    const afterRemove = await getQuoteCart(actorA);
+
+    expect(afterUpdate!.version).toBe(afterAdd!.version + 1);
+    expect(afterRemove!.version).toBe(afterUpdate!.version + 1);
   });
 });

@@ -48,7 +48,9 @@ Son guncelleme: 2026-07-13
 - Public ve bayi urun detay ekranlari; aktif medya, teknik ozellik ve uyumluluk gorunumu.
 - Kullanici+firma kapsamli kalici teklif sepeti.
 - Gonderim aninda DB'den yeniden fiyatlanan, fiyat kaynagi/kademe snapshot'li teklif talebi.
+- Teklif sepetinde version/CAS, company-scoped idempotency, canonical request hash ve atomik tuketim korumasi.
 - Company-scoped teklif detay ve tekrar erisilebilir basari ekrani.
+- Admin teklif kuyrugu, detay, immutable teklif revizyonlari ve role ayrilmis durum gecisleri.
 - Company-scoped order/quote DAL ve cross-company SQLite testi.
 - Kullanici+firma kapsamli kalici siparis sepeti ve `/sepet` checkout ekrani.
 - Teslimat adresi secimi ve checkout icinden yeni firma adresi olusturma.
@@ -104,26 +106,26 @@ Son guncelleme: 2026-07-13
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
 3. Teklif/siparis akisinda kalanlar:
-   - Teklif sepeti ve teklif talebi tamamlandi; admin fiyatlandirma/durum gecis operasyonu eksik.
-   - Admin teklif fiyatlandirma ve durum gecis operasyonu eksik.
+   - Onaylanan teklifin aktif immutable revizyondan idempotent siparise donusumu eksik.
+   - Teklif ve siparis bildirimleri icin transactional e-posta/outbox hatti eksik.
 
 4. Entegrasyonlar hazirlik seviyesinde:
    - City Lojistik canli API dokumani gerekli.
    - ERP/MES entegrasyonu henuz taslak.
 
-5. Birlesik kurumsal web/CMS gecisi planlandi ama uygulanmadi:
-   - Root gateway henuz acilmadi.
-   - Canli URL/SEO/medya envanteri ve redirect haritasi gerekli.
-   - CMS navigation, redirect, locale/path ve genis SEO modelleri eksik.
+5. Bagimsiz B2B portal yayin siniri kesinlesti ama production kurulumu yapilmadi:
+   - Mevcut kurumsal site ve admin korunacak.
+   - Kurumsal siteye yalniz masaustu/mobil `Bayi Portali` butonu eklenecek.
+   - Portal hostu, DNS/TLS ve bagimsiz deployment runbook'u kesinlestirilecek.
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: Admin Teklif Operasyonlari, Transactional E-posta ve City Lojistik Outbox Siniri.
+Faz 3.3 devam edecek: Tekliften Siparise Donusum, Transactional E-posta ve City Lojistik Outbox Siniri.
 
-UX/IA konsolidasyonu tamamlandi: public urun kesfi, bayi urun/fiyat alani, oturum duyarlı ana sayfa ve ayrik yonetim girisi devrede. Siradaki adim company-scoped detay/olusturma akislarini kurmak ve e-posta davet teslim adapterini baglamaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
+UX/IA konsolidasyonu tamamlandi: public urun kesfi, bayi urun/fiyat alani, oturum duyarli ana sayfa ve ayrik yonetim girisi devrede. Siradaki adim onaylanan teklifi guvenli siparise donusturmek ve entegrasyon outbox sinirini kurmaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 
-Siradaki hedef ekranlar:
+Siradaki hedefler:
 
-- `/bayi`
-- `/bayi/hesabim`
-- E-posta invitation adapteri
+- Tekliften siparise donusum action'i ve audit izi.
+- City Lojistik saglayici bagimsiz outbox modeli.
+- E-posta invitation ve operasyon bildirim adapteri.

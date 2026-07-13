@@ -12,9 +12,9 @@ Tek Next.js sayfalari icinde her seyi cozmek, kisa vadede hizli gorunur ama uzun
 
 Sistem mantiksal olarak dort parcaya ayrilir:
 
-1. Public site: kurumsal icerik, SEO, genel katalog.
+1. B2B public yuzeyi: portal urun kesfi, bayi basvurusu ve bayi girisi.
 2. Dealer portal: bayi girisi, fiyat, teklif, siparis, takip.
-3. Admin/CMS: icerik, urun, bayi, fiyat, operasyon, dashboard.
+3. B2B Admin/CMS: portal icerigi, urun, bayi, fiyat, operasyon ve dashboard.
 4. Integration layer: kargo, ERP/MES, bildirim, fatura, muhasebe adapterleri.
 
 Tek repo icinde baslanabilir, fakat route ve domain sinirlari ayrilir:
@@ -23,6 +23,8 @@ Tek repo icinde baslanabilir, fakat route ve domain sinirlari ayrilir:
 - `/portal/*` bayi operasyonu
 - `/admin/*` operasyon admini
 - gelecekte `admin.ekolglass.com` ve `portal.ekolglass.com`
+
+Bu sinirlar yalniz B2B uygulamasina aittir. Mevcut `www.ekolglass.com` ve onun kurumsal admin/CMS sistemi bu deponun parcasi degildir; iki sistem yalniz `Bayi Portali` baglantisiyla gecis saglar.
 
 ## Sonuclar
 

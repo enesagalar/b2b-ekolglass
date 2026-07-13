@@ -375,6 +375,8 @@ export const quoteCartRemoveSchema = z.object({
 });
 
 export const quoteSubmitSchema = z.object({
+  cartId: z.string().trim().min(1, "Teklif sepeti zorunludur."),
+  cartVersion: z.coerce.number().int().positive("Sepet sürümü geçersiz."),
   requesterName: z.string().trim().min(2, "Yetkili adı zorunludur.").max(120),
   requesterEmail: z
     .string()

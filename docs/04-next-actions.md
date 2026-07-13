@@ -8,18 +8,26 @@ Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Teklif sepetine version/CAS ve company-scoped payload-hash idempotency eklenecek.
-2. Onaylanan teklif, immutable aktif revizyondan tek transaction ile idempotent siparise donusturulecek.
-3. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
-4. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
-5. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
-6. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-7. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
-8. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
+1. Onaylanan teklif, immutable aktif revizyondan tek transaction ile idempotent siparise donusturulecek.
+2. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
+3. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
+4. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
+5. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+6. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
+7. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
 
-Faz 3.3 admin teklif operasyonlari dilimi tamamlandi:
+Faz 3.3 teklif sepeti guvenlik kapanisi tamamlandi:
+
+- Teklif sepetine version/CAS, atomik tuketim ve singleton checkout lock eklendi.
+- Idempotency anahtari firma kapsamli hale getirildi; canonical payload SHA-256 hash'i farkli isteklerin replay edilmesini engelliyor.
+- Teklif kaydinda kaynak sepet ID/surumu saklanarak audit izi guclendirildi.
+- Eski sepet surumu, farkli payload replay'i ve firmalar arasi ayni UUID senaryolari entegrasyon testleriyle dogrulandi.
+- Faz 3.5, mevcut kurumsal siteyi koruyan bagimsiz subdomain portal mimarisine gore duzeltildi.
+- 22 test dosyasi, 105 test, lint ve production build basarili.
+
+Onceki admin teklif operasyonlari diliminde:
 
 - `/admin/teklifler` teklif kuyrugu; arama, durum filtresi, KPI ve sayfalama ile acildi.
 - `/admin/teklifler/[id]` kalem, firma, bayi notu, fiyatlandirma, durum ve history operasyonlarini birlestirdi.
@@ -178,8 +186,8 @@ Asagidaki kararlar UI uygulanmadan once veya uygulama sirasinda netlesebilir:
 - Arka plan advisor calismasi 30 dakikalik periyotlarla mi, yoksa sadece her kodlama turu basinda tek seferlik mi calissin?
 - Transactional e-posta saglayicisi hangisi olacak?
 - Bayi onayi tek firma sahibi mi, yoksa bir firmada birden fazla bayi kullanicisi mi uretecek?
-- Canonical host `www` mi apex mi olacak?
 - B2B host `portal.ekolglass.com` mu `b2b.ekolglass.com` mu olacak?
+- B2B admini portal altinda `/admin` mi, ayri bir admin subdomaininde mi yayinlanacak?
 
 Varsayilan karar:
 
@@ -189,5 +197,6 @@ Varsayilan karar:
 - Fiyatlar guest/PENDING icin kapali; bayi rollerinde firma veya musteri grubu eslesmesiyle, ic ekip rollerinde fiyat okuma yetkisiyle acik olacak.
 - Faz 3.2'de ilk uygulama, onaylanan basvurudan tek `Company` ve bir `DEALER_OWNER` kullanicisi uretme varsayimiyla ilerleyecek.
 - Ilk bayi kullanicisi gecici parola ile `ACTIVE` yapilmayacak; `INVITED` olusacak ve sifresini tek kullanimlik aktivasyon akisinda kendi belirleyecek.
-- Birlesik platform varsayimi: `www` gateway/kurumsal, `portal` B2B, `/admin` ortak yonetim.
-- Root gateway SEO envanteri ve redirect haritasi tamamlanmadan canliya alinmayacak.
+- Kurumsal `www`, mevcut CMS ve adminiyle korunacak; B2B bagimsiz subdomain'de yayinlanacak.
+- Ana site split-screen veya root gateway olmayacak; yalniz `Bayi Portali` butonu eklenecek.
+- B2B `/admin`, yalniz bu uygulamanin operasyon panelidir ve kurumsal site adminiyle ortak oturum kullanmaz.
