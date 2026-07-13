@@ -17,6 +17,15 @@ describe("role permissions", () => {
     expect(hasPermission("WAREHOUSE_STAFF", "price.manage")).toBe(false);
   });
 
+  it("separates sales approval from warehouse fulfillment", () => {
+    expect(hasPermission("SALES_MANAGER", "order.approve")).toBe(true);
+    expect(hasPermission("SALES_MANAGER", "order.ship")).toBe(false);
+    expect(hasPermission("WAREHOUSE_STAFF", "order.fulfill")).toBe(true);
+    expect(hasPermission("WAREHOUSE_STAFF", "order.ship")).toBe(true);
+    expect(hasPermission("WAREHOUSE_STAFF", "order.approve")).toBe(false);
+    expect(hasPermission("WAREHOUSE_STAFF", "order.cancel")).toBe(false);
+  });
+
   it("separates internal admin roles from dealer roles", () => {
     expect(isAdminRole("SALES_STAFF")).toBe(true);
     expect(isAdminRole("DEALER_OWNER")).toBe(false);

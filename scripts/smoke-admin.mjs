@@ -187,6 +187,60 @@ assert(
   (await adminOrdersResponse.text()).includes("/admin/siparisler"),
   "Admin orders navigation not rendered",
 );
+
+const smokeAdminOrderId = `smoke-admin-order-${Date.now()}`;
+const smokeAdminOrderNumber = `SMOKE-ORDER-${Date.now()}`;
+const smokeAdminOrderTimestamp = new Date().toISOString();
+const smokeAdminOrderDb = new Database("dev.db");
+smokeAdminOrderDb
+  .prepare(
+    `insert into "Order" (id, orderNumber, companyId, status, currency, subtotal, version, createdAt, updatedAt)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+  .run(
+    smokeAdminOrderId,
+    smokeAdminOrderNumber,
+    "seed-ekolglass-demo-dealer",
+    "SUBMITTED",
+    "TRY",
+    0,
+    1,
+    smokeAdminOrderTimestamp,
+    smokeAdminOrderTimestamp,
+  );
+smokeAdminOrderDb.close();
+
+try {
+  const adminOrderDetailResponse = await request(
+    `/admin/siparisler/${smokeAdminOrderId}`,
+    {
+      headers: { Cookie: serializeCookies(cookieJar) },
+    },
+  );
+  assert(
+    adminOrderDetailResponse.status === 200,
+    `Admin order detail failed with ${adminOrderDetailResponse.status}`,
+  );
+  const adminOrderDetailHtml = await adminOrderDetailResponse.text();
+  assert(
+    adminOrderDetailHtml.includes(smokeAdminOrderNumber),
+    "Admin order detail number not rendered",
+  );
+  assert(
+    adminOrderDetailHtml.includes('name="expectedVersion"'),
+    "Admin order version control not rendered",
+  );
+  assert(
+    adminOrderDetailHtml.includes('name="idempotencyKey"'),
+    "Admin order idempotency control not rendered",
+  );
+} finally {
+  const cleanupAdminOrderDb = new Database("dev.db");
+  cleanupAdminOrderDb
+    .prepare('delete from "Order" where id = ?')
+    .run(smokeAdminOrderId);
+  cleanupAdminOrderDb.close();
+}
 assert(
   adminHtml.includes("Operasyon merkezi"),
   "Admin operations dashboard content not rendered",
@@ -811,6 +865,7 @@ console.log(
         "admin-login",
         "authenticated-admin-dashboard",
         "authenticated-admin-orders",
+        "authenticated-admin-order-detail",
         "admin-dealer-redirect",
         "authenticated-dealer-application-list",
         "authenticated-dealer-application-detail",

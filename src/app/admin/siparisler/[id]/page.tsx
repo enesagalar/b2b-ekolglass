@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -10,11 +12,18 @@ import { notFound } from "next/navigation";
 
 import { getAdminOrderDetail } from "@/data/admin-orders";
 import {
+  getAllowedOrderTransitions,
+  getOrderTransitionPermission,
+  isOrderStatus,
+} from "@/domain/order-transitions";
+import { hasPermission, isKnownRole } from "@/domain/roles";
+import {
   formatPortalDate,
   formatPortalMoney,
   PortalStatus,
 } from "@/features/dealer/dealer-ui";
 import { requirePermissionUser } from "@/lib/auth";
+import { AdminOrderStatusForm } from "@/features/orders/admin-order-status-form";
 
 export const dynamic = "force-dynamic";
 const panelClass = "rounded-lg border border-slate-200 bg-white shadow-sm";
@@ -23,7 +32,10 @@ export default async function AdminOrderDetailPage({
   params,
 }: PageProps<"/admin/siparisler/[id]">) {
   const { id } = await params;
-  await requirePermissionUser("order.track", `/admin/siparisler/${id}`);
+  const actor = await requirePermissionUser(
+    "order.track",
+    `/admin/siparisler/${id}`,
+  );
   const order = await getAdminOrderDetail(id);
   if (!order) notFound();
   const address = [
@@ -36,6 +48,26 @@ export default async function AdminOrderDetailPage({
   ]
     .filter(Boolean)
     .join(", ");
+  const knownRole = isKnownRole(actor.role) ? actor.role : null;
+  const canReadPrice = Boolean(
+    knownRole && hasPermission(knownRole, "price.read"),
+  );
+  const canReadStock = Boolean(
+    knownRole && hasPermission(knownRole, "stock.read.detailed"),
+  );
+  const currentStatus = isOrderStatus(order.status) ? order.status : null;
+  const transitions = getAllowedOrderTransitions(
+    order.status,
+    order.heldFromStatus,
+  ).filter((target) =>
+    Boolean(
+      knownRole &&
+      hasPermission(
+        knownRole,
+        getOrderTransitionPermission(order.status, target),
+      ),
+    ),
+  );
 
   return (
     <div className="grid gap-6">
@@ -93,21 +125,23 @@ export default async function AdminOrderDetailPage({
                         {item.dimensionsSnapshot || "Ölçü yok"}
                       </p>
                     </div>
-                    <div className="sm:text-right">
-                      <p className="font-semibold">
-                        {item.lineTotal
-                          ? formatPortalMoney(item.lineTotal, order.currency)
-                          : "Fiyat bekliyor"}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Birim:{" "}
-                        {item.unitPrice
-                          ? formatPortalMoney(item.unitPrice, order.currency)
-                          : "-"}
-                      </p>
-                    </div>
+                    {canReadPrice ? (
+                      <div className="sm:text-right">
+                        <p className="font-semibold">
+                          {item.lineTotal
+                            ? formatPortalMoney(item.lineTotal, order.currency)
+                            : "Fiyat bekliyor"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Birim:{" "}
+                          {item.unitPrice
+                            ? formatPortalMoney(item.unitPrice, order.currency)
+                            : "-"}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
-                  {item.reservations.length ? (
+                  {canReadStock && item.reservations.length ? (
                     <div className="mt-4 grid gap-2 rounded-md bg-slate-50 p-3">
                       {item.reservations.map((reservation) => (
                         <div
@@ -125,11 +159,11 @@ export default async function AdminOrderDetailPage({
                         </div>
                       ))}
                     </div>
-                  ) : (
+                  ) : canReadStock ? (
                     <p className="mt-4 text-xs text-amber-800">
                       Bu kalem için stok rezervasyonu bulunmuyor.
                     </p>
-                  )}
+                  ) : null}
                 </article>
               ))}
             </div>
@@ -146,6 +180,15 @@ export default async function AdminOrderDetailPage({
                 >
                   <div>
                     <PortalStatus status={event.toStatus} />
+                    <p className="mt-2 text-xs text-slate-500">
+                      {event.fromStatus
+                        ? `${event.fromStatus} → ${event.toStatus}`
+                        : event.toStatus}{" "}
+                      ·{" "}
+                      {event.changedBy?.name ??
+                        event.changedBy?.email ??
+                        "Sistem"}
+                    </p>
                     {event.note ? (
                       <p className="mt-2 text-sm text-slate-600">
                         {event.note}
@@ -162,6 +205,27 @@ export default async function AdminOrderDetailPage({
         </div>
 
         <aside className="grid gap-5">
+          <section className={`${panelClass} p-5`}>
+            <p className="text-xs font-semibold uppercase text-teal-800">
+              Operasyon kararı
+            </p>
+            <h3 className="mt-1 font-semibold">Sipariş durumunu yönet</h3>
+            <div className="mt-4">
+              {transitions.length ? (
+                <AdminOrderStatusForm
+                  orderId={order.id}
+                  expectedStatus={currentStatus!}
+                  expectedVersion={order.version}
+                  idempotencyKey={randomUUID()}
+                  transitions={transitions}
+                />
+              ) : (
+                <p className="text-sm leading-6 text-slate-500">
+                  Bu hesabın sipariş durumunu değiştirme yetkisi yok.
+                </p>
+              )}
+            </div>
+          </section>
           <section className={`${panelClass} p-5`}>
             <div className="flex items-center gap-2">
               <Building2 size={17} className="text-teal-800" />
@@ -205,27 +269,29 @@ export default async function AdminOrderDetailPage({
               {order.shipment?.trackingNumber ?? "Takip numarası yok"}
             </p>
           </section>
-          <section className={`${panelClass} p-5`}>
-            <div className="flex items-center gap-2">
-              <PackageCheck size={17} className="text-teal-800" />
-              <p className="text-xs font-semibold uppercase text-slate-500">
-                KDV hariç toplam
-              </p>
-            </div>
-            <p className="mt-3 text-2xl font-semibold">
-              {formatPortalMoney(order.subtotal, order.currency)}
-            </p>
-            {order.notes ? (
-              <div className="mt-4 border-t border-slate-200 pt-4">
+          {canReadPrice ? (
+            <section className={`${panelClass} p-5`}>
+              <div className="flex items-center gap-2">
+                <PackageCheck size={17} className="text-teal-800" />
                 <p className="text-xs font-semibold uppercase text-slate-500">
-                  Bayi notu
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {order.notes}
+                  KDV hariç toplam
                 </p>
               </div>
-            ) : null}
-          </section>
+              <p className="mt-3 text-2xl font-semibold">
+                {formatPortalMoney(order.subtotal, order.currency)}
+              </p>
+              {order.notes ? (
+                <div className="mt-4 border-t border-slate-200 pt-4">
+                  <p className="text-xs font-semibold uppercase text-slate-500">
+                    Bayi notu
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {order.notes}
+                  </p>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
         </aside>
       </div>
     </div>

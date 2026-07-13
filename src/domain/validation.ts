@@ -11,7 +11,11 @@ import {
   slugifyProductCategoryName,
   stockVisibilities,
 } from "./catalog";
-import { dealerApplicationStatuses, stockStatuses } from "./statuses";
+import {
+  dealerApplicationStatuses,
+  orderStatuses,
+  stockStatuses,
+} from "./statuses";
 
 const optionalText = (max: number) =>
   z.preprocess((value) => {
@@ -430,6 +434,30 @@ export const orderSubmitSchema = z.object({
   notes: optionalText(1000),
   idempotencyKey: z.string().uuid("Gönderim anahtarı geçersiz."),
 });
+
+export const orderStatusTransitionSchema = z
+  .object({
+    orderId: z.string().trim().min(1, "Sipariş seçimi zorunludur."),
+    expectedStatus: z.enum(orderStatuses),
+    expectedVersion: z.coerce
+      .number()
+      .int()
+      .positive("Sipariş sürümü geçersiz."),
+    targetStatus: z.enum(orderStatuses),
+    idempotencyKey: z.string().uuid("İşlem anahtarı geçersiz."),
+    note: optionalText(1000),
+    carrier: optionalText(120),
+    trackingNumber: optionalText(160),
+  })
+  .superRefine((value, context) => {
+    if (["CANCELLED", "ON_HOLD"].includes(value.targetStatus) && !value.note) {
+      context.addIssue({
+        code: "custom",
+        path: ["note"],
+        message: "İptal ve bekletme işlemlerinde operasyon notu zorunludur.",
+      });
+    }
+  });
 
 export const dealerAddressCreateSchema = z.object({
   label: z.string().trim().min(2, "Adres etiketi zorunludur.").max(80),

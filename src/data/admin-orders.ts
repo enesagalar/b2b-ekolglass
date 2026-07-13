@@ -82,6 +82,8 @@ export function getAdminOrderDetail(orderId: string) {
       pricedAt: true,
       createdAt: true,
       updatedAt: true,
+      version: true,
+      heldFromStatus: true,
       company: {
         select: {
           id: true,
@@ -126,13 +128,14 @@ export function getAdminOrderDetail(orderId: string) {
         },
       },
       statusHistory: {
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
         select: {
           id: true,
           fromStatus: true,
           toStatus: true,
           note: true,
           createdAt: true,
+          changedBy: { select: { name: true, email: true } },
         },
       },
       shipment: {

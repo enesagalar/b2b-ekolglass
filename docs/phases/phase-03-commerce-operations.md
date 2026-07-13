@@ -35,7 +35,19 @@ Tamamlandi:
 
 Siradaki dilim:
 
-- Admin durum gecisleri ve audit.
-- Iptal/teslim akislariyla rezervasyon release/consume islemleri.
 - Admin teklif fiyatlandirma ve durum yonetimi.
-- City Lojistik adapterine siparis/sevkiyat aktarimi.
+- City Lojistik adapterine outbox uzerinden siparis/sevkiyat aktarimi.
+- Transactional e-posta teslim adapteri.
+- Stok invariant'lari icin DB check constraint'leri.
+
+## 2026-07-13 Siparis Operasyon Dilimi
+
+Tamamlandi:
+
+- Role/capability bazli state transition matrisi.
+- Order version CAS ve idempotent transition command ledger.
+- `ON_HOLD` onceki operasyon asamasina guvenli donus.
+- Cancellation release ve shipment consume stok muhasebesi.
+- Shipment/takip zorunluluklari ve teslimde stok etkisiz gecis.
+- Actor baglantili status history ve ayrintili audit metadata.
+- Admin operasyon formu, pending/conflict/confirm durumlari.

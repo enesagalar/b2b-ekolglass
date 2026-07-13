@@ -8,27 +8,29 @@ datasource db {
 }
 
 model User {
-  id               String                @id @default(cuid())
-  email            String                @unique
-  name             String
-  role             String
-  status           String                @default("ACTIVE")
-  passwordHash     String?
-  lastLoginAt      DateTime?
-  companyId        String?
-  company          Company?              @relation(fields: [companyId], references: [id])
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  createdOrders    Order[]               @relation("OrderCreatedBy")
-  approvedOrders   Order[]               @relation("OrderApprovedBy")
-  pageRevisions    PageRevision[]
-  sessions         AuthSession[]
-  auditLogs        AuditLog[]
-  activationTokens UserActivationToken[]
-  passwordResetTokens UserPasswordResetToken[]
-  quoteRequests    QuoteRequest[]        @relation("QuoteRequester")
-  quoteCarts       QuoteCart[]
-  orderCarts       OrderCart[]
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  name                    String
+  role                    String
+  status                  String                   @default("ACTIVE")
+  passwordHash            String?
+  lastLoginAt             DateTime?
+  companyId               String?
+  company                 Company?                 @relation(fields: [companyId], references: [id])
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  createdOrders           Order[]                  @relation("OrderCreatedBy")
+  approvedOrders          Order[]                  @relation("OrderApprovedBy")
+  pageRevisions           PageRevision[]
+  sessions                AuthSession[]
+  auditLogs               AuditLog[]
+  activationTokens        UserActivationToken[]
+  passwordResetTokens     UserPasswordResetToken[]
+  quoteRequests           QuoteRequest[]           @relation("QuoteRequester")
+  quoteCarts              QuoteCart[]
+  orderCarts              OrderCart[]
+  orderStatusChanges      OrderStatusHistory[]     @relation("OrderStatusChangedBy")
+  orderTransitionCommands OrderTransitionCommand[] @relation("OrderTransitionCommandCreatedBy")
 
   @@index([companyId, role, status])
 }
@@ -251,16 +253,16 @@ model ProductPrice {
 }
 
 model StockItem {
-  id               String   @id @default(cuid())
+  id               String             @id @default(cuid())
   productId        String
-  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product          Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
   warehouseCode    String
-  quantity         Int      @default(0)
-  reservedQuantity Int      @default(0)
-  visibility       String   @default("SIMPLIFIED")
-  status           String   @default("ASK_FOR_AVAILABILITY")
+  quantity         Int                @default(0)
+  reservedQuantity Int                @default(0)
+  visibility       String             @default("SIMPLIFIED")
+  status           String             @default("ASK_FOR_AVAILABILITY")
   reservations     StockReservation[]
-  updatedAt        DateTime @updatedAt
+  updatedAt        DateTime           @updatedAt
 
   @@unique([productId, warehouseCode])
 }
@@ -271,7 +273,7 @@ model QuoteRequest {
   companyId           String?
   company             Company?           @relation(fields: [companyId], references: [id])
   requesterUserId     String?
-  requester           User?               @relation("QuoteRequester", fields: [requesterUserId], references: [id])
+  requester           User?              @relation("QuoteRequester", fields: [requesterUserId], references: [id])
   requesterName       String
   requesterEmail      String
   requesterPhone      String?
@@ -285,7 +287,7 @@ model QuoteRequest {
   hasUnpricedItems    Boolean            @default(false)
   submittedAt         DateTime?
   pricedAt            DateTime?
-  idempotencyKey      String?             @unique
+  idempotencyKey      String?            @unique
   items               QuoteRequestItem[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
@@ -296,24 +298,24 @@ model QuoteRequest {
 }
 
 model QuoteRequestItem {
-  id             String       @id @default(cuid())
-  quoteRequestId String
-  quoteRequest   QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
-  productId      String?
-  product        Product?     @relation(fields: [productId], references: [id])
-  customTitle    String?
-  quantity       Int          @default(1)
-  unitPrice      Decimal?
-  lineTotal     Decimal?
-  priceListId   String?
+  id               String       @id @default(cuid())
+  quoteRequestId   String
+  quoteRequest     QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  productId        String?
+  product          Product?     @relation(fields: [productId], references: [id])
+  customTitle      String?
+  quantity         Int          @default(1)
+  unitPrice        Decimal?
+  lineTotal        Decimal?
+  priceListId      String?
   priceMinQuantity Int?
-  priceScope    String?
-  dimensions     String?
-  glassType      String?
-  notes          String?
+  priceScope       String?
+  dimensions       String?
+  glassType        String?
+  notes            String?
 
-  @@index([quoteRequestId])
   @@unique([quoteRequestId, productId])
+  @@index([quoteRequestId])
 }
 
 model QuoteCart {
@@ -376,88 +378,91 @@ model OrderCartItem {
 }
 
 model Order {
-  id                String               @id @default(cuid())
-  orderNumber       String               @unique
-  companyId         String
-  company           Company              @relation(fields: [companyId], references: [id])
-  status            String               @default("DRAFT")
-  currency          String               @default("TRY")
-  subtotal          Decimal              @default(0)
-  deliveryAddressId String?
-  deliveryAddress   Address?             @relation(fields: [deliveryAddressId], references: [id], onDelete: SetNull)
-  deliveryLabel     String?
-  deliveryLine1     String?
-  deliveryLine2     String?
-  deliveryDistrict  String?
-  deliveryCity      String?
-  deliveryCountry   String?
+  id                 String                   @id @default(cuid())
+  orderNumber        String                   @unique
+  companyId          String
+  company            Company                  @relation(fields: [companyId], references: [id])
+  status             String                   @default("DRAFT")
+  currency           String                   @default("TRY")
+  subtotal           Decimal                  @default(0)
+  deliveryAddressId  String?
+  deliveryAddress    Address?                 @relation(fields: [deliveryAddressId], references: [id], onDelete: SetNull)
+  deliveryLabel      String?
+  deliveryLine1      String?
+  deliveryLine2      String?
+  deliveryDistrict   String?
+  deliveryCity       String?
+  deliveryCountry    String?
   deliveryPostalCode String?
-  shipmentMethod    String?
-  notes             String?
-  internalNotes     String?
-  createdById       String?
-  createdBy         User?                @relation("OrderCreatedBy", fields: [createdById], references: [id])
-  approvedById      String?
-  approvedBy        User?                @relation("OrderApprovedBy", fields: [approvedById], references: [id])
-  items             OrderItem[]
-  statusHistory     OrderStatusHistory[]
-  shipment          Shipment?
-  submittedAt       DateTime?
+  shipmentMethod     String?
+  notes              String?
+  internalNotes      String?
+  createdById        String?
+  createdBy          User?                    @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  approvedById       String?
+  approvedBy         User?                    @relation("OrderApprovedBy", fields: [approvedById], references: [id])
+  items              OrderItem[]
+  statusHistory      OrderStatusHistory[]
+  shipment           Shipment?
+  submittedAt        DateTime?
   pricedAt           DateTime?
   idempotencyKey     String?
   requestHash        String?
   sourceCartId       String?
   sourceCartVersion  Int?
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  version            Int                      @default(1)
+  heldFromStatus     String?
+  transitionCommands OrderTransitionCommand[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
+  @@unique([companyId, idempotencyKey])
   @@index([companyId, status, createdAt])
   @@index([companyId, createdAt])
-  @@unique([companyId, idempotencyKey])
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int
-  unitPrice Decimal?
-  lineTotal Decimal?
-  productCodeSnapshot String @default("")
-  productNameSnapshot String @default("")
-  dimensionsSnapshot String?
-  glassTypeSnapshot String @default("")
+  id                   String             @id @default(cuid())
+  orderId              String
+  order                Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId            String
+  product              Product            @relation(fields: [productId], references: [id])
+  quantity             Int
+  unitPrice            Decimal?
+  lineTotal            Decimal?
+  productCodeSnapshot  String             @default("")
+  productNameSnapshot  String             @default("")
+  dimensionsSnapshot   String?
+  glassTypeSnapshot    String             @default("")
   sourceProductPriceId String?
-  priceListId String?
-  priceMinQuantity Int?
-  priceScope String?
-  notes     String?
-  reservations StockReservation[]
+  priceListId          String?
+  priceMinQuantity     Int?
+  priceScope           String?
+  notes                String?
+  reservations         StockReservation[]
 
-  @@index([orderId])
   @@unique([orderId, productId])
+  @@index([orderId])
 }
 
 model StockReservation {
-  id          String    @id @default(cuid())
-  orderItemId String
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
-  stockItemId String
-  stockItem   StockItem @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
-  quantity    Int
-  status      String    @default("ACTIVE")
-  expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
-  releasedAt  DateTime?
-  consumedAt  DateTime?
+  id            String    @id @default(cuid())
+  orderItemId   String
+  orderItem     OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  stockItemId   String
+  stockItem     StockItem @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  quantity      Int
+  status        String    @default("ACTIVE")
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  releasedAt    DateTime?
+  consumedAt    DateTime?
   releaseReason String?
-  updatedAt   DateTime  @updatedAt
+  updatedAt     DateTime  @updatedAt
 
+  @@unique([orderItemId, stockItemId])
   @@index([stockItemId, status])
   @@index([status, expiresAt])
-  @@unique([orderItemId, stockItemId])
 }
 
 model CheckoutLock {
@@ -473,8 +478,26 @@ model OrderStatusHistory {
   fromStatus  String?
   toStatus    String
   changedById String?
+  changedBy   User?    @relation("OrderStatusChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
   note        String?
   createdAt   DateTime @default(now())
+}
+
+model OrderTransitionCommand {
+  id             String   @id @default(cuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  idempotencyKey String
+  requestHash    String
+  fromStatus     String
+  toStatus       String
+  resultVersion  Int
+  createdById    String?
+  createdBy      User?    @relation("OrderTransitionCommandCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  @@unique([orderId, idempotencyKey])
+  @@index([orderId, createdAt])
 }
 
 model Shipment {

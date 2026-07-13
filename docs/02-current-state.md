@@ -57,6 +57,12 @@ Son guncelleme: 2026-07-13
 - Transaction icinde deterministik coklu depo stok rezervasyonu ve fiyat/urun/adres snapshot kayitlari.
 - Bayi siparis detay, durum gecmisi ve sevkiyat takip ekrani.
 - Admin siparis liste, filtre, firma/bayi, teslimat, kalem ve rezervasyon detay ekranlari.
+- Admin siparis durum gecis matrisi ve role ayrilmis review/approve/fulfill/ship/deliver/cancel yetkileri.
+- Monoton siparis version'i ve idempotent `OrderTransitionCommand` ile cift gonderim korumasi.
+- `ON_HOLD` siparisin yalnizca bekletildigi asamaya geri donmesi.
+- Iptalde rezervasyon release; sevkte fiziksel stok + rezervasyon consume; teslimde ikinci stok etkisi olmamasi.
+- Durum history kaydinda islemi yapan kullanici ve audit metadata'sinda stok once/sonra degerleri.
+- Admin listesinde depo rolunden fiyat, muhasebe rolunden rezervasyon detayinin gizlenmesi.
 - DB seviyesinde firma/musteri grubu fiyat izolasyonu.
 - Admin dashboard temeli.
 - Admin shell:
@@ -99,8 +105,6 @@ Son guncelleme: 2026-07-13
 
 3. Teklif/siparis akisinda kalanlar:
    - Teklif sepeti ve teklif talebi tamamlandi; admin fiyatlandirma/durum gecis operasyonu eksik.
-   - Admin siparis durum gecis aksiyonlari ve gecis kurallari henuz yok.
-   - Rezervasyonun iptalde serbest birakilmasi ve sevkte tuketilmesi henuz baglanmadi.
    - Admin teklif fiyatlandirma ve durum gecis operasyonu eksik.
 
 4. Entegrasyonlar hazirlik seviyesinde:
@@ -114,7 +118,7 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: Siparis Durum/Rezervasyon Yasam Dongusu, Teklif Liste Operasyonlari ve E-posta Teslim Siniri.
+Faz 3.3 devam edecek: Admin Teklif Operasyonlari, Transactional E-posta ve City Lojistik Outbox Siniri.
 
 UX/IA konsolidasyonu tamamlandi: public urun kesfi, bayi urun/fiyat alani, oturum duyarlı ana sayfa ve ayrik yonetim girisi devrede. Siradaki adim company-scoped detay/olusturma akislarini kurmak ve e-posta davet teslim adapterini baglamaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 

@@ -4,20 +4,34 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.3 - Siparis Operasyon Durumlari, Rezervasyon Yasam Dongusu ve Davet Teslimi.
+Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Admin siparis durum gecis matrisi ve optimistic concurrency kontrollu action'lar eklenecek.
-2. `CANCELLED` durumunda aktif stok rezervasyonlari serbest birakilacak.
-3. Sevkiyat/teslim gecisinde rezervasyonun tuketilmesi ve fiziksel stok dusumu netlestirilecek.
+1. Admin teklif inceleme, fiyatlandirma ve durum gecis ekrani uygulanacak.
+2. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
+3. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
 4. Siparis ve teklif listelerine filtre ve sayfalama tutarliligi eklenecek.
 5. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
 6. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-7. Admin teklif inceleme, fiyatlandirma ve durum gecis ekrani tasarlanacak.
+7. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
 8. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 siparis durum ve stok yasam dongusu dilimi tamamlandi:
+
+- Siparis gecisleri kati bir state machine ile sinirlandi; terminal durumlar geri acilamiyor.
+- Sales review/approve/hold/cancel ve warehouse fulfill/ship/deliver yetkileri ayrildi.
+- Siparise `version` ve `heldFromStatus`, komutlara UUID idempotency + request hash eklendi.
+- Compare-and-swap order version kontrolu stale ekran ve paralel gonderimi engelliyor.
+- Ayni komut replay'de basarili sonucu donduruyor; farkli payload conflict oluyor.
+- Iptal stock-item bazinda rezervasyonu release ediyor; stok miktarini dusurmuyor.
+- Sevk stock-item bazinda rezervasyonu consume edip fiziksel stogu dusuruyor; teslim ikinci kez stok dusurmuyor.
+- Kargolu sevkte tasiyici ve takip numarasi zorunlu; musteri teslim alma akisi ayri ele aliniyor.
+- Admin detayinda role gore fiyat/rezervasyon gorunurlugu ve aktorlu durum history eklendi.
+- Entegrasyon, action, domain ve rol testleri ile admin detay smoke kontrolu eklendi.
+- 20 test dosyasi, 95 test, lint, production build, migration status ve stok ledger invariant kontrolu basarili.
 
 Faz 3.3 siparis checkout dilimi tamamlandi:
 

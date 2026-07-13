@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { getAdminOrders } from "@/data/admin-orders";
+import { hasPermission, isKnownRole } from "@/domain/roles";
 import { orderStatuses } from "@/domain/statuses";
 import {
   formatPortalDate,
@@ -39,7 +40,9 @@ function pageHref(query: string, status: string, page: number) {
 export default async function AdminOrdersPage({
   searchParams,
 }: PageProps<"/admin/siparisler">) {
-  await requirePermissionUser("order.track", "/admin/siparisler");
+  const actor = await requirePermissionUser("order.track", "/admin/siparisler");
+  const canReadPrice =
+    isKnownRole(actor.role) && hasPermission(actor.role, "price.read");
   const params = await searchParams;
   const query = first(params.q)?.trim() ?? "";
   const status = first(params.status)?.trim() ?? "";
@@ -149,7 +152,7 @@ export default async function AdminOrdersPage({
                   <th className="px-5 py-3">Sipariş</th>
                   <th className="px-5 py-3">Firma / bayi</th>
                   <th className="px-5 py-3">Teslimat</th>
-                  <th className="px-5 py-3">Tutar</th>
+                  {canReadPrice ? <th className="px-5 py-3">Tutar</th> : null}
                   <th className="px-5 py-3">Durum</th>
                   <th className="px-5 py-3 text-right">İşlem</th>
                 </tr>
@@ -187,9 +190,11 @@ export default async function AdminOrdersPage({
                           "Planlanmadı"}
                       </p>
                     </td>
-                    <td className="px-5 py-4 text-sm font-semibold">
-                      {formatPortalMoney(order.subtotal, order.currency)}
-                    </td>
+                    {canReadPrice ? (
+                      <td className="px-5 py-4 text-sm font-semibold">
+                        {formatPortalMoney(order.subtotal, order.currency)}
+                      </td>
+                    ) : null}
                     <td className="px-5 py-4">
                       <PortalStatus status={order.status} />
                     </td>
