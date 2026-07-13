@@ -135,7 +135,8 @@ export async function submitQuoteCart(actor: DealerActor, input: { requesterName
         companyId: actor.companyId, requesterUserId: actor.userId, requesterName: input.requesterName, requesterEmail: input.requesterEmail.toLowerCase(),
         requesterPhone: input.requesterPhone, desiredDeliveryDate: input.desiredDeliveryDate ? new Date(`${input.desiredDeliveryDate}T12:00:00.000Z`) : null,
         notes: input.notes, status: "NEW", currency: currencies[0] ?? "TRY", estimatedSubtotal: pricedSnapshots.length ? subtotal : null,
-        hasUnpricedItems: snapshots.some((item) => !item.unitPrice), submittedAt: pricedAt, pricedAt, idempotencyKey: input.idempotencyKey,
+        hasUnpricedItems: snapshots.some((item) => !item.unitPrice), submittedAt: pricedAt, pricedAt: null, idempotencyKey: input.idempotencyKey,
+        statusHistory: { create: { toStatus: "NEW", changedById: actor.userId, note: "Bayi teklif talebini gönderdi." } },
         items: { create: snapshots.map((item) => ({
           productId: item.productId, quantity: item.quantity, notes: item.notes, dimensions: item.dimensions,
           glassType: item.glassType, unitPrice: item.unitPrice, lineTotal: item.lineTotal, priceListId: item.priceListId,

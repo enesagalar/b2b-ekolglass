@@ -38,6 +38,7 @@ describe("quote cart pricing and tenant isolation", () => {
 
   afterAll(async () => {
     await prisma.auditLog.deleteMany({ where: { actorUserId: { in: [ids.userA, ids.userB] } } });
+    await prisma.quoteStatusHistory.deleteMany({ where: { quote: { companyId: { in: [ids.companyA, ids.companyB] } } } });
     await prisma.quoteRequest.deleteMany({ where: { companyId: { in: [ids.companyA, ids.companyB] } } });
     await prisma.quoteCart.deleteMany({ where: { companyId: { in: [ids.companyA, ids.companyB] } } });
     await prisma.productPrice.deleteMany({ where: { productId: ids.product } });

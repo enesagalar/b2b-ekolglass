@@ -83,7 +83,7 @@ async function getDashboardData() {
       {
         label: "Açık teklif",
         value: openQuotes,
-        href: undefined,
+        href: "/admin/teklifler",
         icon: FileText,
         tone: "slate",
       },

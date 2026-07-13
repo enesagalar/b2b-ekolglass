@@ -241,6 +241,87 @@ try {
     .run(smokeAdminOrderId);
   cleanupAdminOrderDb.close();
 }
+
+const smokeQuoteId = `smoke-admin-quote-${Date.now()}`;
+const smokeQuoteItemId = `smoke-admin-quote-item-${Date.now()}`;
+const smokeQuoteNumber = `SMOKE-QUOTE-${Date.now()}`;
+const smokeQuoteTimestamp = new Date().toISOString();
+const smokeQuoteDb = new Database("dev.db");
+smokeQuoteDb
+  .prepare(
+    `insert into QuoteRequest (
+      id, quoteNumber, companyId, requesterName, requesterEmail, status,
+      currency, estimatedSubtotal, hasUnpricedItems, submittedAt, version,
+      createdAt, updatedAt
+    ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+  .run(
+    smokeQuoteId,
+    smokeQuoteNumber,
+    "seed-ekolglass-demo-dealer",
+    "Smoke Quote User",
+    "smoke-quote@example.com",
+    "IN_REVIEW",
+    "TRY",
+    100,
+    0,
+    smokeQuoteTimestamp,
+    1,
+    smokeQuoteTimestamp,
+    smokeQuoteTimestamp,
+  );
+smokeQuoteDb
+  .prepare(
+    `insert into QuoteRequestItem (
+      id, quoteRequestId, customTitle, quantity, unitPrice, lineTotal, priceScope
+    ) values (?, ?, ?, ?, ?, ?, ?)`,
+  )
+  .run(smokeQuoteItemId, smokeQuoteId, "Smoke Quote Item", 2, 50, 100, "COMPANY");
+smokeQuoteDb.close();
+
+try {
+  const adminQuotesResponse = await request("/admin/teklifler", {
+    headers: { Cookie: serializeCookies(cookieJar) },
+  });
+  assert(
+    adminQuotesResponse.status === 200,
+    `Authenticated admin quotes failed with ${adminQuotesResponse.status}`,
+  );
+  assert(
+    (await adminQuotesResponse.text()).includes(smokeQuoteNumber),
+    "Admin quote queue did not render smoke quote",
+  );
+
+  const adminQuoteDetailResponse = await request(
+    `/admin/teklifler/${smokeQuoteId}`,
+    { headers: { Cookie: serializeCookies(cookieJar) } },
+  );
+  assert(
+    adminQuoteDetailResponse.status === 200,
+    `Admin quote detail failed with ${adminQuoteDetailResponse.status}`,
+  );
+  const adminQuoteDetailHtml = await adminQuoteDetailResponse.text();
+  assert(
+    adminQuoteDetailHtml.includes(smokeQuoteNumber) &&
+      adminQuoteDetailHtml.includes("Smoke Quote Item"),
+    "Admin quote detail did not render quote data",
+  );
+  assert(
+    adminQuoteDetailHtml.includes('name="expectedVersion"') &&
+      adminQuoteDetailHtml.includes('name="idempotencyKey"') &&
+      adminQuoteDetailHtml.includes('name="unitPrice"'),
+    "Admin quote operation controls not rendered",
+  );
+} finally {
+  const cleanupQuoteDb = new Database("dev.db");
+  cleanupQuoteDb
+    .prepare("delete from QuoteRequestItem where quoteRequestId = ?")
+    .run(smokeQuoteId);
+  cleanupQuoteDb
+    .prepare("delete from QuoteRequest where id = ?")
+    .run(smokeQuoteId);
+  cleanupQuoteDb.close();
+}
 assert(
   adminHtml.includes("Operasyon merkezi"),
   "Admin operations dashboard content not rendered",
@@ -866,6 +947,8 @@ console.log(
         "authenticated-admin-dashboard",
         "authenticated-admin-orders",
         "authenticated-admin-order-detail",
+        "authenticated-admin-quotes",
+        "authenticated-admin-quote-detail",
         "admin-dealer-redirect",
         "authenticated-dealer-application-list",
         "authenticated-dealer-application-detail",

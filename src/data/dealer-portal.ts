@@ -222,6 +222,20 @@ export function getDealerQuoteDetail(companyId: string, quoteId: string) {
       pricedAt: true,
       createdAt: true,
       updatedAt: true,
+      activeOfferRevision: {
+        select: {
+          revisionNumber: true,
+          currency: true,
+          subtotal: true,
+          items: {
+            select: {
+              quoteRequestItemId: true,
+              unitPrice: true,
+              lineTotal: true,
+            },
+          },
+        },
+      },
       items: {
         orderBy: { id: "asc" },
         select: {

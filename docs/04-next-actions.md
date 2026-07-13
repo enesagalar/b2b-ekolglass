@@ -8,16 +8,37 @@ Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Admin teklif inceleme, fiyatlandirma ve durum gecis ekrani uygulanacak.
-2. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
-3. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
-4. Siparis ve teklif listelerine filtre ve sayfalama tutarliligi eklenecek.
+1. Teklif sepetine version/CAS ve company-scoped payload-hash idempotency eklenecek.
+2. Onaylanan teklif, immutable aktif revizyondan tek transaction ile idempotent siparise donusturulecek.
+3. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
+4. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
 5. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
 6. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
 7. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
 8. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 admin teklif operasyonlari dilimi tamamlandi:
+
+- `/admin/teklifler` teklif kuyrugu; arama, durum filtresi, KPI ve sayfalama ile acildi.
+- `/admin/teklifler/[id]` kalem, firma, bayi notu, fiyatlandirma, durum ve history operasyonlarini birlestirdi.
+- Teklif gecisleri kati state machine ile sinirlandi; review, price, send, approve ve cancel yetkileri ayrildi.
+- Teklife `version`, aktorlu status history ve hash kontrollu idempotent command ledger eklendi.
+- Fiyatlar decimal string olarak dogrulaniyor; satir ve ara toplamlar transaction icinde server tarafinda hesaplanıyor.
+- Admin fiyatlandirmasi katalog snapshot'ini ezmiyor; her kayit immutable `QuoteOfferRevision` olusturuyor.
+- Aktif revizyon admin ve bayi detayinda gosteriliyor; `internalNotes` bayi sorgusuna dahil edilmiyor.
+- Dogrudan `PRICED` bypass'i engellendi; aktif revizyon olmadan `OFFER_SENT` gecisi reddediliyor.
+- `pricedAt` talep aninda degil, ilk gercek admin fiyatlandirmasinda set ediliyor.
+- Admin shell ve dashboard teklif kuyruguna baglandi.
+- 22 test dosyasi, 102 test, production build, HTTP smoke ve 390x844 responsive browser QA basarili.
+
+Agent incelemesinden takip borclari:
+
+- Teklif gonderim idempotency anahtari payload hash ile korunmali.
+- `QuoteCart` version ve checkout CAS ile eszamanli sekmelerden korunmali.
+- `APPROVED -> CONVERTED_TO_ORDER` ayri permission ve idempotent transaction olarak uygulanmali.
+- Teklif revizyonuna gecerlilik tarihi/indirim/vergi gereksinimi is karariyla eklenmeli.
 
 Faz 3.3 siparis durum ve stok yasam dongusu dilimi tamamlandi:
 

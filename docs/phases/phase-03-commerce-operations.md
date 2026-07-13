@@ -35,7 +35,8 @@ Tamamlandi:
 
 Siradaki dilim:
 
-- Admin teklif fiyatlandirma ve durum yonetimi.
+- Teklif sepeti version/CAS ve payload-hash idempotency sertlestirmesi.
+- Onaylanan teklifin idempotent siparise donusumu.
 - City Lojistik adapterine outbox uzerinden siparis/sevkiyat aktarimi.
 - Transactional e-posta teslim adapteri.
 - Stok invariant'lari icin DB check constraint'leri.
@@ -51,3 +52,19 @@ Tamamlandi:
 - Shipment/takip zorunluluklari ve teslimde stok etkisiz gecis.
 - Actor baglantili status history ve ayrintili audit metadata.
 - Admin operasyon formu, pending/conflict/confirm durumlari.
+
+## 2026-07-13 Teklif Operasyon Dilimi
+
+Tamamlandi:
+
+- Admin teklif kuyrugu, arama, durum filtresi, KPI ve sayfalama.
+- Admin teklif detayi, firma/iletisim, kalemler, notlar ve aktorlu durum gecmisi.
+- Kati teklif state machine ve fiyat/review/send/approve/cancel yetki ayrimi.
+- Quote version CAS ve hash kontrollu idempotent operasyon komut defteri.
+- Decimal string girdisi ve server-side satir/ara toplam hesaplama.
+- Talep ani katalog tahmini ile baglayici admin teklifi birbirinden ayrildi.
+- Immutable `QuoteOfferRevision` ve `QuoteOfferRevisionItem` modeli.
+- Aktif teklif revizyonunun admin ve bayi detayinda ortak, ic not sizintisi olmadan gosterimi.
+- `pricedAt` yalniz gercek admin fiyatlandirmasinda set edilecek sekilde duzeltildi.
+- Admin shell ve dashboard teklif operasyonuna baglandi.
+- Unit, SQLite entegrasyon, HTTP smoke ve responsive browser QA kontrolleri eklendi.

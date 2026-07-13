@@ -14,6 +14,7 @@ import {
 import {
   dealerApplicationStatuses,
   orderStatuses,
+  quoteStatuses,
   stockStatuses,
 } from "./statuses";
 
@@ -396,6 +397,54 @@ export const quoteSubmitSchema = z.object({
     ),
   notes: optionalText(1000),
   idempotencyKey: z.string().uuid("Gönderim anahtarı geçersiz."),
+});
+
+export const quoteStatusTransitionSchema = z
+  .object({
+    quoteId: z.string().trim().min(1, "Teklif seçimi zorunludur."),
+    expectedStatus: z.enum(quoteStatuses),
+    expectedVersion: z.coerce.number().int().positive("Teklif sürümü geçersiz."),
+    targetStatus: z.enum(quoteStatuses),
+    idempotencyKey: z.string().uuid("İşlem anahtarı geçersiz."),
+    note: optionalText(1000),
+  })
+  .superRefine((value, context) => {
+    if (
+      ["WAITING_FOR_CUSTOMER_INFO", "REJECTED", "CANCELLED"].includes(
+        value.targetStatus,
+      ) &&
+      !value.note
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["note"],
+        message: "Bu durum değişikliği için operasyon notu zorunludur.",
+      });
+    }
+  });
+
+export const quotePricingSchema = z.object({
+  quoteId: z.string().trim().min(1, "Teklif seçimi zorunludur."),
+  expectedStatus: z.enum(quoteStatuses),
+  expectedVersion: z.coerce.number().int().positive("Teklif sürümü geçersiz."),
+  idempotencyKey: z.string().uuid("İşlem anahtarı geçersiz."),
+  currency: z.string().trim().regex(/^[A-Z]{3}$/, "Para birimi geçersiz."),
+  internalNotes: optionalText(2000),
+  items: z
+    .array(
+      z.object({
+        itemId: z.string().trim().min(1, "Teklif kalemi zorunludur."),
+        unitPrice: z
+          .string()
+          .trim()
+          .regex(
+            /^(?:0|[1-9]\d{0,7})(?:\.\d{1,2})?$/,
+            "Birim fiyat pozitif ve en fazla iki ondalık basamaklı olmalıdır.",
+          )
+          .refine((value) => Number(value) > 0, "Birim fiyat sıfırdan büyük olmalıdır."),
+      }),
+    )
+    .min(1, "En az bir teklif kalemi fiyatlandırılmalıdır."),
 });
 
 export const orderCartAddSchema = z.object({

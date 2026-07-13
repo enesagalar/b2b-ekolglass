@@ -89,9 +89,9 @@ const navigationSections: AdminNavSection[] = [
       },
       {
         label: "Teklifler",
+        href: "/admin/teklifler",
         icon: ClipboardCheck,
         description: "Satış akışı",
-        soon: true,
       },
       {
         label: "Siparişler",
