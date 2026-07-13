@@ -85,6 +85,18 @@ describe("SQLite migration chain", () => {
           )
           .run(),
       ).toThrow("StockItem_reserved_within_quantity_check");
+      expect(
+        db.prepare(`SELECT "orderMode" FROM "Product" WHERE "id" = 'migration-product'`).get(),
+      ).toEqual({ orderMode: "ORDER_ONLY" });
+      db.prepare(`INSERT INTO "CustomerGroup" ("id", "code", "name", "updatedAt") VALUES ('migration-group', 'MIGRATION', 'Migration Group', CURRENT_TIMESTAMP)`).run();
+      expect(() =>
+        db.prepare(`INSERT INTO "PriceList" (
+          "id", "name", "customerGroupId", "companyId", "updatedAt"
+        ) VALUES (
+          'invalid-scope', 'Invalid Scope', 'migration-group', 'migration-company', CURRENT_TIMESTAMP
+        )`).run(),
+      ).toThrow("PriceList_single_scope_check");
+      expect(db.prepare(`SELECT COUNT(*) AS "count" FROM pragma_table_info('MediaAsset') WHERE "name" = 'objectKey'`).get()).toEqual({ count: 1 });
     } finally {
       db.close();
     }

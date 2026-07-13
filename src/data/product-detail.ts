@@ -22,7 +22,6 @@ export async function getProductDetail(productId: string, viewer: CatalogViewer)
       tint: true,
       isTempered: true,
       isLaminated: true,
-      isCustomAvailable: true,
       orderMode: true,
       category: { select: { id: true, name: true } },
       compatibilities: {

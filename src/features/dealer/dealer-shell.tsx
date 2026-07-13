@@ -6,7 +6,6 @@ import {
   Building2,
   ChevronRight,
   ClipboardList,
-  FileText,
   Home,
   LayoutDashboard,
   LogOut,
@@ -30,7 +29,6 @@ type DealerNavItem = {
 const navigation: DealerNavItem[] = [
   { label: "Operasyon", href: "/bayi", icon: LayoutDashboard, description: "Firma operasyon özeti" },
   { label: "Ürün ve Fiyatlar", href: "/urunler", icon: PackageSearch, description: "Ticaret alanına geç" },
-  { label: "Tekliflerim", href: "/bayi/teklifler", icon: FileText, description: "Teklif talepleri" },
   { label: "Siparişlerim", href: "/bayi/siparisler", icon: ClipboardList, description: "Sipariş ve sevkiyat" },
   { label: "Firma Hesabı", href: "/bayi/hesabim", icon: Building2, description: "Ticari ve iletişim bilgileri" },
 ];

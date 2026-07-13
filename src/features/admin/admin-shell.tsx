@@ -8,7 +8,6 @@ import {
   Boxes,
   Building2,
   ChevronRight,
-  ClipboardCheck,
   DatabaseZap,
   FileText,
   Gauge,
@@ -98,13 +97,6 @@ const navigationSections: AdminNavSection[] = [
         icon: FileText,
         description: "Bayi fiyatları",
         permission: "price.read",
-      },
-      {
-        label: "Teklifler",
-        href: "/admin/teklifler",
-        icon: ClipboardCheck,
-        description: "Satış akışı",
-        permission: "quote.review",
       },
       {
         label: "Siparişler",

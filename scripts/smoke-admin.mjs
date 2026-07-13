@@ -575,8 +575,8 @@ try {
     `Dealer product detail failed with ${dealerProductDetailResponse.status}`,
   );
   assert(
-    (await dealerProductDetailResponse.text()).includes("Teklife ekle"),
-    "Dealer product detail did not render quote cart action",
+    (await dealerProductDetailResponse.text()).includes("Sipariş sepetine ekle"),
+    "Dealer product detail did not render direct order action",
   );
 
   const legacyDealerQuoteCartResponse = await request("/bayi/teklif-sepeti", {
@@ -601,12 +601,12 @@ try {
     "Dealer order cart empty-state action not rendered",
   );
   assert(
-    dealerQuoteCartResponse.status === 200,
-    `Dealer quote cart failed with ${dealerQuoteCartResponse.status}`,
+    dealerQuoteCartResponse.status === 307,
+    `Disabled dealer quote cart should redirect, got ${dealerQuoteCartResponse.status}`,
   );
   assert(
-    (await dealerQuoteCartResponse.text()).includes("Teklif sepetiniz boş"),
-    "Dealer empty quote cart state not rendered",
+    dealerQuoteCartResponse.headers.get("location") === "/urunler",
+    "Disabled dealer quote cart did not redirect to products",
   );
 
   const dealerPortalResponse = await request("/bayi", {
@@ -794,6 +794,20 @@ assert(
   productsHtml.includes("Fiyat listelerine git"),
   "Admin price list shortcut not rendered",
 );
+assert(
+  productsHtml.includes("Toplu ürün aktarımı") && productsHtml.includes('type="file"'),
+  "Admin product CSV upload control not rendered",
+);
+
+const contentResponse = await request("/admin/icerik", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(contentResponse.status === 200, `Authenticated /admin/icerik failed with ${contentResponse.status}`);
+const contentHtml = await contentResponse.text();
+assert(
+  contentHtml.includes("Bilgisayardan görsel seç") && contentHtml.includes('accept="image/jpeg,image/png,image/webp"'),
+  "Admin CMS file upload control not rendered",
+);
 
 const categoriesResponse = await request("/admin/urunler/kategoriler", {
   headers: {
@@ -831,6 +845,10 @@ assert(
 assert(
   priceListsHtml.includes("Fiyat listesi ekle"),
   "Admin price list create form not rendered",
+);
+assert(
+  priceListsHtml.includes("iskonto orani degil") && priceListsHtml.includes("Firma fiyati"),
+  "Admin net price resolution guidance not rendered",
 );
 
 const db = new Database("dev.db");
@@ -961,7 +979,7 @@ console.log(
         "authenticated-admin-integrations",
         "authenticated-admin-orders",
         "authenticated-admin-order-detail",
-        "authenticated-admin-quotes",
+        "authenticated-admin-quote-archive",
         "authenticated-admin-quote-detail",
         "admin-dealer-redirect",
         "authenticated-dealer-application-list",
@@ -974,11 +992,11 @@ console.log(
         "authenticated-dealer-products",
         "public-product-detail",
         "authenticated-dealer-product-detail",
-        "authenticated-dealer-quote-cart",
+        "disabled-dealer-quote-cart-redirect",
         "authenticated-dealer-order-cart",
         "authenticated-dealer-dashboard",
         "authenticated-dealer-orders",
-        "authenticated-dealer-quotes",
+        "authenticated-dealer-quote-archive",
         "authenticated-dealer-account",
         "dealer-admin-access-rejected",
         "authenticated-product-management",

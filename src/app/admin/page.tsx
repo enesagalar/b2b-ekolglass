@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Boxes,
   ClipboardCheck,
-  FileText,
   ShieldCheck,
   Truck,
   UsersRound,
@@ -21,7 +20,6 @@ const panelClass = "rounded-lg border border-slate-200 bg-white shadow-sm";
 async function getDashboardData() {
   const [
     pendingDealers,
-    openQuotes,
     approvalOrders,
     lowStockCount,
     readyShipments,
@@ -33,9 +31,6 @@ async function getDashboardData() {
   ] = await Promise.all([
     prisma.dealerApplication.count({
       where: { status: { in: ["NEW", "IN_REVIEW"] } },
-    }),
-    prisma.quoteRequest.count({
-      where: { status: { in: ["NEW", "IN_REVIEW", "PRICED", "OFFER_SENT"] } },
     }),
     prisma.order.count({
       where: {
@@ -83,13 +78,6 @@ async function getDashboardData() {
         href: "/admin/bayi-basvurulari",
         icon: UsersRound,
         tone: "teal",
-      },
-      {
-        label: "Açık teklif",
-        value: openQuotes,
-        href: "/admin/teklifler",
-        icon: FileText,
-        tone: "slate",
       },
       {
         label: "Onay bekleyen sipariş",

@@ -194,7 +194,7 @@ model Product {
   processingNotes    String?
   compatibilityNotes String?
   isCustomAvailable  Boolean                @default(false)
-  orderMode          String                 @default("QUOTE_OR_ORDER")
+  orderMode          String                 @default("ORDER_ONLY")
   status             String                 @default("ACTIVE")
   stockItems         StockItem[]
   prices             ProductPrice[]
@@ -655,18 +655,24 @@ model ShippingProvider {
 }
 
 model MediaAsset {
-  id         String      @id @default(cuid())
-  key        String      @unique
-  title      String
-  url        String
-  altText    String
-  usage      String
-  productId  String?
-  product    Product?    @relation(fields: [productId], references: [id])
-  pageBlocks PageBlock[]
-  isActive   Boolean     @default(true)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id               String      @id @default(cuid())
+  key              String      @unique
+  title            String
+  url              String
+  altText          String
+  usage            String
+  productId        String?
+  product          Product?    @relation(fields: [productId], references: [id])
+  pageBlocks       PageBlock[]
+  isActive         Boolean     @default(true)
+  objectKey        String?     @unique
+  mimeType         String?
+  byteSize         Int?
+  checksum         String?
+  storageProvider  String?
+  uploadedByUserId String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model SiteSetting {

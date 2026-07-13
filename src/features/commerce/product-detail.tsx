@@ -15,12 +15,10 @@ import {
 import type { ProductDetailData } from "@/data/product-detail";
 import {
   canViewCatalogPrices,
-  getOrderModeLabel,
   resolveCatalogStockSummary,
   selectCatalogPrice,
   type CatalogViewer,
 } from "@/domain/catalog";
-import { AddToQuoteCartForm } from "@/features/quotes/quote-forms";
 import { AddToOrderCartForm } from "@/features/orders/order-forms";
 
 function safeMediaUrl(url: string) {
@@ -195,11 +193,6 @@ export function ProductDetail({
               <span className="rounded bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-900">
                 Aktif ürün
               </span>
-              {product.isCustomAvailable ? (
-                <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800">
-                  Özel üretime uygun
-                </span>
-              ) : null}
             </div>
             <h1 className="mt-4 text-2xl font-semibold leading-tight text-slate-950 md:text-3xl">
               {product.name}
@@ -222,9 +215,7 @@ export function ProductDetail({
               </div>
               <div className="border-l border-slate-200 pl-3">
                 <p className="text-xs text-slate-500">Satış biçimi</p>
-                <p className="mt-1 font-semibold text-slate-900">
-                  {getOrderModeLabel(product.orderMode)}
-                </p>
+                <p className="mt-1 font-semibold text-slate-900">Doğrudan sipariş</p>
               </div>
             </div>
 
@@ -277,49 +268,17 @@ export function ProductDetail({
                   Bayi fiyatı için giriş yap
                 </Link>
               ) : (
-                <div className="grid gap-3">
-                  {product.orderMode !== "QUOTE_ONLY" ? (
-                    <div className="rounded-md border border-slate-300 bg-slate-50 p-4">
-                      <div className="mb-4 flex items-start gap-3">
-                        <ShoppingCart
-                          className="mt-0.5 shrink-0 text-slate-800"
-                          size={19}
-                          aria-hidden="true"
-                        />
-                        <div>
-                          <p className="text-sm font-semibold text-slate-950">
-                            Doğrudan sipariş
-                          </p>
-                          <p className="mt-1 text-xs leading-5 text-slate-600">
-                            Firma fiyatı ve kullanılabilir stok gönderim
-                            sırasında yeniden doğrulanır.
-                          </p>
-                        </div>
-                      </div>
-                      <AddToOrderCartForm productId={product.id} />
+                <div className="rounded-md border border-slate-300 bg-slate-50 p-4">
+                  <div className="mb-4 flex items-start gap-3">
+                    <ShoppingCart className="mt-0.5 shrink-0 text-slate-800" size={19} aria-hidden="true" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">Sipariş sepetine ekle</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        Net firma fiyatı ve kullanılabilir stok, sipariş gönderilirken yeniden doğrulanır.
+                      </p>
                     </div>
-                  ) : null}
-                  {product.orderMode !== "ORDER_ONLY" ? (
-                    <div className="rounded-md border border-dashed border-teal-300 bg-teal-50 p-4">
-                      <div className="mb-4 flex items-start gap-3">
-                        <ShoppingCart
-                          className="mt-0.5 shrink-0 text-teal-800"
-                          size={19}
-                          aria-hidden="true"
-                        />
-                        <div>
-                          <p className="text-sm font-semibold text-slate-950">
-                            Teklif sepeti
-                          </p>
-                          <p className="mt-1 text-xs leading-5 text-slate-600">
-                            İhtiyacınız olan adedi belirleyerek firma teklif
-                            sepetinize ekleyin.
-                          </p>
-                        </div>
-                      </div>
-                      <AddToQuoteCartForm productId={product.id} />
-                    </div>
-                  ) : null}
+                  </div>
+                  <AddToOrderCartForm productId={product.id} />
                 </div>
               )}
             </div>

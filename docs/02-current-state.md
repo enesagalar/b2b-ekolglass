@@ -103,12 +103,17 @@ Son guncelleme: 2026-07-13
 - Permission kontrollu `/admin/entegrasyonlar` operasyon ekrani.
 - Idempotent ve audit log'lu dead-letter replay/retry-now komutlari.
 - Backlog, expired lease, dead-letter ve isleyicisiz topic durumlarini kapsayan outbox health metrigi.
+- B2B portalinda yalniz dogrudan siparis akisi; yeni teklif olusturma kapali.
+- Gecmis teklif kayitlari salt okunur audit arsivi olarak korunuyor.
+- Ekol UTF-8 genel listesinden 1.379 kod bazli taslak urun ice aktarildi.
+- Net fiyat kapsami: firma, musteri grubu, genel bayi sirasi.
+- Banner icin dosya secimli, MIME imzasi kontrollu lokal medya storage hatti.
 
 ## En Onemli Eksikler
 
 1. Bayi platformunda kalanlar:
    - Transactional e-posta adapteri hazir; production SMTP credential ve scheduler kurulumu bekliyor.
-   - Teklif listesinde filtre ve sayfalama yok.
+   - Taslak urunlerin toplu fiyat/stok tamamlama ve yayin akisi yok.
    - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:

@@ -185,12 +185,36 @@ export const categoryFormSchema = z
       : slugifyProductCategoryName(data.name),
   }));
 
-export const priceListFormSchema = z.object({
-  id: optionalText(120),
-  name: z.string().trim().min(2, "Fiyat listesi adı zorunludur.").max(140),
-  currency: z.enum(currencies),
-  isActive: checkboxBoolean.default(false),
-});
+export const priceListFormSchema = z
+  .object({
+    id: optionalText(120),
+    name: z.string().trim().min(2, "Fiyat listesi adı zorunludur.").max(140),
+    currency: z.enum(currencies),
+    scope: z.enum(["PUBLIC", "CUSTOMER_GROUP", "COMPANY"]),
+    customerGroupId: optionalText(120),
+    companyId: optionalText(120),
+    startsAt: optionalText(40),
+    endsAt: optionalText(40),
+    priority: z.coerce.number().int().min(0).max(9999).default(0),
+    isActive: checkboxBoolean.default(false),
+  })
+  .superRefine((data, context) => {
+    if (data.scope === "CUSTOMER_GROUP" && !data.customerGroupId) {
+      context.addIssue({ code: "custom", path: ["customerGroupId"], message: "Musteri grubu secilmelidir." });
+    }
+    if (data.scope === "COMPANY" && !data.companyId) {
+      context.addIssue({ code: "custom", path: ["companyId"], message: "Firma secilmelidir." });
+    }
+    if (data.startsAt && Number.isNaN(Date.parse(data.startsAt))) {
+      context.addIssue({ code: "custom", path: ["startsAt"], message: "Baslangic tarihi gecersiz." });
+    }
+    if (data.endsAt && Number.isNaN(Date.parse(data.endsAt))) {
+      context.addIssue({ code: "custom", path: ["endsAt"], message: "Bitis tarihi gecersiz." });
+    }
+    if (data.startsAt && data.endsAt && Date.parse(data.endsAt) <= Date.parse(data.startsAt)) {
+      context.addIssue({ code: "custom", path: ["endsAt"], message: "Bitis tarihi baslangictan sonra olmalidir." });
+    }
+  });
 
 export const productFormSchema = z
   .object({
@@ -214,7 +238,6 @@ export const productFormSchema = z
     tint: optionalText(60),
     isTempered: checkboxBoolean.default(false),
     isLaminated: checkboxBoolean.default(false),
-    isCustomAvailable: checkboxBoolean.default(false),
     processingNotes: optionalText(1000),
     compatibilityNotes: optionalText(1000),
     orderMode: z.enum(productOrderModes),

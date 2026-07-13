@@ -15,7 +15,7 @@ import {
   stockFormSchema,
 } from "@/domain/validation";
 import { Prisma } from "@/generated/prisma/client";
-import { requireAdminUser } from "@/lib/auth";
+import { requireAdminUser, requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export type CatalogActionState = {
@@ -180,6 +180,12 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
     id: formData.get("id") || undefined,
     name: formData.get("name"),
     currency: formData.get("currency"),
+    scope: formData.get("scope") || "PUBLIC",
+    customerGroupId: formData.get("customerGroupId") || undefined,
+    companyId: formData.get("companyId") || undefined,
+    startsAt: formData.get("startsAt") || undefined,
+    endsAt: formData.get("endsAt") || undefined,
+    priority: formData.get("priority") || 0,
     isActive: formData.get("isActive"),
   });
 
@@ -188,21 +194,23 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
   }
 
   try {
+    const scopedData = {
+      name: parsed.data.name,
+      currency: parsed.data.currency,
+      customerGroupId: parsed.data.scope === "CUSTOMER_GROUP" ? parsed.data.customerGroupId : null,
+      companyId: parsed.data.scope === "COMPANY" ? parsed.data.companyId : null,
+      startsAt: parsed.data.startsAt ? new Date(parsed.data.startsAt) : new Date(),
+      endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
+      priority: parsed.data.priority,
+      isActive: parsed.data.isActive,
+    };
     const priceList = parsed.data.id
       ? await prisma.priceList.update({
           where: { id: parsed.data.id },
-          data: {
-            name: parsed.data.name,
-            currency: parsed.data.currency,
-            isActive: parsed.data.isActive,
-          },
+          data: scopedData,
         })
       : await prisma.priceList.create({
-          data: {
-            name: parsed.data.name,
-            currency: parsed.data.currency,
-            isActive: parsed.data.isActive,
-          },
+          data: scopedData,
         });
 
     await writeAuditLog(user.id, parsed.data.id ? "price_list.update" : "price_list.create", "PriceList", priceList.id, {
@@ -245,10 +253,9 @@ export async function saveProductBundle(
     tint: formData.get("tint") || undefined,
     isTempered: formData.get("isTempered"),
     isLaminated: formData.get("isLaminated"),
-    isCustomAvailable: formData.get("isCustomAvailable"),
     processingNotes: formData.get("processingNotes") || undefined,
     compatibilityNotes: formData.get("compatibilityNotes") || undefined,
-    orderMode: formData.get("orderMode"),
+    orderMode: "ORDER_ONLY",
     status: formData.get("status"),
   });
 
@@ -295,10 +302,10 @@ export async function saveProductBundle(
         tint: nullable(productParsed.data.tint),
         isTempered: productParsed.data.isTempered,
         isLaminated: productParsed.data.isLaminated,
-        isCustomAvailable: productParsed.data.isCustomAvailable,
+        isCustomAvailable: false,
         processingNotes: nullable(productParsed.data.processingNotes),
         compatibilityNotes: nullable(productParsed.data.compatibilityNotes),
-        orderMode: productParsed.data.orderMode,
+        orderMode: "ORDER_ONLY",
         status: productParsed.data.status,
       };
 
@@ -638,7 +645,7 @@ export async function saveProductMedia(
   input: CatalogActionInput,
   maybeFormData?: FormData,
 ): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("product.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -718,7 +725,7 @@ export async function setProductMediaStatus(
   input: CatalogActionInput,
   maybeFormData?: FormData,
 ): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("product.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {

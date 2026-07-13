@@ -120,11 +120,7 @@ describe("legacy dealer commerce redirects", () => {
       .rejects.toThrow("permanent-redirect:/urunler/product-1");
   });
 
-  it.each([
-    [undefined, "/teklif-sepeti"],
-    ["1", "/teklif-sepeti?added=1"],
-  ])("redirects the legacy quote cart and preserves added=%s", async (added, destination) => {
-    await expect(LegacyQuoteCartPage({ searchParams: Promise.resolve({ added }) }))
-      .rejects.toThrow(`permanent-redirect:${destination}`);
+  it("redirects the legacy quote cart to products", async () => {
+    await expect(() => LegacyQuoteCartPage()).toThrow("permanent-redirect:/urunler");
   });
 });

@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   Building2,
   Factory,
-  FileText,
   LogIn,
   LogOut,
   PackageSearch,
@@ -106,14 +105,6 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
               <UserRound size={19} aria-hidden="true" />
             </Link>
             <Link
-              href="/teklif-sepeti"
-              aria-label="Teklif sepeti"
-              title="Teklif sepeti"
-              className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 text-slate-700"
-            >
-              <FileText size={18} aria-hidden="true" />
-            </Link>
-            <Link
               href="/sepet"
               aria-label="Sipariş sepeti"
               title="Sipariş sepeti"
@@ -212,12 +203,6 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
                 className="whitespace-nowrap text-teal-800"
               >
                 Siparişlerim
-              </Link>
-              <Link
-                href="/bayi/teklifler"
-                className="whitespace-nowrap text-teal-800"
-              >
-                Tekliflerim
               </Link>
             </>
           ) : null}

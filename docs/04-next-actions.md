@@ -4,17 +4,31 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.3 - Kimlik dogrulama rate-limit sertlestirmesi ve production operasyon hazirligi.
+Faz 3.3 - Katalog fiyat/stok hazirligi, toplu yayin ve kimlik dogrulama sertlestirmesi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-2. Production SMTP credential, scheduler ve alarm esikleri deployment runbook'una baglanacak.
-3. City Lojistik canli API sozlesmesi temin edilirse adapter mapping ve sandbox akisi uygulanacak.
-4. Bayi siparis/teklif listelerine filtre ve sayfalama eklenecek.
+1. 1.379 taslak urun icin kod + net fiyat + stok toplu import sozlesmesi alinacak.
+2. Hazirlik kontrolu ve toplu yayina alma ekrani kurulacak.
+3. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+4. Production SMTP, medya storage, scheduler ve alarm runbook'u tamamlanacak.
 5. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
+
+Faz disi B2B katalog ve ticaret akisi duzeltmesi tamamlandi:
+
+- Bayi urunlerinde teklif/siparis ikilemi kaldirildi; portal yalniz dogrudan siparis uretir.
+- Teklif sepeti ve yeni teklif server action'lari fail-closed kapatildi; gecmis teklif kaydi arsiv olarak korundu.
+- Admin ve bayi navigasyonundan yeni teklif akisi cikarildi.
+- Gonderilen UTF-8 CSV analiz edildi; 1.379 benzersiz ve tamamlanmis urun kod bazinda idempotent ice aktarildi.
+- CSV fiyat/stok icermedigi icin yeni urunler taslak, fiyatsiz ve sifir stokla olusturuldu.
+- Admin urun tablosundaki genisleyen satir ici editor kaldirildi; duzenleme urun detayina sabitlendi.
+- Fiyat listesi ekrani genel, musteri grubu ve firma net fiyat kapsamlarini aciklar hale getirildi.
+- Firma ve musteri grubu kapsamlarinin ayni listede birlesmesi DB constraint'iyle engellendi.
+- CMS banner URL alani kaldirildi; permission kontrollu ve magic-byte dogrulamali dosya yukleme eklendi.
+- Kalici kararlar `docs/architecture/b2b-catalog-pricing-import.md` dosyasina yazildi.
+- 34 test dosyasi, 148 test, migration chain, production build ve genisletilmis admin smoke akisi basarili.
 
 Faz 3.3 entegrasyon operasyonlari dilimi tamamlandi:
 

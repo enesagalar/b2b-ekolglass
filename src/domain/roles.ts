@@ -135,19 +135,17 @@ export const rolePermissions: Record<Role, Permission[]> = {
   DEALER_OWNER: [
     "product.read",
     "price.read",
-    "quote.create",
     "order.create",
     "order.track",
   ],
   DEALER_STAFF: [
     "product.read",
     "price.read",
-    "quote.create",
     "order.create",
     "order.track",
   ],
   PENDING_CUSTOMER: ["product.read"],
-  GUEST: ["product.read", "quote.create"],
+  GUEST: ["product.read"],
 };
 
 export function hasPermission(role: Role, permission: Permission) {

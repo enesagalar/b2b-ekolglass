@@ -16,10 +16,8 @@ import Link from "next/link";
 
 import {
   currencies,
-  getOrderModeLabel,
   getProductStatusLabel,
   productGlassTypes,
-  productOrderModes,
   productStatuses,
   stockVisibilities,
 } from "@/domain/catalog";
@@ -28,10 +26,9 @@ import {
   saveCategory,
   savePriceList,
   saveProductBundle,
-  saveProductPrice,
-  saveProductStock,
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
+import { ProductImportForm } from "@/features/catalog-management/product-import-form";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -134,10 +131,8 @@ function ProductCoreFields({
     tint: string | null;
     isTempered: boolean;
     isLaminated: boolean;
-    isCustomAvailable: boolean;
     processingNotes: string | null;
     compatibilityNotes: string | null;
-    orderMode: string;
     status: string;
   };
 }) {
@@ -211,16 +206,7 @@ function ProductCoreFields({
           Renk
           <input name="tint" defaultValue={product?.tint ?? ""} className={inputClass} placeholder="Yeşil" />
         </label>
-        <label className={labelClass}>
-          Satış modu
-          <select name="orderMode" defaultValue={product?.orderMode ?? "QUOTE_OR_ORDER"} className={inputClass}>
-            {productOrderModes.map((mode) => (
-              <option key={mode} value={mode}>
-                {getOrderModeLabel(mode)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <input type="hidden" name="orderMode" value="ORDER_ONLY" />
         <label className={labelClass}>
           Yayın durumu
           <select name="status" defaultValue={product?.status ?? "DRAFT"} className={inputClass}>
@@ -241,15 +227,6 @@ function ProductCoreFields({
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" name="isLaminated" defaultChecked={product?.isLaminated} className="h-4 w-4 rounded border-slate-300" />
           Lamine
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input
-            type="checkbox"
-            name="isCustomAvailable"
-            defaultChecked={product?.isCustomAvailable}
-            className="h-4 w-4 rounded border-slate-300"
-          />
-          Özel üretime uygun
         </label>
       </div>
 
@@ -422,8 +399,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             <p className="text-sm font-medium text-teal-800">Ticari veri yönetimi</p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-950">Ürün, kategori, fiyat ve stok operasyonu</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-              Bu ekran public katalogun okuduğu gerçek veriyi yönetir. Yeni ürün kaydı stok ve fiyat satırıyla birlikte
-              transaction içinde oluşturulur.
+              Bu ekran public katalogun okuduğu gerçek veriyi yönetir. B2B ürünleri yalnız doğrudan sipariş akışına açılır.
             </p>
           </div>
         </div>
@@ -481,6 +457,13 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           </section>
 
           <aside className="grid gap-4 self-start">
+            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-950">Toplu ürün aktarımı</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Ekol ürün listesini Türkçe karakterleri koruyarak kod bazında ekleyin veya güncelleyin.
+              </p>
+              <div className="mt-4"><ProductImportForm /></div>
+            </section>
             <Link
               href="/admin/urunler/kategoriler"
               className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
@@ -720,67 +703,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                           <Eye size={14} aria-hidden="true" />
                           Detay
                         </Link>
-                        <details className="group">
-                          <summary className="cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800">
-                            Düzenle
-                          </summary>
-                          <div className="mt-4 grid w-[720px] max-w-[80vw] gap-4 rounded-md border border-slate-200 bg-slate-50 p-4">
-                            <CatalogActionForm action={saveProductBundle} className="grid gap-4">
-                              <ProductCoreFields categories={categories} product={product} />
-                              <StockFields
-                                prefix="stock"
-                                stock={
-                                  stock
-                                    ? {
-                                        warehouseCode: stock.warehouseCode,
-                                        quantity: stock.quantity,
-                                        reservedQuantity: stock.reservedQuantity,
-                                        visibility: stock.visibility,
-                                        status: stock.status,
-                                      }
-                                    : undefined
-                                }
-                              />
-                              <PriceFields
-                                priceLists={priceLists}
-                                price={
-                                  price
-                                    ? {
-                                        priceListId: price.priceListId,
-                                        amount: price.amount,
-                                        minQuantity: price.minQuantity,
-                                      }
-                                    : undefined
-                                }
-                              />
-                              <SubmitButton label="Ürün paketini güncelle" />
-                            </CatalogActionForm>
-
-                            <CatalogActionForm action={saveProductStock} className="grid gap-3 rounded-md border border-slate-200 bg-white p-3">
-                              <p className="text-xs font-semibold uppercase text-slate-500">Sadece stok güncelle</p>
-                              <StockFields productId={product.id} stock={stock ?? undefined} />
-                              <SubmitButton label="Stok kaydet" />
-                            </CatalogActionForm>
-
-                            <CatalogActionForm action={saveProductPrice} className="grid gap-3 rounded-md border border-slate-200 bg-white p-3">
-                              <p className="text-xs font-semibold uppercase text-slate-500">Sadece fiyat güncelle</p>
-                              <PriceFields
-                                productId={product.id}
-                                priceLists={priceLists}
-                                price={
-                                  price
-                                    ? {
-                                        priceListId: price.priceListId,
-                                        amount: price.amount,
-                                        minQuantity: price.minQuantity,
-                                      }
-                                    : undefined
-                                }
-                              />
-                              <SubmitButton label="Fiyat kaydet" />
-                            </CatalogActionForm>
-                          </div>
-                        </details>
                       </td>
                     </tr>
                   );

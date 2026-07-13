@@ -15,7 +15,7 @@ import {
   Warehouse,
 } from "lucide-react";
 
-import { getOrderModeLabel, getProductStatusLabel, stockVisibilities } from "@/domain/catalog";
+import { getProductStatusLabel, stockVisibilities } from "@/domain/catalog";
 import { getStatusLabel, stockStatuses } from "@/domain/statuses";
 import {
   deleteProductCompatibility,
@@ -160,7 +160,7 @@ export default async function AdminProductDetailPage({
           </div>
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs font-semibold text-slate-500">Satis modu</span>
-            <span className="text-sm font-semibold text-slate-950">{getOrderModeLabel(product.orderMode)}</span>
+            <span className="text-sm font-semibold text-slate-950">Dogrudan siparis</span>
           </div>
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs font-semibold text-slate-500">Guncelleme</span>
@@ -199,7 +199,6 @@ export default async function AdminProductDetailPage({
           <Field label="Olcu" value={product.dimensions} />
           <Field label="Kalinlik" value={product.thicknessMm ? `${product.thicknessMm.toString()} mm` : null} />
           <Field label="Renk" value={product.tint} />
-          <Field label="Ozel uretim" value={product.isCustomAvailable ? "Uygun" : "Kapali"} />
           <div className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
               <FileText size={16} aria-hidden="true" />
@@ -310,7 +309,7 @@ export default async function AdminProductDetailPage({
             <div className="grid gap-3 lg:grid-cols-[1.4fr_0.7fr_0.7fr_auto]">
               <label className={labelClass}>
                 Fiyat listesi
-                <select name="priceListId" required defaultValue={product.prices[0]?.priceListId ?? priceLists[0]?.id} className={inputClass}>
+                <select name="priceListId" required defaultValue={priceLists[0]?.id} className={inputClass}>
                   {priceLists.map((priceList) => (
                     <option key={priceList.id} value={priceList.id}>
                       {priceList.name} ({priceList.currency})
@@ -320,11 +319,11 @@ export default async function AdminProductDetailPage({
               </label>
               <label className={labelClass}>
                 Fiyat
-                <input name="amount" inputMode="decimal" required defaultValue={product.prices[0]?.amount.toString() ?? ""} className={inputClass} />
+                <input name="amount" inputMode="decimal" required placeholder="Net birim fiyat" className={inputClass} />
               </label>
               <label className={labelClass}>
                 Min. adet
-                <input name="minQuantity" type="number" min={1} required defaultValue={product.prices[0]?.minQuantity ?? 1} className={inputClass} />
+                <input name="minQuantity" type="number" min={1} required defaultValue={1} className={inputClass} />
               </label>
               <div className="flex items-end">
                 <SubmitButton label="Fiyat kaydet" />
@@ -332,7 +331,7 @@ export default async function AdminProductDetailPage({
             </div>
           </CatalogActionForm>
 
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
             {product.prices.length > 0 ? (
               <table className="w-full min-w-[700px] border-collapse text-left text-sm">
                 <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">

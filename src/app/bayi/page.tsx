@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Boxes, ClipboardList, FileText, PackageSearch, Truck } from "lucide-react";
+import { ArrowRight, Boxes, ClipboardList, PackageSearch, ShoppingCart, Truck } from "lucide-react";
 
 import { requireDealerContext } from "@/data/dealer-context";
 import { getDealerDashboardData } from "@/data/dealer-portal";
@@ -15,7 +15,6 @@ export default async function DealerDashboardPage() {
 
   const metrics = [
     { label: "Açık sipariş", value: dashboard.openOrders, icon: ClipboardList, hint: "Aktif operasyon" },
-    { label: "Açık teklif", value: dashboard.openQuotes, icon: FileText, hint: "Yanıt bekleyen" },
     { label: "Aktif sevkiyat", value: dashboard.activeShipments, icon: Truck, hint: "Teslim edilmemiş" },
     { label: "Aktif ürün", value: dashboard.activeProducts, icon: Boxes, hint: "Katalog erişimi" },
   ];
@@ -27,7 +26,7 @@ export default async function DealerDashboardPage() {
           <p className="text-sm font-semibold text-teal-800">{company.displayName}</p>
           <h2 className="mt-1 text-2xl font-semibold text-slate-950 md:text-3xl">Operasyon özeti</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Hoş geldiniz {user.name}. Sipariş, teklif ve sevkiyat hareketleriniz gerçek zamanlı firma hesabınızdan alınır.
+            Hoş geldiniz {user.name}. Sipariş ve sevkiyat hareketleriniz gerçek zamanlı firma hesabınızdan alınır.
           </p>
         </div>
         <Link
@@ -39,7 +38,7 @@ export default async function DealerDashboardPage() {
         </Link>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Firma metrikleri">
+      <section className="grid gap-3 sm:grid-cols-3" aria-label="Firma metrikleri">
         {metrics.map((metric) => {
           const Icon = metric.icon;
 
@@ -97,37 +96,10 @@ export default async function DealerDashboardPage() {
           </div>
         </div>
 
-        <div className={panelClass}>
-          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
-            <div>
-              <h3 className="text-base font-semibold text-slate-950">Son teklifler</h3>
-              <p className="mt-1 text-xs text-slate-500">Fiyatlandırma ve özel üretim talepleri</p>
-            </div>
-            <Link href="/bayi/teklifler" className="inline-flex items-center gap-1 text-sm font-semibold text-teal-800">
-              Tümü <ArrowRight size={15} aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="divide-y divide-slate-200">
-            {dashboard.recentQuotes.length ? (
-              dashboard.recentQuotes.map((quote) => (
-                <div key={quote.id} className="flex items-center justify-between gap-3 px-5 py-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-950">{quote.quoteNumber}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {formatPortalDate(quote.createdAt)} · {quote._count.items} kalem
-                    </p>
-                  </div>
-                  <PortalStatus status={quote.status} />
-                </div>
-              ))
-            ) : (
-              <div className="px-5 py-10 text-center">
-                <FileText className="mx-auto text-slate-300" size={28} aria-hidden="true" />
-                <p className="mt-3 text-sm font-semibold text-slate-800">Henüz teklif talebi bulunmuyor</p>
-                <p className="mt-1 text-xs text-slate-500">Özel üretim ve proje talepleri teklif akışında görünecek.</p>
-              </div>
-            )}
-          </div>
+        <div className={`${panelClass} grid content-center gap-4 p-6`}>
+          <span className="flex h-11 w-11 items-center justify-center rounded-md bg-teal-50 text-teal-800"><ShoppingCart size={21} aria-hidden="true" /></span>
+          <div><h3 className="text-base font-semibold text-slate-950">Yeni sipariş oluştur</h3><p className="mt-2 text-sm leading-6 text-slate-600">Ürün kodu, araç veya ölçüyle arayın; net firma fiyatınızla sipariş sepetine ekleyin.</p></div>
+          <div className="flex flex-wrap gap-2"><Link href="/urunler" className="inline-flex h-10 items-center rounded-md bg-teal-800 px-4 text-sm font-semibold text-white">Ürünleri aç</Link><Link href="/sepet" className="inline-flex h-10 items-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-800">Sepete git</Link></div>
         </div>
       </section>
 

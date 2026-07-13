@@ -9,6 +9,10 @@ import { quoteCartAddSchema, quoteCartRemoveSchema, quoteCartUpdateSchema, quote
 
 export type QuoteActionState = { message?: string };
 
+function isB2BQuoteCreationEnabled() {
+  return false;
+}
+
 async function actor(nextPath: string) {
   const { user, company } = await requireDealerContext(nextPath);
   return { userId: user.id, companyId: company.id, customerGroupId: company.customerGroup?.id, role: user.role as "DEALER_OWNER" | "DEALER_STAFF" };
@@ -19,6 +23,9 @@ function messageOf(error: unknown) {
 }
 
 export async function addQuoteCartItemAction(_state: QuoteActionState, formData: FormData): Promise<QuoteActionState> {
+  if (!isB2BQuoteCreationEnabled()) {
+    return { message: "B2B portalinda yeni teklif talebi kapatildi. Urunu siparis sepetine ekleyin." };
+  }
   const parsed = quoteCartAddSchema.safeParse({ productId: formData.get("productId"), quantity: formData.get("quantity"), notes: formData.get("notes") });
   if (!parsed.success) return { message: parsed.error.issues[0]?.message };
   try {
@@ -45,6 +52,9 @@ export async function removeQuoteCartItemAction(formData: FormData) {
 }
 
 export async function submitQuoteCartAction(_state: QuoteActionState, formData: FormData): Promise<QuoteActionState> {
+  if (!isB2BQuoteCreationEnabled()) {
+    return { message: "B2B portalinda yeni teklif talebi kapatildi." };
+  }
   const parsed = quoteSubmitSchema.safeParse({
     cartId: formData.get("cartId"), cartVersion: formData.get("cartVersion"),
     requesterName: formData.get("requesterName"), requesterEmail: formData.get("requesterEmail"), requesterPhone: formData.get("requesterPhone"),
