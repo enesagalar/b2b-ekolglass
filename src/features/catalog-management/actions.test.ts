@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   productCompatibilityUpdate: vi.fn(),
   requireAdminUser: vi.fn(),
   revalidatePath: vi.fn(),
+  stockItemUpsert: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -31,10 +32,17 @@ vi.mock("@/lib/prisma", () => ({
       findMany: mocks.productCompatibilityFindMany,
       update: mocks.productCompatibilityUpdate,
     },
+    stockItem: {
+      upsert: mocks.stockItemUpsert,
+    },
   },
 }));
 
-import { deleteProductCompatibility, saveProductCompatibility } from "./actions";
+import {
+  deleteProductCompatibility,
+  saveProductCompatibility,
+  saveProductStock,
+} from "./actions";
 
 function compatibilityForm(overrides: Record<string, string> = {}) {
   const formData = new FormData();
@@ -73,6 +81,7 @@ describe("catalog management actions", () => {
     mocks.productCompatibilityDelete.mockResolvedValue({});
     mocks.productCompatibilityFindFirst.mockResolvedValue(null);
     mocks.productCompatibilityFindMany.mockResolvedValue([]);
+    mocks.stockItemUpsert.mockResolvedValue({ id: "stock-1" });
   });
 
   it("rejects duplicate product compatibility records before create", async () => {
@@ -201,5 +210,40 @@ describe("catalog management actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/urunler");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/bayi/urunler");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/urunler/product-1");
+  });
+
+  it("does not allow an admin form to overwrite the reservation ledger", async () => {
+    const formData = new FormData();
+    formData.set("productId", "product-1");
+    formData.set("warehouseCode", "MERKEZ");
+    formData.set("quantity", "12");
+    formData.set("reservedQuantity", "999");
+    formData.set("visibility", "SIMPLIFIED");
+    formData.set("status", "IN_STOCK");
+
+    const state = await saveProductStock(formData);
+
+    expect(state.ok).toBe(true);
+    expect(mocks.stockItemUpsert).toHaveBeenCalledWith({
+      where: {
+        productId_warehouseCode: {
+          productId: "product-1",
+          warehouseCode: "MERKEZ",
+        },
+      },
+      update: {
+        quantity: 12,
+        visibility: "SIMPLIFIED",
+        status: "IN_STOCK",
+      },
+      create: {
+        productId: "product-1",
+        warehouseCode: "MERKEZ",
+        quantity: 12,
+        reservedQuantity: 0,
+        visibility: "SIMPLIFIED",
+        status: "IN_STOCK",
+      },
+    });
   });
 });

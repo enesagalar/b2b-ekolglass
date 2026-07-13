@@ -232,7 +232,9 @@ export default async function AdminProductDetailPage({
               </label>
               <label className={labelClass}>
                 Rezerve
-                <input name="reservedQuantity" type="number" min={0} defaultValue={product.stockItems[0]?.reservedQuantity ?? 0} className={inputClass} />
+                <output className={`${inputClass} flex items-center bg-slate-50 text-slate-600`}>
+                  {product.stockItems[0]?.reservedQuantity ?? 0}
+                </output>
               </label>
               <label className={labelClass}>
                 Gorunurluk

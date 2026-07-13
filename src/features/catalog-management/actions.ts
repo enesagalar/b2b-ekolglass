@@ -45,6 +45,13 @@ function mapCatalogMutationError(error: unknown) {
     if (error.code === "P2003") {
       return "Seçilen ilişkili kayıt bulunamadı. Kategori, fiyat listesi veya ürün seçimini kontrol edin.";
     }
+
+    if (
+      error.code === "P2004" ||
+      error.code === "SQLITE_CONSTRAINT_CHECK"
+    ) {
+      return "Stok miktarı rezerve miktarın altına indirilemez.";
+    }
   }
 
   return "Kayıt sırasında beklenmeyen bir hata oluştu.";
@@ -248,7 +255,7 @@ export async function saveProductBundle(
   const stockParsed = stockFormSchema.safeParse({
     warehouseCode: formData.get("warehouseCode"),
     quantity: formData.get("quantity") || 0,
-    reservedQuantity: formData.get("reservedQuantity") || 0,
+    reservedQuantity: 0,
     visibility: formData.get("visibility"),
     status: formData.get("stockStatus"),
   });
@@ -308,7 +315,6 @@ export async function saveProductBundle(
         },
         update: {
           quantity: stockParsed.data.quantity,
-          reservedQuantity: stockParsed.data.reservedQuantity,
           visibility: stockParsed.data.visibility,
           status: stockParsed.data.status,
         },
@@ -316,7 +322,7 @@ export async function saveProductBundle(
           productId: product.id,
           warehouseCode: stockParsed.data.warehouseCode,
           quantity: stockParsed.data.quantity,
-          reservedQuantity: stockParsed.data.reservedQuantity,
+          reservedQuantity: 0,
           visibility: stockParsed.data.visibility,
           status: stockParsed.data.status,
         },
@@ -374,7 +380,7 @@ export async function saveProductStock(
     productId: formData.get("productId"),
     warehouseCode: formData.get("warehouseCode"),
     quantity: formData.get("quantity") || 0,
-    reservedQuantity: formData.get("reservedQuantity") || 0,
+    reservedQuantity: 0,
     visibility: formData.get("visibility"),
     status: formData.get("status"),
   });
@@ -393,7 +399,6 @@ export async function saveProductStock(
       },
       update: {
         quantity: parsed.data.quantity,
-        reservedQuantity: parsed.data.reservedQuantity,
         visibility: parsed.data.visibility,
         status: parsed.data.status,
       },
@@ -401,7 +406,7 @@ export async function saveProductStock(
         productId: parsed.data.productId,
         warehouseCode: parsed.data.warehouseCode,
         quantity: parsed.data.quantity,
-        reservedQuantity: parsed.data.reservedQuantity,
+        reservedQuantity: 0,
         visibility: parsed.data.visibility,
         status: parsed.data.status,
       },

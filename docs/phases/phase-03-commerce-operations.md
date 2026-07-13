@@ -36,7 +36,6 @@ Tamamlandi:
 Siradaki dilim:
 
 - Transactional e-posta teslim adapteri.
-- Stok invariant'lari icin DB check constraint'leri.
 
 ## 2026-07-13 Siparis Operasyon Dilimi
 
@@ -92,3 +91,18 @@ Tamamlandi:
 - Transaction rollback, idempotency, cift worker, stale lease, eski token ve retry testleri.
 - City API ve provider idempotency sozlesmesi gelmeden canli handler'in fail-closed tutulmasi.
 - 24 test dosyasi, 116 test, production build, sifirdan 18 migration ve admin HTTP smoke kontrolu.
+
+## 2026-07-13 Stok DB Invariant Dilimi
+
+Tamamlandi:
+
+- `StockItem.quantity >= 0` ve `StockItem.reservedQuantity >= 0` DB kontrolleri.
+- Rezerve miktarin fiziksel stok miktarini asmasini engelleyen DB kontrolu.
+- `StockReservation.quantity > 0` ve kapali `ACTIVE/RELEASED/CONSUMED` durum kumesi.
+- Rezervasyon durumu ile `releasedAt`/`consumedAt` zaman damgalarinin DB seviyesinde tutarliligi.
+- Mevcut tablo verisini, foreign key'leri ve sorgu indekslerini koruyan SQLite rebuild migration'i.
+- Admin stok formundan rezervasyon sayacinin elle degistirilmesinin kaldirilmasi.
+- Forged `reservedQuantity` form alaninin server action tarafinda yok sayilmasi.
+- Negatif/fazla stok, gecersiz rezervasyon ve gecerli release/consume yasam dongusu entegrasyon testleri.
+- Dolu eski rezervasyon verisini 19 migration'in tamamindan geciren populated-upgrade testi.
+- 26 test dosyasi, 127 test ve production build kalite kapisi.

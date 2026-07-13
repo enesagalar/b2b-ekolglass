@@ -8,14 +8,23 @@ Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
-2. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
-3. Outbox dead-letter/retry gorunumu icin permission kontrollu admin entegrasyon ekrani kurulacak.
-4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-5. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
-6. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+1. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
+2. Outbox dead-letter/retry gorunumu icin permission kontrollu admin entegrasyon ekrani kurulacak.
+3. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+4. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
+5. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 stok DB invariant dilimi tamamlandi:
+
+- Fiziksel stok ve rezerve stok sayaclari DB `CHECK` constraint'leriyle korundu.
+- Rezervasyon miktari, durum kumesi ve durum-zaman damgasi iliskisi DB seviyesinde zorunlu hale geldi.
+- Mevcut veri, foreign key ve indeksleri koruyan SQLite tablo rebuild migration'i uygulandi.
+- Admin arayuzu ve server action artik `reservedQuantity` sayacini elle degistiremiyor.
+- Dogrudan DB constraint ve forged form regresyon testleri eklendi.
+- Eski rezervasyon migration'indaki zorunlu `updatedAt` tasima hatasi duzeltildi.
+- Dolu legacy rezervasyonla 19 migration, 26 test dosyasi, 127 test ve production build basarili.
 
 Faz 3.3 transactional entegrasyon outbox dilimi tamamlandi:
 

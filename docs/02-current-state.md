@@ -65,6 +65,8 @@ Son guncelleme: 2026-07-13
 - Monoton siparis version'i ve idempotent `OrderTransitionCommand` ile cift gonderim korumasi.
 - `ON_HOLD` siparisin yalnizca bekletildigi asamaya geri donmesi.
 - Iptalde rezervasyon release; sevkte fiziksel stok + rezervasyon consume; teslimde ikinci stok etkisi olmamasi.
+- Fiziksel/rezerve stok sayaclari ve rezervasyon yasam dongusu icin SQLite `CHECK` constraint'leri.
+- Admin stok formlarinda rezervasyon sayacinin salt okunur tutulmasi; sayac yalniz siparis ledger'i tarafindan degisir.
 - Durum history kaydinda islemi yapan kullanici ve audit metadata'sinda stok once/sonra degerleri.
 - Admin listesinde depo rolunden fiyat, muhasebe rolunden rezervasyon detayinin gizlenmesi.
 - DB seviyesinde firma/musteri grubu fiyat izolasyonu.
@@ -123,7 +125,7 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: stok DB constraint'leri ve transactional e-posta adapter siniri.
+Faz 3.3 devam edecek: transactional e-posta adapter siniri ve outbox operasyon ekrani.
 
 UX/IA konsolidasyonu ve tekliften siparise donusum tamamlandi. Siradaki adim entegrasyon outbox sinirini ve transactional bildirim adapterini kurmaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 

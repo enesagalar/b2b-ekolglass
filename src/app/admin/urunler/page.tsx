@@ -297,7 +297,9 @@ function StockFields({
       </label>
       <label className={labelClass}>
         Rezerve
-        <input name="reservedQuantity" type="number" min={0} defaultValue={stock?.reservedQuantity ?? 0} className={inputClass} />
+        <output className={`${inputClass} flex items-center bg-slate-50 text-slate-600`}>
+          {stock?.reservedQuantity ?? 0}
+        </output>
       </label>
       <label className={labelClass}>
         Görünürlük

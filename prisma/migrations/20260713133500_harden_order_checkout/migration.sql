@@ -70,7 +70,7 @@ CREATE TABLE "new_StockReservation" (
     CONSTRAINT "StockReservation_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "OrderItem" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "StockReservation_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "StockItem" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO "new_StockReservation" ("createdAt", "id", "orderItemId", "quantity", "releasedAt", "status", "stockItemId") SELECT "createdAt", "id", "orderItemId", "quantity", "releasedAt", "status", "stockItemId" FROM "StockReservation";
+INSERT INTO "new_StockReservation" ("createdAt", "id", "orderItemId", "quantity", "releasedAt", "status", "stockItemId", "updatedAt") SELECT "createdAt", "id", "orderItemId", "quantity", "releasedAt", "status", "stockItemId", COALESCE("createdAt", CURRENT_TIMESTAMP) FROM "StockReservation";
 DROP TABLE "StockReservation";
 ALTER TABLE "new_StockReservation" RENAME TO "StockReservation";
 CREATE INDEX "StockReservation_stockItemId_status_idx" ON "StockReservation"("stockItemId", "status");
