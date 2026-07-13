@@ -1,13 +1,15 @@
 # Commerce UX ve Bilgi Mimarisi
 
-Son guncelleme: 2026-07-11
+Son guncelleme: 2026-07-13
 
 ## Kalici Kararlar
 
 - `/` kurumsal web ile e-ticaret urun kesfini birlestiren ana ekrandir.
 - Guest ve bayi ayni ana sayfayi kullanir; header, CTA ve hesap alanlari oturuma gore degisir.
-- `/urunler` public urun kesfidir. Fiyat gizlidir, stok yalnizca sade durum olarak gosterilir.
-- `/bayi/urunler` bayi shell icindeki firma fiyatli urun ekranidir.
+- `/urunler` ortak ticaret alanidir. Guest fiyat gormez; onayli bayi ayni rotada firma fiyatini ve teklif/siparis islemlerini gorur.
+- `/bayi/urunler` eski baglantilar icin `/urunler`e kalici yonlenir.
+- `/teklif-sepeti` urun kesfi sirasinda olusan teklif sepetidir; `/bayi/teklif-sepeti` bu rotaya kalici yonlenir.
+- `/bayi` alisveris baslatilan yer degil, teklif/siparis/sevkiyat takibinin yapildigi hesap ve operasyon merkezidir.
 - `/katalog` eski baglantilar icin sorgu parametrelerini koruyarak `/urunler`e kalici yonlenir.
 - Aktivasyon sonrasi bayi `/giris`, basarili giris sonrasi `/` ekranina gelir.
 - Public `/giris` yalnizca bayi rollerini kabul eder.
@@ -20,8 +22,9 @@ Son guncelleme: 2026-07-11
 1. Ziyaretci `/` uzerinden urun arar ve `/urunler`e gider.
 2. Fiyat veya bayi islemi gerektiginde `/giris` ya da `/bayi-basvurusu`na yonelir.
 3. Onaylanan basvuru aktivasyonla parola olusturur, bayi girisi yapar ve `/`e doner.
-4. Oturum acik header firma kimligini, siparisleri, teklifleri ve firma fiyatli urun alanini gosterir.
-5. Ic ekip public bayi girisini kullanamaz; ayri yonetim girisiyle `/admin`e erisir.
+4. Oturum acik header firma kimligini, hesap merkezini ve sepetleri gosterir; urun islemleri `/urunler` ve urun detayindan baslar.
+5. Bayi siparis verdikten sonra `/bayi` ve `/bayi/siparisler` uzerinden durumu takip eder.
+6. Ic ekip public bayi girisini kullanamaz; ayri yonetim girisiyle `/admin`e erisir. Admin public siteyi gezerken bayi fiyati ve bayi aksiyonu goremez.
 
 ## CMS Siniri
 

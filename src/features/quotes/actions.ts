@@ -22,26 +22,26 @@ export async function addQuoteCartItemAction(_state: QuoteActionState, formData:
   const parsed = quoteCartAddSchema.safeParse({ productId: formData.get("productId"), quantity: formData.get("quantity"), notes: formData.get("notes") });
   if (!parsed.success) return { message: parsed.error.issues[0]?.message };
   try {
-    await addQuoteCartProduct(await actor("/bayi/urunler"), parsed.data);
+    await addQuoteCartProduct(await actor("/urunler"), parsed.data);
   } catch (error) {
     return { message: messageOf(error) };
   }
-  revalidatePath("/bayi/teklif-sepeti");
-  redirect("/bayi/teklif-sepeti?added=1");
+  revalidatePath("/teklif-sepeti");
+  redirect("/teklif-sepeti?added=1");
 }
 
 export async function updateQuoteCartItemAction(formData: FormData) {
   const parsed = quoteCartUpdateSchema.safeParse({ itemId: formData.get("itemId"), quantity: formData.get("quantity"), notes: formData.get("notes") });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
-  await updateQuoteCartProduct(await actor("/bayi/teklif-sepeti"), parsed.data);
-  revalidatePath("/bayi/teklif-sepeti");
+  await updateQuoteCartProduct(await actor("/teklif-sepeti"), parsed.data);
+  revalidatePath("/teklif-sepeti");
 }
 
 export async function removeQuoteCartItemAction(formData: FormData) {
   const parsed = quoteCartRemoveSchema.safeParse({ itemId: formData.get("itemId") });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
-  await removeQuoteCartProduct(await actor("/bayi/teklif-sepeti"), parsed.data.itemId);
-  revalidatePath("/bayi/teklif-sepeti");
+  await removeQuoteCartProduct(await actor("/teklif-sepeti"), parsed.data.itemId);
+  revalidatePath("/teklif-sepeti");
 }
 
 export async function submitQuoteCartAction(_state: QuoteActionState, formData: FormData): Promise<QuoteActionState> {
@@ -52,7 +52,7 @@ export async function submitQuoteCartAction(_state: QuoteActionState, formData: 
   if (!parsed.success) return { message: parsed.error.issues[0]?.message };
   let quote: { id: string };
   try {
-    quote = await submitQuoteCart(await actor("/bayi/teklif-sepeti"), parsed.data);
+    quote = await submitQuoteCart(await actor("/teklif-sepeti"), parsed.data);
   } catch (error) {
     return { message: messageOf(error) };
   }

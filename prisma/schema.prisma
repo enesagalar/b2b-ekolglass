@@ -25,6 +25,7 @@ model User {
   sessions         AuthSession[]
   auditLogs        AuditLog[]
   activationTokens UserActivationToken[]
+  passwordResetTokens UserPasswordResetToken[]
   quoteRequests    QuoteRequest[]        @relation("QuoteRequester")
   quoteCarts       QuoteCart[]
 
@@ -32,6 +33,20 @@ model User {
 }
 
 model UserActivationToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, consumedAt, revokedAt])
+  @@index([expiresAt])
+}
+
+model UserPasswordResetToken {
   id         String    @id @default(cuid())
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)

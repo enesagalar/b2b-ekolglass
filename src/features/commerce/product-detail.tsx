@@ -64,11 +64,13 @@ export function ProductDetail({
   viewer,
   basePath,
   embedded = false,
+  adminView = false,
 }: {
   product: ProductDetailData;
   viewer: CatalogViewer;
   basePath: string;
   embedded?: boolean;
+  adminView?: boolean;
 }) {
   const stock = resolveCatalogStockSummary(product.stockItems, viewer);
   const price = selectCatalogPrice(product.prices, viewer);
@@ -168,12 +170,21 @@ export function ProductDetail({
             </div>
 
             <div className="mt-6">
-              {viewer.role === "GUEST" ? (
+              {adminView ? (
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold text-slate-900">Yönetici görünümü</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">Bayi fiyatları ve ticari işlemler yalnızca bayi hesabıyla kullanılabilir.</p>
+                  <Link href="/admin" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-teal-800 hover:text-teal-950">
+                    Yönetim paneline dön
+                    <ExternalLink size={15} aria-hidden="true" />
+                  </Link>
+                </div>
+              ) : viewer.role === "GUEST" ? (
                 <Link href={`/giris?next=${encodeURIComponent(detailPath)}`} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2">
                   <ShieldCheck size={17} aria-hidden="true" />
                   Bayi fiyatı için giriş yap
                 </Link>
-              ) : embedded && product.orderMode !== "ORDER_ONLY" ? (
+              ) : product.orderMode !== "ORDER_ONLY" ? (
                 <div className="rounded-md border border-dashed border-teal-300 bg-teal-50 p-4">
                   <div className="mb-4 flex items-start gap-3">
                     <ShoppingCart className="mt-0.5 shrink-0 text-teal-800" size={19} aria-hidden="true" />

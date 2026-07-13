@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Building2, CreditCard, FileText, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 
 import { getStatusLabel } from "@/domain/statuses";
+import { hasPermission, isKnownRole } from "@/domain/roles";
 import { ActivationInvitationForm } from "@/features/company-management/invitation-form";
+import { DealerUserStatusActions, NewDealerUserForm, PasswordResetInvitationForm } from "@/features/company-management/user-management-forms";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -33,7 +35,9 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 
 export default async function CompanyDetailPage({ params }: PageProps<"/admin/firmalar/[id]">) {
   const { id } = await params;
-  await requirePermissionUser("company.manage", `/admin/firmalar/${id}`);
+  const actor = await requirePermissionUser("company.manage", `/admin/firmalar/${id}`);
+  const canManageUsers = isKnownRole(actor.role) && hasPermission(actor.role, "company.user.manage");
+  const canManageCredentials = isKnownRole(actor.role) && hasPermission(actor.role, "company.user.credentials.manage");
 
   const company = await prisma.company.findUnique({
     where: { id },
@@ -170,6 +174,7 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
               </div>
               <span className="text-xs font-semibold text-slate-500">{company.users.length} hesap</span>
             </div>
+            {canManageUsers ? <NewDealerUserForm companyId={company.id} /> : null}
             {company.users.length > 0 ? (
               company.users.map((user) => {
                 const latestToken = user.activationTokens[0];
@@ -202,7 +207,9 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
                       <span className={user.status === "ACTIVE" ? "rounded bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-800" : "rounded bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800"}>
                         {getStatusLabel(user.status)}
                       </span>
-                      {user.status === "INVITED" ? <ActivationInvitationForm userId={user.id} /> : null}
+                      {canManageCredentials && user.status === "INVITED" ? <ActivationInvitationForm userId={user.id} /> : null}
+                      {canManageCredentials && user.status === "ACTIVE" ? <PasswordResetInvitationForm userId={user.id} /> : null}
+                      {canManageUsers ? <DealerUserStatusActions companyId={company.id} userId={user.id} status={user.status} /> : null}
                     </div>
                   </article>
                 );

@@ -1,10 +1,11 @@
-import { requireDealerContext } from "@/data/dealer-context";
-import { ProductBrowser } from "@/features/commerce/product-browser";
+import { permanentRedirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-export default async function DealerProductsPage({ searchParams }: { searchParams: SearchParams }) {
-  const [{ company, user }, resolved] = await Promise.all([requireDealerContext("/bayi/urunler"), searchParams]);
-  return <ProductBrowser embedded searchParams={resolved} basePath="/bayi/urunler" viewer={{ role: user.role as "DEALER_OWNER" | "DEALER_STAFF", companyId: company.id, customerGroupId: company.customerGroup?.id }} />;
+export default async function LegacyDealerProductsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = await searchParams;
+  const query = new URLSearchParams();
+  for (const [key, raw] of Object.entries(params)) {
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    if (value) query.set(key, value);
+  }
+  permanentRedirect(`/urunler${query.size ? `?${query.toString()}` : ""}`);
 }

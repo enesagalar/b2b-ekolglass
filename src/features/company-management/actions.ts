@@ -2,15 +2,28 @@
 
 import { revalidatePath } from "next/cache";
 
-import { activationInvitationSchema } from "@/domain/validation";
+import {
+  activationInvitationSchema,
+  credentialResetInvitationSchema,
+  dealerUserCreateSchema,
+  dealerUserStatusSchema,
+} from "@/domain/validation";
 import { createActivationToken, getActivationExpiry, hashActivationToken } from "@/lib/activation-token";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createPasswordResetToken, getPasswordResetExpiry, hashPasswordResetToken } from "@/lib/password-reset-token";
 
 export type ActivationInvitationState = {
   ok: boolean;
   message: string;
   activationPath?: string;
+  expiresAt?: string;
+};
+
+export type CompanyUserActionState = {
+  ok: boolean;
+  message: string;
+  resetPath?: string;
   expiresAt?: string;
 };
 
@@ -26,7 +39,7 @@ export async function createActivationInvitation(
   input: ActivationInvitationInput,
   maybeFormData?: FormData,
 ): Promise<ActivationInvitationState> {
-  const actor = await requirePermissionUser("company.manage", "/admin/firmalar");
+  const actor = await requirePermissionUser("company.user.credentials.manage", "/admin/firmalar");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -120,6 +133,147 @@ export async function createActivationInvitation(
     };
   } catch (error) {
     return failure(error instanceof Error ? error.message : "Aktivasyon bağlantısı oluşturulamadı.");
+  }
+}
+
+export async function createDealerUser(
+  _previousState: CompanyUserActionState,
+  formData: FormData,
+): Promise<CompanyUserActionState> {
+  const actor = await requirePermissionUser("company.user.manage", "/admin/firmalar");
+  const parsed = dealerUserCreateSchema.safeParse({
+    companyId: formData.get("companyId"),
+    name: formData.get("name"),
+    email: formData.get("email"),
+    role: formData.get("role"),
+  });
+
+  if (!parsed.success) return failure(parsed.error.issues[0]?.message ?? "Kullanıcı bilgileri geçersiz.");
+
+  try {
+    const user = await prisma.$transaction(async (tx) => {
+      const company = await tx.company.findUnique({ where: { id: parsed.data.companyId }, select: { status: true } });
+      if (!company || company.status !== "APPROVED") throw new Error("Yalnızca onaylı firmalara kullanıcı eklenebilir.");
+
+      const duplicate = await tx.user.findUnique({ where: { email: parsed.data.email }, select: { id: true } });
+      if (duplicate) throw new Error("Bu e-posta adresiyle kayıtlı bir kullanıcı zaten var.");
+
+      const created = await tx.user.create({
+        data: { ...parsed.data, status: "INVITED", passwordHash: null },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: actor.id,
+          action: "company.user.created",
+          entityType: "User",
+          entityId: created.id,
+          metadata: JSON.stringify({ companyId: parsed.data.companyId, role: parsed.data.role }),
+        },
+      });
+      return created;
+    });
+
+    revalidatePath(`/admin/firmalar/${parsed.data.companyId}`);
+    return { ok: true, message: `${user.name} davet bekleyen kullanıcı olarak oluşturuldu.` };
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Kullanıcı oluşturulamadı.");
+  }
+}
+
+export async function changeDealerUserStatus(formData: FormData): Promise<void> {
+  const actor = await requirePermissionUser("company.user.manage", "/admin/firmalar");
+  const parsed = dealerUserStatusSchema.safeParse({
+    companyId: formData.get("companyId"),
+    userId: formData.get("userId"),
+    targetStatus: formData.get("targetStatus"),
+  });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Durum bilgisi geçersiz.");
+
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.findFirst({
+      where: { id: parsed.data.userId, companyId: parsed.data.companyId, role: { in: ["DEALER_OWNER", "DEALER_STAFF"] } },
+      include: { company: { select: { status: true } } },
+    });
+    if (!user) throw new Error("Firma kullanıcısı bulunamadı.");
+
+    const allowed =
+      (parsed.data.targetStatus === "SUSPENDED" && user.status === "ACTIVE") ||
+      (parsed.data.targetStatus === "DISABLED" && ["INVITED", "SUSPENDED"].includes(user.status)) ||
+      (parsed.data.targetStatus === "ACTIVE" && user.status === "SUSPENDED" && Boolean(user.passwordHash));
+    if (!allowed) throw new Error("Bu kullanıcı için istenen durum geçişine izin verilmiyor.");
+    if (parsed.data.targetStatus === "ACTIVE" && user.company?.status !== "APPROVED") {
+      throw new Error("Firma onaylı değilken kullanıcı yeniden etkinleştirilemez.");
+    }
+
+    const now = new Date();
+    await tx.user.update({ where: { id: user.id }, data: { status: parsed.data.targetStatus } });
+    if (parsed.data.targetStatus !== "ACTIVE") {
+      await tx.authSession.deleteMany({ where: { userId: user.id } });
+      await tx.userActivationToken.updateMany({
+        where: { userId: user.id, consumedAt: null, revokedAt: null }, data: { revokedAt: now },
+      });
+      await tx.userPasswordResetToken.updateMany({
+        where: { userId: user.id, consumedAt: null, revokedAt: null }, data: { revokedAt: now },
+      });
+    }
+    await tx.auditLog.create({
+      data: {
+        actorUserId: actor.id,
+        action: `company.user.${parsed.data.targetStatus.toLowerCase()}`,
+        entityType: "User",
+        entityId: user.id,
+        metadata: JSON.stringify({ companyId: parsed.data.companyId, fromStatus: user.status, toStatus: parsed.data.targetStatus }),
+      },
+    });
+  });
+
+  revalidatePath(`/admin/firmalar/${parsed.data.companyId}`);
+}
+
+export async function createPasswordResetInvitation(
+  _previousState: CompanyUserActionState,
+  formData: FormData,
+): Promise<CompanyUserActionState> {
+  const actor = await requirePermissionUser("company.user.credentials.manage", "/admin/firmalar");
+  const parsed = credentialResetInvitationSchema.safeParse({ userId: formData.get("userId") });
+  if (!parsed.success) return failure(parsed.error.issues[0]?.message ?? "Kullanıcı seçimi geçersiz.");
+
+  const manualDeliveryAllowed = process.env.NODE_ENV !== "production" || process.env.ALLOW_MANUAL_PASSWORD_RESET_LINKS === "true";
+  if (!manualDeliveryAllowed) return failure("Production ortamında e-posta teslim adapterı bağlı değil.");
+
+  const rawToken = createPasswordResetToken();
+  const expiresAt = getPasswordResetExpiry();
+  try {
+    const companyId = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findFirst({
+        where: { id: parsed.data.userId, role: { in: ["DEALER_OWNER", "DEALER_STAFF"] }, status: "ACTIVE" },
+        include: { company: { select: { id: true, status: true } } },
+      });
+      if (!user?.company || user.company.status !== "APPROVED" || !user.passwordHash) {
+        throw new Error("Yalnızca aktif bayi kullanıcıları için parola sıfırlama bağlantısı oluşturulabilir.");
+      }
+      const now = new Date();
+      await tx.userPasswordResetToken.updateMany({
+        where: { userId: user.id, consumedAt: null, revokedAt: null }, data: { revokedAt: now },
+      });
+      await tx.userPasswordResetToken.create({
+        data: { userId: user.id, tokenHash: hashPasswordResetToken(rawToken), expiresAt },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: actor.id,
+          action: "user.password_reset.invitation.created",
+          entityType: "User",
+          entityId: user.id,
+          metadata: JSON.stringify({ companyId: user.company.id, expiresAt: expiresAt.toISOString() }),
+        },
+      });
+      return user.company.id;
+    });
+    revalidatePath(`/admin/firmalar/${companyId}`);
+    return { ok: true, message: "Tek kullanımlık parola sıfırlama bağlantısı hazırlandı.", resetPath: `/parola-sifirla/${rawToken}`, expiresAt: expiresAt.toISOString() };
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Parola sıfırlama bağlantısı oluşturulamadı.");
   }
 }
 

@@ -1,0 +1,73 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  findCompany: vi.fn(),
+  getCurrentUser: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({ getCurrentUser: mocks.getCurrentUser }));
+vi.mock("@/lib/prisma", () => ({
+  prisma: { company: { findUnique: mocks.findCompany } },
+}));
+
+import { getCommerceIdentity } from "./commerce";
+
+describe("commerce identity", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("exposes an admin identity without looking up a dealer company", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      id: "admin-1",
+      name: "Admin User",
+      role: "SUPER_ADMIN",
+      companyId: null,
+    });
+
+    await expect(getCommerceIdentity()).resolves.toEqual({
+      audience: "admin",
+      name: "Admin User",
+    });
+    expect(mocks.findCompany).not.toHaveBeenCalled();
+  });
+
+  it("exposes an approved dealer identity with its company", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      id: "dealer-1",
+      name: "Dealer User",
+      role: "DEALER_OWNER",
+      companyId: "company-1",
+    });
+    mocks.findCompany.mockResolvedValue({
+      displayName: "Ekol Dealer",
+      status: "APPROVED",
+    });
+
+    await expect(getCommerceIdentity()).resolves.toEqual({
+      audience: "dealer",
+      name: "Dealer User",
+      companyId: "company-1",
+      companyName: "Ekol Dealer",
+    });
+    expect(mocks.findCompany).toHaveBeenCalledWith({
+      where: { id: "company-1" },
+      select: { displayName: true, status: true },
+    });
+  });
+
+  it("does not expose an unapproved dealer as an authenticated commerce identity", async () => {
+    mocks.getCurrentUser.mockResolvedValue({
+      id: "dealer-2",
+      name: "Pending Dealer",
+      role: "DEALER_STAFF",
+      companyId: "company-2",
+    });
+    mocks.findCompany.mockResolvedValue({
+      displayName: "Pending Company",
+      status: "PENDING",
+    });
+
+    await expect(getCommerceIdentity()).resolves.toBeNull();
+  });
+});

@@ -4,18 +4,31 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.3 - Teklif/Siparis Olusturma, Detay Akislari ve Davet Teslimi.
+Faz 3.3 - Urun Kaynakli Siparis Sepeti, Detay Akislari ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Siparis ve teklif listelerine filtre ve sayfalama eklenecek.
-2. Company-scoped siparis detay ve server-side fiyatlanan taslak siparis olusturma akisi baslatilacak.
-3. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
-4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-5. Admin teklif inceleme, fiyatlandirma ve durum gecis ekrani tasarlanacak.
-6. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
+1. `/urunler` ve urun detayindan baslayan company-scoped siparis sepeti kurulacak.
+2. Teslimat adresi secimi, server-side fiyat/stok dogrulamasi ve idempotent siparis gonderimi eklenecek.
+3. `/bayi/siparisler` takip listesi ve siparis detayina baglanacak.
+4. Siparis ve teklif listelerine filtre ve sayfalama eklenecek.
+5. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
+6. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+7. Admin teklif inceleme, fiyatlandirma ve durum gecis ekrani tasarlanacak.
+8. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz disi auth/ticaret akisi duzeltmesi tamamlandi:
+
+- Admin ve bayi kimlikleri public header'da ayrildi; admin bayi fiyatlarini veya bayi CTA'larini goremez.
+- Bayi girisi guvenli `next` degeri ne olursa olsun `/` ana sayfasina doner.
+- `/urunler` ortak ticaret alani, `/bayi` takip merkezi olarak sabitlendi.
+- Teklif sepeti `/teklif-sepeti` rotasina tasindi; eski bayi rotalari kalici yonleniyor.
+- Admin firma detayina coklu bayi kullanicisi ekleme, askilama, etkinlestirme ve soft devre disi birakma eklendi.
+- Aktivasyon ve parola sifirlama ayri token modelleriyle ayrildi; ham token veritabaninda saklanmiyor.
+- Kullanici askilandiginda ve parola yenilendiginde aktif oturumlar iptal ediliyor.
+- Auth/ticaret regresyon testleri eklendi; production build basarili.
 
 Faz 3.3 teklif talebi dilimi tamamlandi:
 

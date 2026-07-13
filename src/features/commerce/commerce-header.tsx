@@ -1,17 +1,17 @@
 import Link from "next/link";
-import { Building2, Factory, LogIn, LogOut, PackageSearch, Search, UserRound } from "lucide-react";
+import { Building2, Factory, LogIn, LogOut, PackageSearch, Search, ShieldCheck, UserRound } from "lucide-react";
 
 import { logout } from "@/features/auth/actions";
 
 export type CommerceIdentity = {
+  audience: "dealer";
   name: string;
   companyId: string;
   companyName: string;
-  isDealer: boolean;
-} | null;
+} | { audience: "admin"; name: string } | null;
 
 export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
-  const productHref = identity?.isDealer ? "/bayi/urunler" : "/urunler";
+  const productHref = "/urunler";
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -34,13 +34,18 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
           <button type="submit" aria-label="Ürün ara" className="flex h-10 w-11 shrink-0 items-center justify-center text-teal-800"><PackageSearch size={19} aria-hidden="true" /></button>
         </form>
 
-        {identity?.isDealer ? (
+        {identity?.audience === "dealer" ? (
           <div className="ml-auto flex items-center gap-2">
             <Link href="/bayi" className="hidden min-w-0 items-center gap-2 rounded-md border border-slate-200 px-3 py-2 lg:flex">
               <Building2 size={18} className="shrink-0 text-teal-800" aria-hidden="true" />
               <span className="min-w-0"><span className="block max-w-40 truncate text-xs font-semibold text-slate-950">{identity.companyName}</span><span className="block text-[11px] text-slate-500">Bayi hesabım</span></span>
             </Link>
             <Link href="/bayi/hesabim" aria-label="Hesabım" className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 text-slate-700"><UserRound size={19} aria-hidden="true" /></Link>
+            <form action={logout}><button type="submit" aria-label="Çıkış yap" className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 text-slate-700"><LogOut size={18} aria-hidden="true" /></button></form>
+          </div>
+        ) : identity?.audience === "admin" ? (
+          <div className="ml-auto flex items-center gap-2">
+            <Link href="/admin" className="inline-flex h-11 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-800"><ShieldCheck size={17} aria-hidden="true"/>Yönetim Paneli</Link>
             <form action={logout}><button type="submit" aria-label="Çıkış yap" className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 text-slate-700"><LogOut size={18} aria-hidden="true" /></button></form>
           </div>
         ) : (
@@ -58,7 +63,7 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
           <Link href="/#uretim" className="whitespace-nowrap hover:text-teal-800">Üretim</Link>
           <Link href="/#kurumsal" className="whitespace-nowrap hover:text-teal-800">Kurumsal</Link>
           <Link href="/#iletisim" className="whitespace-nowrap hover:text-teal-800">İletişim</Link>
-          {identity?.isDealer ? (
+          {identity?.audience === "dealer" ? (
             <>
               <span className="h-5 w-px shrink-0 bg-slate-200" aria-hidden="true" />
               <Link href="/bayi/siparisler" className="whitespace-nowrap text-teal-800">Siparişlerim</Link>
@@ -77,7 +82,7 @@ export function CommerceFooter({ identity }: { identity: CommerceIdentity }) {
       <div className="mx-auto grid max-w-[1440px] gap-8 px-5 py-10 md:grid-cols-[1.2fr_0.8fr_0.8fr] md:px-6">
         <div><p className="text-lg font-semibold text-white">EkolGlass</p><p className="mt-3 max-w-md text-sm leading-6 text-slate-400">Otomotiv ve özel üretim cam çözümlerinde kurumsal satış, ürün keşfi ve bayi operasyonları.</p></div>
         <div><p className="text-sm font-semibold text-white">Ürün Grupları</p><div className="mt-3 grid gap-2 text-sm"><Link href="/urunler">Otomotiv Camları</Link><Link href="/urunler">Otobüs ve Minibüs</Link><Link href="/urunler">Karavan ve Marine</Link></div></div>
-        <div><p className="text-sm font-semibold text-white">Bayi İşlemleri</p><div className="mt-3 grid gap-2 text-sm">{identity?.isDealer ? <><Link href="/bayi">Bayi Panelim</Link><Link href="/bayi/siparisler">Siparişlerim</Link><Link href="/bayi/urunler">Ürün ve Fiyatlar</Link></> : <><Link href="/giris">Bayi Girişi</Link><Link href="/bayi-basvurusu">Bayi Başvurusu</Link><Link href="/urunler">Ürünlerde Ara</Link></>}</div></div>
+        <div><p className="text-sm font-semibold text-white">Hesap İşlemleri</p><div className="mt-3 grid gap-2 text-sm">{identity?.audience === "dealer" ? <><Link href="/bayi">Bayi Panelim</Link><Link href="/bayi/siparisler">Siparişlerim</Link><Link href="/urunler">Ürün ve Fiyatlar</Link></> : identity?.audience === "admin" ? <><Link href="/admin">Yönetim Paneli</Link><Link href="/urunler">Ürünleri İncele</Link></> : <><Link href="/giris">Bayi Girişi</Link><Link href="/bayi-basvurusu">Bayi Başvurusu</Link><Link href="/urunler">Ürünlerde Ara</Link></>}</div></div>
       </div>
     </footer>
   );

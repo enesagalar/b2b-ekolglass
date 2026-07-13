@@ -90,6 +90,23 @@ export const activationInvitationSchema = z.object({
   userId: z.string().trim().min(1, "Kullanıcı seçimi zorunludur."),
 });
 
+export const dealerUserCreateSchema = z.object({
+  companyId: z.string().trim().min(1, "Firma zorunludur."),
+  name: z.string().trim().min(2, "Ad soyad zorunludur.").max(120),
+  email: z.email("Geçerli bir e-posta girin.").max(180).transform((value) => value.toLowerCase()),
+  role: z.enum(["DEALER_OWNER", "DEALER_STAFF"]),
+});
+
+export const dealerUserStatusSchema = z.object({
+  companyId: z.string().trim().min(1, "Firma zorunludur."),
+  userId: z.string().trim().min(1, "Kullanıcı zorunludur."),
+  targetStatus: z.enum(["ACTIVE", "SUSPENDED", "DISABLED"]),
+});
+
+export const credentialResetInvitationSchema = z.object({
+  userId: z.string().trim().min(1, "Kullanıcı seçimi zorunludur."),
+});
+
 export const accountActivationSchema = z
   .object({
     token: z.string().trim().min(32, "Aktivasyon bağlantısı geçersiz.").max(256),
@@ -108,6 +125,8 @@ export const accountActivationSchema = z
       context.addIssue({ code: "custom", message: "Parola tekrarı eşleşmiyor.", path: ["passwordConfirm"] });
     }
   });
+
+export const passwordResetSchema = accountActivationSchema;
 
 export const categoryFormSchema = z
   .object({

@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   const user = await getCurrentUser();
   if (user && isKnownRole(user.role)) {
     if (isDealerRole(user.role)) redirect("/");
-    if (isAdminRole(user.role)) redirect("/admin");
+    if (isAdminRole(user.role)) redirect("/");
   }
 
   const resolved = await searchParams;

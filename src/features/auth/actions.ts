@@ -60,15 +60,15 @@ async function recordLoginAttempt({
 }
 
 function resolveSafeNext(value: FormDataEntryValue | null, audience: "dealer" | "admin") {
+  if (audience === "dealer") return "/";
+
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
-    return audience === "dealer" ? "/" : "/admin";
+    return "/admin";
   }
 
-  const allowed = audience === "dealer"
-    ? value === "/" || value === "/urunler" || value.startsWith("/urunler?") || value === "/bayi" || value.startsWith("/bayi/")
-    : value === "/admin" || value.startsWith("/admin/");
+  const allowed = value === "/admin" || value.startsWith("/admin/");
 
-  return allowed ? value : audience === "dealer" ? "/" : "/admin";
+  return allowed ? value : "/admin";
 }
 
 async function authenticateWithPassword(formData: FormData, audience: "dealer" | "admin"): Promise<AuthenticationResult> {

@@ -1,6 +1,6 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-11
+Son guncelleme: 2026-07-13
 
 ## Git Durumu
 
@@ -27,7 +27,8 @@ Son guncelleme: 2026-07-11
 - Public ana sayfa.
 - Oturum duyarlı, CMS banner'li public ticaret ana sayfasi.
 - Public urun kesfi: `/urunler`.
-- Bayi shell icinde firma fiyatli urun ekrani: `/bayi/urunler`.
+- Guest ve bayi icin ortak urun ticaret alani: `/urunler`.
+- Eski `/bayi/urunler` ve `/bayi/teklif-sepeti` rotalarinda kalici yonlendirme.
 - Bayi ve ic ekip icin ayrilmis giris akislari.
 - Public sitemap ve private route robots/noindex politikalari.
 - Bayi basvuru formu.
@@ -37,6 +38,9 @@ Son guncelleme: 2026-07-11
 - Musteri grubu, odeme kosulu ve kredi limiti atamasi.
 - `/admin/firmalar` liste/detay ve aktivasyon daveti yonetimi.
 - `/aktivasyon/[token]` ilk parola ve hesap aktivasyonu.
+- Admin firma detayinda ek bayi kullanicisi olusturma, askilama, yeniden etkinlestirme ve soft devre disi birakma.
+- Ayri hash token modeliyle iki saatlik tek kullanimlik `/parola-sifirla/[token]` akisi.
+- Askilama ve parola yenilemede tum aktif oturumlarin iptali.
 - Dealer login role-based `/` yonlendirmesi; firma kimligi header'da gorunur.
 - Merkezi dealer context: ACTIVE dealer + APPROVED company.
 - Bayi operasyon dashboardu ve responsive bayi shell.
@@ -80,7 +84,7 @@ Son guncelleme: 2026-07-11
 
 1. Bayi platformunda kalanlar:
    - Transactional e-posta teslim adapteri yok.
-   - Siparis detay ve taslak siparis olusturma akislari yok.
+   - Urun sayfasindan baslayan siparis sepeti, teslimat adresi ve siparis gonderim akisi yok.
    - Teklif listesinde filtre ve sayfalama yok.
    - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 

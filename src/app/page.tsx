@@ -26,7 +26,7 @@ async function getHomepageData() {
   ]);
 
   const settingMap = new Map(settings.map((setting) => [setting.key, setting.value]));
-  const dealerSummary = identity ? await getDealerDashboardData(identity.companyId) : null;
+  const dealerSummary = identity?.audience === "dealer" ? await getDealerDashboardData(identity.companyId) : null;
 
   return {
     identity,
@@ -41,7 +41,7 @@ async function getHomepageData() {
 
 export default async function Home() {
   const data = await getHomepageData();
-  const productHref = data.identity ? "/bayi/urunler" : "/urunler";
+  const productHref = "/urunler";
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -61,7 +61,7 @@ export default async function Home() {
             </form>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href={productHref} className="inline-flex h-11 items-center gap-2 rounded-md border border-white/30 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur">Tüm Ürünler</Link>
-              {data.identity ? <Link href="/bayi" className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-slate-950">Bayi İşlemlerim</Link> : <Link href="/bayi-basvurusu" className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-slate-950">Bayi Olun</Link>}
+              {data.identity?.audience === "dealer" ? <Link href="/bayi" className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-slate-950">Bayi İşlemlerim</Link> : data.identity?.audience === "admin" ? <Link href="/admin" className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-slate-950">Yönetim Paneli</Link> : <Link href="/bayi-basvurusu" className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-slate-950">Bayi Olun</Link>}
             </div>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {data.identity && data.dealerSummary ? (
+      {data.identity?.audience === "dealer" && data.dealerSummary ? (
         <section className="border-b border-slate-200 bg-teal-950 text-white">
           <div className="mx-auto grid max-w-[1440px] gap-4 px-5 py-6 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,0.7fr)] md:px-6">
             <div><p className="text-sm font-semibold text-teal-200">{data.identity.companyName}</p><h2 className="mt-1 text-xl font-semibold">Bayi hesabınız güncel</h2><Link href="/bayi" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-white">Operasyon merkezine git <ArrowRight size={15} /></Link></div>
@@ -96,7 +96,7 @@ export default async function Home() {
           {data.products.map((product, index) => (
             <article key={product.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <div className={`flex aspect-[16/9] items-center justify-center ${index % 3 === 0 ? "bg-slate-900 text-teal-200" : index % 3 === 1 ? "bg-teal-50 text-teal-800" : "bg-slate-100 text-slate-700"}`}><CarFront size={42} strokeWidth={1.4} aria-hidden="true" /></div>
-              <div className="p-4"><p className="font-mono text-xs font-semibold text-teal-800">{product.code}</p><h3 className="mt-2 min-h-12 text-sm font-semibold leading-6">{product.name}</h3><p className="mt-2 text-xs text-slate-500">{product.category.name} · {product.glassType}</p><div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-xs font-semibold text-emerald-700">{product.stockItems.some((item) => item.status === "IN_STOCK") ? "Stokta" : "Stok sorunuz"}</span><Link href={`${productHref}?q=${encodeURIComponent(product.code)}`} className="text-xs font-semibold text-teal-800">İncele</Link></div></div>
+              <div className="p-4"><p className="font-mono text-xs font-semibold text-teal-800">{product.code}</p><h3 className="mt-2 min-h-12 text-sm font-semibold leading-6">{product.name}</h3><p className="mt-2 text-xs text-slate-500">{product.category.name} · {product.glassType}</p><div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-xs font-semibold text-emerald-700">{product.stockItems.some((item) => item.status === "IN_STOCK") ? "Stokta" : "Stok sorunuz"}</span><Link href={`${productHref}/${product.id}`} className="text-xs font-semibold text-teal-800">İncele</Link></div></div>
             </article>
           ))}
         </div>

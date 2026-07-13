@@ -17,8 +17,8 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 
 ## Kisa Vadeli Eksikler
 
-- Password reset flow.
-- Session rotation.
+- Production transactional e-posta ile aktivasyon/parola sifirlama teslimi.
+- Kalici ve IP+hesap anahtarli rate limit depolamasi.
 - CSRF stratejisi netlestirme.
 - Auth/session unit ve entegrasyon testleri.
 - Permission bazli action guard:
@@ -56,4 +56,4 @@ Her yeni public/dealer feature icin:
 - HTTPS zorunlu.
 - Cookie `secure` production'da aktif.
 - Backup ve migration stratejisi hazir olmali.
-- Admin kullanici ve rol yonetimi tamamlanmali.
+- Admin MFA ve kritik kullanici islemleri icin yeniden kimlik dogrulama karari tamamlanmali.

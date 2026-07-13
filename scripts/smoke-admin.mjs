@@ -187,6 +187,8 @@ try {
   assert(companyDetailHtml.includes("Firma kullanıcıları"), "Company users panel not rendered");
   assert(companyDetailHtml.includes(smokeInvitedEmail), "Invited company user not rendered");
   assert(companyDetailHtml.includes("Aktivasyon bağlantısı üret"), "Activation invitation action not rendered");
+  assert(companyDetailHtml.includes("Kullanıcı ekle"), "Dealer user create action not rendered");
+  assert(companyDetailHtml.includes("Parola bağlantısı"), "Dealer password reset action not rendered");
 
   const invalidActivationResponse = await request(`/aktivasyon/${"x".repeat(43)}`);
   assert(invalidActivationResponse.status === 200, `Invalid activation page failed with ${invalidActivationResponse.status}`);
@@ -224,19 +226,25 @@ try {
   assert(dealerHomeHtml.includes("Anadolu Oto Cam"), "Authenticated home did not render dealer company identity");
   assert(dealerHomeHtml.includes("Siparişlerim"), "Authenticated commerce navigation not rendered");
 
-  const dealerProductsResponse = await request("/bayi/urunler", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  const legacyDealerProductsResponse = await request("/bayi/urunler", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  assert(legacyDealerProductsResponse.status === 308, `Legacy dealer products should redirect, got ${legacyDealerProductsResponse.status}`);
+  assert(new URL(legacyDealerProductsResponse.headers.get("location") ?? "", baseUrl).pathname === "/urunler", "Legacy dealer products redirect target is invalid");
+  const dealerProductsResponse = await request("/urunler", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
   assert(dealerProductsResponse.status === 200, `Dealer products failed with ${dealerProductsResponse.status}`);
-  assert((await dealerProductsResponse.text()).includes("Bayi ürün ve fiyatları"), "Dealer products context not rendered");
 
   const publicProductDetailResponse = await request(`/urunler/${smokeProduct.id}`);
   assert(publicProductDetailResponse.status === 200, `Public product detail failed with ${publicProductDetailResponse.status}`);
   assert((await publicProductDetailResponse.text()).includes(smokeProduct.code), "Public product detail did not render product code");
 
-  const dealerProductDetailResponse = await request(`/bayi/urunler/${smokeProduct.id}`, { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  const legacyDealerProductDetailResponse = await request(`/bayi/urunler/${smokeProduct.id}`, { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  assert(legacyDealerProductDetailResponse.status === 308, `Legacy dealer product detail should redirect, got ${legacyDealerProductDetailResponse.status}`);
+  const dealerProductDetailResponse = await request(`/urunler/${smokeProduct.id}`, { headers: { Cookie: serializeCookies(dealerCookieJar) } });
   assert(dealerProductDetailResponse.status === 200, `Dealer product detail failed with ${dealerProductDetailResponse.status}`);
   assert((await dealerProductDetailResponse.text()).includes("Teklife ekle"), "Dealer product detail did not render quote cart action");
 
-  const dealerQuoteCartResponse = await request("/bayi/teklif-sepeti", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  const legacyDealerQuoteCartResponse = await request("/bayi/teklif-sepeti", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
+  assert(legacyDealerQuoteCartResponse.status === 308, `Legacy dealer quote cart should redirect, got ${legacyDealerQuoteCartResponse.status}`);
+  const dealerQuoteCartResponse = await request("/teklif-sepeti", { headers: { Cookie: serializeCookies(dealerCookieJar) } });
   assert(dealerQuoteCartResponse.status === 200, `Dealer quote cart failed with ${dealerQuoteCartResponse.status}`);
   assert((await dealerQuoteCartResponse.text()).includes("Teklif sepetiniz boş"), "Dealer empty quote cart state not rendered");
 
@@ -270,6 +278,7 @@ try {
     .run(smokeInvitedUserId, smokeActiveDealerId, `%${smokeInvitedEmail}%`, `%${smokeDealerEmail}%`);
   companyUserCleanupDb.prepare("delete from AuthSession where userId in (?, ?)").run(smokeInvitedUserId, smokeActiveDealerId);
   companyUserCleanupDb.prepare("delete from UserActivationToken where userId in (?, ?)").run(smokeInvitedUserId, smokeActiveDealerId);
+  companyUserCleanupDb.prepare("delete from UserPasswordResetToken where userId in (?, ?)").run(smokeInvitedUserId, smokeActiveDealerId);
   companyUserCleanupDb.prepare("delete from User where id in (?, ?)").run(smokeInvitedUserId, smokeActiveDealerId);
   companyUserCleanupDb.close();
 }

@@ -23,18 +23,24 @@ export async function createUserSession(userId: string) {
   const tokenHash = hashSessionToken(token);
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   const requestHeaders = await headers();
+  const cookieStore = await cookies();
+  const currentToken = cookieStore.get(SESSION_COOKIE)?.value;
 
-  await prisma.authSession.create({
-    data: {
-      userId,
-      tokenHash,
-      expiresAt,
-      ipAddress: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim(),
-      userAgent: requestHeaders.get("user-agent"),
-    },
+  await prisma.$transaction(async (tx) => {
+    if (currentToken) {
+      await tx.authSession.deleteMany({ where: { tokenHash: hashSessionToken(currentToken) } });
+    }
+    await tx.authSession.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt,
+        ipAddress: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim(),
+        userAgent: requestHeaders.get("user-agent"),
+      },
+    });
   });
 
-  const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
