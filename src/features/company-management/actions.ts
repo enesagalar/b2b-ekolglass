@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -8,10 +9,12 @@ import {
   dealerUserCreateSchema,
   dealerUserStatusSchema,
 } from "@/domain/validation";
-import { createActivationToken, getActivationExpiry, hashActivationToken } from "@/lib/activation-token";
+import { getEmailConfig } from "@/integrations/email/config";
+import { deriveActivationToken, getActivationExpiry, hashActivationToken } from "@/lib/activation-token";
 import { requirePermissionUser } from "@/lib/auth";
+import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
-import { createPasswordResetToken, getPasswordResetExpiry, hashPasswordResetToken } from "@/lib/password-reset-token";
+import { derivePasswordResetToken, getPasswordResetExpiry, hashPasswordResetToken } from "@/lib/password-reset-token";
 
 export type ActivationInvitationState = {
   ok: boolean;
@@ -55,15 +58,24 @@ export async function createActivationInvitation(
   }
 
   const manualDeliveryAllowed =
-    process.env.NODE_ENV !== "production" || process.env.ALLOW_MANUAL_ACTIVATION_LINKS === "true";
+    process.env.NODE_ENV !== "production";
+  const emailDeliveryEnabled = process.env.EMAIL_PROVIDER === "smtp";
 
-  if (!manualDeliveryAllowed) {
+  if (!manualDeliveryAllowed && !emailDeliveryEnabled) {
     return failure(
       "Production ortamında e-posta teslim adapterı bağlı değil. Manuel bağlantı için açık environment izni gerekir.",
     );
   }
+  if (emailDeliveryEnabled) {
+    try {
+      getEmailConfig();
+    } catch {
+      return failure("Transactional e-posta teslim ayarları hazır değil.");
+    }
+  }
 
-  const rawToken = createActivationToken();
+  const tokenId = randomUUID();
+  const rawToken = deriveActivationToken(tokenId);
   const tokenHash = hashActivationToken(rawToken);
   const expiresAt = getActivationExpiry();
 
@@ -101,11 +113,23 @@ export async function createActivationInvitation(
 
       await tx.userActivationToken.create({
         data: {
+          id: tokenId,
           userId: invitedUser.id,
           tokenHash,
           expiresAt,
         },
       });
+
+      if (emailDeliveryEnabled) {
+        await enqueueIntegrationEvent(tx, {
+          topic: "credential.activation_requested.v1",
+          eventType: "USER_ACTIVATION_REQUESTED",
+          aggregateType: "UserActivationToken",
+          aggregateId: tokenId,
+          payload: { schemaVersion: 1, tokenId, userId: invitedUser.id },
+          idempotencyKey: `credential:activation:${tokenId}:v1`,
+        });
+      }
 
       await tx.auditLog.create({
         data: {
@@ -127,8 +151,10 @@ export async function createActivationInvitation(
 
     return {
       ok: true,
-      message: "Tek kullanımlık aktivasyon bağlantısı hazırlandı.",
-      activationPath: `/aktivasyon/${rawToken}`,
+      message: emailDeliveryEnabled
+        ? "Aktivasyon e-postası teslim kuyruğuna alındı."
+        : "Tek kullanımlık aktivasyon bağlantısı hazırlandı.",
+      activationPath: manualDeliveryAllowed ? `/aktivasyon/${rawToken}` : undefined,
       expiresAt: expiresAt.toISOString(),
     };
   } catch (error) {
@@ -238,10 +264,19 @@ export async function createPasswordResetInvitation(
   const parsed = credentialResetInvitationSchema.safeParse({ userId: formData.get("userId") });
   if (!parsed.success) return failure(parsed.error.issues[0]?.message ?? "Kullanıcı seçimi geçersiz.");
 
-  const manualDeliveryAllowed = process.env.NODE_ENV !== "production" || process.env.ALLOW_MANUAL_PASSWORD_RESET_LINKS === "true";
-  if (!manualDeliveryAllowed) return failure("Production ortamında e-posta teslim adapterı bağlı değil.");
+  const manualDeliveryAllowed = process.env.NODE_ENV !== "production";
+  const emailDeliveryEnabled = process.env.EMAIL_PROVIDER === "smtp";
+  if (!manualDeliveryAllowed && !emailDeliveryEnabled) return failure("Production ortamında e-posta teslim adapterı bağlı değil.");
+  if (emailDeliveryEnabled) {
+    try {
+      getEmailConfig();
+    } catch {
+      return failure("Transactional e-posta teslim ayarları hazır değil.");
+    }
+  }
 
-  const rawToken = createPasswordResetToken();
+  const tokenId = randomUUID();
+  const rawToken = derivePasswordResetToken(tokenId);
   const expiresAt = getPasswordResetExpiry();
   try {
     const companyId = await prisma.$transaction(async (tx) => {
@@ -257,8 +292,18 @@ export async function createPasswordResetInvitation(
         where: { userId: user.id, consumedAt: null, revokedAt: null }, data: { revokedAt: now },
       });
       await tx.userPasswordResetToken.create({
-        data: { userId: user.id, tokenHash: hashPasswordResetToken(rawToken), expiresAt },
+        data: { id: tokenId, userId: user.id, tokenHash: hashPasswordResetToken(rawToken), expiresAt },
       });
+      if (emailDeliveryEnabled) {
+        await enqueueIntegrationEvent(tx, {
+          topic: "credential.password_reset_requested.v1",
+          eventType: "USER_PASSWORD_RESET_REQUESTED",
+          aggregateType: "UserPasswordResetToken",
+          aggregateId: tokenId,
+          payload: { schemaVersion: 1, tokenId, userId: user.id },
+          idempotencyKey: `credential:password-reset:${tokenId}:v1`,
+        });
+      }
       await tx.auditLog.create({
         data: {
           actorUserId: actor.id,
@@ -271,7 +316,14 @@ export async function createPasswordResetInvitation(
       return user.company.id;
     });
     revalidatePath(`/admin/firmalar/${companyId}`);
-    return { ok: true, message: "Tek kullanımlık parola sıfırlama bağlantısı hazırlandı.", resetPath: `/parola-sifirla/${rawToken}`, expiresAt: expiresAt.toISOString() };
+    return {
+      ok: true,
+      message: emailDeliveryEnabled
+        ? "Parola sıfırlama e-postası teslim kuyruğuna alındı."
+        : "Tek kullanımlık parola sıfırlama bağlantısı hazırlandı.",
+      resetPath: manualDeliveryAllowed ? `/parola-sifirla/${rawToken}` : undefined,
+      expiresAt: expiresAt.toISOString(),
+    };
   } catch (error) {
     return failure(error instanceof Error ? error.message : "Parola sıfırlama bağlantısı oluşturulamadı.");
   }

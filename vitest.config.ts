@@ -9,6 +9,9 @@ export default defineConfig({
     },
   },
   test: {
+    env: {
+      CREDENTIAL_LINK_SECRET: "vitest-only-credential-link-secret-0001",
+    },
     environment: "jsdom",
     fileParallelism: false,
     globals: true,

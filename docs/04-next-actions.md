@@ -8,13 +8,25 @@ Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
-2. Outbox dead-letter/retry gorunumu icin permission kontrollu admin entegrasyon ekrani kurulacak.
+1. Outbox dead-letter/retry gorunumu icin permission kontrollu admin entegrasyon ekrani kurulacak.
+2. E-posta outbox backlog/DEAD metrikleri health ve operasyon alarmina baglanacak.
 3. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
 4. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
 5. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 transactional e-posta teslim dilimi tamamlandi:
+
+- Provider-bagimsiz e-posta sozlesmesi ve timeout sinirli SMTP adapteri eklendi.
+- Aktivasyon/parola, siparis ve teklif olaylari tipli handler registry ile teslim ediliyor.
+- Credential tokenlari HMAC ile yeniden turetiliyor; plaintext token DB/outbox/log katmanlarina yazilmiyor.
+- Production manuel credential link cevabi kapatildi; alicilar payload'dan degil DB'den cozuluyor.
+- Outbox claim exact topic allowlist ile worker bazinda izole edildi; e-posta worker'i City shipping olaylarini claim edemiyor.
+- Hassas hata/response alanlari redakte ediliyor ve lease kaybi batch'i durdurmuyor.
+- Bearer secret korumali internal endpoint ve tek seferlik cron tetik scripti eklendi.
+- Kalici sozlesme `docs/architecture/transactional-email-outbox.md` icinde kayda alindi.
+- 28 test dosyasi, 135 test, production build, worker HTTP kontrolu ve admin smoke akisi basarili.
 
 Faz 3.3 stok DB invariant dilimi tamamlandi:
 

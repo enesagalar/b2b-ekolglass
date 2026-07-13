@@ -41,7 +41,7 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 2. Company-scoped siparis detay sayfasi eklenecek.
 3. Server-side fiyatlanan taslak siparis ve delivery address secimi uygulanacak.
 4. Admin teklif inceleme/fiyatlandirma/durum gecis operasyonu eklenecek.
-5. Transactional aktivasyon e-posta adapteri uygulanacak.
+5. Transactional aktivasyon e-posta adapteri uygulandi; production SMTP ve scheduler kurulumu deployment adimidir.
 
 ## Tamamlanan Teklif Talebi Dilimi
 

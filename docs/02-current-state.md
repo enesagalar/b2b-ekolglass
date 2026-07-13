@@ -104,7 +104,7 @@ Son guncelleme: 2026-07-13
 ## En Onemli Eksikler
 
 1. Bayi platformunda kalanlar:
-   - Transactional e-posta teslim adapteri yok.
+   - Transactional e-posta adapteri hazir; production SMTP credential ve scheduler kurulumu bekliyor.
    - Teklif listesinde filtre ve sayfalama yok.
    - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 
@@ -112,7 +112,7 @@ Son guncelleme: 2026-07-13
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
 3. Teklif/siparis akisinda kalanlar:
-   - Outbox hazir; bildirim olaylarini teslim edecek transactional e-posta adapteri eksik.
+   - SMTP teslim hatti hazir; outbox retry/dead-letter admin operasyon ekrani eksik.
 
 4. Entegrasyonlar hazirlik seviyesinde:
    - City Lojistik canli API dokumani gerekli.
@@ -125,11 +125,11 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: transactional e-posta adapter siniri ve outbox operasyon ekrani.
+Faz 3.3 devam edecek: outbox operasyon ekrani, replay yetkisi ve backlog alarmlari.
 
 UX/IA konsolidasyonu ve tekliften siparise donusum tamamlandi. Siradaki adim entegrasyon outbox sinirini ve transactional bildirim adapterini kurmaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 
 Siradaki hedefler:
 
 - Outbox admin retry/dead-letter operasyon ekrani.
-- E-posta invitation ve operasyon bildirim adapteri.
+- E-posta backlog/DEAD gozlemlenebilirligi ve production scheduler runbook'u.

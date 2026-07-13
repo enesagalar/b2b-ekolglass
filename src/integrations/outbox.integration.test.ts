@@ -81,8 +81,8 @@ describe("integration outbox", () => {
     const now = new Date("2000-01-01T00:01:00.000Z");
 
     const [left, right] = await Promise.all([
-      claimOutboxBatch({ workerId: "worker-left", limit: 1, now }),
-      claimOutboxBatch({ workerId: "worker-right", limit: 1, now }),
+      claimOutboxBatch({ workerId: "worker-left", topics: ["test.integration.v1"], limit: 1, now }),
+      claimOutboxBatch({ workerId: "worker-right", topics: ["test.integration.v1"], limit: 1, now }),
     ]);
 
     expect([...left, ...right].map((claimed) => claimed.id)).toEqual([event.id]);
@@ -93,12 +93,14 @@ describe("integration outbox", () => {
     const startedAt = new Date("2000-01-01T00:02:00.000Z");
     const first = await claimOutboxBatch({
       workerId: "worker-old",
+      topics: ["test.integration.v1"],
       limit: 1,
       leaseMs: 1000,
       now: startedAt,
     });
     const second = await claimOutboxBatch({
       workerId: "worker-new",
+      topics: ["test.integration.v1"],
       limit: 1,
       leaseMs: 1000,
       now: new Date(startedAt.getTime() + 1001),
@@ -189,7 +191,7 @@ describe("integration outbox", () => {
     ).toBe(2);
   });
 
-  it("dead-letters an unknown topic without repeated delivery", async () => {
+  it("leaves topics outside the handler registry untouched", async () => {
     const event = await enqueue("unknown-topic");
 
     expect(
@@ -197,11 +199,48 @@ describe("integration outbox", () => {
         workerId: "worker-unknown",
         limit: 1,
       }),
-    ).toEqual([{ eventId: event.id, status: "DEAD" }]);
+    ).toEqual([]);
     expect(
       await prisma.integrationOutboxEvent.findUniqueOrThrow({
         where: { id: event.id },
       }),
-    ).toMatchObject({ status: "DEAD", attempts: 1 });
+    ).toMatchObject({ status: "PENDING", attempts: 0 });
+  });
+
+  it("claims only exact topics owned by the worker", async () => {
+    const owned = await enqueue("owned-topic");
+    const foreign = await prisma.$transaction((tx) =>
+      enqueueIntegrationEvent(tx, {
+        ...input("foreign-topic"),
+        topic: "shipping.shipment_create_requested.v1",
+      }),
+    );
+
+    expect(
+      await processOutboxBatch(
+        { "test.integration.v1": async () => ({ accepted: true }) },
+        { workerId: "email-worker", limit: 2 },
+      ),
+    ).toEqual([{ eventId: owned.id, status: "SUCCEEDED" }]);
+    expect(
+      await prisma.integrationOutboxEvent.findUniqueOrThrow({ where: { id: foreign.id } }),
+    ).toMatchObject({ status: "PENDING", attempts: 0 });
+  });
+
+  it("redacts credential-shaped provider errors before persistence", async () => {
+    const event = await enqueue("redaction");
+    await processOutboxBatch(
+      {
+        "test.integration.v1": async () => {
+          throw new Error(
+            "SMTP_PASSWORD=sentinel client_secret:second smtp://user:third@host Authorization: fourth",
+          );
+        },
+      },
+      { workerId: "worker-redaction", limit: 1 },
+    );
+    const failed = await prisma.integrationOutboxEvent.findUniqueOrThrow({ where: { id: event.id } });
+    expect(failed.lastError).not.toMatch(/sentinel|second|third|fourth/);
+    expect(failed.lastError).toContain("[REDACTED]");
   });
 });

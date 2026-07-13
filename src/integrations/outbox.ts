@@ -35,6 +35,31 @@ export type OutboxHandler = (
 export type OutboxHandlerRegistry = Record<string, OutboxHandler>;
 
 export class PermanentOutboxError extends Error {}
+export class OutboxLeaseLostError extends Error {}
+
+const SENSITIVE_KEY = /authorization|cookie|password|passphrase|token|api[-_]?key|client[-_]?secret|smtp/i;
+
+function redactText(value: string) {
+  return value
+    .replace(/\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+/gi, "$1 [REDACTED]")
+    .replace(/([a-z][a-z0-9+.-]*:\/\/)[^\s/@:]+:[^\s/@]+@/gi, "$1[REDACTED]@")
+    .replace(/([?&](?:access_token|token|api[-_]?key|apikey|password|client_secret|secret)=)[^&#\s]+/gi, "$1[REDACTED]")
+    .replace(/\b(authorization|smtp_password|password|access_token|client_secret|api[-_]?key)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]");
+}
+
+function redactValue(value: unknown): unknown {
+  if (typeof value === "string") return redactText(value);
+  if (Array.isArray(value)) return value.map(redactValue);
+  if (value && typeof value === "object" && !(value instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        SENSITIVE_KEY.test(key) ? "[REDACTED]" : redactValue(entry),
+      ]),
+    );
+  }
+  return value;
+}
 
 function stableValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stableValue);
@@ -58,7 +83,7 @@ function truncate(value: string, limit = 2000) {
 
 function errorMessage(error: unknown) {
   return truncate(
-    error instanceof Error ? error.message : "Bilinmeyen entegrasyon hatası.",
+    redactText(error instanceof Error ? error.message : "Bilinmeyen entegrasyon hatası."),
   );
 }
 
@@ -113,15 +138,20 @@ export async function enqueueIntegrationEvent(
 
 export async function claimOutboxBatch({
   workerId,
+  topics,
   limit = 10,
   leaseMs = 5 * 60 * 1000,
   now = new Date(),
 }: {
   workerId: string;
+  topics: string[];
   limit?: number;
   leaseMs?: number;
   now?: Date;
 }) {
+  const normalizedTopics = [...new Set(topics.filter(Boolean))];
+  if (normalizedTopics.length === 0) return [];
+  const topicFilter = Prisma.sql`AND "topic" IN (${Prisma.join(normalizedTopics)})`;
   const safeLimit = Math.min(100, Math.max(1, limit));
   const leaseExpiresAt = new Date(now.getTime() + Math.max(1000, leaseMs));
   const claimed = [];
@@ -139,6 +169,7 @@ export async function claimOutboxBatch({
     WHERE "status" = 'PROCESSING'
       AND "leaseExpiresAt" <= ${now}
       AND "attempts" >= "maxAttempts"
+      ${topicFilter}
   `);
 
   for (let index = 0; index < safeLimit; index += 1) {
@@ -161,6 +192,7 @@ export async function claimOutboxBatch({
           OR ("status" = 'PROCESSING' AND "leaseExpiresAt" <= ${now})
         )
         AND "attempts" < "maxAttempts"
+        ${topicFilter}
         ORDER BY "availableAt" ASC, "createdAt" ASC, "id" ASC
         LIMIT 1
       )
@@ -216,7 +248,7 @@ export async function completeOutboxEvent({
       },
     });
     if (completed.count !== 1) {
-      throw new Error("Outbox lease artık bu worker'a ait değil.");
+      throw new OutboxLeaseLostError("Outbox lease artık bu worker'a ait değil.");
     }
     await tx.integrationLog.create({
       data: {
@@ -229,7 +261,7 @@ export async function completeOutboxEvent({
         entityId: event.aggregateId,
         requestSummary: stableJson({ topic: event.topic, attempt: event.attempts }),
         responseSummary:
-          response === undefined ? null : truncate(stableJson(response)),
+          response === undefined ? null : truncate(stableJson(redactValue(response))),
         retryCount: Math.max(0, event.attempts - 1),
       },
     });
@@ -252,7 +284,7 @@ export async function failOutboxEvent({
       where: { id: eventId },
     });
     if (event.status !== "PROCESSING" || event.lockToken !== lockToken) {
-      throw new Error("Outbox lease artık bu worker'a ait değil.");
+      throw new OutboxLeaseLostError("Outbox lease artık bu worker'a ait değil.");
     }
     const dead =
       error instanceof PermanentOutboxError || event.attempts >= event.maxAttempts;
@@ -273,7 +305,7 @@ export async function failOutboxEvent({
       },
     });
     if (updated.count !== 1) {
-      throw new Error("Outbox sonucu eşzamanlı olarak değişti.");
+      throw new OutboxLeaseLostError("Outbox sonucu eşzamanlı olarak değişti.");
     }
     await tx.integrationLog.create({
       data: {
@@ -297,20 +329,18 @@ export async function processOutboxBatch(
   handlers: OutboxHandlerRegistry,
   options: { workerId: string; limit?: number; leaseMs?: number; now?: Date },
 ) {
-  const events = await claimOutboxBatch(options);
+  const topics = Object.keys(handlers);
+  if (topics.length === 0) return [];
+  const events = await claimOutboxBatch({ ...options, topics });
   const results: Array<{
     eventId: string;
-    status: "SUCCEEDED" | "RETRY" | "DEAD";
+    status: "SUCCEEDED" | "RETRY" | "DEAD" | "LEASE_LOST";
   }> = [];
   for (const event of events) {
+    const handler = handlers[event.topic];
+    if (!handler) continue;
+    let payload: unknown;
     try {
-      const handler = handlers[event.topic];
-      if (!handler) {
-        throw new PermanentOutboxError(
-          `${event.topic} konusu için outbox handler tanımlı değil.`,
-        );
-      }
-      let payload: unknown;
       try {
         payload = JSON.parse(event.payload);
       } catch {
@@ -325,24 +355,34 @@ export async function processOutboxBatch(
         providerCode: event.providerCode,
         attempt: event.attempts,
       });
-      await completeOutboxEvent({
-        eventId: event.id,
-        lockToken: event.lockToken!,
-        response,
-        now: options.now,
-      });
-      results.push({ eventId: event.id, status: "SUCCEEDED" });
+      try {
+        await completeOutboxEvent({
+          eventId: event.id,
+          lockToken: event.lockToken!,
+          response,
+          now: options.now,
+        });
+        results.push({ eventId: event.id, status: "SUCCEEDED" });
+      } catch (error) {
+        if (!(error instanceof OutboxLeaseLostError)) throw error;
+        results.push({ eventId: event.id, status: "LEASE_LOST" });
+      }
     } catch (error) {
-      const failed = await failOutboxEvent({
-        eventId: event.id,
-        lockToken: event.lockToken!,
-        error,
-        now: options.now,
-      });
-      results.push({
-        eventId: event.id,
-        status: failed.dead ? "DEAD" : "RETRY",
-      });
+      try {
+        const failed = await failOutboxEvent({
+          eventId: event.id,
+          lockToken: event.lockToken!,
+          error,
+          now: options.now,
+        });
+        results.push({
+          eventId: event.id,
+          status: failed.dead ? "DEAD" : "RETRY",
+        });
+      } catch (failError) {
+        if (!(failError instanceof OutboxLeaseLostError)) throw failError;
+        results.push({ eventId: event.id, status: "LEASE_LOST" });
+      }
     }
   }
   return results;

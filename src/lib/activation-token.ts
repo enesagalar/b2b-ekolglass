@@ -2,10 +2,16 @@ import "server-only";
 
 import { createHash, randomBytes } from "crypto";
 
+import { deriveCredentialToken } from "./credential-link-token";
+
 export const ACTIVATION_TOKEN_HOURS = 48;
 
 export function createActivationToken() {
   return randomBytes(32).toString("base64url");
+}
+
+export function deriveActivationToken(tokenId: string) {
+  return deriveCredentialToken("activation", tokenId);
 }
 
 export function hashActivationToken(token: string) {
