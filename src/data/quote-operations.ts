@@ -33,6 +33,7 @@ export type QuoteOperationErrorCode =
   | "CONFLICT"
   | "INVALID_TRANSITION"
   | "INVALID_PRICING"
+  | "INVALID_CONVERSION"
   | "NOT_FOUND";
 
 export class QuoteOperationError extends Error {
@@ -275,7 +276,15 @@ export async function priceQuote(
         id: true,
         status: true,
         version: true,
-        items: { select: { id: true, quantity: true } },
+        items: {
+          select: {
+            id: true,
+            quantity: true,
+            dimensions: true,
+            glassType: true,
+            product: { select: { code: true, name: true } },
+          },
+        },
         _count: { select: { offerRevisions: true } },
       },
     });
@@ -317,6 +326,10 @@ export async function priceQuote(
       quantitySnapshot: number;
       unitPrice: Prisma.Decimal;
       lineTotal: Prisma.Decimal;
+      productCodeSnapshot: string | null;
+      productNameSnapshot: string | null;
+      dimensionsSnapshot: string | null;
+      glassTypeSnapshot: string | null;
     }> = [];
     for (const item of quote.items) {
       const submitted = normalizedItems.find(
@@ -330,6 +343,10 @@ export async function priceQuote(
         quantitySnapshot: item.quantity,
         unitPrice,
         lineTotal,
+        productCodeSnapshot: item.product?.code ?? null,
+        productNameSnapshot: item.product?.name ?? null,
+        dimensionsSnapshot: item.dimensions,
+        glassTypeSnapshot: item.glassType,
       });
     }
 

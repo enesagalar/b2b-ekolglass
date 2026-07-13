@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Building2,
+  FileText,
   MapPin,
   PackageCheck,
   Truck,
@@ -91,13 +92,10 @@ export default async function AdminOrderDetailPage({
             {order.items.length} kalem
           </p>
         </div>
-        <Link
-          href={`/admin/firmalar/${order.company.id}`}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"
-        >
-          <Building2 size={16} />
-          Firma kartını aç
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {order.sourceQuote ? <Link href={`/admin/teklifler/${order.sourceQuote.id}`} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"><FileText size={16} />{order.sourceQuote.quoteNumber}</Link> : null}
+          <Link href={`/admin/firmalar/${order.company.id}`} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"><Building2 size={16} />Firma kartını aç</Link>
+        </div>
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
@@ -254,6 +252,7 @@ export default async function AdminOrderDetailPage({
             <p className="mt-1 text-sm leading-6 text-slate-600">
               {address || "Adres bilgisi yok"}
             </p>
+            {order.requestedDeliveryDate ? <p className="mt-2 text-xs font-semibold text-teal-800">İstenen teslim: {formatPortalDate(order.requestedDeliveryDate)}</p> : null}
           </section>
           <section className={`${panelClass} p-5`}>
             <div className="flex items-center gap-2">

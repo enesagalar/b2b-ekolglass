@@ -35,8 +35,6 @@ Tamamlandi:
 
 Siradaki dilim:
 
-- Teklif sepeti version/CAS ve payload-hash idempotency sertlestirmesi.
-- Onaylanan teklifin idempotent siparise donusumu.
 - City Lojistik adapterine outbox uzerinden siparis/sevkiyat aktarimi.
 - Transactional e-posta teslim adapteri.
 - Stok invariant'lari icin DB check constraint'leri.
@@ -68,3 +66,16 @@ Tamamlandi:
 - `pricedAt` yalniz gercek admin fiyatlandirmasinda set edilecek sekilde duzeltildi.
 - Admin shell ve dashboard teklif operasyonuna baglandi.
 - Unit, SQLite entegrasyon, HTTP smoke ve responsive browser QA kontrolleri eklendi.
+
+## 2026-07-13 Tekliften Siparise Donusum Dilimi
+
+Tamamlandi:
+
+- Yalniz `APPROVED` teklif icin ayri `quote.convert` yetkisi ve admin aksiyonu.
+- Aktif immutable teklif revizyonundan fiyat, miktar ve teknik snapshot aktarimi.
+- Kaynak teklif, teklif surumu, revizyon ve revizyon kalemi baglantili siparis audit zinciri.
+- Firma adresi snapshot'i ve istenen teslim tarihinin sipariste korunmasi.
+- Tek transaction icinde siparis, kalem, coklu depo rezervasyonu, iki history ve audit kayitlari.
+- Hash kontrollu idempotent command ledger, quote version CAS ve tek siparis unique garantisi.
+- Dondurulmus revizyon, yetersiz stok, farkli payload ve replay entegrasyon testleri.
+- Admin tekliften siparise ve siparisten teklife; bayi teklif/siparis detaylari arasinda izlenebilir baglantilar.

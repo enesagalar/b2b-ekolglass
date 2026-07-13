@@ -90,8 +90,20 @@ export function getAdminQuoteDetail(quoteId: string) {
           legalName: true,
           email: true,
           phone: true,
+          addresses: {
+            orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+            select: {
+              id: true,
+              label: true,
+              line1: true,
+              district: true,
+              city: true,
+              isDefault: true,
+            },
+          },
         },
       },
+      convertedOrder: { select: { id: true, orderNumber: true, status: true } },
       requester: { select: { id: true, name: true, email: true } },
       activeOfferRevision: {
         select: {

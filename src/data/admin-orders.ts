@@ -78,12 +78,14 @@ export function getAdminOrderDetail(orderId: string) {
       deliveryCity: true,
       deliveryCountry: true,
       deliveryPostalCode: true,
+      requestedDeliveryDate: true,
       submittedAt: true,
       pricedAt: true,
       createdAt: true,
       updatedAt: true,
       version: true,
       heldFromStatus: true,
+      sourceQuote: { select: { id: true, quoteNumber: true } },
       company: {
         select: {
           id: true,

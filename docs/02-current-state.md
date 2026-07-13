@@ -51,6 +51,8 @@ Son guncelleme: 2026-07-13
 - Teklif sepetinde version/CAS, company-scoped idempotency, canonical request hash ve atomik tuketim korumasi.
 - Company-scoped teklif detay ve tekrar erisilebilir basari ekrani.
 - Admin teklif kuyrugu, detay, immutable teklif revizyonlari ve role ayrilmis durum gecisleri.
+- Onaylanan tekliften aktif revizyon fiyatlarini koruyan idempotent siparis donusumu ve stok rezervasyonu.
+- Teklif, revizyon, siparis ve siparis kalemi arasinda iliskisel kaynak/audit zinciri.
 - Company-scoped order/quote DAL ve cross-company SQLite testi.
 - Kullanici+firma kapsamli kalici siparis sepeti ve `/sepet` checkout ekrani.
 - Teslimat adresi secimi ve checkout icinden yeni firma adresi olusturma.
@@ -106,7 +108,6 @@ Son guncelleme: 2026-07-13
    - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
 
 3. Teklif/siparis akisinda kalanlar:
-   - Onaylanan teklifin aktif immutable revizyondan idempotent siparise donusumu eksik.
    - Teklif ve siparis bildirimleri icin transactional e-posta/outbox hatti eksik.
 
 4. Entegrasyonlar hazirlik seviyesinde:
@@ -120,12 +121,11 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: Tekliften Siparise Donusum, Transactional E-posta ve City Lojistik Outbox Siniri.
+Faz 3.3 devam edecek: Transactional E-posta ve City Lojistik Outbox Siniri.
 
-UX/IA konsolidasyonu tamamlandi: public urun kesfi, bayi urun/fiyat alani, oturum duyarli ana sayfa ve ayrik yonetim girisi devrede. Siradaki adim onaylanan teklifi guvenli siparise donusturmek ve entegrasyon outbox sinirini kurmaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
+UX/IA konsolidasyonu ve tekliften siparise donusum tamamlandi. Siradaki adim entegrasyon outbox sinirini ve transactional bildirim adapterini kurmaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 
 Siradaki hedefler:
 
-- Tekliften siparise donusum action'i ve audit izi.
 - City Lojistik saglayici bagimsiz outbox modeli.
 - E-posta invitation ve operasyon bildirim adapteri.

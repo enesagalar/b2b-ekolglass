@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
+import { convertApprovedQuoteToOrder } from "@/data/quote-conversion";
 import {
   priceQuote,
   QuoteOperationError,
@@ -10,6 +12,7 @@ import {
 import { getQuoteTransitionPermission } from "@/domain/quote-transitions";
 import {
   quotePricingSchema,
+  quoteConversionSchema,
   quoteStatusTransitionSchema,
 } from "@/domain/validation";
 import { requirePermissionUser } from "@/lib/auth";
@@ -102,4 +105,40 @@ export async function priceQuoteAction(
   }
   revalidateQuote(parsed.data.quoteId);
   return { ok: true, message: "Teklif fiyatları kaydedildi." };
+}
+
+export async function convertQuoteToOrderAction(
+  _state: AdminQuoteActionState,
+  formData: FormData,
+): Promise<AdminQuoteActionState> {
+  const parsed = quoteConversionSchema.safeParse({
+    quoteId: formData.get("quoteId"),
+    expectedVersion: formData.get("expectedVersion"),
+    expectedOfferRevisionId: formData.get("expectedOfferRevisionId"),
+    deliveryAddressId: formData.get("deliveryAddressId"),
+    shipmentMethod: formData.get("shipmentMethod"),
+    notes: formData.get("notes"),
+    idempotencyKey: formData.get("idempotencyKey"),
+  });
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message };
+  }
+
+  const actor = await requirePermissionUser(
+    "quote.convert",
+    `/admin/teklifler/${parsed.data.quoteId}`,
+  );
+  let order: { id: string };
+  try {
+    order = await convertApprovedQuoteToOrder({ userId: actor.id }, parsed.data);
+  } catch (error) {
+    return errorState(error);
+  }
+
+  revalidateQuote(parsed.data.quoteId);
+  revalidatePath("/admin/siparisler");
+  revalidatePath(`/admin/siparisler/${order.id}`);
+  revalidatePath("/bayi/siparisler");
+  revalidatePath(`/bayi/siparisler/${order.id}`);
+  redirect(`/admin/siparisler/${order.id}?created=quote`);
 }

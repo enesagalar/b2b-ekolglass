@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, PackageSearch } from "lucide-react";
+import { ArrowLeft, CheckCircle2, PackageCheck, PackageSearch } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -147,9 +147,18 @@ export default async function DealerQuoteDetailPage({
               <p className="mt-2 text-sm leading-6 text-slate-600">{quote.notes}</p>
             </div>
           ) : null}
+          {quote.convertedOrder ? (
+            <Link
+              href={`/bayi/siparisler/${quote.convertedOrder.id}`}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-800 px-3 text-sm font-semibold text-white"
+            >
+              <PackageCheck size={16} />
+              {quote.convertedOrder.orderNumber} siparişini aç
+            </Link>
+          ) : null}
           <Link
             href="/bayi/urunler"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-800 px-3 text-sm font-semibold text-white"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
           >
             <PackageSearch size={16} />
             Ürünlere dön

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { ArrowLeft, Building2, CalendarDays, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Building2, CalendarDays, Mail, PackageCheck, Phone } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -18,6 +18,7 @@ import {
 } from "@/features/dealer/dealer-ui";
 import {
   AdminQuotePricingForm,
+  AdminQuoteConversionForm,
   AdminQuoteStatusForm,
 } from "@/features/quotes/admin-quote-forms";
 import { requirePermissionUser } from "@/lib/auth";
@@ -35,6 +36,7 @@ export default async function AdminQuoteDetailPage({
   const role = isKnownRole(actor.role) ? actor.role : null;
   const status = isQuoteStatus(quote.status) ? quote.status : null;
   const canPrice = Boolean(role && hasPermission(role, "quote.price"));
+  const canConvert = Boolean(role && hasPermission(role, "quote.convert"));
   const transitions = status
     ? getAllowedQuoteTransitions(status)
         .filter((target) => target !== "PRICED")
@@ -98,6 +100,21 @@ export default async function AdminQuoteDetailPage({
         </div>
 
         <aside className="grid gap-6 xl:sticky xl:top-28">
+          {quote.convertedOrder ? (
+            <section className={`${panelClass} p-5`}>
+              <p className="text-xs font-semibold uppercase text-slate-500">Oluşan sipariş</p>
+              <p className="mt-2 font-semibold">{quote.convertedOrder.orderNumber}</p>
+              <Link href={`/admin/siparisler/${quote.convertedOrder.id}`} className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-teal-800 px-3 text-sm font-semibold text-white"><PackageCheck size={16} />Siparişi aç</Link>
+            </section>
+          ) : canConvert && quote.status === "APPROVED" && quote.activeOfferRevision && quote.company?.addresses.length ? (
+            <section className={`${panelClass} p-5`}>
+              <h3 className="font-semibold">Siparişe dönüştür</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-500">Aktif teklif revizyonu siparişe kopyalanır ve uygun stoklar ayrılır.</p>
+              <div className="mt-4"><AdminQuoteConversionForm quoteId={quote.id} expectedVersion={quote.version} expectedOfferRevisionId={quote.activeOfferRevision.id} idempotencyKey={randomUUID()} addresses={quote.company.addresses} /></div>
+            </section>
+          ) : canConvert && quote.status === "APPROVED" ? (
+            <section className={`${panelClass} p-5`}><h3 className="font-semibold">Siparişe dönüştür</h3><p className="mt-2 text-sm leading-6 text-amber-700">Dönüşüm için firmaya ait en az bir teslimat adresi ve aktif teklif revizyonu gerekir.</p></section>
+          ) : null}
           <section className={`${panelClass} p-5`}><h3 className="font-semibold">Durum yönetimi</h3><div className="mt-4">{status && transitions.length ? <AdminQuoteStatusForm quoteId={quote.id} expectedStatus={status} expectedVersion={quote.version} idempotencyKey={randomUUID()} transitions={transitions} /> : <p className="text-sm leading-6 text-slate-500">Bu hesap için kullanılabilir bir sonraki durum aksiyonu yok.</p>}</div></section>
           <section className={`${panelClass} p-5`}><p className="text-xs font-semibold uppercase text-slate-500">Firma ve talep sahibi</p><p className="mt-3 font-semibold">{quote.company?.displayName ?? "Firma kaydı yok"}</p><p className="mt-1 text-sm text-slate-600">{quote.requesterName}</p><div className="mt-4 grid gap-2 text-sm text-slate-600"><p className="flex items-center gap-2 break-all"><Mail size={15} />{quote.requesterEmail}</p>{quote.requesterPhone ? <p className="flex items-center gap-2"><Phone size={15} />{quote.requesterPhone}</p> : null}{quote.desiredDeliveryDate ? <p className="flex items-center gap-2"><CalendarDays size={15} />{formatPortalDate(quote.desiredDeliveryDate)}</p> : null}</div></section>
           <section className={`${panelClass} p-5`}><p className="text-xs font-semibold uppercase text-slate-500">Bayi notu</p><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{quote.notes || "Not iletilmedi."}</p>{quote.internalNotes ? <><p className="mt-5 text-xs font-semibold uppercase text-slate-500">İç not</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{quote.internalNotes}</p></> : null}</section>

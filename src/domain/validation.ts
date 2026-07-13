@@ -425,6 +425,20 @@ export const quoteStatusTransitionSchema = z
     }
   });
 
+export const quoteConversionSchema = z.object({
+  quoteId: z.string().trim().min(1, "Teklif seçimi zorunludur."),
+  expectedVersion: z.coerce.number().int().positive("Teklif sürümü geçersiz."),
+  expectedOfferRevisionId: z.string().trim().min(1, "Aktif teklif revizyonu zorunludur."),
+  deliveryAddressId: z.string().trim().min(1, "Teslimat adresi seçilmelidir."),
+  shipmentMethod: z.enum([
+    "CITY_LOJISTIK",
+    "CUSTOMER_PICKUP",
+    "SALES_COORDINATION",
+  ]),
+  notes: optionalText(1000),
+  idempotencyKey: z.string().uuid("İşlem anahtarı geçersiz."),
+});
+
 export const quotePricingSchema = z.object({
   quoteId: z.string().trim().min(1, "Teklif seçimi zorunludur."),
   expectedStatus: z.enum(quoteStatuses),

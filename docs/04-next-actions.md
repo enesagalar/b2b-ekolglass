@@ -8,17 +8,26 @@ Faz 3.3 - Admin Teklif Operasyonlari, Entegrasyon Outbox'i ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Onaylanan teklif, immutable aktif revizyondan tek transaction ile idempotent siparise donusturulecek.
-2. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
-3. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
-4. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
-5. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-6. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
-7. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+1. City Lojistik ve diger saglayicilar icin transaction disi, idempotent outbox modeli kurulacak.
+2. SQLite migration'inda stok miktari ve rezervasyon miktari icin DB `CHECK` constraint'leri eklenecek.
+3. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
+4. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+5. Admin shell navigasyonu tum ic roller icin permission-aware hale getirilecek.
+6. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
 
-Faz 3.3 teklif sepeti guvenlik kapanisi tamamlandi:
+Faz 3.3 tekliften siparise donusum dilimi tamamlandi:
+
+- `APPROVED -> CONVERTED_TO_ORDER` yalniz `quote.convert` yetkili admin ve satis yoneticisi tarafindan calistirilabiliyor.
+- Siparis fiyatlari katalogdan hesaplanmiyor; aktif immutable teklif revizyonundan kopyalaniyor.
+- Kaynak teklif/revizyon/revizyon kalemi ve teklif surumu sipariste iliskisel audit zinciri olarak saklaniyor.
+- Firma adresi ve istenen teslim tarihi snapshot'lanarak tek transaction icinde coklu depo stogu ayriliyor.
+- Ayni istek replay'de ayni siparisi donduruyor; farkli payload, stale teklif, suresi gecmis revizyon ve yetersiz stok reddediliyor.
+- Admin ve bayi teklif/siparis detaylari arasinda iki yonlu izlenebilir baglantilar eklendi.
+- 23 test dosyasi, 108 test, lint, production build ve sifirdan 16 migration kurulumu basarili.
+
+Onceki teklif sepeti guvenlik kapanisinda:
 
 - Teklif sepetine version/CAS, atomik tuketim ve singleton checkout lock eklendi.
 - Idempotency anahtari firma kapsamli hale getirildi; canonical payload SHA-256 hash'i farkli isteklerin replay edilmesini engelliyor.
@@ -45,7 +54,6 @@ Agent incelemesinden takip borclari:
 
 - Teklif gonderim idempotency anahtari payload hash ile korunmali.
 - `QuoteCart` version ve checkout CAS ile eszamanli sekmelerden korunmali.
-- `APPROVED -> CONVERTED_TO_ORDER` ayri permission ve idempotent transaction olarak uygulanmali.
 - Teklif revizyonuna gecerlilik tarihi/indirim/vergi gereksinimi is karariyla eklenmeli.
 
 Faz 3.3 siparis durum ve stok yasam dongusu dilimi tamamlandi:

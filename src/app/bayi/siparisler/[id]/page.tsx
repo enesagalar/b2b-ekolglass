@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
+  FileText,
   MapPin,
   PackageSearch,
   Truck,
@@ -73,13 +74,10 @@ export default async function DealerOrderDetailPage({
             </span>
           </div>
         </div>
-        <Link
-          href="/bayi/siparisler"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"
-        >
-          <ArrowLeft size={17} />
-          Tüm siparişler
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {order.sourceQuote ? <Link href={`/bayi/teklifler/${order.sourceQuote.id}`} className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"><FileText size={17} />{order.sourceQuote.quoteNumber}</Link> : null}
+          <Link href="/bayi/siparisler" className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"><ArrowLeft size={17} />Tüm siparişler</Link>
+        </div>
       </section>
       <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -139,6 +137,7 @@ export default async function DealerOrderDetailPage({
             <p className="mt-1 text-sm leading-6 text-slate-600">
               {address || "Adres bilgisi bulunmuyor"}
             </p>
+            {order.requestedDeliveryDate ? <p className="mt-2 text-xs font-semibold text-teal-800">İstenen teslim: {formatPortalDate(order.requestedDeliveryDate)}</p> : null}
           </div>
           <div className="border-t border-slate-200 pt-4">
             <p className="text-xs font-semibold uppercase text-slate-500">

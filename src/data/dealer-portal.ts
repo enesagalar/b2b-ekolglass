@@ -135,10 +135,12 @@ export function getDealerOrderDetail(companyId: string, orderId: string) {
       deliveryCity: true,
       deliveryCountry: true,
       deliveryPostalCode: true,
+      requestedDeliveryDate: true,
       submittedAt: true,
       pricedAt: true,
       createdAt: true,
       updatedAt: true,
+      sourceQuote: { select: { id: true, quoteNumber: true } },
       items: {
         orderBy: { id: "asc" },
         select: {
@@ -222,6 +224,7 @@ export function getDealerQuoteDetail(companyId: string, quoteId: string) {
       pricedAt: true,
       createdAt: true,
       updatedAt: true,
+      convertedOrder: { select: { id: true, orderNumber: true, status: true } },
       activeOfferRevision: {
         select: {
           revisionNumber: true,

@@ -1,11 +1,12 @@
 "use client";
 
-import { Calculator, LoaderCircle, RefreshCw } from "lucide-react";
+import { Calculator, LoaderCircle, PackageCheck, RefreshCw } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 
 import type { QuoteStatus } from "@/domain/quote-transitions";
 import { getStatusLabel } from "@/domain/statuses";
 import {
+  convertQuoteToOrderAction,
   priceQuoteAction,
   transitionQuoteStatusAction,
 } from "@/features/quotes/admin-actions";
@@ -16,6 +17,15 @@ type PriceItem = {
   name: string;
   quantity: number;
   unitPrice: string | null;
+};
+
+type ConversionAddress = {
+  id: string;
+  label: string;
+  line1: string;
+  district: string | null;
+  city: string;
+  isDefault: boolean;
 };
 
 function ActionMessage({
@@ -241,6 +251,78 @@ export function AdminQuoteStatusForm({
         )}
         {pending ? "Güncelleniyor" : "Durumu güncelle"}
       </button>
+    </form>
+  );
+}
+
+export function AdminQuoteConversionForm({
+  quoteId,
+  expectedVersion,
+  expectedOfferRevisionId,
+  idempotencyKey,
+  addresses,
+}: {
+  quoteId: string;
+  expectedVersion: number;
+  expectedOfferRevisionId: string;
+  idempotencyKey: string;
+  addresses: ConversionAddress[];
+}) {
+  const [state, action, pending] = useActionState(convertQuoteToOrderAction, {});
+
+  return (
+    <form action={action} className="grid gap-4">
+      <input type="hidden" name="quoteId" value={quoteId} />
+      <input type="hidden" name="expectedVersion" value={expectedVersion} />
+      <input type="hidden" name="expectedOfferRevisionId" value={expectedOfferRevisionId} />
+      <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
+      <fieldset disabled={pending} className="grid gap-4 disabled:opacity-60">
+        <label className="grid gap-1 text-xs font-semibold text-slate-600">
+          Teslimat adresi
+          <select
+            required
+            name="deliveryAddressId"
+            defaultValue={addresses.find((address) => address.isDefault)?.id ?? addresses[0]?.id}
+            className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm"
+          >
+            {addresses.map((address) => (
+              <option key={address.id} value={address.id}>
+                {address.label} · {address.line1} · {[address.district, address.city].filter(Boolean).join(" / ")}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold text-slate-600">
+          Teslimat biçimi
+          <select
+            name="shipmentMethod"
+            defaultValue="SALES_COORDINATION"
+            className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm"
+          >
+            <option value="SALES_COORDINATION">Satış ekibiyle koordine</option>
+            <option value="CITY_LOJISTIK">City Lojistik</option>
+            <option value="CUSTOMER_PICKUP">Müşteri teslim alacak</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-xs font-semibold text-slate-600">
+          Sipariş notu
+          <textarea
+            name="notes"
+            rows={3}
+            maxLength={1000}
+            className="rounded-md border border-slate-300 p-3 text-sm"
+            placeholder="Teslimat veya operasyon notu"
+          />
+        </label>
+        <button
+          disabled={pending || addresses.length === 0}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {pending ? <LoaderCircle size={17} className="animate-spin" /> : <PackageCheck size={17} />}
+          {pending ? "Sipariş oluşturuluyor" : "Siparişe dönüştür"}
+        </button>
+      </fieldset>
+      <ActionMessage state={state} />
     </form>
   );
 }
