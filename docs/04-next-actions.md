@@ -4,20 +4,32 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.3 - Urun Kaynakli Siparis Sepeti, Detay Akislari ve Davet Teslimi.
+Faz 3.3 - Siparis Operasyon Durumlari, Rezervasyon Yasam Dongusu ve Davet Teslimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. `/urunler` ve urun detayindan baslayan company-scoped siparis sepeti kurulacak.
-2. Teslimat adresi secimi, server-side fiyat/stok dogrulamasi ve idempotent siparis gonderimi eklenecek.
-3. `/bayi/siparisler` takip listesi ve siparis detayina baglanacak.
-4. Siparis ve teklif listelerine filtre ve sayfalama eklenecek.
+1. Admin siparis durum gecis matrisi ve optimistic concurrency kontrollu action'lar eklenecek.
+2. `CANCELLED` durumunda aktif stok rezervasyonlari serbest birakilacak.
+3. Sevkiyat/teslim gecisinde rezervasyonun tuketilmesi ve fiziksel stok dusumu netlestirilecek.
+4. Siparis ve teklif listelerine filtre ve sayfalama tutarliligi eklenecek.
 5. Transactional e-posta adapter interface'i ve saglayici karari eklenecek.
 6. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
 7. Admin teklif inceleme, fiyatlandirma ve durum gecis ekrani tasarlanacak.
 8. Birlesik web/CMS icin canli URL ve redirect envanteri dokumani baslatilacak.
 
 ## Son Tamamlanan Tur
+
+Faz 3.3 siparis checkout dilimi tamamlandi:
+
+- `/urunler/[id]` fulfillment mode'a gore siparis ve teklif aksiyonlari gosteriyor.
+- `OrderCart` ve `OrderCartItem` ile bayi kullanicisi/firma kapsamli kalici sepet eklendi.
+- `/sepet` teslimat adresi, yeni adres, sevkiyat tercihi, not ve server kaynakli toplamla calisiyor.
+- Checkout firma/kullanici aktifligini, cart version'i, urun modunu, fiyat kademesini ve stogu transaction icinde yeniden dogruluyor.
+- Company-scoped idempotency + request hash tekrar gonderimde ayni siparisi donduruyor; farkli payload reddediliyor.
+- Stok birden fazla depo satirindan deterministik olarak ayriliyor ve optimistic update ile yarisi engelleniyor.
+- Urun, fiyat, adres ve teslimat snapshot'lari siparise yaziliyor; sepet basarili gonderimde siliniyor.
+- `/bayi/siparisler/[id]` bayi takip ekrani ve `/admin/siparisler` liste/detay operasyon gorunumu eklendi.
+- 17 test dosyasi, 79 test, lint ve production build basarili.
 
 Faz disi auth/ticaret akisi duzeltmesi tamamlandi:
 

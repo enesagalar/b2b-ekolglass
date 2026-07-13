@@ -20,3 +20,22 @@ Bayi operasyonunun gercek siparis ve teklif akisina tasinmasi.
 - Satis ekibi teklifi fiyatlandirabilir.
 - Siparis durumlari history ile izlenir.
 - Fiyat gorunurlugu role/company bazli calisir.
+
+## 2026-07-13 Ilerleme
+
+Tamamlandi:
+
+- Kalici siparis sepeti ve checkout.
+- Firma adresi secimi/olusturma.
+- Transactional server fiyat ve stok dogrulamasi.
+- Company-scoped idempotency, request hash ve cart version kontrolu.
+- Stok rezervasyon defteri ve siparis snapshot'lari.
+- Bayi siparis detay/takip ekrani.
+- Admin siparis liste ve salt okunur operasyon detayi.
+
+Siradaki dilim:
+
+- Admin durum gecisleri ve audit.
+- Iptal/teslim akislariyla rezervasyon release/consume islemleri.
+- Admin teklif fiyatlandirma ve durum yonetimi.
+- City Lojistik adapterine siparis/sevkiyat aktarimi.

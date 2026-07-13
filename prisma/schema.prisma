@@ -28,6 +28,7 @@ model User {
   passwordResetTokens UserPasswordResetToken[]
   quoteRequests    QuoteRequest[]        @relation("QuoteRequester")
   quoteCarts       QuoteCart[]
+  orderCarts       OrderCart[]
 
   @@index([companyId, role, status])
 }
@@ -96,6 +97,7 @@ model Company {
   dealerApplications  DealerApplication[]
   quoteRequests       QuoteRequest[]
   quoteCarts          QuoteCart[]
+  orderCarts          OrderCart[]
   orders              Order[]
   priceLists          PriceList[]
   createdAt           DateTime            @default(now())
@@ -150,6 +152,7 @@ model Address {
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  orders     Order[]
 
   @@index([companyId, isDefault])
 }
@@ -192,6 +195,7 @@ model Product {
   compatibilities    ProductCompatibility[]
   quoteItems         QuoteRequestItem[]
   quoteCartItems     QuoteCartItem[]
+  orderCartItems     OrderCartItem[]
   orderItems         OrderItem[]
   mediaAssets        MediaAsset[]
   createdAt          DateTime               @default(now())
@@ -255,6 +259,7 @@ model StockItem {
   reservedQuantity Int      @default(0)
   visibility       String   @default("SIMPLIFIED")
   status           String   @default("ASK_FOR_AVAILABILITY")
+  reservations     StockReservation[]
   updatedAt        DateTime @updatedAt
 
   @@unique([productId, warehouseCode])
@@ -340,6 +345,36 @@ model QuoteCartItem {
   @@index([cartId])
 }
 
+model OrderCart {
+  id          String          @id @default(cuid())
+  companyId   String
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ownerUserId String
+  ownerUser   User            @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  items       OrderCartItem[]
+  version     Int             @default(1)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([companyId, ownerUserId])
+  @@index([ownerUserId])
+}
+
+model OrderCartItem {
+  id        String    @id @default(cuid())
+  cartId    String
+  cart      OrderCart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id])
+  quantity  Int       @default(1)
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+}
+
 model Order {
   id                String               @id @default(cuid())
   orderNumber       String               @unique
@@ -349,6 +384,14 @@ model Order {
   currency          String               @default("TRY")
   subtotal          Decimal              @default(0)
   deliveryAddressId String?
+  deliveryAddress   Address?             @relation(fields: [deliveryAddressId], references: [id], onDelete: SetNull)
+  deliveryLabel     String?
+  deliveryLine1     String?
+  deliveryLine2     String?
+  deliveryDistrict  String?
+  deliveryCity      String?
+  deliveryCountry   String?
+  deliveryPostalCode String?
   shipmentMethod    String?
   notes             String?
   internalNotes     String?
@@ -359,11 +402,18 @@ model Order {
   items             OrderItem[]
   statusHistory     OrderStatusHistory[]
   shipment          Shipment?
+  submittedAt       DateTime?
+  pricedAt           DateTime?
+  idempotencyKey     String?
+  requestHash        String?
+  sourceCartId       String?
+  sourceCartVersion  Int?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
   @@index([companyId, status, createdAt])
   @@index([companyId, createdAt])
+  @@unique([companyId, idempotencyKey])
 }
 
 model OrderItem {
@@ -374,9 +424,46 @@ model OrderItem {
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   unitPrice Decimal?
+  lineTotal Decimal?
+  productCodeSnapshot String @default("")
+  productNameSnapshot String @default("")
+  dimensionsSnapshot String?
+  glassTypeSnapshot String @default("")
+  sourceProductPriceId String?
+  priceListId String?
+  priceMinQuantity Int?
+  priceScope String?
   notes     String?
+  reservations StockReservation[]
 
   @@index([orderId])
+  @@unique([orderId, productId])
+}
+
+model StockReservation {
+  id          String    @id @default(cuid())
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  stockItemId String
+  stockItem   StockItem @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  quantity    Int
+  status      String    @default("ACTIVE")
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  releasedAt  DateTime?
+  consumedAt  DateTime?
+  releaseReason String?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([stockItemId, status])
+  @@index([status, expiresAt])
+  @@unique([orderItemId, stockItemId])
+}
+
+model CheckoutLock {
+  id        String   @id
+  version   Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 model OrderStatusHistory {

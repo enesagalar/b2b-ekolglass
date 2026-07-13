@@ -20,8 +20,14 @@ const optionalText = (max: number) =>
   }, z.string().max(max).optional());
 
 const optionalInt = z.preprocess(parseOptionalInt, z.number().int().optional());
-const optionalDecimal = z.preprocess(parseOptionalDecimal, z.number().positive().optional());
-const checkboxBoolean = z.preprocess((value) => value === "on" || value === "true" || value === true, z.boolean());
+const optionalDecimal = z.preprocess(
+  parseOptionalDecimal,
+  z.number().positive().optional(),
+);
+const checkboxBoolean = z.preprocess(
+  (value) => value === "on" || value === "true" || value === true,
+  z.boolean(),
+);
 
 export const dealerApplicationSchema = z.object({
   companyName: z.string().min(2, "Firma adı zorunludur.").max(160),
@@ -37,12 +43,21 @@ export const dealerApplicationSchema = z.object({
 export const dealerApplicationReviewSchema = z
   .object({
     id: z.string().trim().min(1, "Başvuru seçimi zorunludur."),
-    expectedUpdatedAt: z.string().trim().refine((value) => !Number.isNaN(Date.parse(value)), "Başvuru sürümü geçersiz."),
+    expectedUpdatedAt: z
+      .string()
+      .trim()
+      .refine(
+        (value) => !Number.isNaN(Date.parse(value)),
+        "Başvuru sürümü geçersiz.",
+      ),
     status: z.enum(dealerApplicationStatuses),
     internalNotes: optionalText(2000),
     customerGroupId: optionalText(120),
     paymentTerms: optionalText(200),
-    creditLimit: z.preprocess(parseOptionalDecimal, z.number().nonnegative("Kredi limiti negatif olamaz.").optional()),
+    creditLimit: z.preprocess(
+      parseOptionalDecimal,
+      z.number().nonnegative("Kredi limiti negatif olamaz.").optional(),
+    ),
   })
   .superRefine((data, context) => {
     if (data.status === "APPROVED" && !data.customerGroupId) {
@@ -77,7 +92,15 @@ export const siteSettingSchema = z.object({
 });
 
 export const homepageHeroMediaSchema = z.object({
-  url: z.string().trim().min(1, "Banner görseli zorunludur.").max(1000).refine((value) => value.startsWith("/") || z.url().safeParse(value).success, "Geçerli bir görsel yolu veya URL girin."),
+  url: z
+    .string()
+    .trim()
+    .min(1, "Banner görseli zorunludur.")
+    .max(1000)
+    .refine(
+      (value) => value.startsWith("/") || z.url().safeParse(value).success,
+      "Geçerli bir görsel yolu veya URL girin.",
+    ),
   altText: z.string().trim().min(5, "Alternatif metin zorunludur.").max(200),
 });
 
@@ -93,7 +116,10 @@ export const activationInvitationSchema = z.object({
 export const dealerUserCreateSchema = z.object({
   companyId: z.string().trim().min(1, "Firma zorunludur."),
   name: z.string().trim().min(2, "Ad soyad zorunludur.").max(120),
-  email: z.email("Geçerli bir e-posta girin.").max(180).transform((value) => value.toLowerCase()),
+  email: z
+    .email("Geçerli bir e-posta girin.")
+    .max(180)
+    .transform((value) => value.toLowerCase()),
   role: z.enum(["DEALER_OWNER", "DEALER_STAFF"]),
 });
 
@@ -109,12 +135,19 @@ export const credentialResetInvitationSchema = z.object({
 
 export const accountActivationSchema = z
   .object({
-    token: z.string().trim().min(32, "Aktivasyon bağlantısı geçersiz.").max(256),
+    token: z
+      .string()
+      .trim()
+      .min(32, "Aktivasyon bağlantısı geçersiz.")
+      .max(256),
     password: z
       .string()
       .min(12, "Parola en az 12 karakter olmalıdır.")
       .max(120)
-      .refine((value) => new TextEncoder().encode(value).length <= 72, "Parola UTF-8 olarak en fazla 72 byte olabilir.")
+      .refine(
+        (value) => new TextEncoder().encode(value).length <= 72,
+        "Parola UTF-8 olarak en fazla 72 byte olabilir.",
+      )
       .regex(/[a-z]/, "Parola en az bir küçük harf içermelidir.")
       .regex(/[A-Z]/, "Parola en az bir büyük harf içermelidir.")
       .regex(/[0-9]/, "Parola en az bir rakam içermelidir."),
@@ -122,7 +155,11 @@ export const accountActivationSchema = z
   })
   .superRefine((data, context) => {
     if (data.password !== data.passwordConfirm) {
-      context.addIssue({ code: "custom", message: "Parola tekrarı eşleşmiyor.", path: ["passwordConfirm"] });
+      context.addIssue({
+        code: "custom",
+        message: "Parola tekrarı eşleşmiyor.",
+        path: ["passwordConfirm"],
+      });
     }
   });
 
@@ -138,7 +175,9 @@ export const categoryFormSchema = z
   })
   .transform((data) => ({
     ...data,
-    slug: data.slug ? slugifyProductCategoryName(data.slug) : slugifyProductCategoryName(data.name),
+    slug: data.slug
+      ? slugifyProductCategoryName(data.slug)
+      : slugifyProductCategoryName(data.name),
   }));
 
 export const priceListFormSchema = z.object({
@@ -151,7 +190,12 @@ export const priceListFormSchema = z.object({
 export const productFormSchema = z
   .object({
     id: optionalText(120),
-    code: z.string().trim().min(3, "Ürün kodu zorunludur.").max(64).transform(normalizeProductCode),
+    code: z
+      .string()
+      .trim()
+      .min(3, "Ürün kodu zorunludur.")
+      .max(64)
+      .transform(normalizeProductCode),
     name: z.string().trim().min(2, "Ürün adı zorunludur.").max(160),
     categoryId: z.string().trim().min(1, "Kategori seçilmelidir."),
     vehicleBrand: optionalText(80),
@@ -172,16 +216,38 @@ export const productFormSchema = z
     status: z.enum(productStatuses),
   })
   .superRefine((data, context) => {
-    if (data.yearStart !== undefined && (data.yearStart < 1900 || data.yearStart > 2100)) {
-      context.addIssue({ code: "custom", message: "Başlangıç yılı 1900-2100 arasında olmalıdır.", path: ["yearStart"] });
+    if (
+      data.yearStart !== undefined &&
+      (data.yearStart < 1900 || data.yearStart > 2100)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Başlangıç yılı 1900-2100 arasında olmalıdır.",
+        path: ["yearStart"],
+      });
     }
 
-    if (data.yearEnd !== undefined && (data.yearEnd < 1900 || data.yearEnd > 2100)) {
-      context.addIssue({ code: "custom", message: "Bitiş yılı 1900-2100 arasında olmalıdır.", path: ["yearEnd"] });
+    if (
+      data.yearEnd !== undefined &&
+      (data.yearEnd < 1900 || data.yearEnd > 2100)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Bitiş yılı 1900-2100 arasında olmalıdır.",
+        path: ["yearEnd"],
+      });
     }
 
-    if (data.yearStart !== undefined && data.yearEnd !== undefined && data.yearEnd < data.yearStart) {
-      context.addIssue({ code: "custom", message: "Bitiş yılı başlangıç yılından küçük olamaz.", path: ["yearEnd"] });
+    if (
+      data.yearStart !== undefined &&
+      data.yearEnd !== undefined &&
+      data.yearEnd < data.yearStart
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Bitiş yılı başlangıç yılından küçük olamaz.",
+        path: ["yearEnd"],
+      });
     }
   });
 
@@ -197,16 +263,38 @@ export const productCompatibilityFormSchema = z
     notes: optionalText(1000),
   })
   .superRefine((data, context) => {
-    if (data.yearStart !== undefined && (data.yearStart < 1900 || data.yearStart > 2100)) {
-      context.addIssue({ code: "custom", message: "Baslangic yili 1900-2100 arasinda olmalidir.", path: ["yearStart"] });
+    if (
+      data.yearStart !== undefined &&
+      (data.yearStart < 1900 || data.yearStart > 2100)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Baslangic yili 1900-2100 arasinda olmalidir.",
+        path: ["yearStart"],
+      });
     }
 
-    if (data.yearEnd !== undefined && (data.yearEnd < 1900 || data.yearEnd > 2100)) {
-      context.addIssue({ code: "custom", message: "Bitis yili 1900-2100 arasinda olmalidir.", path: ["yearEnd"] });
+    if (
+      data.yearEnd !== undefined &&
+      (data.yearEnd < 1900 || data.yearEnd > 2100)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Bitis yili 1900-2100 arasinda olmalidir.",
+        path: ["yearEnd"],
+      });
     }
 
-    if (data.yearStart !== undefined && data.yearEnd !== undefined && data.yearEnd < data.yearStart) {
-      context.addIssue({ code: "custom", message: "Bitis yili baslangic yilindan kucuk olamaz.", path: ["yearEnd"] });
+    if (
+      data.yearStart !== undefined &&
+      data.yearEnd !== undefined &&
+      data.yearEnd < data.yearStart
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Bitis yili baslangic yilindan kucuk olamaz.",
+        path: ["yearEnd"],
+      });
     }
   });
 
@@ -225,7 +313,11 @@ export const stockFormSchema = z
       .max(40)
       .transform((value) => value.toUpperCase()),
     quantity: z.coerce.number().int().min(0, "Stok negatif olamaz."),
-    reservedQuantity: z.coerce.number().int().min(0, "Rezerve stok negatif olamaz.").default(0),
+    reservedQuantity: z.coerce
+      .number()
+      .int()
+      .min(0, "Rezerve stok negatif olamaz.")
+      .default(0),
     visibility: z.enum(stockVisibilities),
     status: z.enum(stockStatuses),
   })
@@ -242,19 +334,34 @@ export const stockFormSchema = z
 export const productPriceFormSchema = z.object({
   productId: optionalText(120),
   priceListId: z.string().trim().min(1, "Fiyat listesi seçilmelidir."),
-  amount: z.preprocess(parseOptionalDecimal, z.number().positive("Fiyat pozitif olmalıdır.")),
-  minQuantity: z.coerce.number().int().min(1, "Minimum adet en az 1 olmalıdır.").default(1),
+  amount: z.preprocess(
+    parseOptionalDecimal,
+    z.number().positive("Fiyat pozitif olmalıdır."),
+  ),
+  minQuantity: z.coerce
+    .number()
+    .int()
+    .min(1, "Minimum adet en az 1 olmalıdır.")
+    .default(1),
 });
 
 export const quoteCartAddSchema = z.object({
   productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
-  quantity: z.coerce.number().int().min(1, "Adet en az 1 olmalıdır.").max(999, "Adet en fazla 999 olabilir."),
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, "Adet en az 1 olmalıdır.")
+    .max(999, "Adet en fazla 999 olabilir."),
   notes: optionalText(500),
 });
 
 export const quoteCartUpdateSchema = z.object({
   itemId: z.string().trim().min(1, "Sepet kalemi zorunludur."),
-  quantity: z.coerce.number().int().min(1, "Adet en az 1 olmalıdır.").max(999, "Adet en fazla 999 olabilir."),
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, "Adet en az 1 olmalıdır.")
+    .max(999, "Adet en fazla 999 olabilir."),
   notes: optionalText(500),
 });
 
@@ -264,12 +371,72 @@ export const quoteCartRemoveSchema = z.object({
 
 export const quoteSubmitSchema = z.object({
   requesterName: z.string().trim().min(2, "Yetkili adı zorunludur.").max(120),
-  requesterEmail: z.string().trim().email("Geçerli bir e-posta girin.").max(180),
+  requesterEmail: z
+    .string()
+    .trim()
+    .email("Geçerli bir e-posta girin.")
+    .max(180),
   requesterPhone: optionalText(40),
-  desiredDeliveryDate: z.string().trim().max(20).optional().transform((value) => value || undefined).refine(
-    (value) => !value || (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T12:00:00.000Z`))),
-    "İstenen teslim tarihi geçersiz.",
-  ),
+  desiredDeliveryDate: z
+    .string()
+    .trim()
+    .max(20)
+    .optional()
+    .transform((value) => value || undefined)
+    .refine(
+      (value) =>
+        !value ||
+        (/^\d{4}-\d{2}-\d{2}$/.test(value) &&
+          !Number.isNaN(Date.parse(`${value}T12:00:00.000Z`))),
+      "İstenen teslim tarihi geçersiz.",
+    ),
   notes: optionalText(1000),
   idempotencyKey: z.string().uuid("Gönderim anahtarı geçersiz."),
+});
+
+export const orderCartAddSchema = z.object({
+  productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, "Adet en az 1 olmalıdır.")
+    .max(999, "Adet en fazla 999 olabilir."),
+  notes: optionalText(500),
+});
+
+export const orderCartUpdateSchema = z.object({
+  itemId: z.string().trim().min(1, "Sepet kalemi zorunludur."),
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, "Adet en az 1 olmalıdır.")
+    .max(999, "Adet en fazla 999 olabilir."),
+  notes: optionalText(500),
+});
+
+export const orderCartRemoveSchema = z.object({
+  itemId: z.string().trim().min(1, "Sepet kalemi zorunludur."),
+});
+
+export const orderSubmitSchema = z.object({
+  cartId: z.string().trim().min(1, "Sipariş sepeti zorunludur."),
+  cartVersion: z.coerce.number().int().positive("Sepet sürümü geçersiz."),
+  deliveryAddressId: z.string().trim().min(1, "Teslimat adresi seçilmelidir."),
+  shipmentMethod: z.enum([
+    "CITY_LOJISTIK",
+    "CUSTOMER_PICKUP",
+    "SALES_COORDINATION",
+  ]),
+  notes: optionalText(1000),
+  idempotencyKey: z.string().uuid("Gönderim anahtarı geçersiz."),
+});
+
+export const dealerAddressCreateSchema = z.object({
+  label: z.string().trim().min(2, "Adres etiketi zorunludur.").max(80),
+  line1: z.string().trim().min(5, "Açık adres zorunludur.").max(240),
+  line2: optionalText(160),
+  district: optionalText(100),
+  city: z.string().trim().min(2, "Şehir zorunludur.").max(100),
+  postalCode: optionalText(20),
+  isDefault: checkboxBoolean.default(false),
 });

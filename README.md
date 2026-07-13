@@ -21,6 +21,8 @@ Bu repo bir demo vitrin degil; public site, dealer portal, admin/CMS ve entegras
 - Admin operasyon dashboard temeli
 - CMS veri modeli: `Page`, `PageBlock`, `MediaAsset`, `SiteSetting`
 - Kargo entegrasyon katmani: `ShippingProvider`, `Shipment`, `ShipmentEvent`, `IntegrationLog`
+- Company-scoped siparis/teklif sepetleri, server-side checkout ve stok rezervasyonu
+- Bayi siparis takibi ve admin siparis operasyon gorunumu
 - City Lojistik adapter iskeleti
 - Rol ve izin sabitleri
 - Faz ve agent prompt dokumantasyonu

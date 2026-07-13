@@ -30,9 +30,20 @@ export function buildDealerOwnershipWhere(companyId: string) {
 export async function getDealerDashboardData(companyId: string) {
   const ownership = buildDealerOwnershipWhere(companyId);
 
-  const [openOrders, openQuotes, activeShipments, activeProducts, recentOrders, recentQuotes] = await Promise.all([
-    prisma.order.count({ where: { ...ownership, status: { in: openOrderStatuses } } }),
-    prisma.quoteRequest.count({ where: { ...ownership, status: { in: openQuoteStatuses } } }),
+  const [
+    openOrders,
+    openQuotes,
+    activeShipments,
+    activeProducts,
+    recentOrders,
+    recentQuotes,
+  ] = await Promise.all([
+    prisma.order.count({
+      where: { ...ownership, status: { in: openOrderStatuses } },
+    }),
+    prisma.quoteRequest.count({
+      where: { ...ownership, status: { in: openQuoteStatuses } },
+    }),
     prisma.shipment.count({
       where: {
         order: ownership,
@@ -70,7 +81,14 @@ export async function getDealerDashboardData(companyId: string) {
     }),
   ]);
 
-  return { openOrders, openQuotes, activeShipments, activeProducts, recentOrders, recentQuotes };
+  return {
+    openOrders,
+    openQuotes,
+    activeShipments,
+    activeProducts,
+    recentOrders,
+    recentQuotes,
+  };
 }
 
 export function getDealerOrders(companyId: string) {
@@ -87,9 +105,84 @@ export function getDealerOrders(companyId: string) {
       createdAt: true,
       updatedAt: true,
       shipment: {
-        select: { status: true, carrier: true, trackingNumber: true, trackingUrl: true },
+        select: {
+          status: true,
+          carrier: true,
+          trackingNumber: true,
+          trackingUrl: true,
+        },
       },
       _count: { select: { items: true } },
+    },
+  });
+}
+
+export function getDealerOrderDetail(companyId: string, orderId: string) {
+  return prisma.order.findFirst({
+    where: { id: orderId, companyId },
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      currency: true,
+      subtotal: true,
+      shipmentMethod: true,
+      notes: true,
+      deliveryLabel: true,
+      deliveryLine1: true,
+      deliveryLine2: true,
+      deliveryDistrict: true,
+      deliveryCity: true,
+      deliveryCountry: true,
+      deliveryPostalCode: true,
+      submittedAt: true,
+      pricedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      items: {
+        orderBy: { id: "asc" },
+        select: {
+          id: true,
+          quantity: true,
+          unitPrice: true,
+          lineTotal: true,
+          productCodeSnapshot: true,
+          productNameSnapshot: true,
+          dimensionsSnapshot: true,
+          glassTypeSnapshot: true,
+          notes: true,
+        },
+      },
+      statusHistory: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          fromStatus: true,
+          toStatus: true,
+          note: true,
+          createdAt: true,
+        },
+      },
+      shipment: {
+        select: {
+          status: true,
+          carrier: true,
+          trackingNumber: true,
+          trackingUrl: true,
+          shippedAt: true,
+          deliveredAt: true,
+          events: {
+            orderBy: { occurredAt: "desc" },
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              location: true,
+              occurredAt: true,
+            },
+          },
+        },
+      },
     },
   });
 }
@@ -114,13 +207,34 @@ export function getDealerQuoteDetail(companyId: string, quoteId: string) {
   return prisma.quoteRequest.findFirst({
     where: { id: quoteId, companyId },
     select: {
-      id: true, quoteNumber: true, status: true, requesterName: true, requesterEmail: true, requesterPhone: true,
-      desiredDeliveryDate: true, notes: true, currency: true, estimatedSubtotal: true, hasUnpricedItems: true,
-      submittedAt: true, pricedAt: true, createdAt: true, updatedAt: true,
-      items: { orderBy: { id: "asc" }, select: {
-        id: true, quantity: true, unitPrice: true, lineTotal: true, dimensions: true, glassType: true, notes: true,
-        product: { select: { id: true, code: true, name: true } },
-      } },
+      id: true,
+      quoteNumber: true,
+      status: true,
+      requesterName: true,
+      requesterEmail: true,
+      requesterPhone: true,
+      desiredDeliveryDate: true,
+      notes: true,
+      currency: true,
+      estimatedSubtotal: true,
+      hasUnpricedItems: true,
+      submittedAt: true,
+      pricedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      items: {
+        orderBy: { id: "asc" },
+        select: {
+          id: true,
+          quantity: true,
+          unitPrice: true,
+          lineTotal: true,
+          dimensions: true,
+          glassType: true,
+          notes: true,
+          product: { select: { id: true, code: true, name: true } },
+        },
+      },
     },
   });
 }
@@ -158,7 +272,13 @@ export function getDealerAccountData(companyId: string) {
       users: {
         where: { status: "ACTIVE" },
         orderBy: { createdAt: "asc" },
-        select: { id: true, name: true, email: true, role: true, lastLoginAt: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          lastLoginAt: true,
+        },
       },
     },
   });

@@ -50,6 +50,13 @@ Son guncelleme: 2026-07-13
 - Gonderim aninda DB'den yeniden fiyatlanan, fiyat kaynagi/kademe snapshot'li teklif talebi.
 - Company-scoped teklif detay ve tekrar erisilebilir basari ekrani.
 - Company-scoped order/quote DAL ve cross-company SQLite testi.
+- Kullanici+firma kapsamli kalici siparis sepeti ve `/sepet` checkout ekrani.
+- Teslimat adresi secimi ve checkout icinden yeni firma adresi olusturma.
+- Gonderim aninda server-side fiyat, firma, kullanici, urun ve stok yeniden dogrulamasi.
+- Cart version, company-scoped idempotency ve request hash ile cift/stale gonderim korumasi.
+- Transaction icinde deterministik coklu depo stok rezervasyonu ve fiyat/urun/adres snapshot kayitlari.
+- Bayi siparis detay, durum gecmisi ve sevkiyat takip ekrani.
+- Admin siparis liste, filtre, firma/bayi, teslimat, kalem ve rezervasyon detay ekranlari.
 - DB seviyesinde firma/musteri grubu fiyat izolasyonu.
 - Admin dashboard temeli.
 - Admin shell:
@@ -84,7 +91,6 @@ Son guncelleme: 2026-07-13
 
 1. Bayi platformunda kalanlar:
    - Transactional e-posta teslim adapteri yok.
-   - Urun sayfasindan baslayan siparis sepeti, teslimat adresi ve siparis gonderim akisi yok.
    - Teklif listesinde filtre ve sayfalama yok.
    - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 
@@ -93,8 +99,9 @@ Son guncelleme: 2026-07-13
 
 3. Teklif/siparis akisinda kalanlar:
    - Teklif sepeti ve teklif talebi tamamlandi; admin fiyatlandirma/durum gecis operasyonu eksik.
-   - Siparis durum gecmisi ekrani yok.
-   - Taslak siparis ve teslimat adresi secimi yok.
+   - Admin siparis durum gecis aksiyonlari ve gecis kurallari henuz yok.
+   - Rezervasyonun iptalde serbest birakilmasi ve sevkte tuketilmesi henuz baglanmadi.
+   - Admin teklif fiyatlandirma ve durum gecis operasyonu eksik.
 
 4. Entegrasyonlar hazirlik seviyesinde:
    - City Lojistik canli API dokumani gerekli.
@@ -107,7 +114,7 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: Siparis Detayi/Taslagi, Teklif Liste Operasyonlari ve E-posta Teslim Siniri.
+Faz 3.3 devam edecek: Siparis Durum/Rezervasyon Yasam Dongusu, Teklif Liste Operasyonlari ve E-posta Teslim Siniri.
 
 UX/IA konsolidasyonu tamamlandi: public urun kesfi, bayi urun/fiyat alani, oturum duyarlı ana sayfa ve ayrik yonetim girisi devrede. Siradaki adim company-scoped detay/olusturma akislarini kurmak ve e-posta davet teslim adapterini baglamaktir. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` icindedir.
 

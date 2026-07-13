@@ -46,34 +46,99 @@ const navigationSections: AdminNavSection[] = [
   {
     label: "Ana",
     items: [
-      { label: "Dashboard", href: "/admin", icon: LayoutDashboard, description: "Operasyon merkezi" },
-      { label: "Bayi Başvuruları", href: "/admin/bayi-basvurulari", icon: UsersRound, description: "Onay ve inceleme" },
-      { label: "Firmalar", href: "/admin/firmalar", icon: Building2, description: "Bayi hesapları" },
+      {
+        label: "Dashboard",
+        href: "/admin",
+        icon: LayoutDashboard,
+        description: "Operasyon merkezi",
+      },
+      {
+        label: "Bayi Başvuruları",
+        href: "/admin/bayi-basvurulari",
+        icon: UsersRound,
+        description: "Onay ve inceleme",
+      },
+      {
+        label: "Firmalar",
+        href: "/admin/firmalar",
+        icon: Building2,
+        description: "Bayi hesapları",
+      },
     ],
   },
   {
     label: "Ticaret",
     items: [
-      { label: "Ürünler", href: "/admin/urunler", icon: PackageSearch, description: "Katalog ve teknik veri" },
-      { label: "Stok", icon: Boxes, description: "Depo görünürlüğü", soon: true },
-      { label: "Fiyat Listeleri", href: "/admin/urunler/fiyat-listeleri", icon: FileText, description: "Bayi fiyatları" },
-      { label: "Teklifler", icon: ClipboardCheck, description: "Satış akışı", soon: true },
-      { label: "Siparişler", icon: DatabaseZap, description: "Onay ve durumlar", soon: true },
+      {
+        label: "Ürünler",
+        href: "/admin/urunler",
+        icon: PackageSearch,
+        description: "Katalog ve teknik veri",
+      },
+      {
+        label: "Stok",
+        icon: Boxes,
+        description: "Depo görünürlüğü",
+        soon: true,
+      },
+      {
+        label: "Fiyat Listeleri",
+        href: "/admin/urunler/fiyat-listeleri",
+        icon: FileText,
+        description: "Bayi fiyatları",
+      },
+      {
+        label: "Teklifler",
+        icon: ClipboardCheck,
+        description: "Satış akışı",
+        soon: true,
+      },
+      {
+        label: "Siparişler",
+        href: "/admin/siparisler",
+        icon: DatabaseZap,
+        description: "Onay ve durumlar",
+      },
     ],
   },
   {
     label: "Operasyon",
     items: [
-      { label: "Sevkiyat", icon: Truck, description: "Kargo ve takip", soon: true },
-      { label: "Entegrasyonlar", icon: Gauge, description: "City/ERP/MES", soon: true },
-      { label: "Raporlar", icon: BarChart3, description: "Satış ve stok", soon: true },
+      {
+        label: "Sevkiyat",
+        icon: Truck,
+        description: "Kargo ve takip",
+        soon: true,
+      },
+      {
+        label: "Entegrasyonlar",
+        icon: Gauge,
+        description: "City/ERP/MES",
+        soon: true,
+      },
+      {
+        label: "Raporlar",
+        icon: BarChart3,
+        description: "Satış ve stok",
+        soon: true,
+      },
     ],
   },
   {
     label: "Sistem",
     items: [
-      { label: "CMS", href: "/admin/icerik", icon: Layers3, description: "Banner ve içerik" },
-      { label: "Ayarlar", icon: Settings, description: "Sistem yönetimi", soon: true },
+      {
+        label: "CMS",
+        href: "/admin/icerik",
+        icon: Layers3,
+        description: "Banner ve içerik",
+      },
+      {
+        label: "Ayarlar",
+        icon: Settings,
+        description: "Sistem yönetimi",
+        soon: true,
+      },
     ],
   },
 ];
@@ -85,15 +150,29 @@ function getActiveItem(pathname: string) {
     items
       .filter((item) => item.href)
       .sort((a, b) => (b.href?.length ?? 0) - (a.href?.length ?? 0))
-      .find((item) => pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`))) ?? items[0]
+      .find(
+        (item) =>
+          pathname === item.href ||
+          (item.href !== "/admin" && pathname.startsWith(`${item.href}/`)),
+      ) ?? items[0]
   );
 }
 
-function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function SidebarContent({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+}) {
   return (
     <div className="flex h-full flex-col bg-slate-950 text-white">
       <div className="border-b border-white/10 px-5 py-5">
-        <Link href="/admin" onClick={onNavigate} className="flex items-center gap-3">
+        <Link
+          href="/admin"
+          onClick={onNavigate}
+          className="flex items-center gap-3"
+        >
           <span className="flex h-10 w-10 items-center justify-center rounded-md bg-teal-400 text-slate-950">
             <ShieldCheck size={22} aria-hidden="true" />
           </span>
@@ -108,13 +187,17 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
         <div className="grid gap-5">
           {navigationSections.map((section) => (
             <section key={section.label}>
-              <p className="px-2 text-xs font-semibold uppercase text-slate-500">{section.label}</p>
+              <p className="px-2 text-xs font-semibold uppercase text-slate-500">
+                {section.label}
+              </p>
               <div className="mt-2 grid gap-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const isActive =
                     Boolean(item.href) &&
-                    (pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`)));
+                    (pathname === item.href ||
+                      (item.href !== "/admin" &&
+                        pathname.startsWith(`${item.href}/`)));
                   const className = isActive
                     ? "bg-white text-slate-950"
                     : item.soon
@@ -125,13 +208,23 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
                     <>
                       <Icon size={18} aria-hidden="true" />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold">{item.label}</span>
-                        <span className={isActive ? "block truncate text-xs text-slate-500" : "block truncate text-xs text-slate-500"}>
+                        <span className="block truncate text-sm font-semibold">
+                          {item.label}
+                        </span>
+                        <span
+                          className={
+                            isActive
+                              ? "block truncate text-xs text-slate-500"
+                              : "block truncate text-xs text-slate-500"
+                          }
+                        >
                           {item.description}
                         </span>
                       </span>
                       {item.soon ? (
-                        <span className="rounded bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-400">Yakında</span>
+                        <span className="rounded bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-400">
+                          Yakında
+                        </span>
                       ) : (
                         <ChevronRight size={15} aria-hidden="true" />
                       )}
@@ -222,7 +315,10 @@ export function AdminShell({
                 <X size={18} aria-hidden="true" />
               </button>
             </div>
-            <SidebarContent pathname={pathname} onNavigate={() => setIsMobileMenuOpen(false)} />
+            <SidebarContent
+              pathname={pathname}
+              onNavigate={() => setIsMobileMenuOpen(false)}
+            />
           </aside>
         </div>
       ) : null}
@@ -243,9 +339,15 @@ export function AdminShell({
                 <ActiveIcon size={21} aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase text-teal-800">Admin operasyon</p>
-                <h1 className="truncate text-xl font-semibold text-slate-950 md:text-2xl">{activeItem.label}</h1>
-                <p className="hidden text-sm text-slate-500 md:block">{activeItem.description}</p>
+                <p className="text-xs font-semibold uppercase text-teal-800">
+                  Admin operasyon
+                </p>
+                <h1 className="truncate text-xl font-semibold text-slate-950 md:text-2xl">
+                  {activeItem.label}
+                </h1>
+                <p className="hidden text-sm text-slate-500 md:block">
+                  {activeItem.description}
+                </p>
               </div>
             </div>
 
@@ -258,8 +360,12 @@ export function AdminShell({
                 <Bell size={18} aria-hidden="true" />
               </button>
               <div className="hidden min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 md:block">
-                <p className="truncate text-xs font-semibold text-slate-900">{user.name}</p>
-                <p className="truncate text-[11px] text-slate-500">{user.role}</p>
+                <p className="truncate text-xs font-semibold text-slate-900">
+                  {user.name}
+                </p>
+                <p className="truncate text-[11px] text-slate-500">
+                  {user.role}
+                </p>
               </div>
               <form action={logout}>
                 <button
@@ -274,7 +380,9 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1500px] px-4 py-6 md:px-6 md:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1500px] px-4 py-6 md:px-6 md:py-8">
+          {children}
+        </main>
       </div>
     </div>
   );
