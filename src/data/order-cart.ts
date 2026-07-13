@@ -15,6 +15,7 @@ export type OrderActor = {
   userId: string;
   companyId: string;
   customerGroupId?: string | null;
+  discountRate?: number | string | null;
   role: "DEALER_OWNER" | "DEALER_STAFF";
 };
 
@@ -32,7 +33,7 @@ async function assertActiveDealer(
     select: {
       id: true,
       role: true,
-      company: { select: { customerGroupId: true } },
+      company: { select: { customerGroupId: true, discountRate: true } },
     },
   });
   if (!user) throw new Error("Bayi oturumu veya firma durumu geçersiz.");
@@ -44,6 +45,7 @@ function viewerFor(actor: OrderActor): CatalogViewer {
     role: actor.role,
     companyId: actor.companyId,
     customerGroupId: actor.customerGroupId,
+    discountRate: actor.discountRate,
   };
 }
 
@@ -282,6 +284,7 @@ export async function submitOrderCart(
       role: activeUser.role as "DEALER_OWNER" | "DEALER_STAFF",
       companyId: actor.companyId,
       customerGroupId: activeUser.company?.customerGroupId,
+      discountRate: activeUser.company?.discountRate?.toString() ?? "0",
     };
     const address = await tx.address.findFirst({
       where: { id: input.deliveryAddressId, companyId: actor.companyId },
@@ -394,6 +397,8 @@ export async function submitOrderCart(
         priceMinQuantity: price.minQuantity,
         priceScope: price.priceList.companyId
           ? "COMPANY"
+          : price.discountRate > 0
+            ? "COMPANY_DISCOUNT"
           : price.priceList.customerGroupId
             ? "CUSTOMER_GROUP"
             : "PUBLIC",

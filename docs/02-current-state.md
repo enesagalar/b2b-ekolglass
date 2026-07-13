@@ -108,6 +108,9 @@ Son guncelleme: 2026-07-13
 - Ekol UTF-8 genel listesinden 1.379 kod bazli taslak urun ice aktarildi.
 - Net fiyat kapsami: firma, musteri grubu, genel bayi sirasi.
 - Banner icin dosya secimli, MIME imzasi kontrollu lokal medya storage hatti.
+- Urun detayinda fiyat ve stok kontrollu yayin hazirligi ile yayina al/yayindan kaldir komutu.
+- Genel bayi baz fiyati uzerine firma kartindan yuzdesel musteri iskontosu.
+- Stok gorunurlugu ve rol/durum kodlari icin Turkce kullanici etiketleri.
 
 ## En Onemli Eksikler
 

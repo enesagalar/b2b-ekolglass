@@ -9,13 +9,14 @@ import {
   Image,
   LinkIcon,
   Plus,
+  Rocket,
   Save,
   ShieldCheck,
   Trash2,
   Warehouse,
 } from "lucide-react";
 
-import { getProductStatusLabel, stockVisibilities } from "@/domain/catalog";
+import { getProductPublicationReadiness, getProductStatusLabel, getStockVisibilityLabel, stockVisibilities } from "@/domain/catalog";
 import { getStatusLabel, stockStatuses } from "@/domain/statuses";
 import {
   deleteProductCompatibility,
@@ -23,6 +24,7 @@ import {
   saveProductMedia,
   saveProductPrice,
   saveProductStock,
+  setProductPublicationStatus,
   setProductMediaStatus,
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
@@ -136,6 +138,7 @@ export default async function AdminProductDetailPage({
       : [];
 
   const vehicle = [product.vehicleBrand, product.vehicleModel].filter(Boolean).join(" ");
+  const publicationReadiness = getProductPublicationReadiness(product);
 
   return (
     <div className="grid gap-6">
@@ -168,6 +171,40 @@ export default async function AdminProductDetailPage({
           </div>
         </div>
       </div>
+
+      <section className="grid gap-4 border-y border-slate-200 bg-white px-5 py-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <div className="flex items-center gap-2">
+            <Rocket size={18} className="text-teal-800" aria-hidden="true" />
+            <h2 className="text-sm font-semibold text-slate-950">Yayın hazırlığı</h2>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+            <span className={publicationReadiness.hasGeneralPrice ? "rounded bg-emerald-50 px-2.5 py-1.5 text-emerald-800" : "rounded bg-amber-50 px-2.5 py-1.5 text-amber-800"}>
+              {publicationReadiness.hasGeneralPrice ? "Genel bayi fiyatı hazır" : "Genel bayi fiyatı eksik"}
+            </span>
+            <span className={publicationReadiness.availableStock > 0 ? "rounded bg-emerald-50 px-2.5 py-1.5 text-emerald-800" : "rounded bg-amber-50 px-2.5 py-1.5 text-amber-800"}>
+              {publicationReadiness.availableStock > 0 ? `${publicationReadiness.availableStock} adet kullanılabilir stok` : "Kullanılabilir stok eksik"}
+            </span>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-slate-600">
+            Ürün yayına alındığında ana sayfada ve ürün kataloğunda görünür. Sipariş için genel fiyat ve stok zorunludur.
+          </p>
+        </div>
+        <CatalogActionForm action={setProductPublicationStatus} className="grid justify-items-start gap-2 lg:justify-items-end">
+          <input type="hidden" name="productId" value={product.id} />
+          <input type="hidden" name="targetStatus" value={product.status === "ACTIVE" ? "DRAFT" : "ACTIVE"} />
+          <button
+            type="submit"
+            disabled={product.status !== "ACTIVE" && !publicationReadiness.isReady}
+            className={product.status === "ACTIVE"
+              ? "inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              : "inline-flex h-10 items-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white hover:bg-teal-900 disabled:cursor-not-allowed disabled:bg-slate-300"}
+          >
+            <Rocket size={16} aria-hidden="true" />
+            {product.status === "ACTIVE" ? "Yayından kaldır" : "Ürünü yayınla"}
+          </button>
+        </CatalogActionForm>
+      </section>
 
       <nav className="flex gap-2 overflow-x-auto border-b border-slate-200 pb-2">
         {tabs.map((tab) => {
@@ -240,7 +277,7 @@ export default async function AdminProductDetailPage({
                 <select name="visibility" defaultValue={product.stockItems[0]?.visibility ?? "SIMPLIFIED"} className={inputClass}>
                   {stockVisibilities.map((visibility) => (
                     <option key={visibility} value={visibility}>
-                      {visibility}
+                      {getStockVisibilityLabel(visibility)}
                     </option>
                   ))}
                 </select>
@@ -281,7 +318,7 @@ export default async function AdminProductDetailPage({
                       <td className="px-4 py-4">{stock.quantity}</td>
                       <td className="px-4 py-4">{stock.reservedQuantity}</td>
                       <td className="px-4 py-4">{Math.max(0, stock.quantity - stock.reservedQuantity)}</td>
-                      <td className="px-4 py-4">{stock.visibility}</td>
+                      <td className="px-4 py-4">{getStockVisibilityLabel(stock.visibility)}</td>
                       <td className="px-4 py-4">
                         <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                           {getStatusLabel(stock.status)}

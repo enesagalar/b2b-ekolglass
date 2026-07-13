@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Filter, Search, UserRoundCheck, UsersRound } from "lucide-react";
 
 import { Prisma } from "@/generated/prisma/client";
+import { getStatusLabel } from "@/domain/statuses";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -196,7 +197,7 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
                       </td>
                       <td className="px-5 py-4">
                         <span className={`inline-flex rounded px-2 py-1 text-xs font-semibold ring-1 ${statusClass(company.status)}`}>
-                          {company.status}
+                          {getStatusLabel(company.status)}
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">

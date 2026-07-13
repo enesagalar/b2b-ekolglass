@@ -228,6 +228,11 @@ export function ProductDetail({
                   <p className="mt-1 text-2xl font-semibold text-slate-950">
                     {formatPrice(price.amount, price.priceList.currency)}
                   </p>
+                  {price.discountRate > 0 ? (
+                    <p className="mt-1 text-xs font-semibold text-emerald-700">
+                      %{price.discountRate.toLocaleString("tr-TR")} firma iskontosu uygulandı · Baz fiyat {formatPrice(price.baseAmount, price.priceList.currency)}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-slate-500">
                     KDV hariç · Minimum {price.minQuantity} adet
                   </p>

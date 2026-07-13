@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveStockStatus,
+  getProductPublicationReadiness,
   resolveCatalogStockSummary,
   selectCatalogPrice,
   selectCatalogPriceForQuantity,
@@ -13,6 +14,7 @@ import {
 import {
   accountActivationSchema,
   categoryFormSchema,
+  companyDiscountSchema,
   dealerApplicationReviewSchema,
   mediaAssetFormSchema,
   mediaAssetStatusFormSchema,
@@ -20,6 +22,7 @@ import {
   productCompatibilityFormSchema,
   productFormSchema,
   productPriceFormSchema,
+  productPublicationSchema,
   quoteSubmitSchema,
   stockFormSchema,
 } from "./validation";
@@ -45,6 +48,21 @@ describe("catalog helpers", () => {
     expect(deriveStockStatus(8, 8)).toBe("RESERVED");
     expect(deriveStockStatus(5, 3)).toBe("LOW_STOCK");
     expect(deriveStockStatus(10, 1)).toBe("IN_STOCK");
+  });
+
+  it("requires an active general price and available stock before publication", () => {
+    const now = new Date("2026-07-13T12:00:00.000Z");
+    const ready = getProductPublicationReadiness({
+      prices: [{ priceList: { isActive: true, startsAt: new Date("2026-07-01T00:00:00.000Z") } }],
+      stockItems: [{ quantity: 8, reservedQuantity: 3 }],
+    }, now);
+    const scopedOnly = getProductPublicationReadiness({
+      prices: [{ priceList: { companyId: "company-1", isActive: true, startsAt: new Date("2026-07-01T00:00:00.000Z") } }],
+      stockItems: [{ quantity: 8, reservedQuantity: 8 }],
+    }, now);
+
+    expect(ready).toEqual({ hasGeneralPrice: true, availableStock: 5, isReady: true });
+    expect(scopedOnly).toEqual({ hasGeneralPrice: false, availableStock: 0, isReady: false });
   });
 
   it("hides catalog prices from guests", () => {
@@ -85,6 +103,39 @@ describe("catalog helpers", () => {
     );
 
     expect(price?.amount.toString()).toBe("1200");
+  });
+
+  it("applies the company discount to the standard dealer price", () => {
+    const price = selectCatalogPrice(
+      [
+        {
+          amount: { toString: () => "1000" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", isActive: true },
+        },
+      ],
+      { role: "DEALER_OWNER", companyId: "company-1", discountRate: "12.5" },
+    );
+
+    expect(price?.baseAmount.toString()).toBe("1000");
+    expect(price?.discountRate).toBe(12.5);
+    expect(price?.amount.toString()).toBe("875.00");
+  });
+
+  it("does not discount an explicit company net price twice", () => {
+    const price = selectCatalogPrice(
+      [
+        {
+          amount: { toString: () => "800" },
+          minQuantity: 1,
+          priceList: { currency: "TRY", companyId: "company-1", isActive: true },
+        },
+      ],
+      { role: "DEALER_OWNER", companyId: "company-1", discountRate: 10 },
+    );
+
+    expect(price?.discountRate).toBe(0);
+    expect(price?.amount.toString()).toBe("800");
   });
 
   it("selects the highest eligible quantity tier deterministically", () => {
@@ -157,6 +208,17 @@ describe("catalog helpers", () => {
 });
 
 describe("catalog validation schemas", () => {
+  it("accepts valid company discounts and rejects values outside zero to one hundred", () => {
+    expect(companyDiscountSchema.safeParse({ companyId: "company-1", discountRate: "12,5" }).success).toBe(true);
+    expect(companyDiscountSchema.safeParse({ companyId: "company-1", discountRate: "-1" }).success).toBe(false);
+    expect(companyDiscountSchema.safeParse({ companyId: "company-1", discountRate: "100.01" }).success).toBe(false);
+  });
+
+  it("only allows explicit publish or draft targets", () => {
+    expect(productPublicationSchema.safeParse({ productId: "product-1", targetStatus: "ACTIVE" }).success).toBe(true);
+    expect(productPublicationSchema.safeParse({ productId: "product-1", targetStatus: "DISCONTINUED" }).success).toBe(false);
+  });
+
   it("validates strong matching activation passwords and byte length", () => {
     const accepted = accountActivationSchema.safeParse({
       token: "a".repeat(43),

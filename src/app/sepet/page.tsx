@@ -41,6 +41,7 @@ export default async function OrderCartPage({
     userId: user.id,
     companyId: company.id,
     customerGroupId: company.customerGroup?.id,
+    discountRate: company.discountRate?.toString() ?? "0",
     role: user.role as "DEALER_OWNER" | "DEALER_STAFF",
   };
   const [cart, addresses] = await Promise.all([

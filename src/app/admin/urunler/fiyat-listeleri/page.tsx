@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Save, Tags } from "lucide-react";
+import { ArrowLeft, Building2, Calculator, Save, Tags } from "lucide-react";
 
 import { currencies } from "@/domain/catalog";
 import { savePriceList } from "@/features/catalog-management/actions";
@@ -59,22 +59,30 @@ export default async function AdminPriceListsPage() {
         <p className="mt-5 text-sm font-medium text-teal-800">Ticari fiyat altyapisi</p>
         <h1 className="mt-2 text-3xl font-semibold text-slate-950">Fiyat listeleri</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Bu ekran iskonto orani degil, bayinin sipariste gorecegi net birim fiyati belirler.
+          Burada ürünlerin standart bayi fiyatı belirlenir. Müşteri iskontosu firma kartından yüzde olarak yönetilir.
         </p>
       </div>
 
       <section className="grid gap-3 border-y border-slate-200 bg-white px-5 py-5 md:grid-cols-3">
-        <div><p className="text-xs font-semibold text-teal-800">1. Firma fiyati</p><p className="mt-1 text-sm text-slate-600">Firmaya ozel liste varsa ilk olarak bu fiyat kullanilir.</p></div>
-        <div><p className="text-xs font-semibold text-teal-800">2. Grup fiyati</p><p className="mt-1 text-sm text-slate-600">Firma listesi yoksa bagli oldugu musteri grubunun fiyati kullanilir.</p></div>
-        <div><p className="text-xs font-semibold text-teal-800">3. Genel bayi fiyati</p><p className="mt-1 text-sm text-slate-600">Ozel eslesme yoksa genel net bayi fiyati uygulanir.</p></div>
+        <div><p className="text-xs font-semibold text-teal-800">1. Genel bayi fiyatı</p><p className="mt-1 text-sm text-slate-600">Her ürün için standart, KDV hariç net bayi fiyatını girin.</p></div>
+        <div><p className="text-xs font-semibold text-teal-800">2. Müşteri iskontosu</p><p className="mt-1 text-sm text-slate-600">Firma kartında örneğin yüzde 10 iskonto tanımlayın.</p></div>
+        <div><p className="text-xs font-semibold text-teal-800">3. Sipariş fiyatı</p><p className="mt-1 text-sm text-slate-600">Sistem 1.000 TL baz fiyatı yüzde 10 iskonto ile 900 TL hesaplar.</p></div>
       </section>
+
+      <Link href="/admin/firmalar" className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-teal-800 hover:text-teal-950">
+        <Building2 size={16} aria-hidden="true" />
+        Müşteri iskontolarını firma kartlarından yönet
+      </Link>
 
       <section className={panelClass}>
         <div className="flex items-center gap-3">
           <Tags size={20} className="text-teal-800" aria-hidden="true" />
           <h2 className="text-lg font-semibold text-slate-950">Yeni fiyat listesi</h2>
         </div>
-        <CatalogActionForm action={savePriceList} className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <p className="mt-2 text-sm text-slate-600">Yeni liste bütün onaylı bayiler için standart baz fiyat oluşturur.</p>
+        <CatalogActionForm action={savePriceList} className="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_auto] md:items-end">
+          <input type="hidden" name="scope" value="PUBLIC" />
+          <input type="hidden" name="priority" value="0" />
           <label className={labelClass}>
             Liste adi
             <input name="name" required className={inputClass} placeholder="Standart Bayi TRY" />
@@ -89,24 +97,11 @@ export default async function AdminPriceListsPage() {
               ))}
             </select>
           </label>
-          <label className={labelClass}>
-            Fiyat kapsami
-            <select name="scope" defaultValue="PUBLIC" className={inputClass}>
-              <option value="PUBLIC">Genel bayi fiyati</option>
-              <option value="CUSTOMER_GROUP">Musteri grubu</option>
-              <option value="COMPANY">Firma</option>
-            </select>
-          </label>
-          <label className={labelClass}>Musteri grubu<select name="customerGroupId" className={inputClass}><option value="">Secilmedi</option>{customerGroups.map((group)=><option key={group.id} value={group.id}>{group.name}</option>)}</select></label>
-          <label className={labelClass}>Firma<select name="companyId" className={inputClass}><option value="">Secilmedi</option>{companies.map((company)=><option key={company.id} value={company.id}>{company.displayName}</option>)}</select></label>
-          <label className={labelClass}>Baslangic<input type="date" name="startsAt" className={inputClass}/></label>
-          <label className={labelClass}>Bitis<input type="date" name="endsAt" className={inputClass}/></label>
-          <label className={labelClass}>Oncelik<input type="number" name="priority" min="0" defaultValue="0" className={inputClass}/></label>
-          <label className="inline-flex h-10 items-center gap-2 self-end text-sm font-medium text-slate-700">
+          <label className="inline-flex h-10 items-center gap-2 text-sm font-medium text-slate-700">
             <input type="checkbox" name="isActive" defaultChecked className="h-4 w-4 rounded border-slate-300" />
             Aktif
           </label>
-          <div className="flex items-end justify-end">
+          <div className="flex justify-end">
             <SubmitButton label="Fiyat listesi ekle" />
           </div>
         </CatalogActionForm>
@@ -145,7 +140,7 @@ export default async function AdminPriceListsPage() {
                 <label className={labelClass}>Bitis<input type="date" name="endsAt" defaultValue={dateInput(priceList.endsAt)} className={inputClass}/></label>
                 <label className={labelClass}>Oncelik<input type="number" name="priority" min="0" defaultValue={priceList.priority} className={inputClass}/></label>
               </div>
-              <p className="text-xs text-slate-500">Etkin kapsam: {priceList.company?.displayName ?? priceList.customerGroup?.name ?? "Tum bayiler"}</p>
+              <p className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600"><Calculator size={14} aria-hidden="true" />Etkin kapsam: {priceList.company?.displayName ?? priceList.customerGroup?.name ?? "Tüm bayiler için genel baz fiyat"}</p>
               <div className="flex items-center justify-between gap-3">
                 <div className="grid gap-1">
                   <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">

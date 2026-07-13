@@ -2,6 +2,15 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-13 - Urun yayini ve firma iskontosu
+
+- Urun detayina genel fiyat + kullanilabilir stok kontrollu `Urunu yayinla` akisi eklendi.
+- `HIDDEN`, `SIMPLIFIED`, `DETAILED` stok gorunurluk kodlari Turkce aciklamalara cevrildi.
+- Fiyat modeli standart genel bayi baz fiyati + firma kartinda yuzdesel iskonto olarak sadelestirildi.
+- Firma ozel net fiyat istisnalarinda cift iskonto engellendi.
+- Firma detayina iskonto yonetimi ve audit kaydi eklendi.
+- 34 test dosyasi, 153 test, production build, migration chain ve genisletilmis admin smoke akisi basarili.
+
 ## Aktif Hedef
 
 Faz 3.3 - Katalog fiyat/stok hazirligi, toplu yayin ve kimlik dogrulama sertlestirmesi.

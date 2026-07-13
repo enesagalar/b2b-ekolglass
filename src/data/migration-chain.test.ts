@@ -97,6 +97,8 @@ describe("SQLite migration chain", () => {
         )`).run(),
       ).toThrow("PriceList_single_scope_check");
       expect(db.prepare(`SELECT COUNT(*) AS "count" FROM pragma_table_info('MediaAsset') WHERE "name" = 'objectKey'`).get()).toEqual({ count: 1 });
+      expect(db.prepare(`SELECT COUNT(*) AS "count" FROM pragma_table_info('Company') WHERE "name" = 'discountRate'`).get()).toEqual({ count: 1 });
+      expect(db.prepare(`SELECT COUNT(*) AS "count" FROM sqlite_master WHERE "type" = 'trigger' AND "name" IN ('Company_discountRate_insert_check', 'Company_discountRate_update_check')`).get()).toEqual({ count: 2 });
     } finally {
       db.close();
     }

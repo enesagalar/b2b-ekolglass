@@ -11,9 +11,11 @@ import {
   productCompatibilityDeleteFormSchema,
   productCompatibilityFormSchema,
   productFormSchema,
+  productPublicationSchema,
   productPriceFormSchema,
   stockFormSchema,
 } from "@/domain/validation";
+import { getProductPublicationReadiness } from "@/domain/catalog";
 import { Prisma } from "@/generated/prisma/client";
 import { requireAdminUser, requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -106,12 +108,85 @@ function getCompatibilityDuplicateKey(input: {
 }
 
 function revalidateProductSurfaces(productId?: string) {
+  revalidatePath("/");
   revalidatePath("/admin/urunler");
   revalidatePath("/urunler");
   revalidatePath("/bayi/urunler");
 
   if (productId) {
     revalidatePath(`/admin/urunler/${productId}`);
+  }
+}
+
+export async function setProductPublicationStatus(
+  input: CatalogActionInput,
+  maybeFormData?: FormData,
+): Promise<CatalogActionState> {
+  const user = await requirePermissionUser("product.manage", "/admin/urunler");
+  const formData = resolveFormData(input, maybeFormData);
+  if (!formData) return failure("Form verisi alınamadı.");
+
+  const parsed = productPublicationSchema.safeParse({
+    productId: formData.get("productId"),
+    targetStatus: formData.get("targetStatus"),
+  });
+  if (!parsed.success) return failure(getFirstValidationMessage(parsed.error.issues[0]?.message ?? ""));
+
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: parsed.data.productId },
+      select: {
+        id: true,
+        code: true,
+        status: true,
+        prices: {
+          select: {
+            priceList: {
+              select: {
+                companyId: true,
+                customerGroupId: true,
+                isActive: true,
+                startsAt: true,
+                endsAt: true,
+              },
+            },
+          },
+        },
+        stockItems: { select: { quantity: true, reservedQuantity: true } },
+      },
+    });
+    if (!product) return failure("Ürün bulunamadı.");
+
+    if (parsed.data.targetStatus === "ACTIVE") {
+      const readiness = getProductPublicationReadiness(product);
+      const missing = [
+        !readiness.hasGeneralPrice && "aktif genel bayi fiyatı",
+        readiness.availableStock <= 0 && "kullanılabilir stok",
+      ].filter(Boolean);
+      if (missing.length > 0) {
+        return failure(`Ürün yayınlanamadı. Eksik: ${missing.join(" ve ")}.`);
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: product.id },
+        data: { status: parsed.data.targetStatus },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: parsed.data.targetStatus === "ACTIVE" ? "product.published" : "product.unpublished",
+          entityType: "Product",
+          entityId: product.id,
+          metadata: JSON.stringify({ code: product.code, previousStatus: product.status }),
+        },
+      });
+    });
+    revalidateProductSurfaces(product.id);
+    return success(parsed.data.targetStatus === "ACTIVE" ? "Ürün yayına alındı." : "Ürün taslağa alındı.");
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Yayın durumu güncellenemedi.");
   }
 }
 

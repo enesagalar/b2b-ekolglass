@@ -34,15 +34,18 @@ Bir urun bayiye siparis edilebilir olarak acilmadan once:
 
 Fiyatsiz veya stoksuz urun otomatik yayina alinmaz. Portal tahmini fiyat veya sahte stok uretmez.
 
+Admin urun detayinda `Yayin hazirligi` paneli genel bayi fiyatini ve kullanilabilir stogu ayri ayri kontrol eder. Iki kosul da hazir oldugunda `Urunu yayinla` komutu etkinlesir; yayinlanan urun ana sayfa ve `/urunler` katalog akisina girer.
+
 ## Net Fiyat Cozumleme
 
-Fiyat listesi iskonto yuzdesi degil net birim fiyat kapsamini tanimlar:
+Ana ticari model:
 
-1. Firma ozel fiyati.
-2. Musteri grubu fiyati.
-3. Genel bayi fiyati.
+1. Urune standart genel bayi net fiyati tanimlanir.
+2. Firma kartina `0-100` araliginda musteri iskonto yuzdesi tanimlanir.
+3. Etkin siparis fiyati `baz fiyat x (1 - iskonto / 100)` olarak iki ondaliga yuvarlanir.
+4. Ornek: 1.000 TRY baz fiyat ve yuzde 10 firma iskontosu, 900 TRY siparis fiyati uretir.
 
-Ayni kapsamda yuksek oncelik, gecerli tarih araligi ve siparis miktarina uyan en yuksek minimum adet kademesi secilir. `PriceList` ayni anda hem firma hem musteri grubu hedefleyemez; bu kural validation ve SQLite `CHECK` constraint'iyle korunur.
+Mevcut musteri grubu ve firma net fiyat listeleri geriye donuk uyumluluk icin gelismis istisna olarak korunur. Firma ozel net fiyat satiri secilirse musteri iskontosu ikinci kez uygulanmaz. Grup veya genel baz fiyat secilirse firma iskontosu uygulanir. Ayni kapsamda yuksek oncelik, gecerli tarih araligi ve siparis miktarina uyan en yuksek minimum adet kademesi secilir. `PriceList` ayni anda hem firma hem musteri grubu hedefleyemez.
 
 ## CMS Medya Sozlesmesi
 

@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Building2, CreditCard, FileText, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 
 import { getStatusLabel } from "@/domain/statuses";
-import { hasPermission, isKnownRole } from "@/domain/roles";
+import { getRoleLabel, hasPermission, isKnownRole } from "@/domain/roles";
 import { ActivationInvitationForm } from "@/features/company-management/invitation-form";
+import { CompanyDiscountForm } from "@/features/company-management/commercial-terms-form";
 import { DealerUserStatusActions, NewDealerUserForm, PasswordResetInvitationForm } from "@/features/company-management/user-management-forms";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -85,7 +86,7 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h2 className="text-2xl font-semibold text-slate-950">{company.displayName}</h2>
             <span className="rounded bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800 ring-1 ring-teal-100">
-              {company.status}
+              {getStatusLabel(company.status)}
             </span>
           </div>
           <p className="mt-2 text-sm text-slate-600">
@@ -125,7 +126,9 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
               <InfoRow label="Müşteri grubu" value={company.customerGroup?.name} />
               <InfoRow label="Ödeme koşulu" value={company.paymentTerms} />
               <InfoRow label="Kredi limiti" value={company.creditLimit?.toString()} />
+              <InfoRow label="Müşteri iskontosu" value={`%${company.discountRate.toString()}`} />
             </dl>
+            <CompanyDiscountForm companyId={company.id} discountRate={company.discountRate.toString()} />
             {company.priceLists.length > 0 ? (
               <div className="border-t border-slate-200 px-5 py-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">Firma fiyat listeleri</p>
@@ -199,7 +202,7 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-slate-950">{user.name}</p>
-                        <p className="mt-1 truncate text-xs text-slate-500">{user.email} · {user.role}</p>
+                        <p className="mt-1 truncate text-xs text-slate-500">{user.email} · {getRoleLabel(user.role)}</p>
                         <p className="mt-2 text-xs text-slate-500">Davet: {tokenState}</p>
                       </div>
                     </div>

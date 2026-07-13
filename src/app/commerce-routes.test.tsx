@@ -90,6 +90,7 @@ describe("public commerce routes", () => {
       role: "DEALER_STAFF",
       companyId: "company-1",
       customerGroupId: "group-1",
+      discountRate: "0",
     });
   });
 

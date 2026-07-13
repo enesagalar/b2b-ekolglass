@@ -78,6 +78,7 @@ export type CatalogViewer = {
   role: Role;
   companyId?: string | null;
   customerGroupId?: string | null;
+  discountRate?: number | string | null;
 };
 
 export type CatalogPriceCandidate = {
@@ -96,6 +97,11 @@ export type CatalogPriceCandidate = {
   };
 };
 
+export type ResolvedCatalogPrice = CatalogPriceCandidate & {
+  baseAmount: CatalogPriceCandidate["amount"];
+  discountRate: number;
+};
+
 export type CatalogStockCandidate = {
   quantity: number;
   reservedQuantity: number;
@@ -103,6 +109,40 @@ export type CatalogStockCandidate = {
   status: string;
   warehouseCode?: string;
 };
+
+export function getProductPublicationReadiness(
+  product: {
+    prices: Array<{
+      priceList: {
+        companyId?: string | null;
+        customerGroupId?: string | null;
+        isActive: boolean;
+        startsAt: Date;
+        endsAt?: Date | null;
+      };
+    }>;
+    stockItems: Array<{ quantity: number; reservedQuantity: number }>;
+  },
+  now = new Date(),
+) {
+  const hasGeneralPrice = product.prices.some(({ priceList }) =>
+    !priceList.companyId &&
+    !priceList.customerGroupId &&
+    priceList.isActive &&
+    priceList.startsAt <= now &&
+    (!priceList.endsAt || priceList.endsAt >= now),
+  );
+  const availableStock = product.stockItems.reduce(
+    (sum, stock) => sum + Math.max(0, stock.quantity - stock.reservedQuantity),
+    0,
+  );
+
+  return {
+    hasGeneralPrice,
+    availableStock,
+    isReady: hasGeneralPrice && availableStock > 0,
+  };
+}
 
 export function canViewCatalogPrices(viewer: CatalogViewer) {
   if (!hasPermission(viewer.role, "price.read")) {
@@ -130,7 +170,7 @@ export function selectCatalogPrice(
   prices: CatalogPriceCandidate[],
   viewer: CatalogViewer,
   now = new Date(),
-) {
+): ResolvedCatalogPrice | null {
   return selectCatalogPriceForQuantity(prices, viewer, 1, now);
 }
 
@@ -139,7 +179,7 @@ export function selectCatalogPriceForQuantity(
   viewer: CatalogViewer,
   quantity: number,
   now = new Date(),
-) {
+): ResolvedCatalogPrice | null {
   if (!canViewCatalogPrices(viewer)) {
     return null;
   }
@@ -160,7 +200,34 @@ export function selectCatalogPriceForQuantity(
         || (left.priceList.id ?? left.id ?? "").localeCompare(right.priceList.id ?? right.id ?? "");
     });
 
-  return activePrices[0] ?? null;
+  const selected = activePrices[0];
+  if (!selected) return null;
+
+  const requestedDiscount = Number(viewer.discountRate ?? 0);
+  const discountRate =
+    viewer.companyId &&
+    !selected.priceList.companyId &&
+    Number.isFinite(requestedDiscount)
+      ? Math.min(100, Math.max(0, requestedDiscount))
+      : 0;
+  const baseAmount = Number(selected.amount.toString());
+  if (discountRate === 0) {
+    return {
+      ...selected,
+      baseAmount: selected.amount,
+      discountRate: 0,
+    };
+  }
+  const discountedAmount =
+    Math.round((baseAmount * (1 - discountRate / 100) + Number.EPSILON) * 100) /
+    100;
+
+  return {
+    ...selected,
+    baseAmount: selected.amount,
+    discountRate,
+    amount: { toString: () => discountedAmount.toFixed(2) },
+  };
 }
 
 export function resolveCatalogStockSummary(stockItems: CatalogStockCandidate[], viewer: CatalogViewer) {
@@ -205,4 +272,14 @@ export function getOrderModeLabel(orderMode: string) {
   };
 
   return labels[orderMode] ?? orderMode;
+}
+
+export function getStockVisibilityLabel(visibility: string) {
+  const labels: Record<string, string> = {
+    SIMPLIFIED: "Stok durumunu göster, adedi gizle",
+    DETAILED: "Stok adedini yetkili personele göster",
+    HIDDEN: "Stok bilgisini müşteriden gizle",
+  };
+
+  return labels[visibility] ?? visibility;
 }

@@ -28,6 +28,7 @@ import { type ReactNode, useMemo, useState } from "react";
 
 import { logout } from "@/features/auth/actions";
 import {
+  getRoleLabel,
   hasPermission,
   isKnownRole,
   type Permission,
@@ -391,7 +392,7 @@ export function AdminShell({
                   {user.name}
                 </p>
                 <p className="truncate text-[11px] text-slate-500">
-                  {user.role}
+                  {getRoleLabel(user.role)}
                 </p>
               </div>
               <form action={logout}>

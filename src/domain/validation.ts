@@ -74,6 +74,22 @@ export const dealerApplicationReviewSchema = z
     }
   });
 
+export const companyDiscountSchema = z.object({
+  companyId: z.string().trim().min(1, "Firma seçimi zorunludur."),
+  discountRate: z.preprocess(
+    parseOptionalDecimal,
+    z
+      .number()
+      .min(0, "İskonto oranı negatif olamaz.")
+      .max(100, "İskonto oranı yüzde 100'ü aşamaz."),
+  ),
+});
+
+export const productPublicationSchema = z.object({
+  productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
+  targetStatus: z.enum(["ACTIVE", "DRAFT"]),
+});
+
 export const mediaAssetFormSchema = z.object({
   id: optionalText(120),
   productId: z.string().trim().min(1, "Urun secimi zorunludur."),

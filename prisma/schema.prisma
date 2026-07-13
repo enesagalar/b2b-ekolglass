@@ -94,6 +94,7 @@ model Company {
   status              String              @default("PENDING")
   paymentTerms        String?
   creditLimit         Decimal?
+  discountRate        Decimal             @default(0)
   customerGroupId     String?
   customerGroup       CustomerGroup?      @relation(fields: [customerGroupId], references: [id])
   assignedSalesUserId String?

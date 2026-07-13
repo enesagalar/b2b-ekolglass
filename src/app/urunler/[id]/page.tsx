@@ -22,11 +22,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const company = dealerUser
     ? await prisma.company.findUnique({
         where: { id: dealerUser.companyId! },
-        select: { status: true, customerGroupId: true },
+        select: { status: true, customerGroupId: true, discountRate: true },
       })
     : null;
   const viewer: CatalogViewer = dealerUser && company?.status === "APPROVED"
-    ? { role: dealerUser.role as "DEALER_OWNER" | "DEALER_STAFF", companyId: dealerUser.companyId, customerGroupId: company.customerGroupId }
+    ? { role: dealerUser.role as "DEALER_OWNER" | "DEALER_STAFF", companyId: dealerUser.companyId, customerGroupId: company.customerGroupId, discountRate: company.discountRate?.toString() ?? "0" }
     : { role: "GUEST" };
   const product = await getProductDetail(id, viewer);
 

@@ -458,6 +458,11 @@ try {
     companyDetailHtml.includes("Parola bağlantısı"),
     "Dealer password reset action not rendered",
   );
+  assert(
+    companyDetailHtml.includes("Müşteri iskontosu") &&
+      companyDetailHtml.includes('name="discountRate"'),
+    "Company discount management control not rendered",
+  );
 
   const invalidActivationResponse = await request(
     `/aktivasyon/${"x".repeat(43)}`,
@@ -847,8 +852,9 @@ assert(
   "Admin price list create form not rendered",
 );
 assert(
-  priceListsHtml.includes("iskonto orani degil") && priceListsHtml.includes("Firma fiyati"),
-  "Admin net price resolution guidance not rendered",
+  priceListsHtml.includes("standart bayi fiyatı") &&
+    priceListsHtml.includes("Müşteri iskontolarını firma kartlarından yönet"),
+  "Admin standard price and company discount guidance not rendered",
 );
 
 const db = new Database("dev.db");
@@ -918,6 +924,11 @@ try {
   assert(
     compatibilityHtml.includes(smokeOemReference),
     "Product compatibility smoke OEM reference not rendered",
+  );
+  assert(
+    compatibilityHtml.includes("Yayın hazırlığı") &&
+      compatibilityHtml.includes('name="targetStatus"'),
+    "Admin product publication controls not rendered",
   );
 
   const catalogCompatibilityResponse = await request(

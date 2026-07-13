@@ -17,6 +17,7 @@ import Link from "next/link";
 import {
   currencies,
   getProductStatusLabel,
+  getStockVisibilityLabel,
   productGlassTypes,
   productStatuses,
   stockVisibilities,
@@ -283,7 +284,7 @@ function StockFields({
         <select name="visibility" defaultValue={stock?.visibility ?? "SIMPLIFIED"} className={inputClass}>
           {stockVisibilities.map((visibility) => (
             <option key={visibility} value={visibility}>
-              {visibility}
+              {getStockVisibilityLabel(visibility)}
             </option>
           ))}
         </select>

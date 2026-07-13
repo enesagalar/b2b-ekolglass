@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import {
   activationInvitationSchema,
+  companyDiscountSchema,
   credentialResetInvitationSchema,
   dealerUserCreateSchema,
   dealerUserStatusSchema,
@@ -33,6 +34,58 @@ export type CompanyUserActionState = {
 type ActivationInvitationInput = FormData | ActivationInvitationState;
 
 const failure = (message: string): ActivationInvitationState => ({ ok: false, message });
+
+export async function updateCompanyDiscount(
+  _previousState: CompanyUserActionState,
+  formData: FormData,
+): Promise<CompanyUserActionState> {
+  const actor = await requirePermissionUser("company.manage", "/admin/firmalar");
+  const parsed = companyDiscountSchema.safeParse({
+    companyId: formData.get("companyId"),
+    discountRate: formData.get("discountRate"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "İskonto bilgisi geçersiz." };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const company = await tx.company.findUnique({
+        where: { id: parsed.data.companyId },
+        select: { discountRate: true },
+      });
+      if (!company) throw new Error("Firma bulunamadı.");
+
+      await tx.company.update({
+        where: { id: parsed.data.companyId },
+        data: { discountRate: parsed.data.discountRate },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: actor.id,
+          action: "company.discount.updated",
+          entityType: "Company",
+          entityId: parsed.data.companyId,
+          metadata: JSON.stringify({
+            previousDiscountRate: company.discountRate.toString(),
+            discountRate: parsed.data.discountRate,
+          }),
+        },
+      });
+    });
+
+    revalidatePath(`/admin/firmalar/${parsed.data.companyId}`);
+    revalidatePath("/urunler");
+    revalidatePath("/sepet");
+    return { ok: true, message: "Müşteri iskonto oranı güncellendi." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "İskonto oranı güncellenemedi.",
+    };
+  }
+}
 
 function resolveFormData(input: ActivationInvitationInput, maybeFormData?: FormData) {
   return input instanceof FormData ? input : maybeFormData;

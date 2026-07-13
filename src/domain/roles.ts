@@ -13,6 +13,23 @@ export const roles = [
 
 export type Role = (typeof roles)[number];
 
+export function getRoleLabel(role: string) {
+  const labels: Record<string, string> = {
+    SUPER_ADMIN: "Süper yönetici",
+    ADMIN: "Yönetici",
+    SALES_MANAGER: "Satış yöneticisi",
+    SALES_STAFF: "Satış çalışanı",
+    WAREHOUSE_STAFF: "Depo çalışanı",
+    ACCOUNTING_STAFF: "Muhasebe çalışanı",
+    DEALER_OWNER: "Bayi yöneticisi",
+    DEALER_STAFF: "Bayi çalışanı",
+    PENDING_CUSTOMER: "Onay bekleyen müşteri",
+    GUEST: "Ziyaretçi",
+  };
+
+  return labels[role] ?? role;
+}
+
 export const permissions = [
   "admin.dashboard.read",
   "admin.content.manage",
