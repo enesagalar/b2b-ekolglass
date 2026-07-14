@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { hasPermission, isAdminRole, isKnownRole, type Permission, type Role } from "@/domain/roles";
 import { prisma } from "@/lib/prisma";
+import { resolveTrustedClientIp } from "@/lib/request-security";
 
 export const SESSION_COOKIE = "ekolglass_session";
 const SESSION_DAYS = 14;
@@ -23,6 +24,7 @@ export async function createUserSession(userId: string) {
   const tokenHash = hashSessionToken(token);
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   const requestHeaders = await headers();
+  const ipAddress = resolveTrustedClientIp(requestHeaders);
   const cookieStore = await cookies();
   const currentToken = cookieStore.get(SESSION_COOKIE)?.value;
 
@@ -35,7 +37,7 @@ export async function createUserSession(userId: string) {
         userId,
         tokenHash,
         expiresAt,
-        ipAddress: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim(),
+        ipAddress,
         userAgent: requestHeaders.get("user-agent"),
       },
     });

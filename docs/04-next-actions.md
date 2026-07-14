@@ -2,6 +2,16 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-14 - Login rate limit sertlestirmesi
+
+- Audit JSON taramali basit throttling, indeksli `AuthLoginFailure` modeline tasindi.
+- E-posta ve guvenilir proxy IP esikleri bagimsiz uygulandi.
+- Ham limiter anahtarlari yerine HMAC-SHA256 ve ayri production secret kullanildi.
+- Forwarding header allowlist, IPv4/IPv6 dogrulamasi ve proxy trust environment sozlesmesi eklendi.
+- Bilinmeyen kullanicida dummy bcrypt ve basarili giriste hesap hata temizligi eklendi.
+- Kalici sozlesme `docs/architecture/auth-login-rate-limit.md` dosyasina yazildi.
+- 24 migration, 37 test dosyasi, 171 test, lint, production build ve admin/dealer login smoke akisi basarili.
+
 ## 2026-07-14 - Toplu urun yayin hazirligi
 
 - `/admin/urunler/yayin-hazirligi` operasyon ekrani eklendi.
@@ -27,9 +37,8 @@ Faz 3.3 - Katalog fiyat/stok hazirligi, toplu yayin ve kimlik dogrulama sertlest
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
 1. 1.379 taslak urun icin kod + net fiyat + stok toplu import sozlesmesi alinacak.
-2. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-3. Production SMTP, medya storage, scheduler ve alarm runbook'u tamamlanacak.
-4. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+2. Production SMTP, medya storage, rate-limit cleanup scheduler ve alarm runbook'u tamamlanacak.
+3. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
 

@@ -37,10 +37,9 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 
 ## Siradaki Dilim
 
-1. Login rate-limit e-posta + IP anahtarli, indeksli modele tasinacak.
-2. Siparis ve teklif liste sayfalama/filtreleri tamamlanacak.
-3. Production SMTP scheduler, alarm kanali ve secret rotasyon runbook'u yazilacak.
-4. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
+1. Siparis ve teklif liste sayfalama/filtreleri tamamlanacak.
+2. Production SMTP scheduler, rate-limit cleanup/alarm kanali ve secret rotasyon runbook'u yazilacak.
+3. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
 
 ## Tamamlanan Teklif Talebi Dilimi
 
@@ -70,12 +69,22 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 - Stale veya kosulu bozulan tek urun tum batch'i fail-closed durdurur.
 - Basarili toplu yayin urun bazli audit kaydi, batch kimligi ve katalog revalidation'i uretir.
 
+## Tamamlanan Login Rate Limit Guvenlik Dilimi
+
+- Bayi ve admin login ayni HMAC anahtarli e-posta + IP limiter sozlesmesini kullanir.
+- Hata sorgulari JSON audit taramasi yerine uc indeksli `AuthLoginFailure` modelinden okunur.
+- IP yalniz acikca guvenilen ve header overwrite eden reverse proxy arkasinda cozulur.
+- Basarili giris hesap hata penceresini temizler; IP saldiri sinyali korunur.
+- Bilinmeyen hesaplar dummy bcrypt ile kullanici enumeration zamanlama riskini azaltir.
+- Production placeholder/missing rate-limit secret ile fail-closed davranir.
+
 ## Kabul Durumu
 
 - Lint: basarili.
-- Test: 35 dosya, 157 test basarili.
+- Test: 37 dosya, 171 test basarili.
 - Production build: basarili.
 - HTTP smoke: urun detay ve teklif sepeti dahil basarili.
 - Browser QA: login -> urun detay -> 2 adet sepet -> teklif sonucu desktop/mobile basarili; body overflow yok.
 - Entegrasyon QA: admin entegrasyon rotasi, permission-aware menu ve 390x844 responsive yerlesim dogrulandi.
 - Katalog yayin QA: toplu hazirlik rotasi, hazir filtresi, gercek KPI'lar ve desktop/mobile tasmasiz yerlesim dogrulandi.
+- Auth QA: 24 migration zinciri, e-posta/IP limiter testleri, guest login smoke ve admin oturum yonlendirmesi dogrulandi.

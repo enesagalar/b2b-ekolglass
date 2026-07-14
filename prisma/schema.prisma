@@ -81,6 +81,19 @@ model AuthSession {
   @@index([expiresAt])
 }
 
+model AuthLoginFailure {
+  id        String   @id @default(cuid())
+  emailKey  String
+  ipKey     String?
+  reason    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([emailKey, createdAt])
+  @@index([ipKey, createdAt])
+  @@index([expiresAt])
+}
+
 model Company {
   id                  String              @id @default(cuid())
   legalName           String

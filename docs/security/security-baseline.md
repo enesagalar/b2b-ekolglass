@@ -9,7 +9,9 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 - HttpOnly session cookie.
 - Password hashleme.
 - Login failure audit log.
-- Basit login throttling.
+- HMAC anahtarli, indeksli e-posta + guvenilir IP login rate limit modeli.
+- Bilinmeyen hesaplarda dummy bcrypt karsilastirmasi.
+- Forwarding header'lari icin acik proxy guven siniri ve IP dogrulamasi.
 - Kritik admin mutation action'larinda `requireAdminUser`.
 - CMS ve katalog mutation action'larinda audit log.
 - Production seed'de varsayilan admin sifresi engeli.
@@ -18,7 +20,6 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 ## Kisa Vadeli Eksikler
 
 - Production transactional e-posta ile aktivasyon/parola sifirlama teslimi.
-- Kalici ve IP+hesap anahtarli rate limit depolamasi.
 - CSRF stratejisi netlestirme.
 - Auth/session unit ve entegrasyon testleri.
 - Permission bazli action guard:
@@ -28,7 +29,7 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
   - `dealer.application.review`
 - Dealer/company veri izolasyonu testleri.
 - Audit log ekrani.
-- Rate limit'in kalici ayar/konfigurasyon modeli.
+- Rate limit temizleme scheduler'i ve throttle alarm metrigi.
 
 ## Faz Kapisi Security Checklist
 
@@ -52,6 +53,8 @@ Her yeni public/dealer feature icin:
 
 - SQLite yerine production DB karari: PostgreSQL onerilir.
 - `AUTH_SECRET` guclu ve ortama ozel olmali.
+- `AUTH_RATE_LIMIT_SECRET` ayri, en az 32 karakter ve placeholder olmayan bir secret olmali.
+- `AUTH_TRUST_PROXY` yalniz forwarding header'ini overwrite eden dogrulanmis proxy arkasinda acilmali.
 - `SEED_ADMIN_PASSWORD` production'da zorunlu olmali.
 - HTTPS zorunlu.
 - Cookie `secure` production'da aktif.

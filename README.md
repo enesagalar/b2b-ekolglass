@@ -62,6 +62,7 @@ npx prisma migrate status
 - `docs/architecture/adr-0001-portal-admin-cms-integration-split.md`
 - `docs/architecture/cms-decision-matrix.md`
 - `docs/architecture/shipping-integration-contract.md`
+- `docs/architecture/auth-login-rate-limit.md`
 - `docs/research/2026-07-02-b2b-cms-shipping-research.md`
 
 ## Proje Takibi

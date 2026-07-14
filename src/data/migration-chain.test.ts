@@ -99,6 +99,12 @@ describe("SQLite migration chain", () => {
       expect(db.prepare(`SELECT COUNT(*) AS "count" FROM pragma_table_info('MediaAsset') WHERE "name" = 'objectKey'`).get()).toEqual({ count: 1 });
       expect(db.prepare(`SELECT COUNT(*) AS "count" FROM pragma_table_info('Company') WHERE "name" = 'discountRate'`).get()).toEqual({ count: 1 });
       expect(db.prepare(`SELECT COUNT(*) AS "count" FROM sqlite_master WHERE "type" = 'trigger' AND "name" IN ('Company_discountRate_insert_check', 'Company_discountRate_update_check')`).get()).toEqual({ count: 2 });
+      expect(db.prepare(`SELECT COUNT(*) AS "count" FROM pragma_table_info('AuthLoginFailure')`).get()).toEqual({ count: 6 });
+      expect(db.prepare(`SELECT COUNT(*) AS "count" FROM sqlite_master WHERE "type" = 'index' AND "name" IN (
+        'AuthLoginFailure_emailKey_createdAt_idx',
+        'AuthLoginFailure_ipKey_createdAt_idx',
+        'AuthLoginFailure_expiresAt_idx'
+      )`).get()).toEqual({ count: 3 });
     } finally {
       db.close();
     }

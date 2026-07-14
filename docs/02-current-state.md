@@ -114,6 +114,9 @@ Son guncelleme: 2026-07-13
 - Toplu yayinda urun bazli audit kaydi ve stale/eksik secimde fail-closed davranis.
 - Genel bayi baz fiyati uzerine firma kartindan yuzdesel musteri iskontosu.
 - Stok gorunurlugu ve rol/durum kodlari icin Turkce kullanici etiketleri.
+- Login hatalari JSON audit sayimi yerine indeksli `AuthLoginFailure` modelinden e-posta + guvenilir IP bazinda sinirlanir.
+- Rate-limit anahtarlari HMAC'lidir; production secret ve proxy guven siniri fail-closed uygulanir.
+- Bilinmeyen hesaplarda dummy bcrypt karsilastirmasi ile zamanlama farki azaltilir.
 
 ## En Onemli Eksikler
 
