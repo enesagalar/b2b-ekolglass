@@ -5,12 +5,14 @@ import {
   Boxes,
   ClipboardCheck,
   ShieldCheck,
+  ShieldAlert,
   Truck,
   UsersRound,
 } from "lucide-react";
 
 import { getStatusLabel } from "@/domain/statuses";
 import { getOutboxHealth } from "@/integrations/outbox-health";
+import { getLoginSecurityHealth } from "@/features/auth/rate-limit-operations";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +30,7 @@ async function getDashboardData() {
     lowStockItems,
     recentAuditLogs,
     shippingProviders,
+    loginSecurity,
   ] = await Promise.all([
     prisma.dealerApplication.count({
       where: { status: { in: ["NEW", "IN_REVIEW"] } },
@@ -63,6 +66,7 @@ async function getDashboardData() {
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
       take: 4,
     }),
+    getLoginSecurityHealth(),
   ]);
 
   return {
@@ -110,6 +114,13 @@ async function getDashboardData() {
         href: "/admin/entegrasyonlar",
         icon: AlertTriangle,
         tone: integrationWarnings.status === "degraded" ? "red" : "teal",
+      },
+      {
+        label: "Giriş güvenliği",
+        value: loginSecurity.limitedSources,
+        href: undefined,
+        icon: ShieldAlert,
+        tone: loginSecurity.status === "degraded" ? "red" : "teal",
       },
     ],
     recentApplications,

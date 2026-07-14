@@ -1,18 +1,17 @@
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 
 import { NextResponse, type NextRequest } from "next/server";
 
 import { runEmailOutboxOnce } from "@/integrations/email/worker";
-import { isStrongRuntimeSecret } from "@/lib/secret-policy";
+import { matchesBearerSecret } from "@/lib/secret-policy";
 
 export const runtime = "nodejs";
 
 function authorized(request: NextRequest) {
-  const secret = process.env.OUTBOX_CRON_SECRET;
-  if (!isStrongRuntimeSecret(secret)) return false;
-  const expected = Buffer.from(`Bearer ${secret}`);
-  const actual = Buffer.from(request.headers.get("authorization") ?? "");
-  return actual.length === expected.length && timingSafeEqual(actual, expected);
+  return matchesBearerSecret(
+    request.headers.get("authorization"),
+    process.env.OUTBOX_CRON_SECRET,
+  );
 }
 
 export async function POST(request: NextRequest) {

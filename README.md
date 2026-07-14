@@ -63,6 +63,7 @@ npx prisma migrate status
 - `docs/architecture/cms-decision-matrix.md`
 - `docs/architecture/shipping-integration-contract.md`
 - `docs/architecture/auth-login-rate-limit.md`
+- `docs/operations/production-auth-email-runbook.md`
 - `docs/research/2026-07-02-b2b-cms-shipping-research.md`
 
 ## Proje Takibi

@@ -14,6 +14,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "smoke:admin": "node scripts/smoke-admin.mjs",
     "outbox:run": "node --env-file=.env scripts/run-outbox-worker.mjs",
+    "auth-rate-limit:maintain": "node --env-file=.env scripts/run-auth-rate-limit-maintenance.mjs",
     "catalog:import": "tsx scripts/import-products-csv.ts",
     "check": "npm run lint && npm run test && npm run build"
   },

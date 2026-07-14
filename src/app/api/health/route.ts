@@ -2,17 +2,25 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { getOutboxHealth } from "@/integrations/outbox-health";
+import { getLoginSecurityHealth } from "@/features/auth/rate-limit-operations";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    const outbox = await getOutboxHealth();
+    const [outbox, authentication] = await Promise.all([
+      getOutboxHealth(),
+      getLoginSecurityHealth(),
+    ]);
 
     return NextResponse.json({
-      status: outbox.status === "degraded" ? "degraded" : "ok",
+      status:
+        outbox.status === "degraded" || authentication.status === "degraded"
+          ? "degraded"
+          : "ok",
       database: "ok",
       outbox: outbox.status,
+      authentication: authentication.status,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

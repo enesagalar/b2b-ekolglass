@@ -2,6 +2,16 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-14 - Auth maintenance ve production runbook
+
+- Expired login failure kayitlari icin idempotent cleanup servisi eklendi.
+- Ayri `MAINTENANCE_CRON_SECRET` ile korunan internal endpoint ve CLI scheduler komutu eklendi.
+- Cleanup calismalari silinen kayit sayisi ve tamamlanma zamaniyla audit log'a yaziliyor.
+- Login security health e-posta/IP limit gruplari ve expired backlog uzerinden hesaplaniyor.
+- Public health'e authentication durumu, admin dashboard'a `Giris guvenligi` metrigi eklendi.
+- Auth, SMTP, proxy, secret rotasyonu, alarm ve medya storage kabul adimlari production runbook'una yazildi.
+- 40 test dosyasi, 179 test, lint, production build, gercek maintenance HTTP/audit, admin smoke ve mobile browser QA basarili.
+
 ## 2026-07-14 - Login rate limit sertlestirmesi
 
 - Audit JSON taramali basit throttling, indeksli `AuthLoginFailure` modeline tasindi.
@@ -37,7 +47,7 @@ Faz 3.3 - Katalog fiyat/stok hazirligi, toplu yayin ve kimlik dogrulama sertlest
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
 1. 1.379 taslak urun icin kod + net fiyat + stok toplu import sozlesmesi alinacak.
-2. Production SMTP, medya storage, rate-limit cleanup scheduler ve alarm runbook'u tamamlanacak.
+2. Production SMTP credential, kalici medya storage, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
 3. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur

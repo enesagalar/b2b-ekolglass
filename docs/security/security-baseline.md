@@ -29,7 +29,7 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
   - `dealer.application.review`
 - Dealer/company veri izolasyonu testleri.
 - Audit log ekrani.
-- Rate limit temizleme scheduler'i ve throttle alarm metrigi.
+- Merkezi alarm kanali ve production scheduler kurulumu deployment ortaminda tamamlanmali.
 
 ## Faz Kapisi Security Checklist
 

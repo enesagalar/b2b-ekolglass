@@ -38,7 +38,7 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 ## Siradaki Dilim
 
 1. Siparis ve teklif liste sayfalama/filtreleri tamamlanacak.
-2. Production SMTP scheduler, rate-limit cleanup/alarm kanali ve secret rotasyon runbook'u yazilacak.
+2. Production SMTP credential, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
 3. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
 
 ## Tamamlanan Teklif Talebi Dilimi
@@ -77,14 +77,18 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 - Basarili giris hesap hata penceresini temizler; IP saldiri sinyali korunur.
 - Bilinmeyen hesaplar dummy bcrypt ile kullanici enumeration zamanlama riskini azaltir.
 - Production placeholder/missing rate-limit secret ile fail-closed davranir.
+- Bearer secret korumali maintenance endpoint'i ve CLI scheduler komutu expired kayitlari idempotent temizler.
+- Public health yalniz auth durumunu, admin dashboard ise limitteki kaynak sayisini gosterir.
+- Production auth/SMTP/proxy/secret/alarm sozlesmesi operasyon runbook'una yazildi.
 
 ## Kabul Durumu
 
 - Lint: basarili.
-- Test: 37 dosya, 171 test basarili.
+- Test: 40 dosya, 179 test basarili.
 - Production build: basarili.
 - HTTP smoke: urun detay ve teklif sepeti dahil basarili.
 - Browser QA: login -> urun detay -> 2 adet sepet -> teklif sonucu desktop/mobile basarili; body overflow yok.
 - Entegrasyon QA: admin entegrasyon rotasi, permission-aware menu ve 390x844 responsive yerlesim dogrulandi.
 - Katalog yayin QA: toplu hazirlik rotasi, hazir filtresi, gercek KPI'lar ve desktop/mobile tasmasiz yerlesim dogrulandi.
 - Auth QA: 24 migration zinciri, e-posta/IP limiter testleri, guest login smoke ve admin oturum yonlendirmesi dogrulandi.
+- Maintenance QA: gercek endpoint/CLI audit kaydi, health auth durumu, admin metrigi ve 375 px tasmasiz dashboard dogrulandi.

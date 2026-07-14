@@ -117,6 +117,8 @@ Son guncelleme: 2026-07-13
 - Login hatalari JSON audit sayimi yerine indeksli `AuthLoginFailure` modelinden e-posta + guvenilir IP bazinda sinirlanir.
 - Rate-limit anahtarlari HMAC'lidir; production secret ve proxy guven siniri fail-closed uygulanir.
 - Bilinmeyen hesaplarda dummy bcrypt karsilastirmasi ile zamanlama farki azaltilir.
+- Bearer secret korumali rate-limit maintenance endpoint'i, CLI scheduler komutu ve audit kaydi.
+- `/api/health` authentication durumu ve admin dashboard `Giris guvenligi` metrigi.
 
 ## En Onemli Eksikler
 
@@ -142,7 +144,7 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: login rate-limit sertlestirmesi ve production operasyon runbook'u.
+Faz 3.3 devam edecek: production credential/scheduler kurulumu ve toplu fiyat-stok import hatti.
 
 UX/IA konsolidasyonu, tekliften siparise donusum, transactional e-posta ve outbox operasyon siniri tamamlandi. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` ve `docs/architecture/transactional-email-outbox.md` icindedir.
 

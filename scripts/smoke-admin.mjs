@@ -56,6 +56,11 @@ assert(
   healthResponse.status === 200,
   `Health check failed with ${healthResponse.status}`,
 );
+const health = await healthResponse.json();
+assert(
+  ["ok", "degraded"].includes(health.authentication),
+  "Health check did not expose authentication status",
+);
 
 const adminGuestResponse = await request("/admin");
 assert(
@@ -338,6 +343,10 @@ try {
 assert(
   adminHtml.includes("Operasyon merkezi"),
   "Admin operations dashboard content not rendered",
+);
+assert(
+  adminHtml.includes("Giriş güvenliği"),
+  "Admin login security metric not rendered",
 );
 assert(
   adminHtml.includes("Bayi Başvuruları"),

@@ -48,5 +48,6 @@ Production ortaminda en az 32 karakterlik, ayri `AUTH_RATE_LIMIT_SECRET` zorunlu
 1. Reverse proxy overwrite davranisini dogrula.
 2. Proxy guvenini ve kullanilacak header'i environment'ta ac.
 3. E-posta/IP esiklerini trafik ve NAT davranisina gore izle.
-4. `expiresAt` indeksi uzerinden eski kayit temizligini scheduler'a bagla.
-5. `auth.login.throttled` audit olaylarinda `email_limit` ve `ip_limit` dagilimini alarm metriğine donustur.
+4. `expiresAt` indeksi uzerinden eski kayit temizligi `/api/internal/maintenance/auth-rate-limit` ve `npm run auth-rate-limit:maintain` ile scheduler'a baglidir.
+5. Health ve admin dashboard, son penceredeki e-posta/IP gruplarini gercek esiklerle karsilastirarak alarm durumu uretir.
+6. Production calistirma sozlesmesi `docs/operations/production-auth-email-runbook.md` icindedir.
