@@ -57,8 +57,19 @@ Mevcut musteri grubu ve firma net fiyat listeleri geriye donuk uyumluluk icin ge
 - Upload action'i `admin.content.manage` yetkisi ister ve audit kaydi uretir.
 - Lokal/tek sunuculu kurulumda `storage/media` kalici volume uzerinde tutulmalidir. Cok instance production kurulumunda ayni sozlesme S3/R2 uyumlu object storage adapterine tasinmalidir.
 
+## Kontrollu Fiyat ve Stok Aktarimi
+
+Fiyat ve stok CSV aktarimi `/admin/urunler/fiyat-stok-aktarimi` altinda staging tabanli olarak kurulmustur.
+
+- UTF-8 CSV sutunlari sirasiyla `urun_kodu`, `net_bayi_fiyati`, `stok_miktari`, `depo_kodu`, `stok_gorunurlugu` olmalidir.
+- Tek dosya en fazla 2 MB ve 2.000 urundur. Bir urun kodu ayni partide yalniz bir kez bulunabilir.
+- Fiyat secilen aktif genel bayi fiyat listesine `minQuantity=1` olarak yazilir. Firma veya grup ozel fiyatlari bu akisla ezilmez.
+- Stok `urun + depo` bazinda guncellenir; mevcut rezerve miktar korunur ve fiziksel miktar rezervasyonun altina indirilemez.
+- Hata raporu bulunan parti uygulanamaz. Onay sirasinda fiyat listesi ve rezervasyonlar transaction icinde yeniden dogrulanir.
+- Uygulama urunun yayin durumunu degistirmez; yayin karari toplu yayin hazirligi ekraninda ayrica verilir.
+- Partiler kullanici kapsamli, 24 saatlik ve audit kayitlidir.
+
 ## Siradaki Operasyon Dilimi
 
-1. ERP veya fiyat kaynagindan kod + net fiyat + stok CSV sozlesmesi alinacak.
-2. Toplu fiyat/stok preview, hata raporu ve onayli import ekrani kurulacak.
-3. Production object storage ve CDN adapteri deployment oncesi baglanacak.
+1. Gercek ERP/fiyat kaynaginin kolonlari bu kanonik CSV sozlesmesine map edilecek.
+2. Production object storage ve CDN adapteri deployment oncesi baglanacak.

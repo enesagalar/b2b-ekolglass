@@ -33,6 +33,7 @@ yarn-error.log*
 .codex-logs/
 .next-dev*.log
 .codex-dev-server*.log
+.codex-dev.*.log
 docs/agent-reports/*.log
 docs/agent-reports/*.prompt.txt
 docs/agent-reports/advisor-*.md

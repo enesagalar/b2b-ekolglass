@@ -4,6 +4,7 @@ import {
   Boxes,
   CircleDollarSign,
   Eye,
+  FileSpreadsheet,
   Filter,
   Layers3,
   PackagePlus,
@@ -466,6 +467,19 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               </p>
               <div className="mt-4"><ProductImportForm /></div>
             </section>
+            <Link
+              href="/admin/urunler/fiyat-stok-aktarimi"
+              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
+            >
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet size={18} className="text-teal-800" aria-hidden="true" />
+                <p className="text-sm font-semibold text-slate-950">Fiyat ve stok aktarımı</p>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                CSV dosyasını önce doğrulayın, satır hatalarını inceleyin ve kontrollü biçimde uygulayın.
+              </p>
+              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Aktarım merkezini aç</span>
+            </Link>
             <Link
               href="/admin/urunler/yayin-hazirligi"
               className="rounded-lg border border-teal-200 bg-teal-50 p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"

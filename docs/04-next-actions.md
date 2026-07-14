@@ -89,6 +89,15 @@ Faz 3.3 transactional e-posta teslim dilimi tamamlandi:
 - Kalici sozlesme `docs/architecture/transactional-email-outbox.md` icinde kayda alindi.
 - 28 test dosyasi, 135 test, production build, worker HTTP kontrolu ve admin smoke akisi basarili.
 
+Faz 3.3 fiyat/stok kontrollu CSV aktarim dilimi tamamlandi:
+
+- Standart genel bayi fiyat listesi ve depo stogu icin UTF-8 CSV sozlesmesi sabitlendi.
+- Dosyalar canli veriye dokunmadan 24 saatlik staging partisine aliniyor.
+- Urun, fiyat, stok, depo, gorunurluk, tekrar eden kod ve rezervasyon kontrolleri satir bazinda raporlaniyor.
+- Yalniz sifir hatali parti transaction icinde atomik uygulanabiliyor; stale fiyat listesi ve rezervasyonlar onay aninda yeniden kontrol ediliyor.
+- Firma/grup ozel fiyatlari ve urun yayin durumu aktarimdan etkilenmiyor.
+- Yetki, sahiplik, iptal ve audit izi eklendi.
+
 Faz 3.3 stok DB invariant dilimi tamamlandi:
 
 - Fiziksel stok ve rezerve stok sayaclari DB `CHECK` constraint'leriyle korundu.

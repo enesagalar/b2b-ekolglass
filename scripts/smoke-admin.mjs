@@ -887,6 +887,27 @@ assert(
   "Admin standard price and company discount guidance not rendered",
 );
 
+const priceStockImportResponse = await request("/admin/urunler/fiyat-stok-aktarimi", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  priceStockImportResponse.status === 200,
+  `Authenticated price/stock import failed with ${priceStockImportResponse.status}`,
+);
+const priceStockImportHtml = await priceStockImportResponse.text();
+assert(
+  priceStockImportHtml.includes('name="priceListId"') &&
+    priceStockImportHtml.includes('name="file"') &&
+    priceStockImportHtml.includes("ekolglass-fiyat-stok-sablonu.csv"),
+  "Price/stock import controls not rendered",
+);
+const importTemplateResponse = await request("/templates/ekolglass-fiyat-stok-sablonu.csv");
+assert(importTemplateResponse.status === 200, "Price/stock CSV template is not downloadable");
+assert(
+  (await importTemplateResponse.text()).includes("urun_kodu,net_bayi_fiyati,stok_miktari"),
+  "Price/stock CSV template contract is invalid",
+);
+
 const db = new Database("dev.db");
 const firstProduct = db
   .prepare("select id, code, name from Product order by createdAt asc limit 1")
@@ -1044,6 +1065,8 @@ console.log(
         "authenticated-product-publication-readiness",
         "authenticated-product-categories",
         "authenticated-price-lists",
+        "authenticated-price-stock-import",
+        "price-stock-import-template",
         "authenticated-product-compatibility-tab",
         "public-catalog-compatibility-search",
         "authenticated-product-media-tab",

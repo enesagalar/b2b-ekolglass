@@ -35,6 +35,7 @@ model User {
   quoteOperationCommands    QuoteOperationCommand[]    @relation("QuoteOperationCommandCreatedBy")
   quoteOfferRevisions       QuoteOfferRevision[]       @relation("QuoteOfferRevisionCreatedBy")
   integrationReplayCommands IntegrationReplayCommand[]
+  catalogImportBatches      CatalogImportBatch[]
 
   @@index([companyId, role, status])
 }
@@ -218,6 +219,7 @@ model Product {
   orderCartItems     OrderCartItem[]
   orderItems         OrderItem[]
   mediaAssets        MediaAsset[]
+  catalogImportRows  CatalogImportRow[]
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 
@@ -240,20 +242,21 @@ model ProductCompatibility {
 }
 
 model PriceList {
-  id              String         @id @default(cuid())
+  id              String               @id @default(cuid())
   name            String
-  currency        String         @default("TRY")
+  currency        String               @default("TRY")
   customerGroupId String?
-  customerGroup   CustomerGroup? @relation(fields: [customerGroupId], references: [id])
+  customerGroup   CustomerGroup?       @relation(fields: [customerGroupId], references: [id])
   companyId       String?
-  company         Company?       @relation(fields: [companyId], references: [id])
-  startsAt        DateTime       @default(now())
+  company         Company?             @relation(fields: [companyId], references: [id])
+  startsAt        DateTime             @default(now())
   endsAt          DateTime?
-  isActive        Boolean        @default(true)
-  priority        Int            @default(0)
+  isActive        Boolean              @default(true)
+  priority        Int                  @default(0)
   prices          ProductPrice[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  importBatches   CatalogImportBatch[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 }
 
 model ProductPrice {
@@ -283,6 +286,51 @@ model StockItem {
   updatedAt        DateTime           @updatedAt
 
   @@unique([productId, warehouseCode])
+}
+
+model CatalogImportBatch {
+  id          String             @id @default(cuid())
+  kind        String             @default("PRICE_STOCK")
+  status      String             @default("PREVIEW")
+  fileName    String
+  fileHash    String
+  priceListId String
+  priceList   PriceList          @relation(fields: [priceListId], references: [id], onDelete: Restrict)
+  createdById String
+  createdBy   User               @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  totalRows   Int
+  validRows   Int
+  invalidRows Int
+  expiresAt   DateTime
+  appliedAt   DateTime?
+  cancelledAt DateTime?
+  rows        CatalogImportRow[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([createdById, status, createdAt])
+  @@index([expiresAt, status])
+}
+
+model CatalogImportRow {
+  id              String             @id @default(cuid())
+  batchId         String
+  batch           CatalogImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  rowNumber       Int
+  productId       String?
+  product         Product?           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productCode     String
+  netPrice        Decimal?
+  warehouseCode   String?
+  stockQuantity   Int?
+  stockVisibility String?
+  status          String
+  errorMessage    String?
+  createdAt       DateTime           @default(now())
+
+  @@unique([batchId, rowNumber])
+  @@index([batchId, status, rowNumber])
+  @@index([productId])
 }
 
 model QuoteRequest {
