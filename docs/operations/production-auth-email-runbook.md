@@ -45,6 +45,7 @@ SMTP credential veya dogrulanmis gonderici domain bu repoda bulunmadigi icin pro
 ```bash
 npm run auth-rate-limit:maintain
 npm run outbox:run
+npm run db:backup
 ```
 
 Her iki komut da bearer secret'i sadece process environment'tan okur. HTTP cevabi basarisizsa komut non-zero cikis uretir. Rate-limit temizligi ayni anda birden fazla calissa da yalniz `expiresAt <= now` kayitlarini silen idempotent bir islemdir.
@@ -86,3 +87,4 @@ Alarm kurallari:
 - Proxy spoof testi guvenilmeyen forwarding header'inin etkisiz oldugunu gosteriyor.
 - Medya volume/object storage restart sonrasinda dosyayi koruyor.
 - Backup restore tatbikati basarili.
+- `npm run media:reconcile` aktif kayip nesne raporlamiyor.

@@ -2,6 +2,16 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-14 - SQLite backup/restore ve medya reconciliation
+
+- Online SQLite backup, partial dosya ve final rename akisi eklendi.
+- Backup `integrity_check`, `foreign_key_check`, kritik tablo sayimlari ve SHA-256 manifestiyle dogrulaniyor.
+- Uygulanmis 25 migration, repository migration fingerprint'iyle eslesmeden backup final hale gelmiyor.
+- Restore verification canli DB'ye dokunmadan gecici kopyada ayni kontrolleri tekrarliyor.
+- Lokal medya reconciliation aktif/pasif referans, eksik, orphan ve gecersiz dosya adlarini silme yapmadan raporluyor.
+- Gercek `dev.db` uzerinde 1.994.752 bayt snapshot, 25 migration, sifir FK ihlali ve restore provasi basarili.
+- 44 test dosyasi, 196 test, lint, production build ve authenticated smoke basarili.
+
 ## 2026-07-14 - Roadmap reconciliation ve bayi siparis gecmisi
 
 - Uc bagimsiz subagent roadmap, security/production ve admin-bayi UX akislarini denetledi.
@@ -53,14 +63,13 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.5/5 - Production veri guvenligi ve geri donus kabiliyeti.
+Faz 5 - Kredi limiti ve ticari onay kontrolu.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. SQLite online backup, integrity check, restore verification ve medya manifest kontrolu eklenecek.
-2. Kredi limiti ve acik siparis exposure hesabiyla ticari onay kapisi kurulacak.
-3. Production SMTP/S3/scheduler credential ve merkezi alarm kanali deployment ortaminda baglanacak.
-4. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+1. Kredi limiti ve acik siparis exposure hesabiyla ticari onay kapisi kurulacak.
+2. Production SMTP/S3/scheduler credential ve merkezi alarm kanali deployment ortaminda baglanacak.
+3. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
 

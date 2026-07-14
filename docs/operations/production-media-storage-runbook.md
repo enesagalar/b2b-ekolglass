@@ -43,3 +43,4 @@ MEDIA_S3_PREFIX="portal/media"
 3. Donen `/media/[file]` URL'si `Content-Type`, `Cache-Control` ve `X-Content-Type-Options: nosniff` basliklariyla acilir.
 4. Uygulama yeniden baslatilir ve ayni URL tekrar okunur.
 5. Farkli provider'a gecis yapilacaksa eski nesneler once tasinir; DB `storageProvider` degeri plansiz toplu degistirilmez.
+6. Lokal provider'da `npm run media:reconcile` ile aktif eksik nesne ve orphan dosya raporu incelenir.

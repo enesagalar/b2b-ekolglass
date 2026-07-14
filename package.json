@@ -15,6 +15,9 @@
     "smoke:admin": "node scripts/smoke-admin.mjs",
     "outbox:run": "node --env-file=.env scripts/run-outbox-worker.mjs",
     "auth-rate-limit:maintain": "node --env-file=.env scripts/run-auth-rate-limit-maintenance.mjs",
+    "db:backup": "tsx --env-file=.env scripts/backup-sqlite.ts",
+    "db:restore:verify": "tsx scripts/verify-sqlite-backup.ts",
+    "media:reconcile": "tsx --env-file=.env scripts/reconcile-media.ts",
     "catalog:import": "tsx scripts/import-products-csv.ts",
     "check": "npm run lint && npm run test && npm run build"
   },

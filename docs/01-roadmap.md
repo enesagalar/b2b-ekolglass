@@ -116,7 +116,6 @@ Tamamlanan ek kapsam:
 
 Kalan operasyon borcu:
 
-- SQLite backup/restore tatbikati ve medya reconciliation.
 - Kredi limiti/exposure tabanli ticari onay kapisi.
 
 ## Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
@@ -186,6 +185,5 @@ Kapsam:
 
 Siradaki sira:
 
-1. SQLite backup/restore ve medya reconciliation.
-2. Kredi limiti/exposure tabanli ticari onay.
-3. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
+1. Kredi limiti/exposure tabanli ticari onay.
+2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.

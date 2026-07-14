@@ -37,10 +37,9 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 
 ## Siradaki Dilim
 
-1. SQLite backup/restore ve medya reconciliation tamamlanacak.
-2. Kredi limiti/exposure tabanli ticari onay kapisi kurulacak.
-3. Production SMTP credential, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
-4. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
+1. Kredi limiti/exposure tabanli ticari onay kapisi kurulacak.
+2. Production SMTP credential, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
+3. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
 
 ## Teklif Arsivi Karari
 
@@ -92,7 +91,7 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 ## Kabul Durumu
 
 - Lint: basarili.
-- Test: 42 dosya, 188 test basarili.
+- Test: 44 dosya, 196 test basarili.
 - Production build: basarili.
 - HTTP smoke: urun detay ve teklif sepeti dahil basarili.
 - Browser QA: login -> urun detay -> 2 adet sepet -> teklif sonucu desktop/mobile basarili; body overflow yok.
