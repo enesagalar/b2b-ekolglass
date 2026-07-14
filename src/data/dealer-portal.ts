@@ -1,5 +1,7 @@
 import "server-only";
 
+import { orderStatuses } from "@/domain/statuses";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const openOrderStatuses = [
@@ -25,6 +27,26 @@ const openQuoteStatuses = [
 
 export function buildDealerOwnershipWhere(companyId: string) {
   return { companyId } as const;
+}
+
+export const dealerOrderStatuses = orderStatuses.filter((status) => status !== "DRAFT");
+
+export type DealerOrderFilters = {
+  query?: string;
+  status?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  page?: number;
+  pageSize?: number;
+};
+
+const defaultDealerOrderPageSize = 20;
+const maxDealerOrderPageSize = 100;
+
+function positiveInteger(value: number | undefined, fallback: number) {
+  return value !== undefined && Number.isFinite(value) && value > 0
+    ? Math.trunc(value)
+    : fallback;
 }
 
 export async function getDealerDashboardData(companyId: string) {
@@ -91,10 +113,40 @@ export async function getDealerDashboardData(companyId: string) {
   };
 }
 
-export function getDealerOrders(companyId: string) {
-  return prisma.order.findMany({
-    where: buildDealerOwnershipWhere(companyId),
-    orderBy: { createdAt: "desc" },
+export async function getDealerOrders(
+  companyId: string,
+  filters: DealerOrderFilters = {},
+) {
+  const page = positiveInteger(filters.page, 1);
+  const pageSize = Math.min(
+    maxDealerOrderPageSize,
+    positiveInteger(filters.pageSize, defaultDealerOrderPageSize),
+  );
+  const where: Prisma.OrderWhereInput = buildDealerOwnershipWhere(companyId);
+  const query = filters.query?.trim();
+
+  if (query) where.orderNumber = { contains: query };
+  if (
+    filters.status &&
+    dealerOrderStatuses.some((status) => status === filters.status)
+  ) {
+    where.status = filters.status;
+  }
+  if (filters.dateFrom || filters.dateTo) {
+    where.createdAt = {
+      ...(filters.dateFrom ? { gte: filters.dateFrom } : {}),
+      ...(filters.dateTo ? { lt: filters.dateTo } : {}),
+    };
+  }
+
+  const total = await prisma.order.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const effectivePage = Math.min(page, totalPages);
+  const orders = await prisma.order.findMany({
+    where,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    skip: (effectivePage - 1) * pageSize,
+    take: pageSize,
     select: {
       id: true,
       orderNumber: true,
@@ -115,6 +167,8 @@ export function getDealerOrders(companyId: string) {
       _count: { select: { items: true } },
     },
   });
+
+  return { orders, total, page: effectivePage, pageSize };
 }
 
 export function getDealerOrderDetail(companyId: string, orderId: string) {

@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { ClipboardList, Truck } from "lucide-react";
+import { ClipboardList, Filter, Search, Truck } from "lucide-react";
 
 import { requireDealerContext } from "@/data/dealer-context";
-import { getDealerOrders } from "@/data/dealer-portal";
+import {
+  dealerOrderStatuses,
+  getDealerOrders,
+} from "@/data/dealer-portal";
+import { getStatusLabel } from "@/domain/statuses";
 import {
   formatPortalDate,
   formatPortalMoney,
@@ -11,9 +15,64 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function DealerOrdersPage() {
+const pageSize = 20;
+const inputClass =
+  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700";
+
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parseDate(value: string, endOfDay = false) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+  if (endOfDay) date.setUTCDate(date.getUTCDate() + 1);
+  return date;
+}
+
+function pageHref(
+  filters: { query: string; status: string; dateFrom: string; dateTo: string },
+  page: number,
+) {
+  const params = new URLSearchParams();
+  if (filters.query) params.set("q", filters.query);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+  if (filters.dateTo) params.set("dateTo", filters.dateTo);
+  params.set("page", String(page));
+  return `/bayi/siparisler?${params.toString()}`;
+}
+
+export default async function DealerOrdersPage({
+  searchParams,
+}: PageProps<"/bayi/siparisler">) {
   const { company } = await requireDealerContext("/bayi/siparisler");
-  const orders = await getDealerOrders(company.id);
+  const params = await searchParams;
+  const query = first(params.q)?.trim() ?? "";
+  const requestedStatus = first(params.status)?.trim() ?? "";
+  const status = dealerOrderStatuses.some(
+    (item) => item === requestedStatus,
+  )
+    ? requestedStatus
+    : "";
+  const dateFrom = first(params.dateFrom)?.trim() ?? "";
+  const dateTo = first(params.dateTo)?.trim() ?? "";
+  const requestedPage = Number.parseInt(first(params.page) ?? "1", 10);
+  const requestedPageNumber =
+    Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const data = await getDealerOrders(company.id, {
+    query,
+    status,
+    dateFrom: parseDate(dateFrom),
+    dateTo: parseDate(dateTo, true),
+    page: requestedPageNumber,
+    pageSize,
+  });
+  const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
+  const page = data.page;
+  const filters = { query, status, dateFrom, dateTo };
+  const orders = data.orders;
 
   return (
     <div className="grid min-w-0 gap-6">
@@ -31,6 +90,60 @@ export default async function DealerOrdersPage() {
       </section>
 
       <section className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <form className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-[minmax(0,1fr)_180px_160px_160px_auto]">
+          <label className="relative">
+            <span className="sr-only">Sipariş numarasında ara</span>
+            <Search
+              className="pointer-events-none absolute left-3 top-3 text-slate-400"
+              size={17}
+              aria-hidden="true"
+            />
+            <input
+              name="q"
+              defaultValue={query}
+              className={`${inputClass} pl-10`}
+              placeholder="Sipariş numarası"
+            />
+          </label>
+          <label>
+            <span className="sr-only">Sipariş durumu</span>
+            <select name="status" defaultValue={status} className={inputClass}>
+              <option value="">Tüm durumlar</option>
+              {dealerOrderStatuses.map((item) => (
+                <option key={item} value={item}>
+                  {getStatusLabel(item)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="sr-only">Başlangıç tarihi</span>
+            <input
+              type="date"
+              name="dateFrom"
+              defaultValue={dateFrom}
+              className={inputClass}
+              aria-label="Başlangıç tarihi"
+            />
+          </label>
+          <label>
+            <span className="sr-only">Bitiş tarihi</span>
+            <input
+              type="date"
+              name="dateTo"
+              defaultValue={dateTo}
+              className={inputClass}
+              aria-label="Bitiş tarihi"
+            />
+          </label>
+          <button
+            type="submit"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white"
+          >
+            <Filter size={16} aria-hidden="true" />
+            Filtrele
+          </button>
+        </form>
         {orders.length ? (
           <>
             <div className="divide-y divide-slate-200 md:hidden">
@@ -144,6 +257,29 @@ export default async function DealerOrdersPage() {
             </p>
           </div>
         )}
+        <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4 text-sm">
+          <p className="text-slate-500">
+            {data.total} sipariş · Sayfa {page}/{totalPages}
+          </p>
+          <div className="flex gap-2">
+            {page > 1 ? (
+              <Link
+                href={pageHref(filters, page - 1)}
+                className="rounded-md border border-slate-300 px-3 py-2 font-semibold"
+              >
+                Önceki
+              </Link>
+            ) : null}
+            {page < totalPages ? (
+              <Link
+                href={pageHref(filters, page + 1)}
+                className="rounded-md border border-slate-300 px-3 py-2 font-semibold"
+              >
+                Sonraki
+              </Link>
+            ) : null}
+          </div>
+        </div>
       </section>
 
       <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">

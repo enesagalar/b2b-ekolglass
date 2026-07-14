@@ -22,7 +22,7 @@ Cikis kriteri:
 
 ## Faz 2 - Gercek Auth ve Admin Korumasi
 
-Durum: Kismen tamamlandi.
+Durum: Tamamlandi.
 
 Kapsam:
 
@@ -32,10 +32,12 @@ Kapsam:
 - Firma bazli veri erisim kisitlari.
 - Audit log yazimi.
 
-Eksik kalanlar:
+Tamamlanan ek kapsam:
 
-- Password reset akisi.
-- Auth/session entegrasyon testleri.
+- Aktivasyon ve parola sifirlama icin ayri, hash saklamali tek kullanimlik token akislar.
+- Parola yenileme ve kullanici askisinda aktif oturum iptali.
+- Login rate limit, proxy guveni, HMAC anahtarlama ve periyodik cleanup.
+- Auth/session, aktivasyon, parola sifirlama ve rate-limit entegrasyon testleri.
 
 ## Faz 2.5 - Admin UX Shell ve Operasyon Merkezi
 
@@ -68,7 +70,7 @@ Tamamlananlar:
 
 ## Faz 3 - Urun ve Katalog Operasyonu
 
-Durum: Faz 3.1 ve Faz 3.2 temel kapsami tamamlandi.
+Durum: Tamamlandi; production operasyon sertlestirmesi devam ediyor.
 
 Kapsam:
 
@@ -103,16 +105,23 @@ Tamamlananlar:
 - DB seviyesinde order/quote tenant izolasyonu ve SQLite testi.
 - Dealer portal operasyon sorgu indeksleri.
 
-Eksik kalanlar:
+Tamamlanan ek kapsam:
 
-- Transactional e-posta teslim adapteri.
-- Authenticated katalogun bayi shell icinde ortak bilesene alinmasi.
-- Teklif/siparis detay ve olusturma action tenant izolasyonu.
-- Liste filtreleri ve sayfalama.
+- Transactional SMTP/outbox teslim adapteri ve guvenli credential linkleri.
+- Birlesik public/bayi katalogu ve firma kapsamli fiyat cozumu.
+- Siparis/teklif sepeti, detay ve mutasyonlarda company tenant izolasyonu.
+- Kontrollu fiyat/stok CSV staging, hata raporu ve atomik onay.
+- Fiyat/stok kontrollu toplu urun yayin kapisi.
+- Lokal ve S3/R2 uyumlu CMS medya depolama adapteri.
+
+Kalan operasyon borcu:
+
+- SQLite backup/restore tatbikati ve medya reconciliation.
+- Kredi limiti/exposure tabanli ticari onay kapisi.
 
 ## Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
 
-Durum: Ilk dilim tamamlandi; detay ve olusturma akislari devam ediyor.
+Durum: Ana siparis ve takip akislari tamamlandi; liste ergonomisi devam ediyor.
 
 Tamamlananlar:
 
@@ -146,6 +155,8 @@ Mimari referans:
 
 ## Faz 4 - Teklif ve Siparis Akisi
 
+Durum: Tamamlandi; yeni B2B teklif talebi urun karariyla kapatildi, eski teklifler salt okunur arsivdir.
+
 Kapsam:
 
 - Teklif sepeti.
@@ -154,7 +165,17 @@ Kapsam:
 - Tekliften siparise donusum.
 - Siparis durum gecmisi.
 
+Tamamlananlar:
+
+- Firma kapsamli siparis sepeti, checkout, fiyat/stok yeniden dogrulamasi ve rezervasyon.
+- Idempotent siparis/teklif komutlari, strict state machine ve actor history.
+- Teklif fiyatlandirma revizyonlari ve tekliften siparise izlenebilir donusum.
+- Iptal/release, sevk/consume ve teslim stok yasam dongusu.
+- Admin siparis/teklif kuyruklari ve bayi detay/takip ekranlari.
+
 ## Faz 5 - Fiyat, Raporlama ve Entegrasyon Hazirligi
+
+Durum: Devam ediyor.
 
 Kapsam:
 
@@ -162,3 +183,9 @@ Kapsam:
 - Satis raporlari.
 - Bildirim altyapisi.
 - ERP/MES entegrasyon servis sinirlari.
+
+Siradaki sira:
+
+1. SQLite backup/restore ve medya reconciliation.
+2. Kredi limiti/exposure tabanli ticari onay.
+3. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FilePlus2, FileText, PackageSearch } from "lucide-react";
+import { FileText, PackageSearch } from "lucide-react";
 
 import { requireDealerContext } from "@/data/dealer-context";
 import { getDealerQuotes } from "@/data/dealer-portal";
@@ -16,17 +16,17 @@ export default async function DealerQuotesPage() {
       <section className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-end">
         <div>
           <p className="text-sm font-semibold text-teal-800">{company.displayName}</p>
-          <h2 className="mt-1 text-2xl font-semibold text-slate-950 md:text-3xl">Teklif talepleri</h2>
+          <h2 className="mt-1 text-2xl font-semibold text-slate-950 md:text-3xl">Teklif arşivi</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Standart ürün ve özel üretim taleplerinizin değerlendirme durumunu izleyin.
+            Daha önce oluşturulan teklif kayıtlarınızı ve bunlardan oluşan siparişleri izleyin. Yeni B2B alımları doğrudan sipariş olarak ilerler.
           </p>
         </div>
         <Link
           href="/bayi/urunler"
           className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900"
         >
-          <FilePlus2 size={17} aria-hidden="true" />
-          Ürünlerden talep başlat
+          <PackageSearch size={17} aria-hidden="true" />
+          Sipariş ürünlerini incele
         </Link>
       </section>
 
@@ -78,9 +78,9 @@ export default async function DealerQuotesPage() {
         ) : (
           <div className="px-6 py-16 text-center">
             <FileText className="mx-auto text-slate-300" size={34} aria-hidden="true" />
-            <h3 className="mt-4 text-base font-semibold text-slate-950">Teklif talebi bulunmuyor</h3>
+            <h3 className="mt-4 text-base font-semibold text-slate-950">Arşivlenmiş teklif bulunmuyor</h3>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-              Özel ölçü, proje ve fiyatlandırma talepleri oluşturulduğunda yalnızca firmanıza ait kayıtlar burada listelenir.
+              Yeni B2B alımları ürün kataloğundan doğrudan siparişe dönüşür. Geçmiş teklif kayıtları oluştuğunda yalnızca firmanıza ait veriler burada görünür.
             </p>
             <Link href="/bayi/urunler" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-800">
               <PackageSearch size={17} aria-hidden="true" /> Ürünleri incele

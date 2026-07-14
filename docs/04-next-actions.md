@@ -2,6 +2,17 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-14 - Roadmap reconciliation ve bayi siparis gecmisi
+
+- Uc bagimsiz subagent roadmap, security/production ve admin-bayi UX akislarini denetledi.
+- Uygulanmis auth, e-posta, tenant izolasyonu, siparis/teklif ve katalog maddeleri roadmap'te tamamlandi olarak senkronlandi.
+- `/bayi/siparisler` siparis numarasi, tum operasyon durumlari ve tarih araligi filtreleri aldi.
+- Liste 20 satirlik server-side sayfalama, 100 satirlik sert DAL limiti, toplam sayi ve query-preserving onceki/sonraki linkleriyle sinirlandi.
+- Tasik sayfa numarasi son gecerli sayfaya clamp ediliyor; companyId kosulu filtre/count sorgularinda korunuyor.
+- `/bayi/teklifler` yeni talep akisi izlenimi vermeyen salt okunur teklif arsivi metnine cevrildi.
+- SQLite testleri filtre, sayfalama siniri ve firma izolasyonunu; smoke testi filtre kontrollerini dogruluyor.
+- 42 test dosyasi, 188 test, lint, production build ve authenticated smoke basarili.
+
 ## 2026-07-14 - Auth maintenance ve production runbook
 
 - Expired login failure kayitlari icin idempotent cleanup servisi eklendi.
@@ -42,13 +53,14 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 3.3 - Katalog fiyat/stok hazirligi, toplu yayin ve kimlik dogrulama sertlestirmesi.
+Faz 3.5/5 - Production veri guvenligi ve geri donus kabiliyeti.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. 1.379 taslak urun icin kod + net fiyat + stok toplu import sozlesmesi alinacak.
-2. Production SMTP credential, kalici medya storage, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
-3. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+1. SQLite online backup, integrity check, restore verification ve medya manifest kontrolu eklenecek.
+2. Kredi limiti ve acik siparis exposure hesabiyla ticari onay kapisi kurulacak.
+3. Production SMTP/S3/scheduler credential ve merkezi alarm kanali deployment ortaminda baglanacak.
+4. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
 

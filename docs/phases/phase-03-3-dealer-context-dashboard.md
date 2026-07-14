@@ -37,11 +37,19 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 
 ## Siradaki Dilim
 
-1. Siparis ve teklif liste sayfalama/filtreleri tamamlanacak.
-2. Production SMTP credential, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
-3. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
+1. SQLite backup/restore ve medya reconciliation tamamlanacak.
+2. Kredi limiti/exposure tabanli ticari onay kapisi kurulacak.
+3. Production SMTP credential, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
+4. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
 
-## Tamamlanan Teklif Talebi Dilimi
+## Teklif Arsivi Karari
+
+- B2B portalinda yeni teklif talebi olusturma kapatildi; standart urunler dogrudan siparise gider.
+- Ozel uretim ve proje camlari kurumsal site talep akisinda kalir.
+- Mevcut teklif, revizyon ve tekliften siparise iz kayitlari salt okunur arsiv olarak korunur.
+- `/bayi/teklifler` yeni talep CTA'si degil, gecmis teklif arsivi ve siparis baglantilarini gosterir.
+
+## Tamamlanan Eski Teklif Talebi Dilimi
 
 - Authenticated urunler bayi shell icinde `/bayi/urunler` ve `/bayi/urunler/[id]` olarak calisiyor.
 - Sepet, gonderilmis teklif kaydindan ayrilan `QuoteCart`/`QuoteCartItem` modellerini kullaniyor.
@@ -84,7 +92,7 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 ## Kabul Durumu
 
 - Lint: basarili.
-- Test: 40 dosya, 179 test basarili.
+- Test: 42 dosya, 188 test basarili.
 - Production build: basarili.
 - HTTP smoke: urun detay ve teklif sepeti dahil basarili.
 - Browser QA: login -> urun detay -> 2 adet sepet -> teklif sonucu desktop/mobile basarili; body overflow yok.

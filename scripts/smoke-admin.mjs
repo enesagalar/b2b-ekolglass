@@ -646,7 +646,7 @@ try {
 
   for (const [path, expectedText] of [
     ["/bayi/siparisler", "Sipariş ve sevkiyat takibi"],
-    ["/bayi/teklifler", "Teklif talepleri"],
+    ["/bayi/teklifler", "Teklif ar"],
     ["/bayi/hesabim", "Ticari koşullar"],
   ]) {
     const response = await request(path, {
@@ -661,6 +661,23 @@ try {
       `Dealer page ${path} did not render ${expectedText}`,
     );
   }
+
+  const dealerOrderFilterResponse = await request(
+    "/bayi/siparisler?q=SMOKE&status=CONFIRMED&dateFrom=2026-01-01&dateTo=2026-12-31&page=999",
+    { headers: { Cookie: serializeCookies(dealerCookieJar) } },
+  );
+  assert(
+    dealerOrderFilterResponse.status === 200,
+    `Dealer order filters failed with ${dealerOrderFilterResponse.status}`,
+  );
+  const dealerOrderFilterHtml = await dealerOrderFilterResponse.text();
+  assert(
+    dealerOrderFilterHtml.includes('name="q"') &&
+      dealerOrderFilterHtml.includes('name="status"') &&
+      dealerOrderFilterHtml.includes('name="dateFrom"') &&
+      dealerOrderFilterHtml.includes('name="dateTo"'),
+    "Dealer order filter controls not rendered",
+  );
 
   const dealerAdminResponse = await request("/admin", {
     headers: { Cookie: serializeCookies(dealerCookieJar) },
