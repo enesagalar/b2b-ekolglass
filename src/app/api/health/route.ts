@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getOutboxHealth } from "@/integrations/outbox-health";
 import { getLoginSecurityHealth } from "@/features/auth/rate-limit-operations";
 import { prisma } from "@/lib/prisma";
+import { getMediaStorageHealth } from "@/lib/media-storage";
 
 export async function GET() {
   try {
@@ -12,15 +13,18 @@ export async function GET() {
       getOutboxHealth(),
       getLoginSecurityHealth(),
     ]);
+    const mediaStorage = getMediaStorageHealth();
 
     return NextResponse.json({
       status:
-        outbox.status === "degraded" || authentication.status === "degraded"
+        outbox.status === "degraded" || authentication.status === "degraded" || mediaStorage.status === "degraded"
           ? "degraded"
           : "ok",
       database: "ok",
       outbox: outbox.status,
       authentication: authentication.status,
+      mediaStorage: mediaStorage.status,
+      mediaStorageProvider: mediaStorage.provider,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

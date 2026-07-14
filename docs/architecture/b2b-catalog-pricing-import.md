@@ -56,6 +56,9 @@ Mevcut musteri grubu ve firma net fiyat listeleri geriye donuk uyumluluk icin ge
 - Icerik SHA-256 object key ile saklanir ve kontrollu `/media/[file]` route'u uzerinden `nosniff` basligiyla sunulur.
 - Upload action'i `admin.content.manage` yetkisi ister ve audit kaydi uretir.
 - Lokal/tek sunuculu kurulumda `storage/media` kalici volume uzerinde tutulmalidir. Cok instance production kurulumunda ayni sozlesme S3/R2 uyumlu object storage adapterine tasinmalidir.
+- Depolama adapteri `MEDIA_STORAGE_PROVIDER=LOCAL|S3` ile secilir. Production ortaminda secim zorunludur; `LOCAL` icin uygulamanin `storage/media` yolu kalici volume'a baglanir, `S3` icin bucket ve region gerekir.
+- S3/R2 bucket public olmak zorunda degildir. Uygulama `PutObject` ve `GetObject` ile nesneyi yonetir; `/media/[file]` aktif DB kaydi, MIME ve `nosniff` kontrollerini korur.
+- Veritabanindaki `storageProvider`, nesnenin yazildigi backend'i kaydeder. Calisan deployment farkli provider ile eski nesneyi sessizce okumaya calismaz.
 
 ## Kontrollu Fiyat ve Stok Aktarimi
 

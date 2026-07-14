@@ -61,6 +61,10 @@ assert(
   ["ok", "degraded"].includes(health.authentication),
   "Health check did not expose authentication status",
 );
+assert(
+  health.mediaStorage === "ok" && ["LOCAL", "S3"].includes(health.mediaStorageProvider),
+  "Health check did not expose a ready media storage provider",
+);
 
 const adminGuestResponse = await request("/admin");
 assert(

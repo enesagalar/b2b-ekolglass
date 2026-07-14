@@ -7,10 +7,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ fil
   const { file } = await params;
   const asset = await prisma.mediaAsset.findFirst({
     where: { objectKey: file, isActive: true },
-    select: { mimeType: true },
+    select: { mimeType: true, storageProvider: true },
   });
   if (!asset?.mimeType) return new Response("Not found", { status: 404 });
-  const buffer = await readStoredImage(file);
+  const buffer = await readStoredImage(file, asset.storageProvider);
   if (!buffer) return new Response("Not found", { status: 404 });
   return new Response(buffer, {
     headers: {

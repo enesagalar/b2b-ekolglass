@@ -89,6 +89,15 @@ Faz 3.3 transactional e-posta teslim dilimi tamamlandi:
 - Kalici sozlesme `docs/architecture/transactional-email-outbox.md` icinde kayda alindi.
 - 28 test dosyasi, 135 test, production build, worker HTTP kontrolu ve admin smoke akisi basarili.
 
+Production CMS medya depolama adapteri tamamlandi:
+
+- Lokal kalici volume ve S3/R2 uyumlu object storage ayni adapter sozlesmesine alindi.
+- Production ortaminda provider secimi ve gerekli ayarlar fail-closed hale getirildi.
+- Private bucket icin AWS SDK v3 `PutObject`/`GetObject` akisi eklendi.
+- Medya route'u aktif DB kaydi, MIME, cache ve `nosniff` kontrollerini koruyor.
+- Health endpoint depolama konfigurasyonunu `ok/degraded` olarak raporluyor.
+- Provider ve S3/R2 environment validation testleri eklendi.
+
 Faz 3.3 fiyat/stok kontrollu CSV aktarim dilimi tamamlandi:
 
 - Standart genel bayi fiyat listesi ve depo stogu icin UTF-8 CSV sozlesmesi sabitlendi.
