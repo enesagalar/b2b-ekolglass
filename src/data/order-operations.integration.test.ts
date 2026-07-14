@@ -658,4 +658,66 @@ describe("order status operations", () => {
       1,
     );
   });
+
+  it("blocks an over-limit confirmation and permits an audited authorized override", async () => {
+    await prisma.company.update({
+      where: { id: ids.company },
+      data: {
+        creditPolicy: "LIMITED",
+        creditLimit: 100,
+        paymentTerms: "30 gün",
+      },
+    });
+    try {
+      const existing = await createOrder("CONFIRMED");
+      await prisma.order.update({ where: { id: existing.id }, data: { subtotal: 80 } });
+      const candidate = await createOrder("WAITING_FOR_APPROVAL");
+      await prisma.order.update({ where: { id: candidate.id }, data: { subtotal: 30 } });
+
+      await expect(
+        transitionOrderStatus(actor, {
+          orderId: candidate.id,
+          expectedStatus: "WAITING_FOR_APPROVAL",
+          expectedVersion: candidate.version,
+          targetStatus: "CONFIRMED",
+          idempotencyKey: randomUUID(),
+        }),
+      ).rejects.toMatchObject({ code: "COMMERCIAL_REVIEW_REQUIRED" });
+      expect(
+        await prisma.order.findUniqueOrThrow({ where: { id: candidate.id } }),
+      ).toMatchObject({ status: "WAITING_FOR_APPROVAL", version: 1 });
+
+      const reason = "Kredi komitesi istisna onayı verdi.";
+      await transitionOrderStatus(
+        { ...actor, canOverrideCredit: true },
+        {
+          orderId: candidate.id,
+          expectedStatus: "WAITING_FOR_APPROVAL",
+          expectedVersion: candidate.version,
+          targetStatus: "CONFIRMED",
+          idempotencyKey: randomUUID(),
+          commercialOverrideReason: reason,
+        },
+      );
+      const approved = await prisma.order.findUniqueOrThrow({
+        where: { id: candidate.id },
+      });
+      expect(approved.status).toBe("CONFIRMED");
+      expect(approved.creditExposureBefore.toString()).toBe("80");
+      expect(approved.creditExposureAfter.toString()).toBe("110");
+      expect(approved.commercialReviewRequired).toBe(true);
+      expect(approved.commercialOverrideReason).toBe(reason);
+      expect(approved.commercialOverrideById).toBe(ids.user);
+      expect(approved.commercialOverrideAt).toBeInstanceOf(Date);
+    } finally {
+      await prisma.company.update({
+        where: { id: ids.company },
+        data: {
+          creditPolicy: "UNSET",
+          creditLimit: null,
+          paymentTerms: null,
+        },
+      });
+    }
+  });
 });

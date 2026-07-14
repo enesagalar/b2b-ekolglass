@@ -141,6 +141,16 @@ export default async function DealerOrderDetailPage({
           </div>
           <div className="border-t border-slate-200 pt-4">
             <p className="text-xs font-semibold uppercase text-slate-500">
+              Ticari durum
+            </p>
+            <p className={`mt-2 text-sm font-semibold ${order.commercialReviewRequired && order.status !== "CONFIRMED" ? "text-amber-800" : "text-emerald-800"}`}>
+              {order.commercialReviewRequired && order.status !== "CONFIRMED"
+                ? "Ticari değerlendirme bekliyor"
+                : "Ticari kontrol tamamlandı"}
+            </p>
+          </div>
+          <div className="border-t border-slate-200 pt-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">
               KDV hariç toplam
             </p>
             <p className="mt-2 text-xl font-semibold">
@@ -194,9 +204,6 @@ export default async function DealerOrderDetailPage({
             >
               <div>
                 <PortalStatus status={event.toStatus} />
-                {event.note ? (
-                  <p className="mt-2 text-sm text-slate-600">{event.note}</p>
-                ) : null}
               </div>
               <time className="text-xs text-slate-500">
                 {formatPortalDate(event.createdAt)}

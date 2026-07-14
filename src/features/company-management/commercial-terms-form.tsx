@@ -1,7 +1,7 @@
 "use client";
 
 import { Percent, Save } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   type CompanyUserActionState,
@@ -13,11 +13,18 @@ const initialState: CompanyUserActionState = { ok: false, message: "" };
 export function CompanyDiscountForm({
   companyId,
   discountRate,
+  paymentTerms,
+  creditPolicy,
+  creditLimit,
 }: {
   companyId: string;
   discountRate: string;
+  paymentTerms: string;
+  creditPolicy: string;
+  creditLimit: string;
 }) {
   const [state, action, pending] = useActionState(updateCompanyDiscount, initialState);
+  const [policy, setPolicy] = useState(creditPolicy);
 
   return (
     <form action={action} className="border-t border-slate-200 px-5 py-5" aria-busy={pending}>
@@ -28,14 +35,14 @@ export function CompanyDiscountForm({
         </span>
         <div>
           <label htmlFor="company-discount" className="text-sm font-semibold text-slate-950">
-            Müşteri iskontosu
+            Ticari koşulları düzenle
           </label>
           <p className="mt-1 text-xs leading-5 text-slate-600">
-            Genel bayi fiyatına uygulanır. Firma özel net fiyatı varsa ayrıca iskonto uygulanmaz.
+            Fiyat iskontosu, ödeme koşulu ve kredi politikası yeni sipariş değerlendirmelerinde kullanılır.
           </p>
         </div>
       </div>
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="grid flex-1 gap-1.5 text-xs font-semibold text-slate-700">
           İskonto oranı (%)
           <input
@@ -50,13 +57,33 @@ export function CompanyDiscountForm({
             className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700"
           />
         </label>
+        <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
+          Ödeme koşulu
+          <input name="paymentTerms" defaultValue={paymentTerms} placeholder="30 gün" className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" />
+        </label>
+        <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
+          Kredi politikası
+          <select name="creditPolicy" value={policy} onChange={(event) => setPolicy(event.target.value)} className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm">
+            <option value="UNSET">Tanımlanmadı</option>
+            <option value="LIMITED">Limitli</option>
+            <option value="UNLIMITED">Limitsiz</option>
+          </select>
+        </label>
+        <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
+          Kredi limiti (TRY)
+          <input name="creditLimit" type="number" min="0" step="0.01" required={policy === "LIMITED"} disabled={policy !== "LIMITED"} defaultValue={creditLimit} className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm disabled:bg-slate-100" />
+        </label>
+        <label className="grid gap-1.5 text-xs font-semibold text-slate-700 sm:col-span-2">
+          Değişiklik gerekçesi
+          <textarea name="changeReason" rows={2} minLength={10} maxLength={500} required className="rounded-md border border-slate-300 bg-white p-3 text-sm" placeholder="Ticari koşul değişikliğinin gerekçesi" />
+        </label>
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 sm:col-span-2 sm:justify-self-end"
         >
           <Save size={16} aria-hidden="true" />
-          {pending ? "Kaydediliyor" : "İskontoyu kaydet"}
+          {pending ? "Kaydediliyor" : "Ticari koşulları kaydet"}
         </button>
       </div>
       {state.message ? (

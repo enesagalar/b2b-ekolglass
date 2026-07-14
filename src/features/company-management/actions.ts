@@ -43,6 +43,10 @@ export async function updateCompanyDiscount(
   const parsed = companyDiscountSchema.safeParse({
     companyId: formData.get("companyId"),
     discountRate: formData.get("discountRate"),
+    paymentTerms: formData.get("paymentTerms") || undefined,
+    creditPolicy: formData.get("creditPolicy"),
+    creditLimit: formData.get("creditLimit") || undefined,
+    changeReason: formData.get("changeReason"),
   });
 
   if (!parsed.success) {
@@ -53,13 +57,26 @@ export async function updateCompanyDiscount(
     await prisma.$transaction(async (tx) => {
       const company = await tx.company.findUnique({
         where: { id: parsed.data.companyId },
-        select: { discountRate: true },
+        select: {
+          discountRate: true,
+          paymentTerms: true,
+          creditPolicy: true,
+          creditLimit: true,
+        },
       });
       if (!company) throw new Error("Firma bulunamadı.");
 
       await tx.company.update({
         where: { id: parsed.data.companyId },
-        data: { discountRate: parsed.data.discountRate },
+        data: {
+          discountRate: parsed.data.discountRate,
+          paymentTerms: parsed.data.paymentTerms ?? null,
+          creditPolicy: parsed.data.creditPolicy,
+          creditLimit:
+            parsed.data.creditPolicy === "LIMITED"
+              ? parsed.data.creditLimit
+              : null,
+        },
       });
       await tx.auditLog.create({
         data: {
@@ -70,6 +87,16 @@ export async function updateCompanyDiscount(
           metadata: JSON.stringify({
             previousDiscountRate: company.discountRate.toString(),
             discountRate: parsed.data.discountRate,
+            previousPaymentTerms: company.paymentTerms,
+            paymentTerms: parsed.data.paymentTerms ?? null,
+            previousCreditPolicy: company.creditPolicy,
+            creditPolicy: parsed.data.creditPolicy,
+            previousCreditLimit: company.creditLimit?.toString() ?? null,
+            creditLimit:
+              parsed.data.creditPolicy === "LIMITED"
+                ? parsed.data.creditLimit?.toString()
+                : null,
+            reason: parsed.data.changeReason,
           }),
         },
       });
@@ -78,7 +105,7 @@ export async function updateCompanyDiscount(
     revalidatePath(`/admin/firmalar/${parsed.data.companyId}`);
     revalidatePath("/urunler");
     revalidatePath("/sepet");
-    return { ok: true, message: "Müşteri iskonto oranı güncellendi." };
+    return { ok: true, message: "Ticari koşullar güncellendi." };
   } catch (error) {
     return {
       ok: false,

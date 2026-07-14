@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 
 import { Prisma } from "@/generated/prisma/client";
 import {
+  orderExposureStatuses,
+  requiresCommercialReview,
+} from "@/domain/order-credit";
+import {
   canTransitionOrder,
   type OrderStatus,
 } from "@/domain/order-transitions";
@@ -18,11 +22,19 @@ export type OrderTransitionInput = {
   note?: string;
   carrier?: string;
   trackingNumber?: string;
+  commercialOverrideReason?: string;
 };
 
-export type OrderTransitionActor = { userId: string };
+export type OrderTransitionActor = {
+  userId: string;
+  canOverrideCredit?: boolean;
+};
 export type OrderTransitionErrorCode =
-  "CONFLICT" | "INVALID_TRANSITION" | "STOCK_INTEGRITY" | "NOT_FOUND";
+  | "CONFLICT"
+  | "INVALID_TRANSITION"
+  | "STOCK_INTEGRITY"
+  | "COMMERCIAL_REVIEW_REQUIRED"
+  | "NOT_FOUND";
 
 export class OrderTransitionError extends Error {
   constructor(
@@ -60,6 +72,7 @@ function hashTransition(
         note: input.note?.trim() || null,
         carrier: input.carrier?.trim() || null,
         trackingNumber: input.trackingNumber?.trim() || null,
+        commercialOverrideReason: input.commercialOverrideReason?.trim() || null,
       }),
     )
     .digest("hex");
@@ -258,6 +271,9 @@ export async function transitionOrderStatus(
       where: { id: input.orderId },
       select: {
         id: true,
+        companyId: true,
+        subtotal: true,
+        currency: true,
         status: true,
         version: true,
         heldFromStatus: true,
@@ -310,6 +326,67 @@ export async function transitionOrderStatus(
     }
 
     const now = new Date();
+    let commercialDecision:
+      | {
+          paymentTermsSnapshot: string | null;
+          creditPolicySnapshot: string;
+          creditLimitSnapshot: Prisma.Decimal | null;
+          creditExposureBefore: Prisma.Decimal;
+          creditExposureAfter: Prisma.Decimal;
+          commercialReviewRequired: boolean;
+          overrideReason: string | null;
+        }
+      | undefined;
+    if (input.targetStatus === "CONFIRMED") {
+      const company = await tx.company.findUnique({
+        where: { id: order.companyId },
+        select: {
+          paymentTerms: true,
+          creditPolicy: true,
+          creditLimit: true,
+        },
+      });
+      if (!company) {
+        throw new OrderTransitionError("Sipariş firması bulunamadı.", "NOT_FOUND");
+      }
+      const aggregate = await tx.order.aggregate({
+        where: {
+          companyId: order.companyId,
+          id: { not: order.id },
+          status: { in: [...orderExposureStatuses] },
+          currency: order.currency,
+        },
+        _sum: { subtotal: true },
+      });
+      const before = new Prisma.Decimal(
+        aggregate._sum.subtotal?.toString() ?? "0",
+      );
+      const after = before.add(order.subtotal);
+      const reviewRequired = requiresCommercialReview({
+        policy: company.creditPolicy,
+        limit: company.creditLimit,
+        exposureAfter: after,
+        currency: order.currency,
+      });
+      const overrideReason = reviewRequired
+        ? input.commercialOverrideReason?.trim() || null
+        : null;
+      if (reviewRequired && (!actor.canOverrideCredit || !overrideReason)) {
+        throw new OrderTransitionError(
+          "Kredi limiti veya ticari koşullar nedeniyle istisna onayı ve gerekçesi zorunludur.",
+          "COMMERCIAL_REVIEW_REQUIRED",
+        );
+      }
+      commercialDecision = {
+        paymentTermsSnapshot: company.paymentTerms,
+        creditPolicySnapshot: company.creditPolicy,
+        creditLimitSnapshot: company.creditLimit,
+        creditExposureBefore: before,
+        creditExposureAfter: after,
+        commercialReviewRequired: reviewRequired,
+        overrideReason,
+      };
+    }
     let reservationEffect: {
       quantity: number;
       stockChanges: Array<Record<string, string | number>>;
@@ -394,7 +471,23 @@ export async function transitionOrderStatus(
               ? null
               : order.heldFromStatus,
         ...(input.targetStatus === "CONFIRMED"
-          ? { approvedById: actor.userId }
+          ? {
+              approvedById: actor.userId,
+              paymentTermsSnapshot: commercialDecision!.paymentTermsSnapshot,
+              creditPolicySnapshot: commercialDecision!.creditPolicySnapshot,
+              creditLimitSnapshot: commercialDecision!.creditLimitSnapshot,
+              creditExposureBefore: commercialDecision!.creditExposureBefore,
+              creditExposureAfter: commercialDecision!.creditExposureAfter,
+              commercialReviewRequired:
+                commercialDecision!.commercialReviewRequired,
+              commercialOverrideReason: commercialDecision!.overrideReason,
+              commercialOverrideById: commercialDecision!.overrideReason
+                ? actor.userId
+                : null,
+              commercialOverrideAt: commercialDecision!.overrideReason
+                ? now
+                : null,
+            }
           : {}),
       },
     });
@@ -439,6 +532,22 @@ export async function transitionOrderStatus(
           note: input.note ?? null,
           reservationQuantity: reservationEffect.quantity,
           stockChanges: reservationEffect.stockChanges,
+          ...(commercialDecision
+            ? {
+                commercialReviewRequired:
+                  commercialDecision.commercialReviewRequired,
+                creditPolicy: commercialDecision.creditPolicySnapshot,
+                creditLimit:
+                  commercialDecision.creditLimitSnapshot?.toString() ?? null,
+                exposureBefore:
+                  commercialDecision.creditExposureBefore.toString(),
+                exposureAfter:
+                  commercialDecision.creditExposureAfter.toString(),
+                commercialOverride: Boolean(
+                  commercialDecision.overrideReason,
+                ),
+              }
+            : {}),
         }),
       },
     });

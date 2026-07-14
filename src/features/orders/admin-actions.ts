@@ -29,6 +29,8 @@ export async function transitionOrderStatusAction(
     note: formData.get("note") || undefined,
     carrier: formData.get("carrier") || undefined,
     trackingNumber: formData.get("trackingNumber") || undefined,
+    commercialOverrideReason:
+      formData.get("commercialOverrideReason") || undefined,
   });
   if (!parsed.success) {
     return {
@@ -45,8 +47,22 @@ export async function transitionOrderStatusAction(
     permission,
     `/admin/siparisler/${parsed.data.orderId}`,
   );
+  let canOverrideCredit = false;
+  if (parsed.data.commercialOverrideReason) {
+    await requirePermissionUser(
+      "order.credit.override",
+      `/admin/siparisler/${parsed.data.orderId}`,
+    );
+    canOverrideCredit = true;
+  }
   try {
-    await transitionOrderStatus({ userId: actor.id }, parsed.data);
+    await transitionOrderStatus(
+      {
+        userId: actor.id,
+        ...(canOverrideCredit ? { canOverrideCredit: true } : {}),
+      },
+      parsed.data,
+    );
   } catch (error) {
     return {
       ok: false,

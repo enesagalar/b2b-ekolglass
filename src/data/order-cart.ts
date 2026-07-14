@@ -8,6 +8,10 @@ import {
   type CatalogViewer,
 } from "@/domain/catalog";
 import { Prisma } from "@/generated/prisma/client";
+import {
+  orderExposureStatuses,
+  requiresCommercialReview,
+} from "@/domain/order-credit";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
 
@@ -33,7 +37,15 @@ async function assertActiveDealer(
     select: {
       id: true,
       role: true,
-      company: { select: { customerGroupId: true, discountRate: true } },
+      company: {
+        select: {
+          customerGroupId: true,
+          discountRate: true,
+          paymentTerms: true,
+          creditPolicy: true,
+          creditLimit: true,
+        },
+      },
     },
   });
   if (!user) throw new Error("Bayi oturumu veya firma durumu geçersiz.");
@@ -413,6 +425,26 @@ export async function submitOrderCart(
       (sum, item) => sum.add(item.lineTotal),
       new Prisma.Decimal(0),
     );
+    const exposureAggregate = await tx.order.aggregate({
+      where: {
+        companyId: actor.companyId,
+        status: { in: [...orderExposureStatuses] },
+        currency: currencies[0],
+      },
+      _sum: { subtotal: true },
+    });
+    const creditExposureBefore = new Prisma.Decimal(
+      exposureAggregate._sum.subtotal?.toString() ?? "0",
+    );
+    const creditExposureAfter = creditExposureBefore.add(subtotal);
+    const creditPolicy = activeUser.company?.creditPolicy ?? "UNSET";
+    const creditLimit = activeUser.company?.creditLimit ?? null;
+    const commercialReviewRequired = requiresCommercialReview({
+      policy: creditPolicy,
+      limit: creditLimit,
+      exposureAfter: creditExposureAfter,
+      currency: currencies[0],
+    });
 
     const order = await tx.order.create({
       data: {
@@ -422,6 +454,12 @@ export async function submitOrderCart(
         status: "SUBMITTED",
         currency: currencies[0],
         subtotal,
+        paymentTermsSnapshot: activeUser.company?.paymentTerms,
+        creditPolicySnapshot: creditPolicy,
+        creditLimitSnapshot: creditLimit,
+        creditExposureBefore,
+        creditExposureAfter,
+        commercialReviewRequired,
         deliveryAddressId: address.id,
         deliveryLabel: address.label,
         deliveryLine1: address.line1,
@@ -516,6 +554,12 @@ export async function submitOrderCart(
           itemCount: snapshots.length,
           subtotal: subtotal.toString(),
           currency: currencies[0],
+          paymentTerms: activeUser.company?.paymentTerms ?? null,
+          creditPolicy,
+          creditLimit: creditLimit?.toString() ?? null,
+          creditExposureBefore: creditExposureBefore.toString(),
+          creditExposureAfter: creditExposureAfter.toString(),
+          commercialReviewRequired,
         }),
       },
     });

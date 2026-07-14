@@ -18,12 +18,16 @@ export function AdminOrderStatusForm({
   expectedVersion,
   idempotencyKey,
   transitions,
+  commercialReviewRequired,
+  canOverrideCredit,
 }: {
   orderId: string;
   expectedStatus: OrderStatus;
   expectedVersion: number;
   idempotencyKey: string;
   transitions: readonly OrderStatus[];
+  commercialReviewRequired: boolean;
+  canOverrideCredit: boolean;
 }) {
   const [state, action, pending] = useActionState(
     transitionOrderStatusAction,
@@ -98,6 +102,23 @@ export function AdminOrderStatusForm({
               />
             </label>
           </div>
+        ) : null}
+
+        {selectedStatus === "CONFIRMED" && canOverrideCredit ? (
+          <label className="grid gap-1 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-950">
+            Ticari istisna gerekçesi
+            <textarea
+              name="commercialOverrideReason"
+              rows={3}
+              maxLength={1000}
+              required={commercialReviewRequired}
+              className="rounded-md border border-amber-300 bg-white p-3 text-sm text-slate-950"
+              placeholder="Limit aşımı veya eksik ticari koşul için onay gerekçesi"
+            />
+            <span className="font-normal leading-5">
+              Yalnız limit/koşul kontrolü istisna gerektiriyorsa doldurun. Gerekçe bayiyle paylaşılmaz.
+            </span>
+          </label>
         ) : null}
 
         <label className="grid gap-1 text-xs font-semibold text-slate-600">

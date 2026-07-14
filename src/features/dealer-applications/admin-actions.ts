@@ -149,6 +149,8 @@ export async function reviewDealerApplication(
               customerGroupId: customerGroup.id,
               paymentTerms: parsed.data.paymentTerms ?? null,
               creditLimit: parsed.data.creditLimit ?? null,
+              creditPolicy:
+                parsed.data.creditLimit === undefined ? "UNSET" : "LIMITED",
               internalNotes: parsed.data.internalNotes ?? null,
             },
           });
@@ -182,6 +184,8 @@ export async function reviewDealerApplication(
               customerGroupId: customerGroup.id,
               paymentTerms: parsed.data.paymentTerms,
               creditLimit: parsed.data.creditLimit,
+              creditPolicy:
+                parsed.data.creditLimit === undefined ? "UNSET" : "LIMITED",
               internalNotes: parsed.data.internalNotes,
             },
           });

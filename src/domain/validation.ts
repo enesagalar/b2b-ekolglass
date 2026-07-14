@@ -74,16 +74,33 @@ export const dealerApplicationReviewSchema = z
     }
   });
 
-export const companyDiscountSchema = z.object({
-  companyId: z.string().trim().min(1, "Firma seçimi zorunludur."),
-  discountRate: z.preprocess(
-    parseOptionalDecimal,
-    z
-      .number()
-      .min(0, "İskonto oranı negatif olamaz.")
-      .max(100, "İskonto oranı yüzde 100'ü aşamaz."),
-  ),
-});
+export const companyDiscountSchema = z
+  .object({
+    companyId: z.string().trim().min(1, "Firma seçimi zorunludur."),
+    discountRate: z.preprocess(
+      parseOptionalDecimal,
+      z
+        .number()
+        .min(0, "İskonto oranı negatif olamaz.")
+        .max(100, "İskonto oranı yüzde 100'ü aşamaz."),
+    ),
+    paymentTerms: optionalText(240),
+    creditPolicy: z.enum(["UNSET", "LIMITED", "UNLIMITED"]),
+    creditLimit: z.preprocess(
+      parseOptionalDecimal,
+      z.number().nonnegative("Kredi limiti negatif olamaz.").optional(),
+    ),
+    changeReason: z.string().trim().min(10, "Değişiklik gerekçesi en az 10 karakter olmalıdır.").max(500),
+  })
+  .superRefine((value, context) => {
+    if (value.creditPolicy === "LIMITED" && value.creditLimit === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["creditLimit"],
+        message: "Limitli kredi politikası için tutar zorunludur.",
+      });
+    }
+  });
 
 export const productPublicationSchema = z.object({
   productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
@@ -560,6 +577,7 @@ export const orderStatusTransitionSchema = z
     note: optionalText(1000),
     carrier: optionalText(120),
     trackingNumber: optionalText(160),
+    commercialOverrideReason: optionalText(1000),
   })
   .superRefine((value, context) => {
     if (["CANCELLED", "ON_HOLD"].includes(value.targetStatus) && !value.note) {
@@ -567,6 +585,16 @@ export const orderStatusTransitionSchema = z
         code: "custom",
         path: ["note"],
         message: "İptal ve bekletme işlemlerinde operasyon notu zorunludur.",
+      });
+    }
+    if (
+      value.commercialOverrideReason &&
+      value.commercialOverrideReason.length < 10
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["commercialOverrideReason"],
+        message: "Ticari istisna gerekçesi en az 10 karakter olmalıdır.",
       });
     }
   });

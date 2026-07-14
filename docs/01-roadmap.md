@@ -114,9 +114,13 @@ Tamamlanan ek kapsam:
 - Fiyat/stok kontrollu toplu urun yayin kapisi.
 - Lokal ve S3/R2 uyumlu CMS medya depolama adapteri.
 
-Kalan operasyon borcu:
+Tamamlanan ticari kontrol ek kapsami:
 
-- Kredi limiti/exposure tabanli ticari onay kapisi.
+- Firma kredi politikasi, odeme kosulu ve kredi limiti yonetimi.
+- Siparis aninda ticari kosul ve acik siparis exposure snapshot'i.
+- Onay aninda yeniden hesaplanan kredi limiti kapisi.
+- Ayrik `order.credit.override` yetkisi ve zorunlu ic gerekce.
+- Bayi ekranlarindan ic operasyon/ticari not izolasyonu.
 
 ## Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
 
@@ -185,5 +189,5 @@ Kapsam:
 
 Siradaki sira:
 
-1. Kredi limiti/exposure tabanli ticari onay.
+1. Satis raporlari ve operasyon KPI'lari.
 2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.

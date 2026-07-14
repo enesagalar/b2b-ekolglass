@@ -21,6 +21,7 @@ model User {
   updatedAt                 DateTime                   @updatedAt
   createdOrders             Order[]                    @relation("OrderCreatedBy")
   approvedOrders            Order[]                    @relation("OrderApprovedBy")
+  commercialOverrideOrders  Order[]                    @relation("OrderCommercialOverrideBy")
   pageRevisions             PageRevision[]
   sessions                  AuthSession[]
   auditLogs                 AuditLog[]
@@ -108,6 +109,7 @@ model Company {
   status              String              @default("PENDING")
   paymentTerms        String?
   creditLimit         Decimal?
+  creditPolicy        String              @default("UNSET")
   discountRate        Decimal             @default(0)
   customerGroupId     String?
   customerGroup       CustomerGroup?      @relation(fields: [customerGroupId], references: [id])
@@ -530,54 +532,65 @@ model OrderCartItem {
 }
 
 model Order {
-  id                     String                   @id @default(cuid())
-  orderNumber            String                   @unique
-  companyId              String
-  company                Company                  @relation(fields: [companyId], references: [id])
-  status                 String                   @default("DRAFT")
-  currency               String                   @default("TRY")
-  subtotal               Decimal                  @default(0)
-  deliveryAddressId      String?
-  deliveryAddress        Address?                 @relation(fields: [deliveryAddressId], references: [id], onDelete: SetNull)
-  deliveryLabel          String?
-  deliveryLine1          String?
-  deliveryLine2          String?
-  deliveryDistrict       String?
-  deliveryCity           String?
-  deliveryCountry        String?
-  deliveryPostalCode     String?
-  requestedDeliveryDate  DateTime?
-  shipmentMethod         String?
-  notes                  String?
-  internalNotes          String?
-  createdById            String?
-  createdBy              User?                    @relation("OrderCreatedBy", fields: [createdById], references: [id])
-  approvedById           String?
-  approvedBy             User?                    @relation("OrderApprovedBy", fields: [approvedById], references: [id])
-  items                  OrderItem[]
-  statusHistory          OrderStatusHistory[]
-  shipment               Shipment?
-  submittedAt            DateTime?
-  pricedAt               DateTime?
-  idempotencyKey         String?
-  requestHash            String?
-  sourceCartId           String?
-  sourceCartVersion      Int?
-  sourceQuoteId          String?                  @unique
-  sourceQuote            QuoteRequest?            @relation("QuoteConvertedOrder", fields: [sourceQuoteId], references: [id], onDelete: Restrict)
-  sourceQuoteVersion     Int?
-  sourceOfferRevisionId  String?                  @unique
-  sourceOfferRevision    QuoteOfferRevision?      @relation("QuoteConvertedOfferRevision", fields: [sourceOfferRevisionId], references: [id], onDelete: Restrict)
-  quoteConversionCommand QuoteOperationCommand?   @relation("QuoteConversionCommand")
-  version                Int                      @default(1)
-  heldFromStatus         String?
-  transitionCommands     OrderTransitionCommand[]
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
+  id                       String                   @id @default(cuid())
+  orderNumber              String                   @unique
+  companyId                String
+  company                  Company                  @relation(fields: [companyId], references: [id])
+  status                   String                   @default("DRAFT")
+  currency                 String                   @default("TRY")
+  subtotal                 Decimal                  @default(0)
+  paymentTermsSnapshot     String?
+  creditPolicySnapshot     String                   @default("UNSET")
+  creditLimitSnapshot      Decimal?
+  creditExposureBefore     Decimal                  @default(0)
+  creditExposureAfter      Decimal                  @default(0)
+  commercialReviewRequired Boolean                  @default(true)
+  commercialOverrideReason String?
+  commercialOverrideById   String?
+  commercialOverrideBy     User?                    @relation("OrderCommercialOverrideBy", fields: [commercialOverrideById], references: [id])
+  commercialOverrideAt     DateTime?
+  deliveryAddressId        String?
+  deliveryAddress          Address?                 @relation(fields: [deliveryAddressId], references: [id], onDelete: SetNull)
+  deliveryLabel            String?
+  deliveryLine1            String?
+  deliveryLine2            String?
+  deliveryDistrict         String?
+  deliveryCity             String?
+  deliveryCountry          String?
+  deliveryPostalCode       String?
+  requestedDeliveryDate    DateTime?
+  shipmentMethod           String?
+  notes                    String?
+  internalNotes            String?
+  createdById              String?
+  createdBy                User?                    @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  approvedById             String?
+  approvedBy               User?                    @relation("OrderApprovedBy", fields: [approvedById], references: [id])
+  items                    OrderItem[]
+  statusHistory            OrderStatusHistory[]
+  shipment                 Shipment?
+  submittedAt              DateTime?
+  pricedAt                 DateTime?
+  idempotencyKey           String?
+  requestHash              String?
+  sourceCartId             String?
+  sourceCartVersion        Int?
+  sourceQuoteId            String?                  @unique
+  sourceQuote              QuoteRequest?            @relation("QuoteConvertedOrder", fields: [sourceQuoteId], references: [id], onDelete: Restrict)
+  sourceQuoteVersion       Int?
+  sourceOfferRevisionId    String?                  @unique
+  sourceOfferRevision      QuoteOfferRevision?      @relation("QuoteConvertedOfferRevision", fields: [sourceOfferRevisionId], references: [id], onDelete: Restrict)
+  quoteConversionCommand   QuoteOperationCommand?   @relation("QuoteConversionCommand")
+  version                  Int                      @default(1)
+  heldFromStatus           String?
+  transitionCommands       OrderTransitionCommand[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
 
   @@unique([companyId, idempotencyKey])
   @@index([companyId, status, createdAt])
   @@index([companyId, createdAt])
+  @@index([companyId, commercialReviewRequired, status])
 }
 
 model OrderItem {

@@ -465,6 +465,10 @@ describe("order cart submission and tenant isolation", () => {
     expect(order.createdById).toBe(ids.userA);
     expect(order.currency).toBe("TRY");
     expect(order.subtotal.toString()).toBe("800");
+    expect(order.creditPolicySnapshot).toBe("UNSET");
+    expect(order.creditExposureBefore.toString()).toBe("0");
+    expect(order.creditExposureAfter.toString()).toBe("800");
+    expect(order.commercialReviewRequired).toBe(true);
     expect(order.deliveryAddressId).toBe(ids.addressA);
     expect(order.deliveryLabel).toBe("Main Warehouse");
     expect(order.deliveryLine1).toBe("Glass Street 10");

@@ -89,6 +89,33 @@ describe("admin order status action", () => {
     );
   });
 
+  it("requires the separate credit override permission when a reason is sent", async () => {
+    await transitionOrderStatusAction(
+      { ok: false, message: "" },
+      form({
+        expectedStatus: "WAITING_FOR_APPROVAL",
+        targetStatus: "CONFIRMED",
+        commercialOverrideReason: "Kredi komitesi onayı alındı.",
+      }),
+    );
+    expect(mocks.requirePermissionUser).toHaveBeenNthCalledWith(
+      1,
+      "order.approve",
+      "/admin/siparisler/order-1",
+    );
+    expect(mocks.requirePermissionUser).toHaveBeenNthCalledWith(
+      2,
+      "order.credit.override",
+      "/admin/siparisler/order-1",
+    );
+    expect(mocks.transitionOrderStatus).toHaveBeenCalledWith(
+      { userId: "admin-1", canOverrideCredit: true },
+      expect.objectContaining({
+        commercialOverrideReason: "Kredi komitesi onayı alındı.",
+      }),
+    );
+  });
+
   it("returns an explicit conflict state", async () => {
     mocks.transitionOrderStatus.mockRejectedValue(
       new OrderTransitionError("Sipariş güncellendi.", "CONFLICT"),

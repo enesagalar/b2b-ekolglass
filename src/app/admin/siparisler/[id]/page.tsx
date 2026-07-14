@@ -56,6 +56,9 @@ export default async function AdminOrderDetailPage({
   const canReadStock = Boolean(
     knownRole && hasPermission(knownRole, "stock.read.detailed"),
   );
+  const canOverrideCredit = Boolean(
+    knownRole && hasPermission(knownRole, "order.credit.override"),
+  );
   const currentStatus = isOrderStatus(order.status) ? order.status : null;
   const transitions = getAllowedOrderTransitions(
     order.status,
@@ -204,6 +207,22 @@ export default async function AdminOrderDetailPage({
 
         <aside className="grid gap-5">
           <section className={`${panelClass} p-5`}>
+            <p className="text-xs font-semibold uppercase text-slate-500">
+              Ticari değerlendirme
+            </p>
+            <dl className="mt-4 grid gap-3 text-sm">
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Ödeme koşulu</dt><dd className="text-right font-semibold">{order.paymentTermsSnapshot ?? "Tanımlanmadı"}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Kredi politikası</dt><dd className="text-right font-semibold">{order.creditPolicySnapshot === "UNLIMITED" ? "Limitsiz" : order.creditPolicySnapshot === "LIMITED" ? "Limitli" : "Tanımlanmadı"}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Kredi limiti</dt><dd className="text-right font-semibold">{order.creditLimitSnapshot ? formatPortalMoney(order.creditLimitSnapshot, order.currency) : "-"}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Önceki açık sipariş</dt><dd className="text-right font-semibold">{formatPortalMoney(order.creditExposureBefore, order.currency)}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Sipariş sonrası risk</dt><dd className="text-right font-semibold">{formatPortalMoney(order.creditExposureAfter, order.currency)}</dd></div>
+            </dl>
+            <p className={`mt-4 rounded-md p-3 text-xs font-semibold ${order.commercialReviewRequired ? "bg-amber-50 text-amber-900" : "bg-emerald-50 text-emerald-900"}`}>
+              {order.commercialReviewRequired ? "Ticari istisna onayı gerekiyor." : "Sipariş tanımlı ticari koşullar içinde."}
+            </p>
+            {order.commercialOverrideReason ? <div className="mt-3 border-t border-slate-200 pt-3 text-xs text-slate-600"><p className="font-semibold text-slate-900">İstisna gerekçesi</p><p className="mt-1 leading-5">{order.commercialOverrideReason}</p><p className="mt-2">{order.commercialOverrideBy?.name ?? order.commercialOverrideBy?.email ?? "Yetkili"}</p></div> : null}
+          </section>
+          <section className={`${panelClass} p-5`}>
             <p className="text-xs font-semibold uppercase text-teal-800">
               Operasyon kararı
             </p>
@@ -216,6 +235,8 @@ export default async function AdminOrderDetailPage({
                   expectedVersion={order.version}
                   idempotencyKey={randomUUID()}
                   transitions={transitions}
+                  commercialReviewRequired={order.commercialReviewRequired}
+                  canOverrideCredit={canOverrideCredit}
                 />
               ) : (
                 <p className="text-sm leading-6 text-slate-500">

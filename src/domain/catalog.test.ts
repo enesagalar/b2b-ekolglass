@@ -209,9 +209,14 @@ describe("catalog helpers", () => {
 
 describe("catalog validation schemas", () => {
   it("accepts valid company discounts and rejects values outside zero to one hundred", () => {
-    expect(companyDiscountSchema.safeParse({ companyId: "company-1", discountRate: "12,5" }).success).toBe(true);
-    expect(companyDiscountSchema.safeParse({ companyId: "company-1", discountRate: "-1" }).success).toBe(false);
-    expect(companyDiscountSchema.safeParse({ companyId: "company-1", discountRate: "100.01" }).success).toBe(false);
+    const terms = {
+      companyId: "company-1",
+      creditPolicy: "UNSET",
+      changeReason: "Yıllık ticari değerlendirme",
+    };
+    expect(companyDiscountSchema.safeParse({ ...terms, discountRate: "12,5" }).success).toBe(true);
+    expect(companyDiscountSchema.safeParse({ ...terms, discountRate: "-1" }).success).toBe(false);
+    expect(companyDiscountSchema.safeParse({ ...terms, discountRate: "100.01" }).success).toBe(false);
   });
 
   it("only allows explicit publish or draft targets", () => {
