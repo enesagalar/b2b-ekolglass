@@ -90,6 +90,14 @@ export const productPublicationSchema = z.object({
   targetStatus: z.enum(["ACTIVE", "DRAFT"]),
 });
 
+export const productBulkPublicationSchema = z.object({
+  productIds: z
+    .array(z.string().trim().min(1, "Ürün seçimi geçersizdir."))
+    .min(1, "Yayınlanacak en az bir ürün seçin.")
+    .max(50, "Tek işlemde en fazla 50 ürün yayınlanabilir.")
+    .transform((productIds) => [...new Set(productIds)]),
+});
+
 export const mediaAssetFormSchema = z.object({
   id: optionalText(120),
   productId: z.string().trim().min(1, "Urun secimi zorunludur."),

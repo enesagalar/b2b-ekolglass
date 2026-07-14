@@ -7,6 +7,7 @@ import {
   Filter,
   Layers3,
   PackagePlus,
+  PackageCheck,
   Save,
   Search,
   Tags,
@@ -465,6 +466,19 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               </p>
               <div className="mt-4"><ProductImportForm /></div>
             </section>
+            <Link
+              href="/admin/urunler/yayin-hazirligi"
+              className="rounded-lg border border-teal-200 bg-teal-50 p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
+            >
+              <div className="flex items-center gap-2">
+                <PackageCheck size={18} className="text-teal-800" aria-hidden="true" />
+                <p className="text-sm font-semibold text-slate-950">Toplu yayın hazırlığı</p>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Fiyat ve stok koşullarını kontrol edin, hazır taslakları güvenli biçimde topluca yayınlayın.
+              </p>
+              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Yayın hazırlığını aç</span>
+            </Link>
             <Link
               href="/admin/urunler/kategoriler"
               className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"

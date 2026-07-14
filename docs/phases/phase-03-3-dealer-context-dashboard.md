@@ -62,11 +62,20 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 - Backlog, dead-letter, expired lease ve isleyicisiz topic health durumunu `degraded` yapar.
 - Admin shell tum ic rollerde permission bazli menu uretir.
 
+## Tamamlanan Katalog Yayin Operasyon Dilimi
+
+- Taslak urunler genel bayi fiyati ve kullanilabilir stok kosullarina gore siniflandirilir.
+- `/admin/urunler/yayin-hazirligi` KPI, arama, kategori/hazirlik filtresi ve 50 satirli sayfalama sunar.
+- Yalniz hazir urunler secilebilir; tum secim transaction icinde yeniden dogrulanir.
+- Stale veya kosulu bozulan tek urun tum batch'i fail-closed durdurur.
+- Basarili toplu yayin urun bazli audit kaydi, batch kimligi ve katalog revalidation'i uretir.
+
 ## Kabul Durumu
 
 - Lint: basarili.
-- Test: 31 dosya, 143 test basarili.
+- Test: 35 dosya, 157 test basarili.
 - Production build: basarili.
 - HTTP smoke: urun detay ve teklif sepeti dahil basarili.
 - Browser QA: login -> urun detay -> 2 adet sepet -> teklif sonucu desktop/mobile basarili; body overflow yok.
 - Entegrasyon QA: admin entegrasyon rotasi, permission-aware menu ve 390x844 responsive yerlesim dogrulandi.
+- Katalog yayin QA: toplu hazirlik rotasi, hazir filtresi, gercek KPI'lar ve desktop/mobile tasmasiz yerlesim dogrulandi.

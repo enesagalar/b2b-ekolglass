@@ -36,6 +36,8 @@ Fiyatsiz veya stoksuz urun otomatik yayina alinmaz. Portal tahmini fiyat veya sa
 
 Admin urun detayinda `Yayin hazirligi` paneli genel bayi fiyatini ve kullanilabilir stogu ayri ayri kontrol eder. Iki kosul da hazir oldugunda `Urunu yayinla` komutu etkinlesir; yayinlanan urun ana sayfa ve `/urunler` katalog akisina girer.
 
+Admin toplu yayin ekrani `/admin/urunler/yayin-hazirligi` altindadir. Taslaklar fiyat/stok eksigine gore filtrelenir; yalniz hazir urunler secilebilir. Sunucu secilen tum urunleri transaction icinde yeniden okur. Tek bir urun stale, fiyatsiz veya stoksuzsa hicbir urun yayinlanmaz. Tek komut 50 urunle sinirlidir ve her urun batch kimligiyle audit log'a yazilir.
+
 ## Net Fiyat Cozumleme
 
 Ana ticari model:
@@ -59,5 +61,4 @@ Mevcut musteri grubu ve firma net fiyat listeleri geriye donuk uyumluluk icin ge
 
 1. ERP veya fiyat kaynagindan kod + net fiyat + stok CSV sozlesmesi alinacak.
 2. Toplu fiyat/stok preview, hata raporu ve onayli import ekrani kurulacak.
-3. Hazirlik kontrolu gecen urunler icin toplu yayina alma komutu eklenecek.
-4. Production object storage ve CDN adapteri deployment oncesi baglanacak.
+3. Production object storage ve CDN adapteri deployment oncesi baglanacak.

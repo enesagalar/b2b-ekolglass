@@ -109,6 +109,9 @@ Son guncelleme: 2026-07-13
 - Net fiyat kapsami: firma, musteri grubu, genel bayi sirasi.
 - Banner icin dosya secimli, MIME imzasi kontrollu lokal medya storage hatti.
 - Urun detayinda fiyat ve stok kontrollu yayin hazirligi ile yayina al/yayindan kaldir komutu.
+- `/admin/urunler/yayin-hazirligi` ekraninda taslak urun KPI, arama, kategori/hazirlik filtresi ve sayfalama.
+- Fiyat ve stok kosullarini transaction icinde yeniden dogrulayan, 50 urun sinirli atomik toplu yayin komutu.
+- Toplu yayinda urun bazli audit kaydi ve stale/eksik secimde fail-closed davranis.
 - Genel bayi baz fiyati uzerine firma kartindan yuzdesel musteri iskontosu.
 - Stok gorunurlugu ve rol/durum kodlari icin Turkce kullanici etiketleri.
 
@@ -116,7 +119,7 @@ Son guncelleme: 2026-07-13
 
 1. Bayi platformunda kalanlar:
    - Transactional e-posta adapteri hazir; production SMTP credential ve scheduler kurulumu bekliyor.
-   - Taslak urunlerin toplu fiyat/stok tamamlama ve yayin akisi yok.
+   - Taslak urunlerin toplu yayin akisi hazir; toplu fiyat/stok preview ve onayli import hatti bekliyor.
    - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:

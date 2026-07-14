@@ -2,6 +2,15 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-14 - Toplu urun yayin hazirligi
+
+- `/admin/urunler/yayin-hazirligi` operasyon ekrani eklendi.
+- Taslaklar hazir, genel fiyati eksik ve stoku eksik olarak sayiliyor ve filtreleniyor.
+- Hazir urunlerden 50 adede kadar secim transaction icinde yeniden dogrulaniyor.
+- Stale veya eksik tek urun tum islemi durduruyor; kismi yayin olusmuyor.
+- Basarili yayinlar batch kimligiyle urun bazli audit log'a yaziliyor.
+- 35 test dosyasi, 157 test, lint, production build, admin smoke ve desktop/mobile browser QA basarili.
+
 ## 2026-07-13 - Urun yayini ve firma iskontosu
 
 - Urun detayina genel fiyat + kullanilabilir stok kontrollu `Urunu yayinla` akisi eklendi.
@@ -18,10 +27,9 @@ Faz 3.3 - Katalog fiyat/stok hazirligi, toplu yayin ve kimlik dogrulama sertlest
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
 1. 1.379 taslak urun icin kod + net fiyat + stok toplu import sozlesmesi alinacak.
-2. Hazirlik kontrolu ve toplu yayina alma ekrani kurulacak.
-3. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
-4. Production SMTP, medya storage, scheduler ve alarm runbook'u tamamlanacak.
-5. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+2. Login rate-limit e-posta + IP anahtarli indeksli modele tasinacak.
+3. Production SMTP, medya storage, scheduler ve alarm runbook'u tamamlanacak.
+4. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
 

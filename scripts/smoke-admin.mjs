@@ -803,6 +803,27 @@ assert(
   productsHtml.includes("Toplu ürün aktarımı") && productsHtml.includes('type="file"'),
   "Admin product CSV upload control not rendered",
 );
+assert(
+  productsHtml.includes("Toplu yayın hazırlığı") &&
+    productsHtml.includes("/admin/urunler/yayin-hazirligi"),
+  "Admin product publication readiness shortcut not rendered",
+);
+
+const publicationReadinessResponse = await request(
+  "/admin/urunler/yayin-hazirligi",
+  { headers: { Cookie: serializeCookies(cookieJar) } },
+);
+assert(
+  publicationReadinessResponse.status === 200,
+  `Authenticated product publication readiness failed with ${publicationReadinessResponse.status}`,
+);
+const publicationReadinessHtml = await publicationReadinessResponse.text();
+assert(
+  publicationReadinessHtml.includes("Toplu yayın hazırlığı") &&
+    publicationReadinessHtml.includes("Seçilenleri yayınla") &&
+    publicationReadinessHtml.includes("Genel bayi fiyatı"),
+  "Admin product publication readiness controls not rendered",
+);
 
 const contentResponse = await request("/admin/icerik", {
   headers: { Cookie: serializeCookies(cookieJar) },
@@ -1011,6 +1032,7 @@ console.log(
         "authenticated-dealer-account",
         "dealer-admin-access-rejected",
         "authenticated-product-management",
+        "authenticated-product-publication-readiness",
         "authenticated-product-categories",
         "authenticated-price-lists",
         "authenticated-product-compatibility-tab",
