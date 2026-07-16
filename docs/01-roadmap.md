@@ -189,7 +189,7 @@ Kapsam:
 
 Siradaki sira:
 
-1. Stok operasyon raporu ve kontrollu CSV disari aktarimi.
+1. Production deployment kabul kapisi ve merkezi gozlemlenebilirlik.
 2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
 
 Tamamlanan raporlama dilimi:
@@ -199,3 +199,7 @@ Tamamlanan raporlama dilimi:
 - Siparis snapshot tutarlariyla firma performansi, durum dagilimi ve kesintisiz zaman serisi.
 - Rapor sorgulari icin Order, Shipment ve OrderStatusHistory indeksleri.
 - Ekranin fatura, tahsilat veya muhasebe cirosu olmadigini aciklayan metrik sozlesmesi.
+- Aktif urunlerde urun + depo grain'li anlik stok operasyon raporu.
+- Fiziksel, rezerve ve kullanilabilir sayaçlardan turetilen stok risk siniflari.
+- Aktif rezervasyon defteri ile rezerve sayac uyumsuzluk kontrolu.
+- `stock.export` izinli, UTF-8 BOM ve formula-injection korumali CSV disari aktarimi.

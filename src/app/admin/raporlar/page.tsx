@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   AlertTriangle,
   Banknote,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { getAdminSalesReport } from "@/data/admin-reports";
+import { hasPermission, isKnownRole } from "@/domain/roles";
 import {
   formatReportDateInput,
   resolveReportPeriod,
@@ -20,7 +22,9 @@ import {
   formatPortalMoney,
   PortalStatus,
 } from "@/features/dealer/dealer-ui";
-import { requirePermissionUser } from "@/lib/auth";
+import { ReportViewTabs } from "@/features/admin/report-view-tabs";
+import { StockReportView } from "@/features/admin/stock-report-view";
+import { requireAdminUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +52,29 @@ function shortDate(value: string) {
 export default async function AdminReportsPage({
   searchParams,
 }: PageProps<"/admin/raporlar">) {
-  await requirePermissionUser("report.read", "/admin/raporlar");
   const params = await searchParams;
+  const actor = await requireAdminUser();
+  if (!isKnownRole(actor.role)) redirect("/admin");
+  const canViewSales = hasPermission(actor.role, "report.read");
+  const canViewStock = hasPermission(actor.role, "stock.read.detailed");
+  const canExportStock = hasPermission(actor.role, "stock.export");
+  const requestedView = first(params.view);
+  const activeView = requestedView === "stock" && canViewStock
+    ? "stock"
+    : canViewSales
+      ? "sales"
+      : canViewStock
+        ? "stock"
+        : null;
+  if (!activeView) redirect("/admin");
+  if (activeView === "stock") {
+    return (
+      <div className="grid gap-6">
+        <ReportViewTabs active="stock" canViewSales={canViewSales} canViewStock={canViewStock} />
+        <StockReportView searchParams={params} canExport={canExportStock} />
+      </div>
+    );
+  }
   let filterError: string | null = null;
   let period;
   try {
@@ -119,6 +144,7 @@ export default async function AdminReportsPage({
 
   return (
     <div className="grid gap-6">
+      <ReportViewTabs active="sales" canViewSales={canViewSales} canViewStock={canViewStock} />
       <section className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end">
         <div>
           <p className="text-sm font-semibold text-teal-800">Ticari performans</p>

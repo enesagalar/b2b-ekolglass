@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Bell,
-  Boxes,
   Building2,
   ChevronRight,
   DatabaseZap,
@@ -39,7 +38,8 @@ type AdminNavItem = {
   href?: string;
   icon: LucideIcon;
   description: string;
-  permission: Permission;
+  permission?: Permission;
+  anyPermissions?: Permission[];
   soon?: boolean;
 };
 
@@ -86,13 +86,6 @@ const navigationSections: AdminNavSection[] = [
         permission: "product.read",
       },
       {
-        label: "Stok",
-        icon: Boxes,
-        description: "Depo görünürlüğü",
-        permission: "stock.read.detailed",
-        soon: true,
-      },
-      {
         label: "Fiyat Listeleri",
         href: "/admin/urunler/fiyat-listeleri",
         icon: FileText,
@@ -129,8 +122,8 @@ const navigationSections: AdminNavSection[] = [
         label: "Raporlar",
         href: "/admin/raporlar",
         icon: BarChart3,
-        description: "Sipariş performansı",
-        permission: "report.read",
+        description: "Satış ve stok",
+        anyPermissions: ["report.read", "stock.read.detailed"],
       },
     ],
   },
@@ -160,7 +153,11 @@ function getVisibleNavigationSections(role: string) {
   return navigationSections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => hasPermission(role, item.permission)),
+      items: section.items.filter((item) =>
+        item.permission
+          ? hasPermission(role, item.permission)
+          : item.anyPermissions?.some((permission) => hasPermission(role, permission)),
+      ),
     }))
     .filter((section) => section.items.length > 0);
 }

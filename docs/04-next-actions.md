@@ -63,14 +63,13 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 5 - Stok operasyon raporu ve kontrollu rapor disari aktarimi.
+Production deployment kabul kapisi ve merkezi gozlemlenebilirlik.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Anlik stok, rezerve ve kullanilabilir miktar raporu yetki kapsamli kurulacak.
-2. Ekranla ayni veri sozlesmesini kullanan denetlenebilir CSV disari aktarimi eklenecek.
-3. Production SMTP/S3/scheduler credential ve merkezi alarm kanali deployment ortaminda baglanacak.
-4. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+1. Production SMTP/S3/scheduler credential ve merkezi alarm kanali deployment ortaminda baglanacak.
+2. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+3. City Lojistik API dokumani, test hesabi ve idempotency sozlesmesi proje sahibinden beklenecek.
 
 ## Son Tamamlanan Tur
 
@@ -83,6 +82,16 @@ Faz 5 - Stok operasyon raporu ve kontrollu rapor disari aktarimi.
 - Rapor sorgu indeksleri migration zincirine ve lokal veritabanina uygulandi.
 - Vitest worker paralelligi Windows'ta deterministik calismasi icin dort worker ile sinirlandi.
 - 47 test dosyasi, 208 test, lint, production build, authenticated admin smoke ve desktop/mobile browser QA basarili.
+
+### 2026-07-16 - Stok operasyon raporu ve CSV
+
+- `/admin/raporlar?view=stock` aktif urunlerde urun + depo grain'li anlik stok ekranina donusturuldu.
+- Fiziksel, rezerve ve kullanilabilir miktarlar sayaclardan; stok riskleri hesaplanmis operasyon siniflarindan uretiliyor.
+- Tanimli stok durumu nicel operasyon durumundan ayrildi; taslak ve durdurulmus urunler acik filtreyle erisilebilir.
+- KPI, tablo, rezervasyon defteri kontrolu ve snapshot zamani tek read transaction icinden geliyor.
+- CSV ayni filtre/siralama sozlesmesini kullaniyor; 5.000 satir siniri, UTF-8 BOM, RFC 4180 ve formula-injection korumasi var.
+- `stock.export` yetkisi, query allowlist'i, kontrollu hata cevaplari, checksum ve audit izi eklendi.
+- 50 test dosyasi, 224 test, lint, production build, authenticated smoke ve desktop/mobile browser QA basarili.
 
 Faz disi B2B katalog ve ticaret akisi duzeltmesi tamamlandi:
 

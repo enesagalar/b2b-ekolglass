@@ -62,6 +62,7 @@ export const permissions = [
   "order.cancel.fulfillment",
   "order.track",
   "report.read",
+  "stock.export",
   "integration.read",
   "integration.replay",
 ] as const;
@@ -100,6 +101,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "order.cancel.fulfillment",
     "order.track",
     "report.read",
+    "stock.export",
     "integration.read",
     "integration.replay",
   ],
@@ -124,6 +126,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "order.cancel",
     "order.track",
     "report.read",
+    "stock.export",
     "integration.read",
   ],
   SALES_STAFF: [
@@ -145,6 +148,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "order.ship",
     "order.deliver",
     "order.track",
+    "stock.export",
   ],
   ACCOUNTING_STAFF: [
     "admin.dashboard.read",

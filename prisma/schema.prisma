@@ -226,6 +226,7 @@ model Product {
   updatedAt          DateTime               @updatedAt
 
   @@index([code])
+  @@index([status, code])
   @@index([vehicleBrand, vehicleModel])
   @@index([glassType])
 }
@@ -288,6 +289,8 @@ model StockItem {
   updatedAt        DateTime           @updatedAt
 
   @@unique([productId, warehouseCode])
+  @@index([warehouseCode, status, updatedAt])
+  @@index([status, updatedAt])
 }
 
 model CatalogImportBatch {

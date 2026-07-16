@@ -26,6 +26,15 @@ describe("role permissions", () => {
     expect(hasPermission("WAREHOUSE_STAFF", "order.cancel")).toBe(false);
   });
 
+  it("keeps stock export limited to operational stock roles", () => {
+    expect(hasPermission("ADMIN", "stock.export")).toBe(true);
+    expect(hasPermission("SALES_MANAGER", "stock.export")).toBe(true);
+    expect(hasPermission("WAREHOUSE_STAFF", "stock.export")).toBe(true);
+    expect(hasPermission("ACCOUNTING_STAFF", "stock.export")).toBe(false);
+    expect(hasPermission("SALES_STAFF", "stock.export")).toBe(false);
+    expect(hasPermission("DEALER_OWNER", "stock.export")).toBe(false);
+  });
+
   it("separates internal admin roles from dealer roles", () => {
     expect(isAdminRole("SALES_STAFF")).toBe(true);
     expect(isAdminRole("DEALER_OWNER")).toBe(false);
