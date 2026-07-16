@@ -591,6 +591,7 @@ model Order {
   @@index([companyId, status, createdAt])
   @@index([companyId, createdAt])
   @@index([companyId, commercialReviewRequired, status])
+  @@index([currency, submittedAt, status])
 }
 
 model OrderItem {
@@ -655,6 +656,8 @@ model OrderStatusHistory {
   changedBy   User?    @relation("OrderStatusChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
   note        String?
   createdAt   DateTime @default(now())
+
+  @@index([toStatus, createdAt, orderId])
 }
 
 model OrderTransitionCommand {
@@ -694,6 +697,7 @@ model Shipment {
   updatedAt          DateTime          @updatedAt
 
   @@index([status, updatedAt])
+  @@index([deliveredAt, status])
 }
 
 model ShipmentEvent {

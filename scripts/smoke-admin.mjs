@@ -210,6 +210,20 @@ assert(
   "Admin orders navigation not rendered",
 );
 
+const adminReportsResponse = await request("/admin/raporlar", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  adminReportsResponse.status === 200,
+  `Authenticated admin reports failed with ${adminReportsResponse.status}`,
+);
+const adminReportsHtml = await adminReportsResponse.text();
+assert(
+  adminReportsHtml.includes("Satış ve sipariş raporları") &&
+    adminReportsHtml.includes('href="/admin/raporlar"'),
+  "Admin reports page or navigation not rendered",
+);
+
 const smokeAdminOrderId = `smoke-admin-order-${Date.now()}`;
 const smokeAdminOrderNumber = `SMOKE-ORDER-${Date.now()}`;
 const smokeAdminOrderTimestamp = new Date().toISOString();
@@ -1061,6 +1075,7 @@ console.log(
         "authenticated-admin-dashboard",
         "authenticated-admin-integrations",
         "authenticated-admin-orders",
+        "authenticated-admin-reports",
         "authenticated-admin-order-detail",
         "authenticated-admin-quote-archive",
         "authenticated-admin-quote-detail",

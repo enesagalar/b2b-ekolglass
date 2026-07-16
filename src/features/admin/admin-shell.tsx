@@ -127,10 +127,10 @@ const navigationSections: AdminNavSection[] = [
       },
       {
         label: "Raporlar",
+        href: "/admin/raporlar",
         icon: BarChart3,
-        description: "Satış ve stok",
+        description: "Sipariş performansı",
         permission: "report.read",
-        soon: true,
       },
     ],
   },

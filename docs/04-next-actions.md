@@ -63,15 +63,26 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 ## Aktif Hedef
 
-Faz 5 - Kredi limiti ve ticari onay kontrolu.
+Faz 5 - Stok operasyon raporu ve kontrollu rapor disari aktarimi.
 
 ## Bir Sonraki Kodlama Turunda Yapilacaklar
 
-1. Kredi limiti ve acik siparis exposure hesabiyla ticari onay kapisi kurulacak.
-2. Production SMTP/S3/scheduler credential ve merkezi alarm kanali deployment ortaminda baglanacak.
-3. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
+1. Anlik stok, rezerve ve kullanilabilir miktar raporu yetki kapsamli kurulacak.
+2. Ekranla ayni veri sozlesmesini kullanan denetlenebilir CSV disari aktarimi eklenecek.
+3. Production SMTP/S3/scheduler credential ve merkezi alarm kanali deployment ortaminda baglanacak.
+4. Bagimsiz portal hostu, DNS/TLS ve ana site `Bayi Portali` butonu entegrasyon plani kesinlestirilecek.
 
 ## Son Tamamlanan Tur
+
+### 2026-07-16 - Satis ve siparis raporlamasi
+
+- `/admin/raporlar` para birimi ve Istanbul gun siniri bazli siparis performans ekranina donusturuldu.
+- Guncel net siparis, teslim, olay tarihli iptal, ortalama ve ticari inceleme KPI'lari eklendi.
+- Firma performansi, durum dagilimi ve sifir gunleri koruyan donem grafigi ayni sorgu kapsamini kullaniyor.
+- Fatura/tahsilat modeli olmadigi icin metrikler ciro olarak adlandirilmiyor ve para birimleri karistirilmiyor.
+- Rapor sorgu indeksleri migration zincirine ve lokal veritabanina uygulandi.
+- Vitest worker paralelligi Windows'ta deterministik calismasi icin dort worker ile sinirlandi.
+- 47 test dosyasi, 208 test, lint, production build, authenticated admin smoke ve desktop/mobile browser QA basarili.
 
 Faz disi B2B katalog ve ticaret akisi duzeltmesi tamamlandi:
 

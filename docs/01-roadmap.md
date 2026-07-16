@@ -189,5 +189,13 @@ Kapsam:
 
 Siradaki sira:
 
-1. Satis raporlari ve operasyon KPI'lari.
+1. Stok operasyon raporu ve kontrollu CSV disari aktarimi.
 2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
+
+Tamamlanan raporlama dilimi:
+
+- Para birimi bazinda siparis talebi, teslim, iptal, ortalama ve ticari inceleme KPI'lari.
+- Istanbul saat dilimine sabitlenmis 7/30/90 gun ve ozel tarih filtreleri.
+- Siparis snapshot tutarlariyla firma performansi, durum dagilimi ve kesintisiz zaman serisi.
+- Rapor sorgulari icin Order, Shipment ve OrderStatusHistory indeksleri.
+- Ekranin fatura, tahsilat veya muhasebe cirosu olmadigini aciklayan metrik sozlesmesi.
