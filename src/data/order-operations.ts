@@ -568,14 +568,25 @@ export async function transitionOrderStatus(
       input.targetStatus === "READY_FOR_SHIPMENT" &&
       order.shipmentMethod === "CITY_LOJISTIK"
     ) {
-      await enqueueIntegrationEvent(tx, {
-        topic: "shipping.shipment_create_requested.v1",
-        eventType: "SHIPMENT_CREATE_REQUESTED",
-        aggregateType: "Order",
-        aggregateId: order.id,
-        providerCode: "CITY_LOJISTIK",
-        payload: { orderId: order.id, orderVersion: resultVersion },
-        idempotencyKey: `shipment:${order.id}:create:v1`,
+      const provider = await tx.shippingProvider.findUnique({
+        where: { code: "CITY_LOJISTIK" },
+        select: { id: true },
+      });
+      await tx.shipment.upsert({
+        where: { orderId: order.id },
+        create: {
+          orderId: order.id,
+          providerId: provider?.id,
+          carrier: "CITY_LOJISTIK",
+          status: "AWAITING_MANUAL_DISPATCH",
+          rawStatus: "API_CONTRACT_PENDING",
+        },
+        update: {
+          providerId: provider?.id,
+          carrier: "CITY_LOJISTIK",
+          status: "AWAITING_MANUAL_DISPATCH",
+          rawStatus: "API_CONTRACT_PENDING",
+        },
       });
     }
 

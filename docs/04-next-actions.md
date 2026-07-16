@@ -2,6 +2,20 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-16 - City Lojistik aktivasyon kapisi
+
+- Resmi Turkiye web, takip ve transfer alanlari incelendi; kamuya acik surumlu API dokumani bulunamadi.
+- Farkli ulkedeki ada benzer firmanin API dokumani entegrasyon kaynagi olarak reddedildi.
+- Adapter, environment degerleri doldurulsa bile dogrulanmis sozlesme uygulanana kadar dis ag cagrisi yapmayacak sekilde kilitlendi.
+- Admin entegrasyon ekranina City Lojistik hazirlik kontrolleri eklendi; credential degerleri UI veya loglara tasinmiyor.
+- City sevkiyatlari handler yokken outbox sagligini bozmuyor; manuel sevk intent'i ve admin siparis baglantisi olusturuyor.
+- City ekibine gonderilecek teknik bilgi talebi ve kabul kapisi operasyon dokumanina yazildi.
+- Production environment preflight, liveness/readiness ayrimi ve migration deploy komutu eklendi.
+- Deploy, health, scheduler ve rollback kabul sirasi production runbook'una yazildi.
+- 53 test dosyasi ve 231 test, lint, TypeScript production build, authenticated smoke ve 375/1265 px browser QA basarili.
+- Lokal development environment'i production preflight ve readiness tarafindan beklendigi gibi reddediliyor; liveness HTTP 200, readiness HTTP 503 donuyor.
+- Siradaki ana dilim merkezi yapilandirilmis loglama, request correlation ve worker heartbeat'tir.
+
 ## 2026-07-14 - SQLite backup/restore ve medya reconciliation
 
 - Online SQLite backup, partial dosya ve final rename akisi eklendi.

@@ -189,8 +189,15 @@ Kapsam:
 
 Siradaki sira:
 
-1. Production deployment kabul kapisi ve merkezi gozlemlenebilirlik.
+1. Merkezi yapilandirilmis loglama, request correlation ve worker heartbeat.
 2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
+
+Tamamlanan production deployment kabul dilimi:
+
+- Secret degerlerini sizdirmayan merkezi production environment preflight.
+- Development DB, localhost/HTTP origin, zayif secret, SMTP, medya ve City aktivasyon kontrolleri.
+- Bagimlilik sorgulamayan `/api/health/live` ve 503 semantikli `/api/health/ready` ayrimi.
+- Production migration komutu ve deploy/rollback/scheduler kabul runbook'u.
 
 Tamamlanan raporlama dilimi:
 
@@ -203,3 +210,10 @@ Tamamlanan raporlama dilimi:
 - Fiziksel, rezerve ve kullanilabilir sayaçlardan turetilen stok risk siniflari.
 - Aktif rezervasyon defteri ile rezerve sayac uyumsuzluk kontrolu.
 - `stock.export` izinli, UTF-8 BOM ve formula-injection korumali CSV disari aktarimi.
+
+Tamamlanan City Lojistik hazirlik dilimi:
+
+- Canli API sozlesmesi olmadan ag cagrisi yapmayan fail-closed adapter kapisi.
+- Sozlesme surumu, HTTPS endpoint, credential ve musteri hesabi icin ayri aktivasyon kontrolleri.
+- Admin entegrasyon ekraninda secret sizdirmayan saglayici hazirlik gorunumu.
+- City ekibinden istenecek API, webhook, idempotency ve kabul testi teknik paketi.

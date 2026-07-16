@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "smoke:admin": "node scripts/smoke-admin.mjs",
     "outbox:run": "node --env-file=.env scripts/run-outbox-worker.mjs",
@@ -18,6 +19,7 @@
     "db:backup": "tsx --env-file=.env scripts/backup-sqlite.ts",
     "db:restore:verify": "tsx scripts/verify-sqlite-backup.ts",
     "media:reconcile": "tsx --env-file=.env scripts/reconcile-media.ts",
+    "preflight:production": "tsx scripts/production-preflight.ts",
     "catalog:import": "tsx scripts/import-products-csv.ts",
     "check": "npm run lint && npm run test && npm run build"
   },

@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { isReplayableOutboxTopic } from "@/domain/integration-topics";
 import { getOutboxHealth } from "@/integrations/outbox-health";
+import { getCityLogisticsReadiness } from "@/integrations/shipping/city-logistics-readiness";
 import { prisma } from "@/lib/prisma";
 
 export const outboxStatuses = [
@@ -44,7 +45,7 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
     ];
   }
 
-  const [events, total, topics, health] = await Promise.all([
+  const [events, total, topics, health, manualCityShipmentCount, manualCityShipments] = await Promise.all([
     prisma.integrationOutboxEvent.findMany({
       where,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -79,6 +80,18 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
       orderBy: { topic: "asc" },
     }),
     getOutboxHealth(),
+    prisma.shipment.count({ where: { status: "AWAITING_MANUAL_DISPATCH", carrier: "CITY_LOJISTIK" } }),
+    prisma.shipment.findMany({
+      where: { status: "AWAITING_MANUAL_DISPATCH", carrier: "CITY_LOJISTIK" },
+      orderBy: { updatedAt: "asc" },
+      take: 5,
+      select: {
+        id: true,
+        orderId: true,
+        updatedAt: true,
+        order: { select: { orderNumber: true } },
+      },
+    }),
   ]);
 
   return {
@@ -86,6 +99,9 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
     total,
     topics: topics.map((item) => item.topic),
     health,
+    cityLogistics: getCityLogisticsReadiness(),
+    manualCityShipmentCount,
+    manualCityShipments,
     emailWorkerEnabled: process.env.EMAIL_PROVIDER === "smtp",
   };
 }

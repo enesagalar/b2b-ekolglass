@@ -57,6 +57,10 @@ assert(
   `Health check failed with ${healthResponse.status}`,
 );
 const health = await healthResponse.json();
+
+const livenessResponse = await request("/api/health/live");
+assert(livenessResponse.status === 200, `Liveness check failed with ${livenessResponse.status}`);
+assert((await livenessResponse.json()).status === "ok", "Liveness response is not ok");
 assert(
   ["ok", "degraded"].includes(health.authentication),
   "Health check did not expose authentication status",
@@ -195,7 +199,9 @@ assert(
 const adminIntegrationsHtml = await adminIntegrationsResponse.text();
 assert(
   adminIntegrationsHtml.includes("Entegrasyon kuyruğu") &&
-    adminIntegrationsHtml.includes('href="/admin/entegrasyonlar"'),
+    adminIntegrationsHtml.includes('href="/admin/entegrasyonlar"') &&
+    adminIntegrationsHtml.includes("City Lojistik aktivasyon hazırlığı") &&
+    adminIntegrationsHtml.includes("Canlı aktarım kilitli"),
   "Admin integrations page or navigation not rendered",
 );
 const adminOrdersResponse = await request("/admin/siparisler", {

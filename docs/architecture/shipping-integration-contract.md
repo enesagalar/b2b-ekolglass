@@ -16,7 +16,8 @@ City Lojistik icin public ve dogrulanabilir Turkiye API dokumani bulunamadi. Bu 
 - Canli endpoint uydurulmaz.
 - Adapter varsayilan olarak pasif gelir.
 - `CITY_LOJISTIK_ENABLED=true` olmadan gonderi olusturulamaz.
-- `CITY_LOJISTIK_API_BASE_URL`, `CITY_LOJISTIK_API_KEY`, `CITY_LOJISTIK_ACCOUNT_NUMBER` gereklidir.
+- `CITY_LOJISTIK_API_BASE_URL`, `CITY_LOJISTIK_API_KEY`, `CITY_LOJISTIK_ACCOUNT_NUMBER` ve `CITY_LOJISTIK_CONTRACT_VERSION` gereklidir.
+- Environment degerleri tek basina yeterli degildir; kod seviyesi adapter kabul kapisi acilmadan ag cagrisi yapilmaz.
 
 ## Veritabani Modelleri
 
@@ -44,9 +45,9 @@ Mevcut versiyonlu olaylar:
 - `commerce.quote.submitted.v1`
 - `commerce.quote.status_changed.v1`
 - `commerce.quote.converted_to_order.v1`
-- `shipping.shipment_create_requested.v1`
+- `shipping.shipment_create_requested.v1` (canli adapter kabulunden sonra etkinlestirilecek rezerve topic)
 
-City Lojistik olayi kuyruga alinabilir; ancak dogrulanmis endpoint, auth, DTO ve provider idempotency davranisi gelmeden dis ag cagrisi yapan handler yazilmaz.
+City Lojistik secili siparis `READY_FOR_SHIPMENT` oldugunda `Shipment.status=AWAITING_MANUAL_DISPATCH` intent'i ayni transaction'da olusturulur. Dogrulanmis endpoint, auth, DTO ve provider idempotency davranisi gelmeden shipping outbox olayi uretilmez; boylece isleyicisiz sahte backlog ve yanlis health alarmi olusmaz.
 
 ## Canliya Gecis Checklist
 

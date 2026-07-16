@@ -603,7 +603,7 @@ describe("order status operations", () => {
     });
   });
 
-  it("enqueues City shipment creation only after the ready transition commits", async () => {
+  it("creates a manual City shipment intent without an unsupported outbox event", async () => {
     const order = await createOrder("PREPARING", [], "CITY_LOJISTIK");
 
     await transitionOrderStatus(actor, {
@@ -618,14 +618,11 @@ describe("order status operations", () => {
       where: { aggregateId: order.id },
       orderBy: { createdAt: "asc" },
     });
-    expect(events.map((event) => event.topic)).toEqual([
-      "commerce.order.status_changed.v1",
-      "shipping.shipment_create_requested.v1",
-    ]);
-    expect(events[1]).toMatchObject({
-      providerCode: "CITY_LOJISTIK",
-      status: "PENDING",
-      attempts: 0,
+    expect(events.map((event) => event.topic)).toEqual(["commerce.order.status_changed.v1"]);
+    expect(await prisma.shipment.findUniqueOrThrow({ where: { orderId: order.id } })).toMatchObject({
+      carrier: "CITY_LOJISTIK",
+      status: "AWAITING_MANUAL_DISPATCH",
+      rawStatus: "API_CONTRACT_PENDING",
     });
   });
 

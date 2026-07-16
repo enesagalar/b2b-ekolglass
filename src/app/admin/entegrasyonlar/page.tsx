@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   RotateCcw,
   Search,
+  Truck,
 } from "lucide-react";
 
 import {
@@ -114,6 +115,57 @@ export default async function AdminIntegrationsPage({
         <div className={`inline-flex min-h-10 items-center gap-2 self-start rounded-md px-3 py-2 text-sm font-semibold ring-1 ${data.health.status === "ok" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : data.health.status === "empty" ? "bg-slate-100 text-slate-700 ring-slate-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
           {data.health.status === "ok" ? <CircleCheck size={17} /> : <AlertTriangle size={17} />}
           {data.health.status === "ok" ? "Kuyruk sağlıklı" : data.health.status === "empty" ? "Henüz teslimat olayı yok" : `${data.health.overdue} gecikmiş · ${data.health.unsupportedReady} işleyicisiz`}
+        </div>
+      </section>
+
+      <section className={`${panelClass} overflow-hidden`} data-testid="city-logistics-readiness">
+        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-800">
+              <Truck size={21} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-teal-800">Kargo sağlayıcısı</p>
+              <h3 className="mt-1 text-lg font-semibold text-slate-950">City Lojistik aktivasyon hazırlığı</h3>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+                Türkiye servisine ait doğrulanmış API sözleşmesi ve test hesabı gelene kadar dış ağ aktarımı kapalı tutulur.
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex min-h-9 shrink-0 items-center gap-2 self-start rounded-md bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-200">
+            <AlertTriangle size={16} /> Canlı aktarım kilitli · {data.manualCityShipmentCount} manuel sevk
+          </span>
+        </div>
+        <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-3">
+          {data.cityLogistics.checks.map((check) => (
+            <div key={check.key} className="bg-white p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-900">{check.label}</p>
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${check.status === "ready" ? "bg-emerald-500" : check.status === "blocked" ? "bg-amber-500" : "bg-slate-300"}`} />
+              </div>
+              <p className="mt-2 text-xs leading-5 text-slate-500">{check.detail}</p>
+            </div>
+          ))}
+        </div>
+        {data.manualCityShipments.length ? (
+          <div className="border-t border-slate-200 px-5 py-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Manuel işlem bekleyen siparişler</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {data.manualCityShipments.map((shipment) => (
+                <Link
+                  key={shipment.id}
+                  href={`/admin/siparisler/${shipment.orderId}`}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:border-teal-700 hover:text-teal-800"
+                >
+                  {shipment.order.orderNumber}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-2 bg-slate-50 px-5 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <p>Resmi iletişim: <a className="font-semibold text-teal-800 underline-offset-4 hover:underline" href="mailto:info@citylojistik.com">info@citylojistik.com</a> · 0850 259 24 89</p>
+          <p className="text-xs font-semibold text-slate-500">Teknik sözleşme bekleniyor</p>
         </div>
       </section>
 
