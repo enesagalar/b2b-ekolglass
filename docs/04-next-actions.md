@@ -2,6 +2,28 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-16 - Provider-neutral sistem alarm teslimi
+
+Tamamlananlar:
+
+- `SystemAlertState` ile warning, critical, escalation, reminder ve recovery yasam dongusu.
+- State version + transactional outbox idempotency ile paralel evaluator deduplication.
+- E-posta worker'indan bagimsiz `system.alert.notification.v1` teslim worker'i ve scheduler endpoint'i.
+- HTTPS/443 host allowlist, private IP literal reddi, redirect kapisi, timeout ve HMAC-SHA256 imzasi.
+- `408/425/429/5xx` retry, kalici `4xx` dead-letter ve audit izli replay sozlesmesi.
+- Production preflight'ta ayri secret, URL, allowlist, timeout ve scheduler esik kontrolleri.
+- Admin entegrasyon ekraninda hesaplanan sagliktan ayri provider hazirligi, alarm olayi, kuyruklama ve teslim gorunurlugu.
+- Tum scheduler runner'larinda tek satir kontrollu JSON, sure, HTTP durum ve correlation ID cikisi.
+- 32 migration, 62 test dosyasi ve 266 test, lint, uyarisiz production build, 42 adimli smoke ve 1440/390 px browser QA basarili.
+
+Production aktivasyon kapisi:
+
+1. Webhook receiver/saglayici secilecek; idempotency, HMAC timestamp ve replay reddi staging'de kanitlanacak.
+2. Scheduler platformunda `SYSTEM_ALERT_DISPATCH` icin bagimsiz non-zero/dead-man alarmi kurulacak.
+3. Stdout/stderr JSON akisi icin merkezi log sink secilip event/correlation indeksleri acilacak.
+4. Backup bundle'lari farkli failure domain'e sifreli aktarilacak.
+5. City Lojistik API sozlesmesi geldiginde canli adapter kabulune gecilecek.
+
 ## 2026-07-16 - Backup heartbeat, alarm seviyesi ve retention
 
 Tamamlananlar:

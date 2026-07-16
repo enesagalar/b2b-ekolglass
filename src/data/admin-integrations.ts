@@ -2,7 +2,8 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
-import { isReplayableOutboxTopic } from "@/domain/integration-topics";
+import { isActiveOutboxTopic, isReplayableOutboxTopic } from "@/domain/integration-topics";
+import { getSystemAlertReadiness } from "@/integrations/alerts/config";
 import { getOutboxHealth } from "@/integrations/outbox-health";
 import { getCityLogisticsReadiness } from "@/integrations/shipping/city-logistics-readiness";
 import { prisma } from "@/lib/prisma";
@@ -46,7 +47,7 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
     ];
   }
 
-  const [events, total, topics, health, manualCityShipmentCount, manualCityShipments, systemJobs] = await Promise.all([
+  const [events, total, topics, health, manualCityShipmentCount, manualCityShipments, systemJobs, systemAlerts] = await Promise.all([
     prisma.integrationOutboxEvent.findMany({
       where,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -94,6 +95,10 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
       },
     }),
     getSystemJobsHealth(),
+    prisma.systemAlertState.findMany({
+      orderBy: [{ status: "asc" }, { lastObservedAt: "desc" }],
+      take: 10,
+    }),
   ]);
 
   return {
@@ -105,7 +110,8 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
     manualCityShipmentCount,
     manualCityShipments,
     systemJobs,
-    emailWorkerEnabled: process.env.EMAIL_PROVIDER === "smtp",
+    systemAlerts,
+    systemAlertReadiness: getSystemAlertReadiness(),
   };
 }
 
@@ -149,7 +155,7 @@ export async function replayOutboxEvent(actorUserId: string, input: ReplayOutbox
     if (!event) throw new OutboxReplayError("Outbox kaydı bulunamadı.", "NOT_FOUND");
     if (
       !isReplayableOutboxTopic(event.topic) ||
-      process.env.EMAIL_PROVIDER !== "smtp"
+      !isActiveOutboxTopic(event.topic)
     ) {
       throw new OutboxReplayError("Bu topic için çalışan teslim adapteri yok.", "UNSUPPORTED_TOPIC");
     }

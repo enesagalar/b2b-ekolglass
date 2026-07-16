@@ -2,6 +2,8 @@ import path from "node:path";
 
 import { z } from "zod";
 
+import { getSystemAlertConfig } from "@/integrations/alerts/config";
+
 type RuntimeEnvironment = Record<string, string | undefined>;
 
 export type ProductionEnvironmentIssue = {
@@ -15,6 +17,8 @@ const requiredSecretKeys = [
   "MAINTENANCE_CRON_SECRET",
   "OUTBOX_CRON_SECRET",
   "BACKUP_CRON_SECRET",
+  "SYSTEM_ALERT_CRON_SECRET",
+  "SYSTEM_ALERT_WEBHOOK_SECRET",
   "CREDENTIAL_LINK_SECRET",
 ] as const;
 
@@ -24,6 +28,7 @@ const baseSchema = z.object({
   OUTBOX_BASE_URL: z.string().url(),
   MAINTENANCE_BASE_URL: z.string().url(),
   BACKUP_BASE_URL: z.string().url(),
+  SYSTEM_ALERT_BASE_URL: z.string().url(),
   DATABASE_BACKUP_ROOT: z.string().min(1),
   SYSTEM_JOB_LEASE_MINUTES: z.coerce.number().int().positive(),
   BACKUP_JOB_LEASE_MINUTES: z.coerce.number().int().positive(),
@@ -35,6 +40,13 @@ const baseSchema = z.object({
   BACKUP_HEARTBEAT_MAX_AGE_MINUTES: z.coerce.number().int().positive(),
   RETENTION_HEARTBEAT_WARN_AFTER_MINUTES: z.coerce.number().int().positive(),
   RETENTION_HEARTBEAT_MAX_AGE_MINUTES: z.coerce.number().int().positive(),
+  SYSTEM_ALERT_HEARTBEAT_WARN_AFTER_MINUTES: z.coerce.number().int().positive(),
+  SYSTEM_ALERT_HEARTBEAT_MAX_AGE_MINUTES: z.coerce.number().int().positive(),
+  SYSTEM_ALERT_REMINDER_MINUTES: z.coerce.number().int().positive(),
+  SYSTEM_ALERT_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000),
+  SYSTEM_ALERT_PROVIDER: z.literal("webhook"),
+  SYSTEM_ALERT_WEBHOOK_URL: z.string().url(),
+  SYSTEM_ALERT_WEBHOOK_ALLOWED_HOSTS: z.string().min(1),
   SYSTEM_JOB_CRITICAL_AFTER_FAILURES: z.coerce.number().int().positive(),
   SYSTEM_JOB_RUN_SUCCESS_RETENTION_DAYS: z.coerce.number().int().positive(),
   SYSTEM_JOB_RUN_FAILED_RETENTION_DAYS: z.coerce.number().int().positive(),
@@ -82,8 +94,16 @@ export function validateProductionEnvironment(env: RuntimeEnvironment = process.
       issues.push({ key, message: "En az 32 karakterlik, placeholder olmayan secret gerekli." });
     }
   }
+  const seenSecrets = new Map<string, string>();
+  for (const key of requiredSecretKeys) {
+    const value = env[key];
+    if (!value) continue;
+    const previous = seenSecrets.get(value);
+    if (previous) issues.push({ key, message: `Secret ${previous} ile aynı olamaz.` });
+    else seenSecrets.set(value, key);
+  }
 
-  for (const key of ["NEXT_PUBLIC_SITE_URL", "OUTBOX_BASE_URL", "MAINTENANCE_BASE_URL", "BACKUP_BASE_URL"] as const) {
+  for (const key of ["NEXT_PUBLIC_SITE_URL", "OUTBOX_BASE_URL", "MAINTENANCE_BASE_URL", "BACKUP_BASE_URL", "SYSTEM_ALERT_BASE_URL"] as const) {
     if (!isSecurePublicOrigin(env[key]) && !issues.some((item) => item.key === key)) {
       issues.push({ key, message: "Production için localhost olmayan HTTPS origin gerekli." });
     }
@@ -103,6 +123,7 @@ export function validateProductionEnvironment(env: RuntimeEnvironment = process.
     ["SYSTEM_JOB_LEASE_MINUTES", "MAINTENANCE_HEARTBEAT_WARN_AFTER_MINUTES", "MAINTENANCE_HEARTBEAT_MAX_AGE_MINUTES"],
     ["BACKUP_JOB_LEASE_MINUTES", "BACKUP_HEARTBEAT_WARN_AFTER_MINUTES", "BACKUP_HEARTBEAT_MAX_AGE_MINUTES"],
     ["SYSTEM_JOB_LEASE_MINUTES", "RETENTION_HEARTBEAT_WARN_AFTER_MINUTES", "RETENTION_HEARTBEAT_MAX_AGE_MINUTES"],
+    ["SYSTEM_JOB_LEASE_MINUTES", "SYSTEM_ALERT_HEARTBEAT_WARN_AFTER_MINUTES", "SYSTEM_ALERT_HEARTBEAT_MAX_AGE_MINUTES"],
   ] as const) {
     const lease = integer(leaseKey);
     const warn = integer(warnKey);
@@ -116,6 +137,12 @@ export function validateProductionEnvironment(env: RuntimeEnvironment = process.
   const failedRetention = integer("SYSTEM_JOB_RUN_FAILED_RETENTION_DAYS");
   if (Number.isInteger(successRetention) && Number.isInteger(failedRetention) && successRetention > failedRetention) {
     issues.push({ key: "SYSTEM_JOB_RUN_SUCCESS_RETENTION_DAYS", message: "Başarılı iş retention süresi hata geçmişinden uzun olamaz." });
+  }
+
+  try {
+    getSystemAlertConfig({ ...env, NODE_ENV: "production" });
+  } catch {
+    if (!issues.some((item) => item.key === "SYSTEM_ALERT_WEBHOOK_URL")) issues.push({ key: "SYSTEM_ALERT_WEBHOOK_URL", message: "Production webhook güvenlik sözleşmesi geçersiz." });
   }
 
   if (Boolean(env.SMTP_USER?.trim()) !== Boolean(env.SMTP_PASSWORD?.trim())) {

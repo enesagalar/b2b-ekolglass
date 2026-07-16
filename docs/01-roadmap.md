@@ -189,7 +189,7 @@ Kapsam:
 
 Siradaki sira:
 
-1. Merkezi log sink, alarm kanali ve sifreli offsite backup aktarimi.
+1. Merkezi log sink, staging alarm receiver kabul kaniti ve sifreli offsite backup aktarimi.
 2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
 
 Tamamlanan gozlemlenebilirlik dilimi:
@@ -200,6 +200,7 @@ Tamamlanan gozlemlenebilirlik dilimi:
 - Operasyonel health ve admin entegrasyon ekraninda scheduler gorunurlugu.
 - Backup ve retention icin ayri scheduler job'lari, warning/critical alarm seviyesi ve lease fencing.
 - Atomik backup bundle, restore provasi ve run-history retention politikasi.
+- Outbox tabanli OPENED/ESCALATED/REMINDER/RECOVERED alarm yasam dongusu, HMAC webhook ve admin teslim gorunurlugu.
 
 Tamamlanan production deployment kabul dilimi:
 

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { emailOutboxTopics } from "@/domain/integration-topics";
+import { emailOutboxTopics, systemAlertOutboxTopic } from "@/domain/integration-topics";
 import { prisma } from "@/lib/prisma";
 
 export async function getOutboxHealth(now = new Date()) {
@@ -47,6 +47,7 @@ export async function getOutboxHealth(now = new Date()) {
   const activeTopics = new Set<string>(
     process.env.EMAIL_PROVIDER === "smtp" ? emailOutboxTopics : [],
   );
+  if (process.env.SYSTEM_ALERT_PROVIDER === "webhook") activeTopics.add(systemAlertOutboxTopic);
   const unsupportedTopics = dueTopics
     .filter((item) => !activeTopics.has(item.topic))
     .map((item) => ({ topic: item.topic, count: item._count._all }));

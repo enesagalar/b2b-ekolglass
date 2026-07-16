@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import {
   Activity,
   AlertTriangle,
+  BellRing,
   CircleCheck,
   Clock3,
   Filter,
@@ -18,6 +19,7 @@ import {
 } from "@/data/admin-integrations";
 import {
   integrationTopicLabels,
+  isActiveOutboxTopic,
   isReplayableOutboxTopic,
 } from "@/domain/integration-topics";
 import { hasPermission, isKnownRole } from "@/domain/roles";
@@ -45,6 +47,12 @@ const jobStatusLabels: Record<string, string> = {
   stale: "Gecikmiş",
   late: "Uyarı eşiğinde",
   failed: "Başarısız",
+};
+const alertEventLabels: Record<string, string> = {
+  OPENED: "Alarm açıldı",
+  ESCALATED: "Kritik seviyeye yükseldi",
+  REMINDER: "Hatırlatma kuyruğa alındı",
+  RECOVERED: "Düzeldi",
 };
 
 function first(value: string | string[] | undefined) {
@@ -178,6 +186,50 @@ export default async function AdminIntegrationsPage({
         </div>
       </section>
 
+      <section className={`${panelClass} overflow-hidden`} data-testid="system-alert-delivery">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+              <BellRing size={19} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-teal-800">Alarm teslim kanalı</p>
+              <h3 className="mt-1 text-lg font-semibold text-slate-950">Operasyon bildirimleri</h3>
+              <p className="mt-1 text-sm text-slate-600">Hesaplanan scheduler sağlığı ile dış kanala teslim durumunu ayrı izleyin.</p>
+            </div>
+          </div>
+          <span className={`inline-flex min-h-9 items-center gap-2 self-start rounded-md px-3 py-2 text-sm font-semibold ring-1 ${data.systemAlertReadiness.status === "ready" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : data.systemAlertReadiness.status === "blocked" ? "bg-red-50 text-red-800 ring-red-200" : "bg-slate-100 text-slate-700 ring-slate-200"}`}>
+            {data.systemAlertReadiness.status === "ready" ? <CircleCheck size={16} /> : <AlertTriangle size={16} />}
+            {data.systemAlertReadiness.status === "ready" ? "Webhook hazır" : data.systemAlertReadiness.status === "blocked" ? "Yapılandırma geçersiz" : "Sağlayıcı devre dışı"}
+          </span>
+        </div>
+        {data.systemAlerts.length ? (
+          <div className="divide-y divide-slate-200">
+            {data.systemAlerts.map((alert) => (
+              <div key={alert.jobKey} className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_140px_180px_180px] md:items-center">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{alert.jobKey}</p>
+                  <p className="mt-1 text-xs text-slate-500">{alertEventLabels[alert.lastEventType ?? ""] ?? "Henüz olay yok"} · {alert.reasonCode ?? "neden yok"}</p>
+                </div>
+                <span className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-semibold ring-1 ${alert.status === "ACTIVE" && alert.currentSeverity === "critical" ? "bg-red-50 text-red-800 ring-red-200" : alert.status === "ACTIVE" ? "bg-amber-50 text-amber-900 ring-amber-200" : "bg-emerald-50 text-emerald-800 ring-emerald-200"}`}>
+                  {alert.status === "ACTIVE" ? alert.currentSeverity === "critical" ? "Kritik" : "Uyarı" : "Çözüldü"}
+                </span>
+                <div className="text-sm">
+                  <p className="text-xs text-slate-500">Son kuyruklama</p>
+                  <p className="mt-1 font-semibold text-slate-800">{formatIntegrationDate(alert.lastQueuedAt)}</p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-xs text-slate-500">Son başarılı teslim</p>
+                  <p className="mt-1 font-semibold text-slate-800">{formatIntegrationDate(alert.lastDeliveredAt)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="px-5 py-8 text-sm text-slate-500">Henüz kalıcı sistem alarm olayı oluşmadı.</p>
+        )}
+      </section>
+
       <section className={`${panelClass} overflow-hidden`} data-testid="city-logistics-readiness">
         <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 gap-3">
@@ -285,7 +337,7 @@ export default async function AdminIntegrationsPage({
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {data.events.map((event) => {
-                  const replayable = canReplay && data.emailWorkerEnabled && ["DEAD", "RETRY"].includes(event.status) && isReplayableOutboxTopic(event.topic);
+                  const replayable = canReplay && isActiveOutboxTopic(event.topic) && ["DEAD", "RETRY"].includes(event.status) && isReplayableOutboxTopic(event.topic);
                   return (
                     <tr key={event.id} className="align-top hover:bg-slate-50">
                       <td className="px-5 py-4">
@@ -319,7 +371,7 @@ export default async function AdminIntegrationsPage({
                           />
                         ) : (
                           <span className="text-xs text-slate-400">
-                            {!isReplayableOutboxTopic(event.topic) || !data.emailWorkerEnabled
+                            {!isReplayableOutboxTopic(event.topic) || !isActiveOutboxTopic(event.topic)
                               ? "İşleyici yok"
                               : "İşlem yok"}
                           </span>

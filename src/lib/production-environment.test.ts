@@ -8,6 +8,7 @@ const validEnvironment = {
   OUTBOX_BASE_URL: "https://portal.ekolglass.com",
   MAINTENANCE_BASE_URL: "https://portal.ekolglass.com",
   BACKUP_BASE_URL: "https://portal.ekolglass.com",
+  SYSTEM_ALERT_BASE_URL: "https://portal.ekolglass.com",
   DATABASE_BACKUP_ROOT: "/var/lib/ekolglass/backups",
   SYSTEM_JOB_LEASE_MINUTES: "5",
   BACKUP_JOB_LEASE_MINUTES: "30",
@@ -19,6 +20,13 @@ const validEnvironment = {
   BACKUP_HEARTBEAT_MAX_AGE_MINUTES: "2160",
   RETENTION_HEARTBEAT_WARN_AFTER_MINUTES: "1500",
   RETENTION_HEARTBEAT_MAX_AGE_MINUTES: "2160",
+  SYSTEM_ALERT_HEARTBEAT_WARN_AFTER_MINUTES: "6",
+  SYSTEM_ALERT_HEARTBEAT_MAX_AGE_MINUTES: "10",
+  SYSTEM_ALERT_REMINDER_MINUTES: "360",
+  SYSTEM_ALERT_TIMEOUT_MS: "10000",
+  SYSTEM_ALERT_PROVIDER: "webhook",
+  SYSTEM_ALERT_WEBHOOK_URL: "https://alerts.example.com/ekolglass",
+  SYSTEM_ALERT_WEBHOOK_ALLOWED_HOSTS: "alerts.example.com",
   SYSTEM_JOB_CRITICAL_AFTER_FAILURES: "3",
   SYSTEM_JOB_RUN_SUCCESS_RETENTION_DAYS: "14",
   SYSTEM_JOB_RUN_FAILED_RETENTION_DAYS: "90",
@@ -35,6 +43,8 @@ const validEnvironment = {
   MAINTENANCE_CRON_SECRET: "c".repeat(48),
   OUTBOX_CRON_SECRET: "d".repeat(48),
   BACKUP_CRON_SECRET: "f".repeat(48),
+  SYSTEM_ALERT_CRON_SECRET: "g".repeat(48),
+  SYSTEM_ALERT_WEBHOOK_SECRET: "h".repeat(48),
   CREDENTIAL_LINK_SECRET: "e".repeat(48),
   CITY_LOJISTIK_ENABLED: "false",
 };
@@ -79,5 +89,17 @@ describe("validateProductionEnvironment", () => {
     expect(result.issues.map((issue) => issue.key)).toEqual(
       expect.arrayContaining(["DATABASE_BACKUP_ROOT", "BACKUP_HEARTBEAT_WARN_AFTER_MINUTES"]),
     );
+  });
+
+  it("rejects private webhook targets and reused runtime secrets", () => {
+    const result = validateProductionEnvironment({
+      ...validEnvironment,
+      SYSTEM_ALERT_WEBHOOK_URL: "https://127.0.0.1/alerts",
+      SYSTEM_ALERT_WEBHOOK_ALLOWED_HOSTS: "127.0.0.1",
+      SYSTEM_ALERT_WEBHOOK_SECRET: validEnvironment.SYSTEM_ALERT_CRON_SECRET,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.key)).toEqual(expect.arrayContaining(["SYSTEM_ALERT_WEBHOOK_URL", "SYSTEM_ALERT_WEBHOOK_SECRET"]));
   });
 });

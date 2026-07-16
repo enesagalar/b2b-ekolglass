@@ -9,6 +9,7 @@ export const systemJobKeys = [
   "AUTH_RATE_LIMIT_MAINTENANCE",
   "DATABASE_BACKUP",
   "SYSTEM_JOB_RETENTION",
+  "SYSTEM_ALERT_DISPATCH",
 ] as const;
 export type SystemJobKey = (typeof systemJobKeys)[number];
 
@@ -17,6 +18,7 @@ const jobLabels: Record<SystemJobKey, string> = {
   AUTH_RATE_LIMIT_MAINTENANCE: "Giriş güvenliği bakımı",
   DATABASE_BACKUP: "Veritabanı yedekleme",
   SYSTEM_JOB_RETENTION: "İş geçmişi temizliği",
+  SYSTEM_ALERT_DISPATCH: "Sistem alarm dağıtımı",
 };
 
 export class SystemJobBusyError extends Error {}
@@ -45,6 +47,10 @@ export function getSystemJobThresholds(env = process.env) {
     SYSTEM_JOB_RETENTION: {
       warnAfterMinutes: positiveInteger(env.RETENTION_HEARTBEAT_WARN_AFTER_MINUTES, 1_500),
       maxAgeMinutes: positiveInteger(env.RETENTION_HEARTBEAT_MAX_AGE_MINUTES, 2_160),
+    },
+    SYSTEM_ALERT_DISPATCH: {
+      warnAfterMinutes: positiveInteger(env.SYSTEM_ALERT_HEARTBEAT_WARN_AFTER_MINUTES, 6),
+      maxAgeMinutes: positiveInteger(env.SYSTEM_ALERT_HEARTBEAT_MAX_AGE_MINUTES, 10),
     },
     leaseMinutes: positiveInteger(env.SYSTEM_JOB_LEASE_MINUTES, 5),
     backupLeaseMinutes: positiveInteger(env.BACKUP_JOB_LEASE_MINUTES, 30),
@@ -248,7 +254,11 @@ export async function getSystemJobsHealth(now = new Date()) {
   const byKey = new Map(states.map((state) => [state.jobKey, state]));
   const latestRunByKey = new Map(systemJobKeys.map((jobKey, index) => [jobKey, latestRuns[index]]));
   const jobs = systemJobKeys.map((jobKey) => {
-    const enabled = jobKey !== "EMAIL_OUTBOX" || process.env.EMAIL_PROVIDER === "smtp";
+    const enabled = jobKey === "EMAIL_OUTBOX"
+      ? process.env.EMAIL_PROVIDER === "smtp"
+      : jobKey === "SYSTEM_ALERT_DISPATCH"
+        ? process.env.SYSTEM_ALERT_PROVIDER === "webhook"
+        : true;
     const state = byKey.get(jobKey) ?? null;
     const lastRun = latestRunByKey.get(jobKey) ?? null;
     const { warnAfterMinutes, maxAgeMinutes } = thresholds[jobKey];

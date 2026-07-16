@@ -45,10 +45,12 @@ SMTP credential veya dogrulanmis gonderici domain bu repoda bulunmadigi icin pro
 ```bash
 npm run auth-rate-limit:maintain
 npm run outbox:run
-npm run db:backup
+npm run db:backup:run
+npm run system-jobs:maintain
+npm run system-alerts:run
 ```
 
-Her iki komut da bearer secret'i sadece process environment'tan okur. HTTP cevabi basarisizsa komut non-zero cikis uretir. Rate-limit temizligi ayni anda birden fazla calissa da yalniz `expiresAt <= now` kayitlarini silen idempotent bir islemdir.
+Her komut bearer secret'i sadece process environment'tan okur. HTTP cevabi basarisizsa komut non-zero cikis ve correlation ID iceren kontrollu tek satir JSON uretir. Rate-limit temizligi ayni anda birden fazla calissa da yalniz `expiresAt <= now` kayitlarini silen idempotent bir islemdir.
 
 ## Health ve Alarmlar
 
@@ -57,6 +59,8 @@ Her iki komut da bearer secret'i sadece process environment'tan okur. HTTP cevab
 - `database`
 - `outbox`
 - `authentication`
+- `systemJobs`
+- `systemJobsSeverity`
 - birlesik `status`
 
 Alarm kurallari:

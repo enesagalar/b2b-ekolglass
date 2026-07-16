@@ -9,7 +9,7 @@ Bu katman uygulama hatalarini, HTTP isteklerini ve zamanlanmis islerin calisma d
 - `SystemJobRun`: Her scheduler cagrisinin calisma gecmisidir.
 - `SystemJobState`: Bir isin son durumu ve aktif lease kaydidir.
 
-Izlenen is anahtarlari `EMAIL_OUTBOX`, `AUTH_RATE_LIMIT_MAINTENANCE`, `DATABASE_BACKUP` ve `SYSTEM_JOB_RETENTION` olarak tanimlidir.
+Izlenen is anahtarlari `EMAIL_OUTBOX`, `AUTH_RATE_LIMIT_MAINTENANCE`, `DATABASE_BACKUP`, `SYSTEM_JOB_RETENTION` ve `SYSTEM_ALERT_DISPATCH` olarak tanimlidir.
 
 ## Korelasyon Kimligi
 
@@ -46,6 +46,7 @@ Database backup icin ayri `BACKUP_JOB_LEASE_MINUTES` kullanilir. Heartbeat ve fi
 - Giris guvenligi bakimi: warning 90, critical 180 dakika.
 - Database backup: warning 1500, critical 2160 dakika.
 - Is gecmisi retention: warning 1500, critical 2160 dakika.
+- Sistem alarm dagitimi: warning 6, critical 10 dakika; provider kapaliyken `disabled`.
 - E-posta saglayicisi devre disiyken outbox isi `disabled` kabul edilir.
 
 Warning esigi asildiginda operasyon uyarisi, critical esigi veya `SYSTEM_JOB_CRITICAL_AFTER_FAILURES` kadar ardisik hata asildiginda kritik alarm uretilir. Eksik, basarisiz veya gecikmis scheduler kaydi `/api/health` sonucunu `degraded` yapar. Bu durum `/api/health/ready` sonucunu 503 yapmaz; scheduler problemi yeni HTTP trafiginin veritabani ve depolama baglantilarini kullanmasini engellemez.
@@ -54,8 +55,10 @@ Basarili run kayitlari varsayilan 14, hatali run kayitlari 90 gun tutulur. `SYST
 
 Admin kullanicisi guncel durumu `/admin/entegrasyonlar` ekranindaki **Zamanlanmis isler** bolumunden izler.
 
+Alarm durumu ve teslim sagligi ayni sey degildir. `SystemAlertState` warning/critical yasam dongusunu, `system.alert.notification.v1` outbox topic'i ise provider teslimini tutar. OPENED, ESCALATED, REMINDER ve RECOVERED gecisleri kalici version ve idempotency anahtariyla uretilir. Webhook HMAC, host allowlist, timeout ve redirect kapisi `docs/architecture/system-alert-delivery.md` icinde tanimlidir.
+
 ## Operasyon Sonrasi Adimlar
 
-- Merkezi log servisi ve alarm kurallari kurulacak.
-- Scheduler icin ard arda hata ve gecikme alarmlari tanimlanacak.
+- Stdout/stderr JSON akisini alacak merkezi log servisi secilecek ve indeksler kurulacak.
+- Provider-neutral alarm webhook'u staging receiver ile etkinlestirilip teslim kaniti alinacak.
 - Yerel backup bundle'lari farkli failure domain'e sifreli tasiyacak saglayici secilecek.

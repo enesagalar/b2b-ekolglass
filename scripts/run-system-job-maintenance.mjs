@@ -5,15 +5,17 @@ if (!secret || secret.length < 32 || secret.toLowerCase().startsWith("replace-wi
   throw new Error("MAINTENANCE_CRON_SECRET güçlü, placeholder olmayan ve en az 32 karakter olmalıdır.");
 }
 
+const startedAt = Date.now();
 const response = await fetch(new URL("/api/internal/maintenance/system-jobs", baseUrl), {
   method: "POST",
   headers: { authorization: `Bearer ${secret}` },
   signal: AbortSignal.timeout(45_000),
 });
 const result = await response.json();
-
+const correlationId = response.headers.get("x-request-id") ?? result.correlationId ?? null;
 if (!response.ok) {
-  throw new Error(`System job maintenance HTTP ${response.status}: ${result.error ?? "Bilinmeyen hata"}`);
+  console.error(JSON.stringify({ status: "failed", jobKey: "SYSTEM_JOB_RETENTION", httpStatus: response.status, correlationId, durationMs: Date.now() - startedAt }));
+  process.exitCode = 1;
+} else {
+  console.log(JSON.stringify({ status: "succeeded", jobKey: "SYSTEM_JOB_RETENTION", httpStatus: response.status, correlationId, durationMs: Date.now() - startedAt, deleted: result.deleted, byStatus: result.byStatus }));
 }
-
-console.log(JSON.stringify(result));

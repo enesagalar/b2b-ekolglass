@@ -200,6 +200,7 @@ const adminIntegrationsHtml = await adminIntegrationsResponse.text();
 assert(
   adminIntegrationsHtml.includes("Entegrasyon kuyruğu") &&
     adminIntegrationsHtml.includes('href="/admin/entegrasyonlar"') &&
+    adminIntegrationsHtml.includes('data-testid="system-alert-delivery"') &&
     adminIntegrationsHtml.includes("City Lojistik aktivasyon hazırlığı") &&
     adminIntegrationsHtml.includes("Canlı aktarım kilitli"),
   "Admin integrations page or navigation not rendered",

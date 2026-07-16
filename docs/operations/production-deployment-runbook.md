@@ -8,6 +8,7 @@ Bu runbook bir release'in migration, runtime konfigurasyonu, health kapilari ve 
 
 - Outbox endpoint'i en az dakikada bir, giris guvenligi bakimi en az saatte bir calistirilir.
 - `npm run db:backup:run` ve `npm run system-jobs:maintain` gunde bir calistirilir.
+- `npm run system-alerts:run` en az dakikada bir calistirilir ve non-zero cikisi bagimsiz dead-man alarmi uretir.
 - Her cagrinin cevabindaki `x-request-id` scheduler logunda saklanir.
 - `/api/health` icindeki `systemJobs` degeri `degraded` ise `/admin/entegrasyonlar` ekranindan eksik, gecikmis veya basarisiz is belirlenir.
 - Warning/critical heartbeat, lease ve run-history retention degerleri uretim ortamina acikca tanimlanir; preflight `lease < warning < critical` sirasini zorlar.
@@ -26,10 +27,11 @@ Detayli model ve guvenlik kararlari icin `docs/architecture/observability-and-sy
 Zorunlu gruplar:
 
 - Veritabani: production'a ozel `DATABASE_URL`.
-- Origin: HTTPS `NEXT_PUBLIC_SITE_URL`, `OUTBOX_BASE_URL`, `MAINTENANCE_BASE_URL`.
+- Origin: HTTPS `NEXT_PUBLIC_SITE_URL`, `OUTBOX_BASE_URL`, `MAINTENANCE_BASE_URL`, `BACKUP_BASE_URL`, `SYSTEM_ALERT_BASE_URL`.
 - Auth: birbirinden farkli ve en az 32 karakterlik runtime secret'lari.
 - E-posta: SMTP provider, host, TLS ve gonderici.
 - Medya: acik `LOCAL` veya eksiksiz `S3` konfigurasyonu.
+- Alarm: webhook provider, HTTPS/443 allowlist hedefi, ayri HMAC secret ve receiver idempotency kabul kaniti.
 - City Lojistik: adapter kabulü tamamlanana kadar `CITY_LOJISTIK_ENABLED=false`.
 
 ## 2. Veritabani Ve Backup
@@ -53,7 +55,9 @@ SQLite kullaniliyorsa tek-writer deployment, kalici disk, dosya kilidi ve ayni v
 
 - Outbox worker duzenli aralikla `npm run outbox:run` calistirir.
 - Auth rate-limit bakimi `npm run auth-rate-limit:maintain` ile planlanir.
-- Backup gorevi `npm run db:backup` calistirir ve manifestleri kalici depoya tasir.
+- Backup gorevi `npm run db:backup:run` calistirir, atomik bundle uretir ve restore provasini tamamlar.
+- Run-history retention `npm run system-jobs:maintain` ile gunluk calistirilir.
+- Sistem alarm degerlendirme ve teslimi `npm run system-alerts:run` ile en az dakikada bir calistirilir.
 - Gorevler tek instance veya dagitik lock ile calisir; ayni cron paralel baslatilmaz.
 - Admin `/admin/entegrasyonlar` ekraninda gecikmis, dead-letter ve isleyicisiz topic sayilari sifirlanmadan kabul tamamlanmaz.
 
