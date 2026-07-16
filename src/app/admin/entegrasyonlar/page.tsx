@@ -43,6 +43,7 @@ const jobStatusLabels: Record<string, string> = {
   running: "Çalışıyor",
   ok: "Sağlıklı",
   stale: "Gecikmiş",
+  late: "Uyarı eşiğinde",
   failed: "Başarısız",
 };
 
@@ -72,7 +73,7 @@ function jobStatusClass(status: string) {
   if (status === "ok") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
   if (status === "running") return "bg-blue-50 text-blue-800 ring-blue-200";
   if (status === "failed") return "bg-red-50 text-red-800 ring-red-200";
-  if (status === "stale" || status === "missing") return "bg-amber-50 text-amber-900 ring-amber-200";
+  if (status === "stale" || status === "missing" || status === "late") return "bg-amber-50 text-amber-900 ring-amber-200";
   return "bg-slate-100 text-slate-600 ring-slate-200";
 }
 
@@ -141,8 +142,8 @@ export default async function AdminIntegrationsPage({
             <p className="text-sm font-semibold text-teal-800">Scheduler gözlemlenebilirliği</p>
             <h3 className="mt-1 text-lg font-semibold text-slate-950">Zamanlanmış işler</h3>
           </div>
-          <span className={`inline-flex min-h-9 items-center gap-2 self-start rounded-md px-3 py-2 text-sm font-semibold ring-1 ${data.systemJobs.status === "ok" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
-            <Clock3 size={16} /> {data.systemJobs.status === "ok" ? "İşler zamanında" : "Operasyon kontrolü gerekli"}
+          <span className={`inline-flex min-h-9 items-center gap-2 self-start rounded-md px-3 py-2 text-sm font-semibold ring-1 ${data.systemJobs.alertLevel === "none" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : data.systemJobs.alertLevel === "critical" ? "bg-red-50 text-red-800 ring-red-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
+            <Clock3 size={16} /> {data.systemJobs.alertLevel === "none" ? "İşler zamanında" : data.systemJobs.alertLevel === "critical" ? "Kritik operasyon alarmı" : "Operasyon uyarısı"}
           </span>
         </div>
         <div className="divide-y divide-slate-200">
@@ -155,6 +156,9 @@ export default async function AdminIntegrationsPage({
               <span className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-semibold ring-1 ${jobStatusClass(job.status)}`}>
                 {jobStatusLabels[job.status] ?? job.status}
               </span>
+              <p className="mt-1 text-xs text-slate-500">
+                {job.ageMinutes == null ? `Uyarı ${job.warnAfterMinutes} dk` : `${job.ageMinutes} dk önce · uyarı ${job.warnAfterMinutes} dk`}
+              </p>
               <div className="text-sm">
                 <p className="text-xs text-slate-500">Son başarılı çalışma</p>
                 <p className="mt-1 font-semibold text-slate-800">{formatIntegrationDate(job.state?.lastSucceededAt)}</p>
@@ -164,6 +168,10 @@ export default async function AdminIntegrationsPage({
                 <p className="mt-1 font-semibold text-slate-800">
                   {job.state?.lastResultCount ?? 0} kayıt · {job.state?.lastDurationMs != null ? `${job.state.lastDurationMs} ms` : "-"}
                 </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Hata: {job.state?.consecutiveFailures ?? 0} · {job.state?.lastErrorCode ?? "kod yok"}
+                </p>
+                {job.lastRun?.correlationId ? <p className="mt-1 break-all font-mono text-[10px] text-slate-400">{job.lastRun.correlationId}</p> : null}
               </div>
             </div>
           ))}

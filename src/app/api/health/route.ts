@@ -11,28 +11,42 @@ export async function GET() {
   const correlationId = getCorrelationId();
   try {
     await prisma.$queryRaw`SELECT 1`;
-    const [outbox, authentication, systemJobs] = await Promise.all([
+    const [outboxResult, authenticationResult, systemJobsResult] = await Promise.allSettled([
       getOutboxHealth(),
       getLoginSecurityHealth(),
       getSystemJobsHealth(),
     ]);
-    const mediaStorage = getMediaStorageHealth();
+    const outbox = outboxResult.status === "fulfilled" ? outboxResult.value.status : "error";
+    const authentication = authenticationResult.status === "fulfilled" ? authenticationResult.value.status : "error";
+    const systemJobs = systemJobsResult.status === "fulfilled" ? systemJobsResult.value.status : "error";
+    const systemJobsSeverity = systemJobsResult.status === "fulfilled" ? systemJobsResult.value.alertLevel : "critical";
+    for (const [component, result] of [["outbox", outboxResult], ["authentication", authenticationResult], ["systemJobs", systemJobsResult]] as const) {
+      if (result.status === "rejected") structuredLog("error", "health.component.failed", { correlationId, component, error: result.reason });
+    }
+    let mediaStorage: ReturnType<typeof getMediaStorageHealth> | { status: "error"; provider: "unknown" };
+    try {
+      mediaStorage = getMediaStorageHealth();
+    } catch (error) {
+      mediaStorage = { status: "error", provider: "unknown" };
+      structuredLog("error", "health.component.failed", { correlationId, component: "mediaStorage", error });
+    }
 
     return NextResponse.json({
       status:
-        outbox.status === "degraded" || authentication.status === "degraded" || mediaStorage.status === "degraded" || systemJobs.status === "degraded"
+        outbox === "degraded" || outbox === "error" || authentication === "degraded" || authentication === "error" || mediaStorage.status === "degraded" || mediaStorage.status === "error" || systemJobs === "degraded" || systemJobs === "error"
           ? "degraded"
           : "ok",
       database: "ok",
-      outbox: outbox.status,
-      authentication: authentication.status,
+      outbox,
+      authentication,
       mediaStorage: mediaStorage.status,
       mediaStorageProvider: mediaStorage.provider,
-      systemJobs: systemJobs.status,
+      systemJobs,
+      systemJobsSeverity,
       timestamp: new Date().toISOString(),
     }, { headers: correlationHeaders(correlationId) });
   } catch (error) {
-    structuredLog("error", "health.operational.failed", { correlationId, error });
+    structuredLog("error", "health.database.failed", { correlationId, error });
     return NextResponse.json(
       {
         status: "error",

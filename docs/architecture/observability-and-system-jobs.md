@@ -9,6 +9,8 @@ Bu katman uygulama hatalarini, HTTP isteklerini ve zamanlanmis islerin calisma d
 - `SystemJobRun`: Her scheduler cagrisinin calisma gecmisidir.
 - `SystemJobState`: Bir isin son durumu ve aktif lease kaydidir.
 
+Izlenen is anahtarlari `EMAIL_OUTBOX`, `AUTH_RATE_LIMIT_MAINTENANCE`, `DATABASE_BACKUP` ve `SYSTEM_JOB_RETENTION` olarak tanimlidir.
+
 ## Korelasyon Kimligi
 
 Her izlenen istek icin sunucu yeni bir UUID uretir. Istemciden gelen `x-request-id` guvenilir kabul edilmez ve yeniden kullanilmaz. Kimlik:
@@ -36,19 +38,24 @@ Uretimde stdout/stderr JSON akisi merkezi bir log servisine yonlendirilmelidir. 
 
 Lease suresi `SYSTEM_JOB_LEASE_MINUTES` ile belirlenir. Uzun sureli isler `heartbeatSystemJobRun` cagirmadan lease suresini asmamalidir.
 
+Database backup icin ayri `BACKUP_JOB_LEASE_MINUTES` kullanilir. Heartbeat ve finish yalniz suresi dolmamis lease sahibi tarafindan yapilabilir. Yeni worker suresi dolmus lease'i devraldiginda onceki `RUNNING` kaydi `LEASE_EXPIRED` hatasiyla kapanir. Backup bundle'i publish edilmeden hemen once lease checkpoint'i tekrar dogrulanir.
+
 ## Saglik Esikleri
 
-- E-posta outbox: `OUTBOX_HEARTBEAT_MAX_AGE_MINUTES`, varsayilan 10 dakika.
-- Giris guvenligi bakimi: `MAINTENANCE_HEARTBEAT_MAX_AGE_MINUTES`, varsayilan 180 dakika.
+- E-posta outbox: warning 6, critical 10 dakika.
+- Giris guvenligi bakimi: warning 90, critical 180 dakika.
+- Database backup: warning 1500, critical 2160 dakika.
+- Is gecmisi retention: warning 1500, critical 2160 dakika.
 - E-posta saglayicisi devre disiyken outbox isi `disabled` kabul edilir.
 
-Eksik, basarisiz veya gecikmis scheduler kaydi `/api/health` sonucunu `degraded` yapar. Bu durum `/api/health/ready` sonucunu 503 yapmaz; scheduler problemi yeni HTTP trafiginin veritabani ve depolama baglantilarini kullanmasini engellemez.
+Warning esigi asildiginda operasyon uyarisi, critical esigi veya `SYSTEM_JOB_CRITICAL_AFTER_FAILURES` kadar ardisik hata asildiginda kritik alarm uretilir. Eksik, basarisiz veya gecikmis scheduler kaydi `/api/health` sonucunu `degraded` yapar. Bu durum `/api/health/ready` sonucunu 503 yapmaz; scheduler problemi yeni HTTP trafiginin veritabani ve depolama baglantilarini kullanmasini engellemez.
+
+Basarili run kayitlari varsayilan 14, hatali run kayitlari 90 gun tutulur. `SYSTEM_JOB_RETENTION_BATCH_SIZE` her calismada silinebilecek kayit sayisini sinirlar; `RUNNING` kayitlar ve `SystemJobState` silinmez.
 
 Admin kullanicisi guncel durumu `/admin/entegrasyonlar` ekranindaki **Zamanlanmis isler** bolumunden izler.
 
 ## Operasyon Sonrasi Adimlar
 
 - Merkezi log servisi ve alarm kurallari kurulacak.
-- Yedekleme isi de `SystemJobRun` modeline alinacak.
 - Scheduler icin ard arda hata ve gecikme alarmlari tanimlanacak.
-- Tamamlanan eski is calismalari icin saklama ve arsivleme politikasi belirlenecek.
+- Yerel backup bundle'lari farkli failure domain'e sifreli tasiyacak saglayici secilecek.

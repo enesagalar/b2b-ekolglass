@@ -2,6 +2,28 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-16 - Backup heartbeat, alarm seviyesi ve retention
+
+Tamamlananlar:
+
+- Database backup icin ayri secret'li internal scheduler endpoint'i ve korelasyonlu CLI runner.
+- Backup'a ozel lease, suresi dolmus worker fencing'i ve publish oncesi heartbeat checkpoint'i.
+- Database ile manifesti tek dizin rename'iyle yayinlayan atomik backup bundle modeli.
+- Scheduler basarisindan once izole restore provasi.
+- Warning/critical heartbeat seviyeleri, ardisik hata esigi ve admin teshis alanlari.
+- Basarili run icin 14 gun, hatali run icin 90 gun batch retention isi.
+- Scheduler bileseni arizasini veritabani arizasi gibi gostermeyen operational health siniflandirmasi.
+- Production preflight'ta backup root, secret, HTTPS origin, lease/esik ve retention kontrolleri.
+- Gercek scheduler cagrisinda 2.269.184 baytlik atomik backup bundle'i uretildi; SHA-256, 31 migration, sifir foreign key ihlali ve izole restore provasi dogrulandi.
+- 58 test dosyasi ve 247 test, lint, uyarisiz production build, 42 adimli authenticated smoke ve 1440/390 px browser QA basarili.
+
+Sonraki teknik paket:
+
+1. Merkezi log sink ve alarm kanali saglayicisini secmek.
+2. Backup bundle'larini farkli failure domain'e sifreli aktarmak.
+3. Staging scheduler zamanlamalarini ve alarm teslimini kanitlamak.
+4. City Lojistik API sozlesmesi geldiginde canli adapter kabulune gecmek.
+
 ## 2026-07-16 - Gozlemlenebilirlik ve scheduler heartbeat
 
 Tamamlananlar:

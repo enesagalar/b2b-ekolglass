@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { access, copyFile, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
+import { access, chmod, copyFile, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -32,7 +32,7 @@ function quoteIdentifier(identifier: string) {
 
 async function sha256File(filePath: string) {
   const hash = createHash("sha256");
-  for await (const chunk of createReadStream(filePath)) hash.update(chunk);
+  for await (const chunk of createReadStream(/* turbopackIgnore: true */ filePath)) hash.update(chunk);
   return hash.digest("hex");
 }
 
@@ -65,14 +65,14 @@ function inspectDatabase(db: Database.Database) {
 }
 
 export async function readMigrationContract(migrationsRoot: string) {
-  const root = await realpath(path.resolve(migrationsRoot));
-  const entries = (await readdir(root, { withFileTypes: true }))
+  const root = await realpath(path.resolve(/* turbopackIgnore: true */ migrationsRoot));
+  const entries = (await readdir(/* turbopackIgnore: true */ root, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
   const hash = createHash("sha256");
   for (const name of entries) {
-    const sql = await readFile(path.join(root, name, "migration.sql"));
+    const sql = await readFile(/* turbopackIgnore: true */ path.join(root, name, "migration.sql"));
     hash.update(name).update("\0").update(createHash("sha256").update(sql).digest("hex")).update("\n");
   }
   return { names: entries, fingerprint: hash.digest("hex") };
@@ -89,33 +89,40 @@ export function resolveSqliteDatabasePath(databaseUrl: string | undefined, cwd =
   if (databaseUrl.includes("?") || databaseUrl.includes("#") || databaseUrl.includes("\0")) throw new Error("DATABASE_URL query, fragment veya NUL içeremez.");
   const value = decodeURIComponent(databaseUrl.slice(5));
   if (!value || value === ":memory:") throw new Error("Kalıcı SQLite dosya yolu zorunludur.");
-  return path.isAbsolute(value) ? path.normalize(value) : path.resolve(cwd, value);
+  return path.isAbsolute(value) ? path.normalize(value) : path.resolve(/* turbopackIgnore: true */ cwd, value);
 }
 
-export async function createSqliteBackup(options: { databasePath: string; backupRoot: string; migrationsRoot?: string; now?: Date }) {
-  const sourcePath = await realpath(path.resolve(options.databasePath));
-  const requestedBackupRoot = path.resolve(options.backupRoot);
-  await access(sourcePath);
-  await mkdir(requestedBackupRoot, { recursive: true });
-  const backupRoot = await realpath(requestedBackupRoot);
+export async function createSqliteBackup(options: { databasePath: string; backupRoot: string; migrationsRoot?: string; now?: Date; checkpoint?: () => Promise<void> }) {
+  const sourcePath = await realpath(path.resolve(/* turbopackIgnore: true */ options.databasePath));
+  const requestedBackupRoot = path.resolve(/* turbopackIgnore: true */ options.backupRoot);
+  await access(/* turbopackIgnore: true */ sourcePath);
+  await mkdir(/* turbopackIgnore: true */ requestedBackupRoot, { recursive: true });
+  const backupRoot = await realpath(/* turbopackIgnore: true */ requestedBackupRoot);
   const now = options.now ?? new Date();
   const timestamp = now.toISOString().replace(/[:.]/g, "-");
   const stem = `ekolglass-${timestamp}-${randomBytes(4).toString("hex")}`;
-  const finalDatabasePath = path.join(backupRoot, `${stem}.sqlite`);
-  const partialDatabasePath = `${finalDatabasePath}.partial`;
-  const finalManifestPath = path.join(backupRoot, `${stem}.manifest.json`);
-  const partialManifestPath = `${finalManifestPath}.partial`;
-  const relativeDestination = path.relative(backupRoot, finalDatabasePath);
+  const finalBundlePath = path.join(/* turbopackIgnore: true */ backupRoot, stem);
+  const partialBundlePath = path.join(/* turbopackIgnore: true */ backupRoot, `.${stem}.partial`);
+  const databaseFile = `${stem}.sqlite`;
+  const manifestFile = `${stem}.manifest.json`;
+  const finalDatabasePath = path.join(finalBundlePath, databaseFile);
+  const partialDatabasePath = path.join(partialBundlePath, databaseFile);
+  const finalManifestPath = path.join(finalBundlePath, manifestFile);
+  const partialManifestPath = path.join(partialBundlePath, manifestFile);
+  const relativeDestination = path.relative(backupRoot, finalBundlePath);
   if (relativeDestination.startsWith("..") || path.isAbsolute(relativeDestination)) throw new Error("Backup hedefi yapılandırılmış kök dışında olamaz.");
+  await mkdir(/* turbopackIgnore: true */ partialBundlePath, { mode: 0o700 });
   const migrationContract = options.migrationsRoot ? await readMigrationContract(options.migrationsRoot) : null;
-  const sourceDb = new Database(sourcePath, { readonly: true, fileMustExist: true, timeout: 30_000 });
-  let backupMetadata: Database.BackupMetadata;
   try {
-    backupMetadata = await sourceDb.backup(partialDatabasePath);
-  } finally {
-    sourceDb.close();
-  }
-  try {
+    const sourceDb = new Database(sourcePath, { readonly: true, fileMustExist: true, timeout: 30_000 });
+    let backupMetadata: Database.BackupMetadata;
+    try {
+      backupMetadata = await sourceDb.backup(partialDatabasePath);
+    } finally {
+      sourceDb.close();
+    }
+    await chmod(/* turbopackIgnore: true */ partialDatabasePath, 0o600);
+    await options.checkpoint?.();
     const backupDb = new Database(partialDatabasePath, { readonly: true, fileMustExist: true });
     let inspection;
     try {
@@ -124,11 +131,11 @@ export async function createSqliteBackup(options: { databasePath: string; backup
       backupDb.close();
     }
     if (migrationContract) requireMigrationMatch(inspection.appliedMigrations, migrationContract.names);
-    const byteSize = (await stat(partialDatabasePath)).size;
+    const byteSize = (await stat(/* turbopackIgnore: true */ partialDatabasePath)).size;
     const manifest: SqliteBackupManifest = {
       version: manifestVersion,
       createdAt: now.toISOString(),
-      databaseFile: path.basename(finalDatabasePath),
+      databaseFile,
       byteSize,
       sha256: await sha256File(partialDatabasePath),
       backupTotalPages: backupMetadata.totalPages,
@@ -136,22 +143,25 @@ export async function createSqliteBackup(options: { databasePath: string; backup
       repositoryMigrationFingerprint: migrationContract?.fingerprint ?? null,
       ...inspection,
     } as SqliteBackupManifest & { backupTotalPages: number; backupRemainingPages: number };
-    await writeFile(partialManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx" });
-    await rename(partialDatabasePath, finalDatabasePath);
-    await rename(partialManifestPath, finalManifestPath);
+    await writeFile(/* turbopackIgnore: true */ partialManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx", mode: 0o600 });
+    await options.checkpoint?.();
+    await rename(/* turbopackIgnore: true */ partialBundlePath, finalBundlePath);
     return { databasePath: finalDatabasePath, manifestPath: finalManifestPath, manifest };
   } catch (error) {
-    await Promise.all([partialDatabasePath, partialManifestPath, finalDatabasePath, finalManifestPath].map((file) => rm(file, { force: true })));
+    await Promise.all([
+      rm(partialBundlePath, { recursive: true, force: true }),
+      rm(finalBundlePath, { recursive: true, force: true }),
+    ]);
     throw error;
   }
 }
 
 export async function verifySqliteBackup(options: { databasePath: string; manifestPath?: string; migrationsRoot?: string }) {
-  const databasePath = path.resolve(options.databasePath);
-  const manifestPath = path.resolve(options.manifestPath ?? databasePath.replace(/\.sqlite$/i, ".manifest.json"));
-  const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as SqliteBackupManifest;
+  const databasePath = path.resolve(/* turbopackIgnore: true */ options.databasePath);
+  const manifestPath = path.resolve(/* turbopackIgnore: true */ options.manifestPath ?? databasePath.replace(/\.sqlite$/i, ".manifest.json"));
+  const manifest = JSON.parse(await readFile(/* turbopackIgnore: true */ manifestPath, "utf8")) as SqliteBackupManifest;
   if (manifest.version !== manifestVersion || manifest.databaseFile !== path.basename(databasePath)) throw new Error("Backup manifest sürümü veya dosya adı geçersizdir.");
-  const actualSize = (await stat(databasePath)).size;
+  const actualSize = (await stat(/* turbopackIgnore: true */ databasePath)).size;
   if (actualSize !== manifest.byteSize) throw new Error("Backup dosya boyutu manifest ile uyuşmuyor.");
   if (await sha256File(databasePath) !== manifest.sha256) throw new Error("Backup SHA-256 doğrulaması başarısız.");
   const migrationContract = options.migrationsRoot ? await readMigrationContract(options.migrationsRoot) : null;
@@ -159,7 +169,7 @@ export async function verifySqliteBackup(options: { databasePath: string; manife
   const rehearsalRoot = await mkdtemp(path.join(os.tmpdir(), "ekolglass-restore-"));
   const rehearsalPath = path.join(rehearsalRoot, "restored.sqlite");
   try {
-    await copyFile(databasePath, rehearsalPath);
+    await copyFile(/* turbopackIgnore: true */ databasePath, rehearsalPath);
     const db = new Database(rehearsalPath, { readonly: true, fileMustExist: true });
     let inspection;
     try {

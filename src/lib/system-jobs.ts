@@ -4,16 +4,24 @@ import { randomUUID } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 
-export const systemJobKeys = ["EMAIL_OUTBOX", "AUTH_RATE_LIMIT_MAINTENANCE"] as const;
+export const systemJobKeys = [
+  "EMAIL_OUTBOX",
+  "AUTH_RATE_LIMIT_MAINTENANCE",
+  "DATABASE_BACKUP",
+  "SYSTEM_JOB_RETENTION",
+] as const;
 export type SystemJobKey = (typeof systemJobKeys)[number];
 
 const jobLabels: Record<SystemJobKey, string> = {
   EMAIL_OUTBOX: "E-posta outbox worker",
   AUTH_RATE_LIMIT_MAINTENANCE: "Giriş güvenliği bakımı",
+  DATABASE_BACKUP: "Veritabanı yedekleme",
+  SYSTEM_JOB_RETENTION: "İş geçmişi temizliği",
 };
 
 export class SystemJobBusyError extends Error {}
 export class SystemJobLeaseLostError extends Error {}
+export class SystemJobReplayConflictError extends Error {}
 
 function positiveInteger(value: string | undefined, fallback: number) {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -22,10 +30,63 @@ function positiveInteger(value: string | undefined, fallback: number) {
 
 export function getSystemJobThresholds(env = process.env) {
   return {
-    EMAIL_OUTBOX: positiveInteger(env.OUTBOX_HEARTBEAT_MAX_AGE_MINUTES, 10),
-    AUTH_RATE_LIMIT_MAINTENANCE: positiveInteger(env.MAINTENANCE_HEARTBEAT_MAX_AGE_MINUTES, 180),
+    EMAIL_OUTBOX: {
+      warnAfterMinutes: positiveInteger(env.OUTBOX_HEARTBEAT_WARN_AFTER_MINUTES, 6),
+      maxAgeMinutes: positiveInteger(env.OUTBOX_HEARTBEAT_MAX_AGE_MINUTES, 10),
+    },
+    AUTH_RATE_LIMIT_MAINTENANCE: {
+      warnAfterMinutes: positiveInteger(env.MAINTENANCE_HEARTBEAT_WARN_AFTER_MINUTES, 90),
+      maxAgeMinutes: positiveInteger(env.MAINTENANCE_HEARTBEAT_MAX_AGE_MINUTES, 180),
+    },
+    DATABASE_BACKUP: {
+      warnAfterMinutes: positiveInteger(env.BACKUP_HEARTBEAT_WARN_AFTER_MINUTES, 1_500),
+      maxAgeMinutes: positiveInteger(env.BACKUP_HEARTBEAT_MAX_AGE_MINUTES, 2_160),
+    },
+    SYSTEM_JOB_RETENTION: {
+      warnAfterMinutes: positiveInteger(env.RETENTION_HEARTBEAT_WARN_AFTER_MINUTES, 1_500),
+      maxAgeMinutes: positiveInteger(env.RETENTION_HEARTBEAT_MAX_AGE_MINUTES, 2_160),
+    },
     leaseMinutes: positiveInteger(env.SYSTEM_JOB_LEASE_MINUTES, 5),
+    backupLeaseMinutes: positiveInteger(env.BACKUP_JOB_LEASE_MINUTES, 30),
+    criticalAfterFailures: positiveInteger(env.SYSTEM_JOB_CRITICAL_AFTER_FAILURES, 3),
+    successRetentionDays: positiveInteger(env.SYSTEM_JOB_RUN_SUCCESS_RETENTION_DAYS, 14),
+    failedRetentionDays: positiveInteger(env.SYSTEM_JOB_RUN_FAILED_RETENTION_DAYS, 90),
+    retentionBatchSize: positiveInteger(env.SYSTEM_JOB_RETENTION_BATCH_SIZE, 1_000),
   };
+}
+
+function leaseMinutesFor(jobKey: SystemJobKey) {
+  const thresholds = getSystemJobThresholds();
+  return jobKey === "DATABASE_BACKUP" ? thresholds.backupLeaseMinutes : thresholds.leaseMinutes;
+}
+
+export async function pruneSystemJobRuns(now = new Date()) {
+  const thresholds = getSystemJobThresholds();
+  const policies = [
+    { status: "SUCCEEDED", days: thresholds.successRetentionDays },
+    { status: "FAILED", days: thresholds.failedRetentionDays },
+  ] as const;
+  let deleted = 0;
+  const byStatus: Record<(typeof policies)[number]["status"], number> = {
+    SUCCEEDED: 0,
+    FAILED: 0,
+  };
+  for (const policy of policies) {
+    const cutoff = new Date(now.getTime() - policy.days * 24 * 60 * 60_000);
+    const expired = await prisma.systemJobRun.findMany({
+      where: { status: policy.status, completedAt: { lt: cutoff } },
+      orderBy: { completedAt: "asc" },
+      take: thresholds.retentionBatchSize,
+      select: { id: true },
+    });
+    if (!expired.length) continue;
+    const result = await prisma.systemJobRun.deleteMany({
+      where: { id: { in: expired.map((run) => run.id) }, status: policy.status },
+    });
+    byStatus[policy.status] = result.count;
+    deleted += result.count;
+  }
+  return { deleted, byStatus };
 }
 
 export async function beginSystemJobRun(input: {
@@ -37,13 +98,16 @@ export async function beginSystemJobRun(input: {
 }) {
   const startedAt = input.startedAt ?? new Date();
   const leaseToken = randomUUID();
-  const leaseExpiresAt = new Date(
-    startedAt.getTime() + getSystemJobThresholds().leaseMinutes * 60_000,
-  );
+  const leaseExpiresAt = new Date(startedAt.getTime() + leaseMinutesFor(input.jobKey) * 60_000);
   return prisma.$transaction(async (tx) => {
     const existing = await tx.systemJobRun.findUnique({ where: { runId: input.runId } });
-    if (existing) return { run: existing, replayed: true };
-    await tx.systemJobState.upsert({
+    if (existing) {
+      if (existing.jobKey !== input.jobKey || existing.trigger !== input.trigger || existing.correlationId !== input.correlationId) {
+        throw new SystemJobReplayConflictError("Run kimliği farklı bir iş için kullanılmış.");
+      }
+      return { run: existing, replayed: true };
+    }
+    const previousState = await tx.systemJobState.upsert({
       where: { jobKey: input.jobKey },
       create: { jobKey: input.jobKey },
       update: {},
@@ -67,6 +131,12 @@ export async function beginSystemJobRun(input: {
       },
     });
     if (acquired.count !== 1) throw new SystemJobBusyError("Zamanlanmış iş zaten çalışıyor.");
+    if (previousState.currentRunId && previousState.currentRunId !== input.runId) {
+      await tx.systemJobRun.updateMany({
+        where: { runId: previousState.currentRunId, status: "RUNNING" },
+        data: { status: "FAILED", completedAt: startedAt, heartbeatAt: startedAt, errorCode: "LEASE_EXPIRED" },
+      });
+    }
     const run = await tx.systemJobRun.create({
       data: {
         runId: input.runId,
@@ -88,19 +158,30 @@ export async function heartbeatSystemJobRun(input: {
   heartbeatAt?: Date;
 }) {
   const heartbeatAt = input.heartbeatAt ?? new Date();
-  const leaseExpiresAt = new Date(
-    heartbeatAt.getTime() + getSystemJobThresholds().leaseMinutes * 60_000,
-  );
   return prisma.$transaction(async (tx) => {
+    const owner = await tx.systemJobState.findFirst({
+      where: {
+        currentRunId: input.runId,
+        leaseToken: input.leaseToken,
+        lastStatus: "RUNNING",
+        leaseExpiresAt: { gt: heartbeatAt },
+      },
+      select: { jobKey: true },
+    });
+    if (!owner) throw new SystemJobLeaseLostError("Zamanlanmış iş lease süresi dolmuş veya sahibi değişmiş.");
+    const leaseExpiresAt = new Date(heartbeatAt.getTime() + leaseMinutesFor(owner.jobKey as SystemJobKey) * 60_000);
     const state = await tx.systemJobState.updateMany({
-      where: { currentRunId: input.runId, leaseToken: input.leaseToken, lastStatus: "RUNNING" },
+      where: { currentRunId: input.runId, leaseToken: input.leaseToken, lastStatus: "RUNNING", leaseExpiresAt: { gt: heartbeatAt } },
       data: { lastHeartbeatAt: heartbeatAt, leaseExpiresAt },
     });
     const run = await tx.systemJobRun.updateMany({
       where: { runId: input.runId, leaseToken: input.leaseToken, status: "RUNNING" },
       data: { heartbeatAt },
     });
-    return { updated: state.count === 1 && run.count === 1 };
+    if (state.count !== 1 || run.count !== 1) {
+      throw new SystemJobLeaseLostError("Zamanlanmış iş heartbeat kaydı atomik olarak güncellenemedi.");
+    }
+    return { updated: true };
   });
 }
 
@@ -121,7 +202,7 @@ export async function finishSystemJobRun(input: {
     if (!run) throw new SystemJobLeaseLostError("Zamanlanmış iş lease kaydı bulunamadı.");
     const durationMs = Math.max(0, completedAt.getTime() - run.startedAt.getTime());
     const state = await tx.systemJobState.updateMany({
-      where: { jobKey: run.jobKey, currentRunId: input.runId, leaseToken: input.leaseToken },
+      where: { jobKey: run.jobKey, currentRunId: input.runId, leaseToken: input.leaseToken, leaseExpiresAt: { gt: completedAt } },
       data: {
         currentRunId: null,
         leaseToken: null,
@@ -156,17 +237,26 @@ export async function finishSystemJobRun(input: {
 
 export async function getSystemJobsHealth(now = new Date()) {
   const thresholds = getSystemJobThresholds();
-  const states = await prisma.systemJobState.findMany({
-    where: { jobKey: { in: [...systemJobKeys] } },
-  });
+  const [states, latestRuns] = await Promise.all([
+    prisma.systemJobState.findMany({ where: { jobKey: { in: [...systemJobKeys] } } }),
+    Promise.all(systemJobKeys.map((jobKey) => prisma.systemJobRun.findFirst({
+      where: { jobKey },
+      orderBy: { startedAt: "desc" },
+      select: { runId: true, correlationId: true, status: true, startedAt: true, completedAt: true },
+    }))),
+  ]);
   const byKey = new Map(states.map((state) => [state.jobKey, state]));
+  const latestRunByKey = new Map(systemJobKeys.map((jobKey, index) => [jobKey, latestRuns[index]]));
   const jobs = systemJobKeys.map((jobKey) => {
     const enabled = jobKey !== "EMAIL_OUTBOX" || process.env.EMAIL_PROVIDER === "smtp";
     const state = byKey.get(jobKey) ?? null;
-    const maxAgeMinutes = thresholds[jobKey];
-    if (!enabled) return { jobKey, label: jobLabels[jobKey], status: "disabled" as const, maxAgeMinutes, ageMinutes: null, state };
-    if (!state?.lastStatus) return { jobKey, label: jobLabels[jobKey], status: "missing" as const, maxAgeMinutes, ageMinutes: null, state };
-    const reference = state.lastCompletedAt ?? state.lastHeartbeatAt ?? state.lastStartedAt;
+    const lastRun = latestRunByKey.get(jobKey) ?? null;
+    const { warnAfterMinutes, maxAgeMinutes } = thresholds[jobKey];
+    if (!enabled) return { jobKey, label: jobLabels[jobKey], status: "disabled" as const, severity: "none" as const, warnAfterMinutes, maxAgeMinutes, ageMinutes: null, state, lastRun };
+    if (!state?.lastStatus) return { jobKey, label: jobLabels[jobKey], status: "missing" as const, severity: "critical" as const, warnAfterMinutes, maxAgeMinutes, ageMinutes: null, state, lastRun };
+    const reference = state.lastStatus === "RUNNING"
+      ? state.lastHeartbeatAt ?? state.lastStartedAt
+      : state.lastCompletedAt ?? state.lastHeartbeatAt ?? state.lastStartedAt;
     const ageMinutes = reference
       ? Math.max(0, Math.floor((now.getTime() - reference.getTime()) / 60_000))
       : null;
@@ -175,15 +265,27 @@ export async function getSystemJobsHealth(now = new Date()) {
       ? "failed" as const
       : leaseExpired || (ageMinutes !== null && ageMinutes > maxAgeMinutes)
         ? "stale" as const
+        : ageMinutes !== null && ageMinutes > warnAfterMinutes
+          ? "late" as const
         : state.lastStatus === "RUNNING"
           ? "running" as const
           : "ok" as const;
-    return { jobKey, label: jobLabels[jobKey], status, maxAgeMinutes, ageMinutes, state };
+    const severity = status === "stale" || (status === "failed" && state.consecutiveFailures >= thresholds.criticalAfterFailures)
+      ? "critical" as const
+      : status === "late" || status === "failed"
+        ? "warning" as const
+        : "none" as const;
+    return { jobKey, label: jobLabels[jobKey], status, severity, warnAfterMinutes, maxAgeMinutes, ageMinutes, state, lastRun };
   });
   return {
-    status: jobs.some((job) => ["missing", "failed", "stale"].includes(job.status))
+    status: jobs.some((job) => job.severity !== "none")
       ? "degraded" as const
       : "ok" as const,
+    alertLevel: jobs.some((job) => job.severity === "critical")
+      ? "critical" as const
+      : jobs.some((job) => job.severity === "warning")
+        ? "warning" as const
+        : "none" as const,
     jobs,
   };
 }

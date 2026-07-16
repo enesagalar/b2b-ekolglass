@@ -13,10 +13,18 @@ DATABASE_BACKUP_ROOT="./backups/database"
 
 Production backup root uygulama deploy dizininden bagimsiz, kalici ve erisimi sinirli bir volume olmalidir. Backup dosyalari web root altinda servis edilmez.
 
+Scheduler ayrica `BACKUP_CRON_SECRET`, `BACKUP_BASE_URL`, warning/critical heartbeat ve `BACKUP_JOB_LEASE_MINUTES` degerlerini kullanir.
+
 ## Backup
 
 ```bash
 npm run db:backup
+```
+
+Bu komut manuel ve yerel snapshot aracidir. Izlenen production scheduler komutu:
+
+```bash
+npm run db:backup:run
 ```
 
 Komut:
@@ -25,9 +33,11 @@ Komut:
 2. Snapshot uzerinde `PRAGMA integrity_check` ve `foreign_key_check` calistirir.
 3. Repository migration dosyalarinin SHA-256 fingerprint'ini uygulanmis `_prisma_migrations` listesiyle karsilastirir.
 4. Kritik tablo satir sayilari, dosya boyutu ve SHA-256 iceren versioned manifest yazar.
-5. Yalniz tum kontroller basariliysa DB ve manifesti final adlarina atomik tasir.
+5. Database ve manifesti izinleri sinirli gecici bundle dizininde hazirlar.
+6. Lease checkpoint'i gecerliyse bundle dizinini tek rename ile atomik olarak yayinlar.
+7. Scheduler akisi yayinlanan snapshot uzerinde izole restore provasi yapar; job ancak bundan sonra `SUCCEEDED` olur.
 
-Komut JSON sonucunda backup ve manifest yolunu doner. Scheduler non-zero exit'i kritik alarm saymalidir.
+Komut JSON sonucunda yalniz dosya adlarini, boyutu, hash'i ve correlation ID'yi doner; mutlak host yolu veya secret loglanmaz. Scheduler non-zero exit'i kritik alarm saymalidir.
 
 ## Izole Restore Provasi
 
@@ -56,3 +66,5 @@ Rapor aktif/pasif referanslari, eksik nesneleri, orphan dosyalari ve gecersiz ad
 4. Lokal medya reconciliation'da aktif kayip nesne yok.
 5. En az bir kopya farkli failure domain'e sifreli aktarilmis.
 6. Retention ve silme politikasi deployment platformunda onaylanmis.
+
+`DATABASE_BACKUP` sagligi yalniz yerel, restore edilmis snapshot'i kanitlar. Farkli failure domain'e sifreli aktarim tamamlanmadan felaket kurtarma kapsami tamamlanmis sayilmaz.

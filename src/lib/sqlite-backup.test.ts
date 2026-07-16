@@ -1,4 +1,4 @@
-import { appendFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { appendFile, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -52,5 +52,18 @@ describe("SQLite backup operations", () => {
     await appendFile(result.databasePath, Buffer.from([0x00]));
     await expect(verifySqliteBackup({ databasePath: result.databasePath, manifestPath: result.manifestPath })).rejects.toThrow("boyutu");
     expect(JSON.parse(await readFile(result.manifestPath, "utf8"))).toHaveProperty("sha256");
+  });
+
+  it("does not publish a bundle when the lease checkpoint fails", async () => {
+    const data = await fixture();
+    await expect(createSqliteBackup({
+      databasePath: data.databasePath,
+      backupRoot: data.backupRoot,
+      checkpoint: async () => {
+        throw new Error("lease expired");
+      },
+    })).rejects.toThrow("lease expired");
+
+    expect(await readdir(data.backupRoot)).toEqual([]);
   });
 });

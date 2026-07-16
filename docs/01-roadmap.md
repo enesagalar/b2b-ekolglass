@@ -189,7 +189,7 @@ Kapsam:
 
 Siradaki sira:
 
-1. Yedekleme heartbeat'i, merkezi log sink ve scheduler alarmlari.
+1. Merkezi log sink, alarm kanali ve sifreli offsite backup aktarimi.
 2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
 
 Tamamlanan gozlemlenebilirlik dilimi:
@@ -198,6 +198,8 @@ Tamamlanan gozlemlenebilirlik dilimi:
 - Next.js instrumentation uzerinden yakalanmayan istek hatasi kaydi.
 - Outbox ve auth bakimi icin atomik lease, kalici run history ve heartbeat saglik modeli.
 - Operasyonel health ve admin entegrasyon ekraninda scheduler gorunurlugu.
+- Backup ve retention icin ayri scheduler job'lari, warning/critical alarm seviyesi ve lease fencing.
+- Atomik backup bundle, restore provasi ve run-history retention politikasi.
 
 Tamamlanan production deployment kabul dilimi:
 
