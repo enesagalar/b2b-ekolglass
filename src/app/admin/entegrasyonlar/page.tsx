@@ -4,6 +4,7 @@ import {
   Activity,
   AlertTriangle,
   CircleCheck,
+  Clock3,
   Filter,
   LoaderCircle,
   RotateCcw,
@@ -36,6 +37,14 @@ const outboxStatusLabels: Record<string, string> = {
   SUCCEEDED: "Başarılı",
   DEAD: "Müdahale gerekli",
 };
+const jobStatusLabels: Record<string, string> = {
+  disabled: "Devre dışı",
+  missing: "Henüz çalışmadı",
+  running: "Çalışıyor",
+  ok: "Sağlıklı",
+  stale: "Gecikmiş",
+  failed: "Başarısız",
+};
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -57,6 +66,14 @@ function statusClass(status: string) {
   if (status === "RETRY") return "bg-amber-50 text-amber-900 ring-amber-200";
   if (status === "PROCESSING") return "bg-blue-50 text-blue-800 ring-blue-200";
   return "bg-slate-100 text-slate-700 ring-slate-200";
+}
+
+function jobStatusClass(status: string) {
+  if (status === "ok") return "bg-emerald-50 text-emerald-800 ring-emerald-200";
+  if (status === "running") return "bg-blue-50 text-blue-800 ring-blue-200";
+  if (status === "failed") return "bg-red-50 text-red-800 ring-red-200";
+  if (status === "stale" || status === "missing") return "bg-amber-50 text-amber-900 ring-amber-200";
+  return "bg-slate-100 text-slate-600 ring-slate-200";
 }
 
 function pageHref(query: string, status: string, topic: string, page: number) {
@@ -115,6 +132,41 @@ export default async function AdminIntegrationsPage({
         <div className={`inline-flex min-h-10 items-center gap-2 self-start rounded-md px-3 py-2 text-sm font-semibold ring-1 ${data.health.status === "ok" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : data.health.status === "empty" ? "bg-slate-100 text-slate-700 ring-slate-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
           {data.health.status === "ok" ? <CircleCheck size={17} /> : <AlertTriangle size={17} />}
           {data.health.status === "ok" ? "Kuyruk sağlıklı" : data.health.status === "empty" ? "Henüz teslimat olayı yok" : `${data.health.overdue} gecikmiş · ${data.health.unsupportedReady} işleyicisiz`}
+        </div>
+      </section>
+
+      <section className={`${panelClass} overflow-hidden`} data-testid="system-jobs-health">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-teal-800">Scheduler gözlemlenebilirliği</p>
+            <h3 className="mt-1 text-lg font-semibold text-slate-950">Zamanlanmış işler</h3>
+          </div>
+          <span className={`inline-flex min-h-9 items-center gap-2 self-start rounded-md px-3 py-2 text-sm font-semibold ring-1 ${data.systemJobs.status === "ok" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
+            <Clock3 size={16} /> {data.systemJobs.status === "ok" ? "İşler zamanında" : "Operasyon kontrolü gerekli"}
+          </span>
+        </div>
+        <div className="divide-y divide-slate-200">
+          {data.systemJobs.jobs.map((job) => (
+            <div key={job.jobKey} className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_150px_180px_180px] md:items-center">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">{job.label}</p>
+                <p className="mt-1 font-mono text-[11px] text-slate-500">{job.jobKey}</p>
+              </div>
+              <span className={`inline-flex w-fit rounded-md px-2 py-1 text-xs font-semibold ring-1 ${jobStatusClass(job.status)}`}>
+                {jobStatusLabels[job.status] ?? job.status}
+              </span>
+              <div className="text-sm">
+                <p className="text-xs text-slate-500">Son başarılı çalışma</p>
+                <p className="mt-1 font-semibold text-slate-800">{formatIntegrationDate(job.state?.lastSucceededAt)}</p>
+              </div>
+              <div className="text-sm">
+                <p className="text-xs text-slate-500">Sonuç / süre</p>
+                <p className="mt-1 font-semibold text-slate-800">
+                  {job.state?.lastResultCount ?? 0} kayıt · {job.state?.lastDurationMs != null ? `${job.state.lastDurationMs} ms` : "-"}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

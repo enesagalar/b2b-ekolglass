@@ -6,6 +6,7 @@ import { isReplayableOutboxTopic } from "@/domain/integration-topics";
 import { getOutboxHealth } from "@/integrations/outbox-health";
 import { getCityLogisticsReadiness } from "@/integrations/shipping/city-logistics-readiness";
 import { prisma } from "@/lib/prisma";
+import { getSystemJobsHealth } from "@/lib/system-jobs";
 
 export const outboxStatuses = [
   "PENDING",
@@ -45,7 +46,7 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
     ];
   }
 
-  const [events, total, topics, health, manualCityShipmentCount, manualCityShipments] = await Promise.all([
+  const [events, total, topics, health, manualCityShipmentCount, manualCityShipments, systemJobs] = await Promise.all([
     prisma.integrationOutboxEvent.findMany({
       where,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -92,6 +93,7 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
         order: { select: { orderNumber: true } },
       },
     }),
+    getSystemJobsHealth(),
   ]);
 
   return {
@@ -102,6 +104,7 @@ export async function getAdminIntegrationOverview(filters: AdminIntegrationFilte
     cityLogistics: getCityLogisticsReadiness(),
     manualCityShipmentCount,
     manualCityShipments,
+    systemJobs,
     emailWorkerEnabled: process.env.EMAIL_PROVIDER === "smtp",
   };
 }

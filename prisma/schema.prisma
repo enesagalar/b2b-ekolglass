@@ -913,3 +913,46 @@ model IntegrationReplayCommand {
   @@index([outboxEventId, createdAt])
   @@index([actorUserId, createdAt])
 }
+
+model SystemJobRun {
+  id            String   @id @default(cuid())
+  runId         String   @unique
+  jobKey        String
+  status        String   @default("RUNNING")
+  trigger       String
+  correlationId String
+  leaseToken    String
+  startedAt     DateTime @default(now())
+  heartbeatAt   DateTime @default(now())
+  completedAt   DateTime?
+  durationMs    Int?
+  resultCount   Int?
+  errorCode     String?
+  metadata      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([jobKey, startedAt])
+  @@index([status, startedAt])
+}
+
+model SystemJobState {
+  jobKey              String   @id
+  currentRunId        String?
+  leaseToken          String?
+  leaseExpiresAt      DateTime?
+  lastStartedAt       DateTime?
+  lastHeartbeatAt     DateTime?
+  lastCompletedAt     DateTime?
+  lastSucceededAt     DateTime?
+  lastFailedAt        DateTime?
+  lastStatus          String?
+  consecutiveFailures Int      @default(0)
+  lastDurationMs      Int?
+  lastResultCount     Int?
+  lastErrorCode       String?
+  updatedAt           DateTime @updatedAt
+
+  @@index([leaseExpiresAt])
+  @@index([lastStatus, lastCompletedAt])
+}

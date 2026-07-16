@@ -189,8 +189,15 @@ Kapsam:
 
 Siradaki sira:
 
-1. Merkezi yapilandirilmis loglama, request correlation ve worker heartbeat.
+1. Yedekleme heartbeat'i, merkezi log sink ve scheduler alarmlari.
 2. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
+
+Tamamlanan gozlemlenebilirlik dilimi:
+
+- Hassas veri maskeleyen yapilandirilmis JSON logger ve sunucu kaynakli request correlation.
+- Next.js instrumentation uzerinden yakalanmayan istek hatasi kaydi.
+- Outbox ve auth bakimi icin atomik lease, kalici run history ve heartbeat saglik modeli.
+- Operasyonel health ve admin entegrasyon ekraninda scheduler gorunurlugu.
 
 Tamamlanan production deployment kabul dilimi:
 

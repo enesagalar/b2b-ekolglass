@@ -4,6 +4,7 @@ import { z } from "zod";
 import { hasPermission, isKnownRole } from "@/domain/roles";
 import { getCurrentUser } from "@/lib/auth";
 import { maxImageUploadBytes, storeImage } from "@/lib/media-storage";
+import { correlationHeaders, getCorrelationId, structuredLog } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -11,6 +12,7 @@ export const runtime = "nodejs";
 const altTextSchema = z.string().trim().min(5).max(180);
 
 export async function POST(request: Request) {
+  const correlationId = getCorrelationId();
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ message: "Gecersiz istek kaynagi." }, { status: 403 });
   const declaredLength = Number(request.headers.get("content-length") ?? 0);
@@ -65,6 +67,10 @@ export async function POST(request: Request) {
     revalidatePath("/admin/icerik");
     return Response.json({ ok: true, url: stored.url });
   } catch (error) {
-    return Response.json({ message: error instanceof Error ? error.message : "Gorsel yuklenemedi." }, { status: 400 });
+    structuredLog("error", "cms.hero_upload.failed", { correlationId, error });
+    return Response.json(
+      { message: "Görsel yüklenemedi.", correlationId },
+      { status: 500, headers: correlationHeaders(correlationId) },
+    );
   }
 }

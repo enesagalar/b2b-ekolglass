@@ -2,6 +2,28 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-16 - Gozlemlenebilirlik ve scheduler heartbeat
+
+Tamamlananlar:
+
+- Sunucu tarafindan uretilen korelasyon kimligi ve `x-request-id` cevap standardi.
+- Hassas veri maskeleyen, boyut sinirli tek satir JSON logger.
+- Next.js `onRequestError` instrumentation kaydi.
+- Outbox ve giris guvenligi bakimi icin kalici run history, heartbeat ve atomik lease modeli.
+- Scheduler sagliginin `/api/health` ve `/admin/entegrasyonlar` ekranina eklenmesi.
+- Worker tekrar calisma ve aktif lease cakismasi kontrolleri.
+- 55 test dosyasi ve 236 test, lint, production build, 42 adimli authenticated smoke ile 1440/390 px browser QA basarili.
+- Gercek outbox ve auth bakim endpoint cagirilari basarili; admin ekrani kalici scheduler kayitlarini gosteriyor.
+
+Sonraki teknik paket:
+
+1. Yedekleme scriptini ayni heartbeat/run-history modeline almak.
+2. Merkezi log sink ve scheduler alarm kanallarini kurmak.
+3. Uretim scheduler tanimlarini staging ortaminda dogrulamak.
+4. Eski `SystemJobRun` kayitlari icin retention isi eklemek.
+
+Migration notu: Lokal veritabaninda iki eski uygulanmis migration dosyasinin checksum'i mevcut dosyalarla uyusmuyor. Veri kaybi yaratacak reset uygulanmadi; yeni migration'lar `prisma migrate deploy` ile ileri yonlu uygulandi. Eski checksum farki staging/production oncesinde migration gecmisiyle mutabik hale getirilmelidir.
+
 ## 2026-07-16 - City Lojistik aktivasyon kapisi
 
 - Resmi Turkiye web, takip ve transfer alanlari incelendi; kamuya acik surumlu API dokumani bulunamadi.
@@ -14,7 +36,7 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 - Deploy, health, scheduler ve rollback kabul sirasi production runbook'una yazildi.
 - 53 test dosyasi ve 231 test, lint, TypeScript production build, authenticated smoke ve 375/1265 px browser QA basarili.
 - Lokal development environment'i production preflight ve readiness tarafindan beklendigi gibi reddediliyor; liveness HTTP 200, readiness HTTP 503 donuyor.
-- Siradaki ana dilim merkezi yapilandirilmis loglama, request correlation ve worker heartbeat'tir.
+- Bu dilim tamamlandi; siradaki ana is yedekleme heartbeat'i, merkezi log sink ve scheduler alarmlaridir.
 
 ## 2026-07-14 - SQLite backup/restore ve medya reconciliation
 

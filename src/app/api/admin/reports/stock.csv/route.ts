@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
 import { hasPermission, isKnownRole } from "@/domain/roles";
 import {
@@ -10,6 +10,7 @@ import {
 import { getAdminStockExportRows } from "@/data/admin-stock-reports";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { correlationHeaders, getCorrelationId, structuredLog } from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ function validateQueryKeys(searchParams: URLSearchParams) {
 }
 
 export async function GET(request: Request) {
+  const correlationId = getCorrelationId();
   const user = await getCurrentUser();
   if (!user) return Response.json({ message: "Oturum gerekli." }, { status: 401 });
   if (
@@ -84,6 +86,7 @@ export async function GET(request: Request) {
         "Content-Disposition": `attachment; filename="${fileName}"`,
         "Cache-Control": "private, no-store, max-age=0",
         "X-Content-Type-Options": "nosniff",
+        ...correlationHeaders(correlationId),
       },
     });
   } catch (error) {
@@ -93,11 +96,10 @@ export async function GET(request: Request) {
     if (error instanceof StockReportLimitError) {
       return Response.json({ message: error.message }, { status: 422 });
     }
-    const correlationId = randomUUID();
-    console.error("Stock report export failed", { correlationId, error });
+    structuredLog("error", "report.stock_export.failed", { correlationId, error });
     return Response.json(
       { message: "Stok raporu oluşturulamadı.", correlationId },
-      { status: 500 },
+      { status: 500, headers: correlationHeaders(correlationId) },
     );
   }
 }

@@ -1,11 +1,11 @@
-import { randomUUID } from "node:crypto";
-
 import { prisma } from "@/lib/prisma";
+import { correlationHeaders, getCorrelationId, structuredLog } from "@/lib/observability";
 import { validateProductionEnvironment } from "@/lib/production-environment";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const correlationId = getCorrelationId();
   const environment = validateProductionEnvironment();
   if (!environment.ok) {
     return Response.json(
@@ -15,7 +15,7 @@ export async function GET() {
         issueKeys: environment.issues.map((issue) => issue.key),
         timestamp: new Date().toISOString(),
       },
-      { status: 503 },
+      { status: 503, headers: correlationHeaders(correlationId) },
     );
   }
 
@@ -25,10 +25,9 @@ export async function GET() {
       status: "ready",
       checks: { environment: "ok", database: "ok" },
       timestamp: new Date().toISOString(),
-    });
+    }, { headers: correlationHeaders(correlationId) });
   } catch (error) {
-    const correlationId = randomUUID();
-    console.error("Readiness database check failed", { correlationId, error });
+    structuredLog("error", "health.readiness.database_failed", { correlationId, error });
     return Response.json(
       {
         status: "not_ready",
@@ -36,7 +35,7 @@ export async function GET() {
         correlationId,
         timestamp: new Date().toISOString(),
       },
-      { status: 503 },
+      { status: 503, headers: correlationHeaders(correlationId) },
     );
   }
 }

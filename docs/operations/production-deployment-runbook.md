@@ -4,6 +4,16 @@
 
 Bu runbook bir release'in migration, runtime konfigurasyonu, health kapilari ve arka plan isleriyle birlikte kontrollu acilmasini tanimlar. `npm run build` tek basina production kabul kaniti degildir.
 
+## Scheduler Gozlemlenebilirligi
+
+- Outbox endpoint'i en az dakikada bir, giris guvenligi bakimi en az saatte bir calistirilir.
+- Her cagrinin cevabindaki `x-request-id` scheduler logunda saklanir.
+- `/api/health` icindeki `systemJobs` degeri `degraded` ise `/admin/entegrasyonlar` ekranindan eksik, gecikmis veya basarisiz is belirlenir.
+- `OUTBOX_HEARTBEAT_MAX_AGE_MINUTES`, `MAINTENANCE_HEARTBEAT_MAX_AGE_MINUTES` ve `SYSTEM_JOB_LEASE_MINUTES` uretim ortamina acikca tanimlanir.
+- Scheduler gecikmesi readiness kontrolunu kapatmaz; trafik kesmek yerine operasyon alarmi uretilir.
+
+Detayli model ve guvenlik kararlari icin `docs/architecture/observability-and-system-jobs.md` kullanilir.
+
 ## 1. Release Oncesi
 
 1. Temiz commit uzerinde `npm ci` calistirilir.
