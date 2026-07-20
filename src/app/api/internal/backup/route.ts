@@ -13,6 +13,10 @@ export const runtime = "nodejs";
 const defaultBackupRoot = path.join(process.cwd(), "backups", "database");
 const migrationsRoot = path.join(process.cwd(), "prisma", "migrations");
 
+function portableBasename(filePath: string) {
+  return path.win32.basename(path.posix.basename(filePath));
+}
+
 export async function POST(request: NextRequest) {
   const correlationId = getCorrelationId();
   const json = (body: object, status = 200) =>
@@ -51,8 +55,8 @@ export async function POST(request: NextRequest) {
     });
     await heartbeatSystemJobRun({ runId: correlationId, leaseToken: activeLeaseToken });
     const backup = {
-      databaseFile: path.basename(result.databasePath),
-      manifestFile: path.basename(result.manifestPath),
+      databaseFile: portableBasename(result.databasePath),
+      manifestFile: portableBasename(result.manifestPath),
       byteSize: result.manifest.byteSize,
       sha256: result.manifest.sha256,
       createdAt: result.manifest.createdAt,
