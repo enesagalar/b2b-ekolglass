@@ -30,6 +30,10 @@ const baseSchema = z.object({
   BACKUP_BASE_URL: z.string().url(),
   SYSTEM_ALERT_BASE_URL: z.string().url(),
   DATABASE_BACKUP_ROOT: z.string().min(1),
+  BACKUP_OFFSITE_PROVIDER: z.literal("S3"),
+  BACKUP_S3_BUCKET: z.string().min(1),
+  BACKUP_S3_REGION: z.string().min(1),
+  BACKUP_S3_SERVER_SIDE_ENCRYPTION: z.enum(["AES256", "aws:kms"]),
   SYSTEM_JOB_LEASE_MINUTES: z.coerce.number().int().positive(),
   BACKUP_JOB_LEASE_MINUTES: z.coerce.number().int().positive(),
   OUTBOX_HEARTBEAT_WARN_AFTER_MINUTES: z.coerce.number().int().positive(),
@@ -115,6 +119,13 @@ export function validateProductionEnvironment(env: RuntimeEnvironment = process.
 
   if (env.DATABASE_BACKUP_ROOT && !path.isAbsolute(env.DATABASE_BACKUP_ROOT)) {
     issues.push({ key: "DATABASE_BACKUP_ROOT", message: "Production backup kökü mutlak ve kalıcı volume yolu olmalıdır." });
+  }
+
+  if (Boolean(env.BACKUP_S3_ACCESS_KEY_ID?.trim()) !== Boolean(env.BACKUP_S3_SECRET_ACCESS_KEY?.trim())) {
+    issues.push({ key: "BACKUP_S3_ACCESS_KEY_ID", message: "Backup S3 access key ve secret key birlikte tanımlanmalıdır." });
+  }
+  if (env.BACKUP_S3_SERVER_SIDE_ENCRYPTION === "aws:kms" && !env.BACKUP_S3_KMS_KEY_ID?.trim()) {
+    issues.push({ key: "BACKUP_S3_KMS_KEY_ID", message: "KMS şifrelemesi için key kimliği zorunludur." });
   }
 
   const integer = (key: string) => Number.parseInt(env[key] ?? "", 10);

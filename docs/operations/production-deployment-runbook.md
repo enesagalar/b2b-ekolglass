@@ -20,13 +20,15 @@ Detayli model ve guvenlik kararlari icin `docs/architecture/observability-and-sy
 
 1. Temiz commit uzerinde `npm ci` calistirilir.
 2. `npm run check` lint, tum testler ve production build'i tamamlar.
-3. Production secret ve servis degerleri deployment platformuna tanimlanir.
-4. Ayni environment ile `npm run preflight:production` calistirilir.
-5. Preflight basarisizsa release durdurulur; cikti yalniz eksik anahtar adlarini gosterir.
+3. `npm run prisma:migrate:verify` uygulanmis migration adlarini ve checksum'larini repository ile karsilastirir.
+4. Production secret ve servis degerleri deployment platformuna tanimlanir.
+5. Ayni environment ile `npm run preflight:production` calistirilir.
+6. Migration veya environment preflight basarisizsa release durdurulur; cikti SQL, secret veya mutlak veritabani yolu gostermez.
 
 Zorunlu gruplar:
 
 - Veritabani: production'a ozel `DATABASE_URL`.
+- Backup: ayri failure domain'de S3/R2 bucket ve zorunlu server-side encryption.
 - Origin: HTTPS `NEXT_PUBLIC_SITE_URL`, `OUTBOX_BASE_URL`, `MAINTENANCE_BASE_URL`, `BACKUP_BASE_URL`, `SYSTEM_ALERT_BASE_URL`.
 - Auth: birbirinden farkli ve en az 32 karakterlik runtime secret'lari.
 - E-posta: SMTP provider, host, TLS ve gonderici.

@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { correlationHeaders, getCorrelationId, structuredLog } from "@/lib/observability";
+import { uploadVerifiedBackup } from "@/lib/offsite-backup";
 import { matchesBearerSecret } from "@/lib/secret-policy";
 import { createSqliteBackup, resolveSqliteDatabasePath, verifySqliteBackup } from "@/lib/sqlite-backup";
 import { beginSystemJobRun, finishSystemJobRun, heartbeatSystemJobRun, SystemJobBusyError } from "@/lib/system-jobs";
@@ -44,15 +45,26 @@ export async function POST(request: NextRequest) {
       migrationsRoot,
     });
     await heartbeatSystemJobRun({ runId: correlationId, leaseToken: activeLeaseToken });
+    const offsite = await uploadVerifiedBackup({
+      databasePath: result.databasePath,
+      manifestPath: result.manifestPath,
+    });
+    await heartbeatSystemJobRun({ runId: correlationId, leaseToken: activeLeaseToken });
     const backup = {
       databaseFile: path.basename(result.databasePath),
       manifestFile: path.basename(result.manifestPath),
       byteSize: result.manifest.byteSize,
       sha256: result.manifest.sha256,
       createdAt: result.manifest.createdAt,
+      offsite,
     };
     await finishSystemJobRun({ runId: correlationId, leaseToken: activeLeaseToken, status: "SUCCEEDED", resultCount: 1, metadata: backup });
-    structuredLog("info", "database.backup.completed", { correlationId, databaseFile: backup.databaseFile, byteSize: backup.byteSize });
+    structuredLog("info", "database.backup.completed", {
+      correlationId,
+      databaseFile: backup.databaseFile,
+      byteSize: backup.byteSize,
+      offsiteStatus: offsite.status,
+    });
     return json({ backup, correlationId });
   } catch (error) {
     if (error instanceof SystemJobBusyError) {

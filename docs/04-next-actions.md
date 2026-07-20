@@ -2,6 +2,24 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-20 - Migration butunlugu ve sifreli offsite backup
+
+Tamamlananlar:
+
+- Uygulanmis Prisma migration adlarini ve SHA-256 checksum'larini repository ile karsilastiran salt okunur denetci ve CLI eklendi.
+- Eksik tablo, yarim, rollback edilmis, repository disi, bekleyen ve checksum uyusmazligi ayri hata kodlariyla raporlaniyor.
+- S3/R2 uyumlu, ayri credential sinirli ve content-addressed offsite backup adapteri eklendi.
+- Database nesnesi once, manifest son yukleniyor; SHA-256 transport checksum'i ve `AES256`/`aws:kms` server-side encryption zorunlu.
+- Production preflight offsite backup hedefi olmadan gecmiyor; aktarim hatasi `DATABASE_BACKUP` isini basarisiz yapiyor.
+- Lokal gelistirme `BACKUP_OFFSITE_PROVIDER=DISABLED` ile ag cagrisiz calisiyor.
+
+Acil production kapisi:
+
+1. Lokal veritabaninda dogrulanan iki eski migration checksum farki yazili mutabakat proseduruyle kapatilacak; migration dosyalari veya canli veri resetlenmeyecek.
+2. Production S3/R2 backup bucket, retention/versioning ve recovery yetkilisi tanimlanacak.
+3. Offsite nesne farkli recovery ortaminda indirilip restore provasi yapilacak.
+4. Merkezi log sink, staging alarm receiver ve scheduler dead-man kabul kaniti tamamlanacak.
+
 ## 2026-07-16 - Provider-neutral sistem alarm teslimi
 
 Tamamlananlar:

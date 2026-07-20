@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:verify": "tsx scripts/verify-migration-integrity.ts",
     "db:seed": "tsx prisma/seed.ts",
     "smoke:admin": "node scripts/smoke-admin.mjs",
     "outbox:run": "node --env-file=.env scripts/run-outbox-worker.mjs",

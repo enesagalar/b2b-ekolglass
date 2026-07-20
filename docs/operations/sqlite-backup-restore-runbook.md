@@ -9,11 +9,18 @@ Bu akis yalniz `DATABASE_URL=file:...` kullanan SQLite deployment'lari icindir. 
 ```env
 DATABASE_URL="file:./dev.db"
 DATABASE_BACKUP_ROOT="./backups/database"
+BACKUP_OFFSITE_PROVIDER="S3"
+BACKUP_S3_BUCKET="ekolglass-production-backups"
+BACKUP_S3_REGION="eu-central-1"
+BACKUP_S3_PREFIX="portal/database-backups"
+BACKUP_S3_SERVER_SIDE_ENCRYPTION="AES256"
 ```
 
 Production backup root uygulama deploy dizininden bagimsiz, kalici ve erisimi sinirli bir volume olmalidir. Backup dosyalari web root altinda servis edilmez.
 
 Scheduler ayrica `BACKUP_CRON_SECRET`, `BACKUP_BASE_URL`, warning/critical heartbeat ve `BACKUP_JOB_LEASE_MINUTES` degerlerini kullanir.
+
+Production'da `BACKUP_OFFSITE_PROVIDER=S3` zorunludur. AWS S3, Cloudflare R2 veya S3 uyumlu ayri bir hesap/bucket kullanilabilir. Statik credential kullaniliyorsa access key ve secret birlikte tanimlanir; workload identity kullaniliyorsa ikisi de bos birakilir. `aws:kms` seciminde `BACKUP_S3_KMS_KEY_ID` zorunludur.
 
 ## Backup
 
@@ -36,6 +43,9 @@ Komut:
 5. Database ve manifesti izinleri sinirli gecici bundle dizininde hazirlar.
 6. Lease checkpoint'i gecerliyse bundle dizinini tek rename ile atomik olarak yayinlar.
 7. Scheduler akisi yayinlanan snapshot uzerinde izole restore provasi yapar; job ancak bundan sonra `SUCCEEDED` olur.
+8. Dogrulanmis database nesnesi once, manifest nesnesi son yazilacak sekilde content-addressed S3/R2 anahtarina aktarilir.
+9. Aktarim SHA-256 transport checksum'i, private bucket politikasi ve `AES256` veya `aws:kms` server-side encryption zorunluluguyla yapilir.
+10. Offsite aktarim basarisizsa `DATABASE_BACKUP` isi `FAILED` olur ve sistem alarm yasam dongusune girer.
 
 Komut JSON sonucunda yalniz dosya adlarini, boyutu, hash'i ve correlation ID'yi doner; mutlak host yolu veya secret loglanmaz. Scheduler non-zero exit'i kritik alarm saymalidir.
 
@@ -66,5 +76,7 @@ Rapor aktif/pasif referanslari, eksik nesneleri, orphan dosyalari ve gecersiz ad
 4. Lokal medya reconciliation'da aktif kayip nesne yok.
 5. En az bir kopya farkli failure domain'e sifreli aktarilmis.
 6. Retention ve silme politikasi deployment platformunda onaylanmis.
+7. Offsite bucket public erisime kapali ve uygulama runtime hesabindan bagimsiz recovery yetkilisi tanimli.
+8. En az bir offsite nesne periyodik felaket kurtarma provasinda indirilip `db:restore:verify` ile dogrulanmis.
 
-`DATABASE_BACKUP` sagligi yalniz yerel, restore edilmis snapshot'i kanitlar. Farkli failure domain'e sifreli aktarim tamamlanmadan felaket kurtarma kapsami tamamlanmis sayilmaz.
+`DATABASE_BACKUP` basarisi yerel restore provasi ile sifreli offsite aktarimin ikisini birlikte kanitlar. Offsite nesnenin farkli bir recovery ortaminda indirilip restore edilmesi yine periyodik operasyon kabul adimidir.

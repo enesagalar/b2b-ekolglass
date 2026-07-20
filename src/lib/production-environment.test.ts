@@ -10,6 +10,10 @@ const validEnvironment = {
   BACKUP_BASE_URL: "https://portal.ekolglass.com",
   SYSTEM_ALERT_BASE_URL: "https://portal.ekolglass.com",
   DATABASE_BACKUP_ROOT: "/var/lib/ekolglass/backups",
+  BACKUP_OFFSITE_PROVIDER: "S3",
+  BACKUP_S3_BUCKET: "ekolglass-production-backups",
+  BACKUP_S3_REGION: "eu-central-1",
+  BACKUP_S3_SERVER_SIDE_ENCRYPTION: "AES256",
   SYSTEM_JOB_LEASE_MINUTES: "5",
   BACKUP_JOB_LEASE_MINUTES: "30",
   OUTBOX_HEARTBEAT_WARN_AFTER_MINUTES: "6",
@@ -88,6 +92,20 @@ describe("validateProductionEnvironment", () => {
     expect(result.ok).toBe(false);
     expect(result.issues.map((issue) => issue.key)).toEqual(
       expect.arrayContaining(["DATABASE_BACKUP_ROOT", "BACKUP_HEARTBEAT_WARN_AFTER_MINUTES"]),
+    );
+  });
+
+  it("requires an encrypted offsite backup target", () => {
+    const result = validateProductionEnvironment({
+      ...validEnvironment,
+      BACKUP_OFFSITE_PROVIDER: "DISABLED",
+      BACKUP_S3_SERVER_SIDE_ENCRYPTION: "aws:kms",
+      BACKUP_S3_KMS_KEY_ID: "",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.key)).toEqual(
+      expect.arrayContaining(["BACKUP_OFFSITE_PROVIDER", "BACKUP_S3_KMS_KEY_ID"]),
     );
   });
 
