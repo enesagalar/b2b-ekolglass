@@ -885,11 +885,17 @@ assert(
   `Authenticated product publication readiness failed with ${publicationReadinessResponse.status}`,
 );
 const publicationReadinessHtml = await publicationReadinessResponse.text();
+const publicationReadinessMarkers = [
+  "Toplu yayın hazırlığı",
+  "Seçilenleri yayınla",
+  "Genel fiyatı eksik",
+];
+const missingPublicationReadinessMarkers = publicationReadinessMarkers.filter(
+  (marker) => !publicationReadinessHtml.includes(marker),
+);
 assert(
-  publicationReadinessHtml.includes("Toplu yayın hazırlığı") &&
-    publicationReadinessHtml.includes("Seçilenleri yayınla") &&
-    publicationReadinessHtml.includes("Genel bayi fiyatı"),
-  "Admin product publication readiness controls not rendered",
+  missingPublicationReadinessMarkers.length === 0,
+  `Admin product publication readiness controls not rendered: ${missingPublicationReadinessMarkers.join(", ")}`,
 );
 
 const contentResponse = await request("/admin/icerik", {
