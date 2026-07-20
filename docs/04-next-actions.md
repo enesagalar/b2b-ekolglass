@@ -2,6 +2,30 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-20 - S3/R2 medya readiness ve reconciliation
+
+Tamamlananlar:
+
+- `/api/health/ready`, environment ve veritabanindan sonra S3/R2 bucket erisimini sure sinirli gercek istekle dogrular; medya erisimi yoksa `503` doner.
+- Readiness yaniti ve log sozlesmesi bucket, endpoint, credential ve ham provider hatasi sizdirmayacak sekilde sinirlandi.
+- AWS imzali URL'lerdeki `X-Amz-Credential`, `X-Amz-Signature` ve `X-Amz-Security-Token` degerleri merkezi logger'da maskelenir.
+- `media:reconcile`, LOCAL ve S3 provider'larinda salt okunur calisir; S3 pagination, continuation-token dongusu ve 100.000 nesne guvenlik siniri eklendi.
+- Veritabani medya referanslari aktif `storageProvider` ile filtrelenerek provider gecislerinde yanlis eksik nesne raporu engellendi.
+- Admin/bayi session degisimi, gecersiz/suresi dolmus/pasif session reddi ve logout invalidation icin kalici entegrasyon testleri eklendi.
+- 66 test dosyasi ve 292 test, 2 Node testi, lint, production build ve 42 adimli authenticated smoke basarili.
+
+Siradaki kod paketi:
+
+1. Kritik bayi siparis server action kabul testlerini genisletmek.
+2. Alarm receiver HMAC, timeout, redirect ve reminder/re-escalation regresyonlarini tamamlamak.
+3. Production dis kabulleri icin credential/DNS/scheduler kanit listesini son kez daraltmak.
+
+Production ortaminda bekleyen dis kabul:
+
+1. Gercek S3/R2 medya credential ve IAM yetkileriyle readiness, upload/read ve reconciliation provasi.
+2. Merkezi log sink, staging alarm receiver ve scheduler dead-man kaniti.
+3. Portal host, DNS/TLS ve ana site `Bayi Portali` baglantisi.
+
 ## 2026-07-20 - Izole test/CI ve migration mutabakati
 
 Tamamlananlar:

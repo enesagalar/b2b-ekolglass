@@ -59,14 +59,14 @@ Prova once manifest boyut/hash kontrolu yapar, snapshot'i gecici dizine kopyalar
 
 ## Medya Reconciliation
 
-Lokal provider icin:
+Aktif LOCAL veya S3 medya provider'i icin:
 
 ```bash
 npm run media:reconcile
 npm run media:reconcile -- --sample-limit=50
 ```
 
-Rapor aktif/pasif referanslari, eksik nesneleri, orphan dosyalari ve gecersiz adlari sayar. Bu komut silme yapmaz. `S3` provider'da nesne listeleme sozlesmesi kurulmadan fail-closed cikar; provider lifecycle/versioning ayarlari ayri kontrol edilir.
+Rapor yalniz aktif provider'a ait veritabani referanslarini; eksik, orphan ve gecersiz nesneleri sayar. S3 listeleme sayfalidir ve varsayilan 100.000 nesne guvenlik sinirina sahiptir. Bu komut silme yapmaz; provider lifecycle/versioning ayarlari ayri kontrol edilir.
 
 ## Production Kabul
 

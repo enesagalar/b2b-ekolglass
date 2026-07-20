@@ -18,7 +18,7 @@ describe("observability", () => {
       correlationId: "11111111-1111-4111-8111-111111111111",
       authorization: "Bearer should-not-leak",
       nested: { apiKey: "private-key" },
-      error: new Error("Request user@example.com failed with Basic hidden-value"),
+      error: new Error("Request user@example.com failed with Basic hidden-value at https://storage.example/file?X-Amz-Credential=credential-leak&X-Amz-Signature=signature-leak&X-Amz-Security-Token=session-leak"),
     });
 
     expect(errorSpy).toHaveBeenCalledOnce();
@@ -29,6 +29,9 @@ describe("observability", () => {
     expect(output).not.toContain("private-key");
     expect(output).not.toContain("hidden-value");
     expect(output).not.toContain("user@example.com");
+    expect(output).not.toContain("credential-leak");
+    expect(output).not.toContain("signature-leak");
+    expect(output).not.toContain("session-leak");
   });
 });
 

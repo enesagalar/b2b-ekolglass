@@ -1,6 +1,6 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-13
+Son guncelleme: 2026-07-20
 
 ## Git Durumu
 
@@ -108,6 +108,8 @@ Son guncelleme: 2026-07-13
 - Ekol UTF-8 genel listesinden 1.379 kod bazli taslak urun ice aktarildi.
 - Net fiyat kapsami: firma, musteri grubu, genel bayi sirasi.
 - Banner icin dosya secimli, MIME imzasi kontrollu lokal medya storage hatti.
+- Lokal ve S3/R2 medya storage adapteri; gercek bucket erisimini sinayan production readiness kapisi.
+- LOCAL/S3 provider ayrimli, S3 pagination ve nesne sinirli salt okunur medya reconciliation.
 - Urun detayinda fiyat ve stok kontrollu yayin hazirligi ile yayina al/yayindan kaldir komutu.
 - `/admin/urunler/yayin-hazirligi` ekraninda taslak urun KPI, arama, kategori/hazirlik filtresi ve sayfalama.
 - Fiyat ve stok kosullarini transaction icinde yeniden dogrulayan, 50 urun sinirli atomik toplu yayin komutu.
@@ -144,11 +146,10 @@ Son guncelleme: 2026-07-13
 
 ## Bir Sonraki Dogru Adim
 
-Faz 3.3 devam edecek: production credential/scheduler kurulumu ve toplu fiyat-stok import hatti.
+UI yenilemesine gecmeden once production sertlestirmesinin kalan kod ici test paketleri tamamlanacak:
 
-UX/IA konsolidasyonu, tekliften siparise donusum, transactional e-posta ve outbox operasyon siniri tamamlandi. Kalici kararlar `docs/architecture/commerce-ux-information-architecture.md` ve `docs/architecture/transactional-email-outbox.md` icindedir.
+- Kritik bayi siparis server action kabul testleri.
+- Alarm receiver HMAC/timeout/redirect ve reminder/re-escalation regresyonlari.
+- Production credential, DNS/TLS, scheduler ve merkezi log sink dis kabul listesi.
 
-Siradaki hedefler:
-
-- E-posta + IP anahtarli, indeksli login rate-limit modeli.
-- Production SMTP scheduler, alarm kanali ve secret rotasyon runbook'u.
+City Lojistik canli adapteri, resmi API sozlesmesi gelene kadar kapsam disinda ve fail-closed kalir.

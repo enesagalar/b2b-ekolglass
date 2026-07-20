@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const mediaTypes = {
   "image/jpeg": "jpg",
@@ -10,10 +10,10 @@ const mediaTypes = {
   "image/webp": "webp",
 } as const;
 
-type MediaStorageProvider = "LOCAL" | "S3";
-type StorageEnvironment = Record<string, string | undefined>;
+export type MediaStorageProvider = "LOCAL" | "S3";
+export type StorageEnvironment = Record<string, string | undefined>;
 
-type MediaStorageConfig =
+export type MediaStorageConfig =
   | { provider: "LOCAL" }
   | {
       provider: "S3";
@@ -24,6 +24,7 @@ type MediaStorageConfig =
       secretAccessKey?: string;
       forcePathStyle: boolean;
       prefix: string;
+      readinessTimeoutMs: number;
     };
 
 export const maxImageUploadBytes = 5 * 1024 * 1024;
@@ -47,6 +48,15 @@ function normalizePrefix(value: string | undefined) {
   return prefix;
 }
 
+function readinessTimeout(value: string | undefined) {
+  if (!value?.trim()) return 5_000;
+  const timeoutMs = Number(value);
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 30_000) {
+    throw new Error("MEDIA_STORAGE_READINESS_TIMEOUT_MS 1000 ile 30000 arasinda bir tam sayi olmalidir.");
+  }
+  return timeoutMs;
+}
+
 export function resolveMediaStorageConfig(env: StorageEnvironment = process.env): MediaStorageConfig {
   const configured = env.MEDIA_STORAGE_PROVIDER?.trim().toLocaleUpperCase("en-US");
   const provider = (configured || (env.NODE_ENV === "production" ? "" : "LOCAL")) as MediaStorageProvider | "";
@@ -67,6 +77,7 @@ export function resolveMediaStorageConfig(env: StorageEnvironment = process.env)
     secretAccessKey,
     forcePathStyle: env.MEDIA_S3_FORCE_PATH_STYLE?.trim().toLocaleLowerCase("en-US") === "true",
     prefix: normalizePrefix(env.MEDIA_S3_PREFIX),
+    readinessTimeoutMs: readinessTimeout(env.MEDIA_STORAGE_READINESS_TIMEOUT_MS),
   };
 }
 
@@ -82,13 +93,47 @@ function localObjectPath(objectKey: string) {
   return path.join(/* turbopackIgnore: true */ process.cwd(), "storage", "media", objectKey);
 }
 
-function createS3Client(config: Extract<MediaStorageConfig, { provider: "S3" }>) {
+export function createS3Client(config: Extract<MediaStorageConfig, { provider: "S3" }>) {
   return new S3Client({
     region: config.region,
     endpoint: config.endpoint,
     forcePathStyle: config.forcePathStyle,
     credentials: config.accessKeyId && config.secretAccessKey ? { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey } : undefined,
   });
+}
+
+type ReadinessDependencies = {
+  headBucket?: (
+    client: S3Client,
+    bucket: string,
+    abortSignal: AbortSignal,
+  ) => Promise<unknown>;
+};
+
+export async function checkMediaStorageReadiness(
+  env: StorageEnvironment = process.env,
+  dependencies: ReadinessDependencies = {},
+) {
+  let config: MediaStorageConfig;
+  try {
+    config = resolveMediaStorageConfig(env);
+  } catch {
+    return { status: "degraded" as const, provider: "MISCONFIGURED" as const, reason: "configuration" as const };
+  }
+
+  if (config.provider === "LOCAL") {
+    return { status: "ok" as const, provider: config.provider };
+  }
+
+  const headBucket = dependencies.headBucket ?? ((client, bucket, abortSignal) => (
+    client.send(new HeadBucketCommand({ Bucket: bucket }), { abortSignal })
+  ));
+  try {
+    await headBucket(createS3Client(config), config.bucket, AbortSignal.timeout(config.readinessTimeoutMs));
+    return { status: "ok" as const, provider: config.provider };
+  } catch {
+    return { status: "degraded" as const, provider: config.provider, reason: "unreachable" as const };
+  }
 }
 
 export function getMediaStorageHealth(env: StorageEnvironment = process.env) {

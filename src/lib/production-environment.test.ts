@@ -109,6 +109,19 @@ describe("validateProductionEnvironment", () => {
     );
   });
 
+  it("rejects an unsafe media readiness timeout", () => {
+    const result = validateProductionEnvironment({
+      ...validEnvironment,
+      MEDIA_STORAGE_PROVIDER: "S3",
+      MEDIA_S3_BUCKET: "ekolglass-media",
+      MEDIA_S3_REGION: "eu-central-1",
+      MEDIA_STORAGE_READINESS_TIMEOUT_MS: "60000",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual(expect.objectContaining({ key: "MEDIA_STORAGE_READINESS_TIMEOUT_MS" }));
+  });
+
   it("rejects private webhook targets and reused runtime secrets", () => {
     const result = validateProductionEnvironment({
       ...validEnvironment,

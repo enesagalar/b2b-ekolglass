@@ -10,7 +10,7 @@ function sanitizeText(value: string) {
     .replace(/Basic\s+[^\s,;]+/gi, "Basic [REDACTED]")
     .replace(/\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?):\/\/[^\s]+/gi, "[DATABASE_URL_REDACTED]")
     .replace(/\bhttps?:\/\/[^\s/@:]+:[^\s/@]+@/gi, "https://[REDACTED]@")
-    .replace(/([?&](?:token|secret|api[_-]?key|password)=)[^&\s]+/gi, "$1[REDACTED]")
+    .replace(/([?&](?:token|secret|api[_-]?key|password|x-amz-(?:credential|signature|security-token))=)[^&\s]+/gi, "$1[REDACTED]")
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[EMAIL_REDACTED]")
     .replace(/(?<!\d)(?:\+?90\s*)?(?:0\s*)?5\d{2}(?:[\s.-]*\d{3})(?:[\s.-]*\d{2})(?:[\s.-]*\d{2})(?!\d)/g, "[PHONE_REDACTED]")
     .slice(0, 1_000);

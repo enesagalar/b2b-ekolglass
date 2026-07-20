@@ -207,6 +207,8 @@ Tamamlanan production deployment kabul dilimi:
 - Secret degerlerini sizdirmayan merkezi production environment preflight.
 - Development DB, localhost/HTTP origin, zayif secret, SMTP, medya ve City aktivasyon kontrolleri.
 - Bagimlilik sorgulamayan `/api/health/live` ve 503 semantikli `/api/health/ready` ayrimi.
+- S3/R2 bucket erisimini gercek istekle sinayan, sure sinirli ve redakte medya readiness kapisi.
+- LOCAL/S3 provider ayrimli, sayfali ve nesne sinirli salt okunur medya reconciliation.
 - Production migration komutu ve deploy/rollback/scheduler kabul runbook'u.
 
 Tamamlanan raporlama dilimi:

@@ -62,6 +62,7 @@ const baseSchema = z.object({
   SMTP_SECURE: z.enum(["true", "false"]),
   SMTP_REQUIRE_TLS: z.literal("true"),
   MEDIA_STORAGE_PROVIDER: z.enum(["LOCAL", "S3"]),
+  MEDIA_STORAGE_READINESS_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).optional(),
 });
 
 function isStrongSecret(value: string | undefined) {
