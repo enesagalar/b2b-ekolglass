@@ -2,6 +2,28 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-20 - Izole test/CI ve migration mutabakati
+
+Tamamlananlar:
+
+- Vitest artik gercek `dev.db` yerine her kosuda sifirdan migration+seed uygulanan `.test-data/vitest.db` kullanir ve kapanista dosyayi siler.
+- Smoke testi hardcoded `dev.db` yerine guvenli `file:` DATABASE_URL cozumler; farkli staging hedefiyle lokal DB'nin karismasi engellendi.
+- GitHub Actions `main` push ve pull request'lerde install, generate, lint, 278 test, build, 32 migration integrity ve 42 adimli authenticated smoke kapisi calistirir.
+- Iki tarihsel local checksum farki dry-run, otomatik backup/restore, schema fingerprint ve optimistic guard ile mutabik hale getirildi.
+- Mutabakat sonrasi 32/32 migration checksum'i eslesiyor ve Prisma migration diff fark bulmuyor.
+
+Siradaki kod paketi:
+
+1. S3 medya provider icin gercek erisim/readiness ve sayfali reconciliation.
+2. Kritik bayi siparis server action kabul testleri ve auth session cekirdegi testleri.
+3. Alarm receiver tam HMAC/timeout/redirect ve reminder/re-escalation regresyon testleri.
+
+Production ortaminda bekleyen dis kabul:
+
+1. S3/R2 medya ve backup bucket credential, retention/versioning ve recovery yetkilisi.
+2. Merkezi log sink, staging alarm receiver ve scheduler dead-man kaniti.
+3. Portal host, DNS/TLS ve ana site `Bayi Portali` baglantisi.
+
 ## 2026-07-20 - Migration butunlugu ve sifreli offsite backup
 
 Tamamlananlar:

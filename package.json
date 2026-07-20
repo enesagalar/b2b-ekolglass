@@ -8,11 +8,14 @@
     "start": "next start",
     "lint": "eslint src prisma --ext .ts,.tsx --cache --no-error-on-unmatched-pattern",
     "test": "vitest run --maxWorkers=4",
+    "test:node": "node --test scripts/*.test.mjs",
     "test:watch": "vitest",
+    "test:db:prepare": "tsx scripts/prepare-test-database.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:verify": "tsx scripts/verify-migration-integrity.ts",
+    "prisma:migrate:reconcile": "tsx scripts/reconcile-migration-checksums.ts",
     "db:seed": "tsx prisma/seed.ts",
     "smoke:admin": "node scripts/smoke-admin.mjs",
     "outbox:run": "node --env-file=.env scripts/run-outbox-worker.mjs",
@@ -25,7 +28,7 @@
     "media:reconcile": "tsx --env-file=.env scripts/reconcile-media.ts",
     "preflight:production": "tsx scripts/production-preflight.ts",
     "catalog:import": "tsx scripts/import-products-csv.ts",
-    "check": "npm run lint && npm run test && npm run build"
+    "check": "npm run lint && npm run test:node && npm run test && npm run build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1086.0",

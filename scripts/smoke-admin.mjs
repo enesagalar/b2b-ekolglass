@@ -1,6 +1,7 @@
 import { JSDOM } from "jsdom";
 import Database from "better-sqlite3";
 import { hash } from "bcryptjs";
+import { resolveTestDatabasePath } from "./sqlite-database-path.mjs";
 
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const adminEmail =
@@ -11,6 +12,7 @@ const adminPassword =
   process.env.SMOKE_ADMIN_PASSWORD ??
   process.env.SEED_ADMIN_PASSWORD ??
   "EkolGlass2026!";
+const databasePath = resolveTestDatabasePath();
 
 function mergeCookies(existingCookies, setCookieHeaders) {
   for (const header of setCookieHeaders) {
@@ -248,7 +250,7 @@ assert(
 const smokeAdminOrderId = `smoke-admin-order-${Date.now()}`;
 const smokeAdminOrderNumber = `SMOKE-ORDER-${Date.now()}`;
 const smokeAdminOrderTimestamp = new Date().toISOString();
-const smokeAdminOrderDb = new Database("dev.db");
+const smokeAdminOrderDb = new Database(databasePath);
 smokeAdminOrderDb
   .prepare(
     `insert into "Order" (id, orderNumber, companyId, status, currency, subtotal, version, createdAt, updatedAt)
@@ -292,7 +294,7 @@ try {
     "Admin order idempotency control not rendered",
   );
 } finally {
-  const cleanupAdminOrderDb = new Database("dev.db");
+  const cleanupAdminOrderDb = new Database(databasePath);
   cleanupAdminOrderDb
     .prepare('delete from "Order" where id = ?')
     .run(smokeAdminOrderId);
@@ -303,7 +305,7 @@ const smokeQuoteId = `smoke-admin-quote-${Date.now()}`;
 const smokeQuoteItemId = `smoke-admin-quote-item-${Date.now()}`;
 const smokeQuoteNumber = `SMOKE-QUOTE-${Date.now()}`;
 const smokeQuoteTimestamp = new Date().toISOString();
-const smokeQuoteDb = new Database("dev.db");
+const smokeQuoteDb = new Database(databasePath);
 smokeQuoteDb
   .prepare(
     `insert into QuoteRequest (
@@ -370,7 +372,7 @@ try {
     "Admin quote operation controls not rendered",
   );
 } finally {
-  const cleanupQuoteDb = new Database("dev.db");
+  const cleanupQuoteDb = new Database(databasePath);
   cleanupQuoteDb
     .prepare("delete from QuoteRequestItem where quoteRequestId = ?")
     .run(smokeQuoteId);
@@ -412,7 +414,7 @@ const smokeDealerEmail = `smoke-dealer-${Date.now()}@example.com`;
 const smokeDealerPassword = "SmokeDealer2026!";
 const smokeDealerPasswordHash = await hash(smokeDealerPassword, 12);
 const smokeUserTimestamp = new Date().toISOString();
-const companyUserDb = new Database("dev.db");
+const companyUserDb = new Database(databasePath);
 const smokeProduct = companyUserDb
   .prepare(
     "select id, code from Product where status = 'ACTIVE' order by createdAt asc limit 1",
@@ -727,7 +729,7 @@ try {
     "Dealer admin access was not rejected",
   );
 } finally {
-  const companyUserCleanupDb = new Database("dev.db");
+  const companyUserCleanupDb = new Database(databasePath);
   companyUserCleanupDb
     .prepare(
       "delete from AuditLog where actorUserId in (?, ?) or metadata like ? or metadata like ?",
@@ -756,7 +758,7 @@ try {
 const smokeDealerApplicationId = `smoke-dealer-${Date.now()}`;
 const smokeDealerCompanyName = `Smoke Cam ${Date.now()}`;
 const smokeDealerTimestamp = new Date().toISOString();
-const dealerDb = new Database("dev.db");
+const dealerDb = new Database(databasePath);
 dealerDb
   .prepare(
     `
@@ -839,7 +841,7 @@ try {
     "Dealer review submit action not rendered",
   );
 } finally {
-  const dealerCleanupDb = new Database("dev.db");
+  const dealerCleanupDb = new Database(databasePath);
   dealerCleanupDb
     .prepare("delete from DealerApplication where id = ?")
     .run(smokeDealerApplicationId);
@@ -964,7 +966,7 @@ assert(
   "Price/stock CSV template contract is invalid",
 );
 
-const db = new Database("dev.db");
+const db = new Database(databasePath);
 const firstProduct = db
   .prepare("select id, code, name from Product order by createdAt asc limit 1")
   .get();
@@ -974,7 +976,7 @@ assert(firstProduct, "Smoke database has no product");
 const smokeCompatibilityId = `smoke-compat-${Date.now()}`;
 const smokeOemReference = `SMOKE-OEM-${Date.now()}`;
 
-const compatibilityDb = new Database("dev.db");
+const compatibilityDb = new Database(databasePath);
 compatibilityDb
   .prepare(
     `
@@ -1051,7 +1053,7 @@ try {
     "Catalog compatibility search did not render owning product",
   );
 } finally {
-  const cleanupDb = new Database("dev.db");
+  const cleanupDb = new Database(databasePath);
   cleanupDb
     .prepare("delete from ProductCompatibility where id = ?")
     .run(smokeCompatibilityId);

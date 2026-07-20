@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: file:./.test-data/smoke.db
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      AUTH_SECRET: ci-only-auth-secret-000000000000000000000001
+      AUTH_RATE_LIMIT_SECRET: ci-only-rate-limit-secret-0000000000000001
+      CREDENTIAL_LINK_SECRET: ci-only-credential-secret-00000000000000001
+      SEED_ADMIN_EMAIL: admin@ekolglass.test
+      SEED_ADMIN_PASSWORD: VitestOnlyPassword2026!
+      SMOKE_ADMIN_EMAIL: admin@ekolglass.test
+      SMOKE_ADMIN_PASSWORD: VitestOnlyPassword2026!
+      EMAIL_PROVIDER: disabled
+      MEDIA_STORAGE_PROVIDER: LOCAL
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run check
+
+      - name: Prepare isolated smoke database
+        run: npm run test:db:prepare -- .test-data/smoke.db
+
+      - name: Verify migration integrity
+        run: npm run prisma:migrate:verify
+
+      - name: Start production server
+        run: |
+          npm start > .test-data/server.log 2>&1 &
+          echo $! > .test-data/server.pid
+
+      - name: Wait for liveness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health/live > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat .test-data/server.log
+          exit 1
+
+      - name: Run authenticated smoke
+        env:
+          SMOKE_BASE_URL: http://127.0.0.1:3000
+        run: npm run smoke:admin
+
+      - name: Upload server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log
+          path: .test-data/server.log
