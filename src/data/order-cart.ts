@@ -23,6 +23,13 @@ export type OrderActor = {
   role: "DEALER_OWNER" | "DEALER_STAFF";
 };
 
+export class OrderCartError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OrderCartError";
+  }
+}
+
 async function assertActiveDealer(
   tx: Prisma.TransactionClient,
   actor: OrderActor,
@@ -48,7 +55,7 @@ async function assertActiveDealer(
       },
     },
   });
-  if (!user) throw new Error("Bayi oturumu veya firma durumu geçersiz.");
+  if (!user) throw new OrderCartError("Bayi oturumu veya firma durumu geçersiz.");
   return user;
 }
 
@@ -138,7 +145,7 @@ export async function addOrderCartProduct(
       },
       select: { id: true },
     });
-    if (!product) throw new Error("Bu ürün doğrudan siparişe eklenemiyor.");
+    if (!product) throw new OrderCartError("Bu ürün doğrudan siparişe eklenemiyor.");
 
     const cart = await tx.orderCart.upsert({
       where: {
@@ -198,7 +205,7 @@ export async function updateOrderCartProduct(
       },
       select: { id: true, cartId: true },
     });
-    if (!item) throw new Error("Sepet kalemi bulunamadı.");
+    if (!item) throw new OrderCartError("Sepet kalemi bulunamadı.");
     const updated = await tx.orderCartItem.update({
       where: { id: item.id },
       data: { quantity: input.quantity, notes: input.notes },
@@ -224,7 +231,7 @@ export async function removeOrderCartProduct(
       },
       select: { id: true, cartId: true },
     });
-    if (!item) throw new Error("Sepet kalemi bulunamadı.");
+    if (!item) throw new OrderCartError("Sepet kalemi bulunamadı.");
     const deleted = await tx.orderCartItem.delete({ where: { id: item.id } });
     await tx.orderCart.update({
       where: { id: item.cartId },
@@ -284,7 +291,7 @@ export async function submitOrderCart(
         existing.createdById !== actor.userId ||
         existing.requestHash !== requestHash
       ) {
-        throw new Error(
+        throw new OrderCartError(
           "Gönderim anahtarı farklı bir sipariş isteğiyle kullanılmış.",
         );
       }
@@ -301,7 +308,7 @@ export async function submitOrderCart(
     const address = await tx.address.findFirst({
       where: { id: input.deliveryAddressId, companyId: actor.companyId },
     });
-    if (!address) throw new Error("Teslimat adresi firmanıza ait değil.");
+    if (!address) throw new OrderCartError("Teslimat adresi firmanıza ait değil.");
 
     const pricedAt = new Date();
     const cart = await tx.orderCart.findFirst({
@@ -362,14 +369,14 @@ export async function submitOrderCart(
         },
       },
     });
-    if (!cart?.items.length) throw new Error("Sipariş sepetiniz boş.");
+    if (!cart?.items.length) throw new OrderCartError("Sipariş sepetiniz boş.");
 
     const snapshots = cart.items.map((item) => {
       if (
         item.product.status !== "ACTIVE" ||
         item.product.orderMode === "QUOTE_ONLY"
       ) {
-        throw new Error(
+        throw new OrderCartError(
           `${item.product.name} artık doğrudan siparişe uygun değil.`,
         );
       }
@@ -380,7 +387,7 @@ export async function submitOrderCart(
         pricedAt,
       );
       if (!price)
-        throw new Error(
+        throw new OrderCartError(
           `${item.product.name} için geçerli firma fiyatı bulunamadı.`,
         );
       const stockItems = item.product.stockItems;
@@ -390,7 +397,7 @@ export async function submitOrderCart(
         0,
       );
       if (available < item.quantity)
-        throw new Error(
+        throw new OrderCartError(
           `${item.product.name} için yeterli kullanılabilir stok yok.`,
         );
       const unitPrice = new Prisma.Decimal(price.amount.toString());
@@ -420,7 +427,7 @@ export async function submitOrderCart(
     });
     const currencies = [...new Set(snapshots.map((item) => item.currency))];
     if (currencies.length !== 1)
-      throw new Error("Sepette birden fazla para birimi bulunuyor.");
+      throw new OrderCartError("Sepette birden fazla para birimi bulunuyor.");
     const subtotal = snapshots.reduce(
       (sum, item) => sum.add(item.lineTotal),
       new Prisma.Decimal(0),
@@ -517,7 +524,7 @@ export async function submitOrderCart(
           data: { reservedQuantity: { increment: allocation } },
         });
         if (reserved.count !== 1)
-          throw new Error(
+          throw new OrderCartError(
             `${snapshot.productNameSnapshot} stok kaydı eşzamanlı olarak değişti. Lütfen tekrar deneyin.`,
           );
         await tx.stockReservation.create({
@@ -530,7 +537,7 @@ export async function submitOrderCart(
         remaining -= allocation;
       }
       if (remaining !== 0)
-        throw new Error(
+        throw new OrderCartError(
           `${snapshot.productNameSnapshot} için stok rezervasyonu tamamlanamadı.`,
         );
     }
@@ -579,7 +586,7 @@ export async function submitOrderCart(
       where: { id: cart.id, version: input.cartVersion },
     });
     if (removedCart.count !== 1)
-      throw new Error(
+      throw new OrderCartError(
         "Sipariş sepeti gönderim sırasında değişti. Lütfen tekrar deneyin.",
       );
     return order;

@@ -10,7 +10,7 @@ describe("trusted client IP resolution", () => {
   it("ignores forwarding headers unless the proxy is explicitly trusted", () => {
     expect(resolveTrustedClientIp(
       requestHeaders({ "x-forwarded-for": "203.0.113.10" }),
-      { AUTH_TRUST_PROXY: "false" },
+      { NODE_ENV: "test", AUTH_TRUST_PROXY: "false" },
     )).toBeNull();
   });
 
@@ -18,6 +18,7 @@ describe("trusted client IP resolution", () => {
     expect(resolveTrustedClientIp(
       requestHeaders({ "x-forwarded-for": "203.0.113.10, 10.0.0.4" }),
       {
+        NODE_ENV: "test",
         AUTH_TRUST_PROXY: "true",
         AUTH_CLIENT_IP_HEADER: "x-forwarded-for",
       },
@@ -27,22 +28,22 @@ describe("trusted client IP resolution", () => {
   it("normalizes bracketed IPv6 and IPv4 ports", () => {
     expect(resolveTrustedClientIp(
       requestHeaders({ "x-real-ip": "[2001:db8::1]:443" }),
-      { AUTH_TRUST_PROXY: "true", AUTH_CLIENT_IP_HEADER: "x-real-ip" },
+      { NODE_ENV: "test", AUTH_TRUST_PROXY: "true", AUTH_CLIENT_IP_HEADER: "x-real-ip" },
     )).toBe("2001:db8::1");
     expect(resolveTrustedClientIp(
       requestHeaders({ "x-real-ip": "203.0.113.10:8443" }),
-      { AUTH_TRUST_PROXY: "true", AUTH_CLIENT_IP_HEADER: "x-real-ip" },
+      { NODE_ENV: "test", AUTH_TRUST_PROXY: "true", AUTH_CLIENT_IP_HEADER: "x-real-ip" },
     )).toBe("203.0.113.10");
   });
 
   it("rejects malformed values and unapproved header names", () => {
     expect(resolveTrustedClientIp(
       requestHeaders({ "x-forwarded-for": "not-an-ip" }),
-      { AUTH_TRUST_PROXY: "true" },
+      { NODE_ENV: "test", AUTH_TRUST_PROXY: "true" },
     )).toBeNull();
     expect(resolveTrustedClientIp(
       requestHeaders({ "x-client-ip": "203.0.113.10" }),
-      { AUTH_TRUST_PROXY: "true", AUTH_CLIENT_IP_HEADER: "x-client-ip" },
+      { NODE_ENV: "test", AUTH_TRUST_PROXY: "true", AUTH_CLIENT_IP_HEADER: "x-client-ip" },
     )).toBeNull();
   });
 });

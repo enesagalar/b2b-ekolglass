@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireDealerContext } from "@/data/dealer-context";
 import {
   addOrderCartProduct,
+  OrderCartError,
   removeOrderCartProduct,
   submitOrderCart,
   updateOrderCartProduct,
@@ -33,7 +34,7 @@ async function actor(nextPath: string) {
 }
 
 function messageOf(error: unknown) {
-  return error instanceof Error ? error.message : "İşlem tamamlanamadı.";
+  return error instanceof OrderCartError ? error.message : "İşlem tamamlanamadı.";
 }
 
 export async function addOrderCartItemAction(
@@ -46,8 +47,9 @@ export async function addOrderCartItemAction(
     notes: formData.get("notes"),
   });
   if (!parsed.success) return { message: parsed.error.issues[0]?.message };
+  const orderActor = await actor("/urunler");
   try {
-    await addOrderCartProduct(await actor("/urunler"), parsed.data);
+    await addOrderCartProduct(orderActor, parsed.data);
   } catch (error) {
     return { message: messageOf(error) };
   }
@@ -138,9 +140,10 @@ export async function submitOrderCartAction(
     idempotencyKey: formData.get("idempotencyKey"),
   });
   if (!parsed.success) return { message: parsed.error.issues[0]?.message };
+  const orderActor = await actor("/sepet");
   let order: { id: string };
   try {
-    order = await submitOrderCart(await actor("/sepet"), parsed.data);
+    order = await submitOrderCart(orderActor, parsed.data);
   } catch (error) {
     return { message: messageOf(error) };
   }

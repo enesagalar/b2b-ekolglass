@@ -201,6 +201,8 @@ Tamamlanan gozlemlenebilirlik dilimi:
 - Backup ve retention icin ayri scheduler job'lari, warning/critical alarm seviyesi ve lease fencing.
 - Atomik backup bundle, restore provasi ve run-history retention politikasi.
 - Outbox tabanli OPENED/ESCALATED/REMINDER/RECOVERED alarm yasam dongusu, HMAC webhook ve admin teslim gorunurlugu.
+- Alarm reminder/recovery/re-escalation idempotency ve webhook HMAC/timeout/redirect regresyon kapilari.
+- Bayi siparis action dealer redirect, girdi dogrulama ve guvenli hata siniri testleri.
 
 Tamamlanan production deployment kabul dilimi:
 

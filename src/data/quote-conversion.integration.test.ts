@@ -151,7 +151,7 @@ describe("approved quote to order conversion", () => {
         where: { aggregateId: { in: [quote.id, first.id] } },
       }),
     ).toBe(2);
-    await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, notes: "Different note" })).rejects.toMatchObject<Partial<QuoteOperationError>>({ code: "CONFLICT" });
+    await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, notes: "Different note" })).rejects.toMatchObject({ code: "CONFLICT" } satisfies Partial<QuoteOperationError>);
 
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: first.id },
@@ -172,7 +172,7 @@ describe("approved quote to order conversion", () => {
     expect((await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockA } })).reservedQuantity).toBe(4);
     expect((await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockB } })).reservedQuantity).toBe(3);
 
-    await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, idempotencyKey: crypto.randomUUID() })).rejects.toMatchObject<Partial<QuoteOperationError>>({ code: "CONFLICT" });
+    await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, idempotencyKey: crypto.randomUUID() })).rejects.toMatchObject({ code: "CONFLICT" } satisfies Partial<QuoteOperationError>);
   });
 
   it("rolls back completely when stock is insufficient", async () => {
@@ -187,7 +187,7 @@ describe("approved quote to order conversion", () => {
       deliveryAddressId: ids.address,
       shipmentMethod: "SALES_COORDINATION",
       idempotencyKey: crypto.randomUUID(),
-    })).rejects.toMatchObject<Partial<QuoteOperationError>>({ code: "INVALID_CONVERSION" });
+    })).rejects.toMatchObject({ code: "INVALID_CONVERSION" } satisfies Partial<QuoteOperationError>);
 
     expect(await prisma.order.count({ where: { companyId: ids.company } })).toBe(beforeOrders);
     expect((await prisma.stockItem.aggregate({ where: { productId: ids.product }, _sum: { reservedQuantity: true } }))._sum.reservedQuantity).toBe(beforeReserved._sum.reservedQuantity);
@@ -203,7 +203,7 @@ describe("approved quote to order conversion", () => {
       deliveryAddressId: ids.address,
       shipmentMethod: "CUSTOMER_PICKUP",
       idempotencyKey: crypto.randomUUID(),
-    })).rejects.toMatchObject<Partial<QuoteOperationError>>({ code: "INVALID_CONVERSION" });
+    })).rejects.toMatchObject({ code: "INVALID_CONVERSION" } satisfies Partial<QuoteOperationError>);
     expect(await prisma.order.count({ where: { sourceQuoteId: quote.id } })).toBe(0);
   });
 });

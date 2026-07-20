@@ -149,13 +149,13 @@ describe("quote operations", () => {
         { userId: actorId },
         { ...base, items: [{ itemId: quote.items[0]!.id, unitPrice: "21.00" }] },
       ),
-    ).rejects.toMatchObject<Partial<QuoteOperationError>>({ code: "CONFLICT" });
+    ).rejects.toMatchObject({ code: "CONFLICT" } satisfies Partial<QuoteOperationError>);
     await expect(
       priceQuote(
         { userId: actorId },
         { ...base, idempotencyKey: crypto.randomUUID() },
       ),
-    ).rejects.toMatchObject<Partial<QuoteOperationError>>({ code: "CONFLICT" });
+    ).rejects.toMatchObject({ code: "CONFLICT" } satisfies Partial<QuoteOperationError>);
   });
 
   it("requires an active offer revision before sending", async () => {
@@ -171,9 +171,9 @@ describe("quote operations", () => {
           idempotencyKey: crypto.randomUUID(),
         },
       ),
-    ).rejects.toMatchObject<Partial<QuoteOperationError>>({
+    ).rejects.toMatchObject({
       code: "INVALID_PRICING",
-    });
+    } satisfies Partial<QuoteOperationError>);
   });
 
   it("records an idempotent status transition after pricing", async () => {

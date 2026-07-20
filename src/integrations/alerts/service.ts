@@ -33,7 +33,7 @@ export async function reconcileSystemAlerts(health: SystemJobsHealth, now = new 
         eventType = "RECOVERED";
       } else if (!current || current.status === "RESOLVED") {
         eventType = "OPENED";
-      } else if (observedSeverity === "critical" && current.lastQueuedSeverity !== "critical") {
+      } else if (observedSeverity === "critical" && current.currentSeverity !== "critical") {
         eventType = "ESCALATED";
       } else if (
         observedSeverity === "critical" && current.lastQueuedAt &&

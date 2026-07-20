@@ -2,6 +2,29 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-20 - Siparis action ve alarm regresyon kapilari
+
+Tamamlananlar:
+
+- Bayi siparis submit action'i icin validation, dealer context, actor aktarimi, revalidation, redirect ve hata haritalama testleri eklendi.
+- Dealer context redirect'inin genel hata yakalayici tarafindan yutulmasi engellendi.
+- Beklenen sepet/is kurali hatalari `OrderCartError` ile ayrildi; beklenmeyen veritabani ve altyapi hata detaylari kullanici yanitina tasinmiyor.
+- Alarm webhook HMAC govdesi, timestamp, idempotency, timeout sinyali, manuel redirect ve HTTP retry/permanent siniflari testlendi.
+- Reminder esik/idempotency, recovery sonrasi reopen ve `critical -> warning -> critical` yeniden escalation yasam dongusu kalici testlere alindi.
+- Eski test tip borcu kapatildi; bagimsiz `npx tsc --noEmit` artik basarili.
+- 67 test dosyasi ve 313 test, 2 Node testi, lint ve production build basarili.
+
+Siradaki kod paketi:
+
+1. Production dis kabul kontrol listesini deployment-ready kanit sablonuna donusturmek.
+2. Guvenlik ve veri kurtarma runbook'larinda son tutarlilik denetimi yapmak.
+3. City Lojistik haric kalan production kod bosluklarini son kez taramak.
+
+UI karari:
+
+- UI yenilemesine henuz gecilmedi.
+- Kalan production readiness denetimi kapandiginda kullanicidan UI degisimi icin acik onay istenecek.
+
 ## 2026-07-20 - S3/R2 medya readiness ve reconciliation
 
 Tamamlananlar:

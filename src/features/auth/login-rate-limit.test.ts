@@ -20,7 +20,7 @@ import {
 const environment = {
   NODE_ENV: "test",
   AUTH_RATE_LIMIT_SECRET: "test-rate-limit-secret-with-32-bytes",
-};
+} satisfies NodeJS.ProcessEnv;
 
 describe("login rate limiting", () => {
   beforeEach(() => {
@@ -49,6 +49,7 @@ describe("login rate limiting", () => {
 
   it("uses safe defaults when environment limits are invalid", () => {
     expect(getLoginRateLimitConfig({
+      NODE_ENV: "test",
       AUTH_LOGIN_WINDOW_MINUTES: "0",
       AUTH_LOGIN_EMAIL_MAX_FAILURES: "not-a-number",
       AUTH_LOGIN_IP_MAX_FAILURES: "900",

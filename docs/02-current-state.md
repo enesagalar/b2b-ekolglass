@@ -55,6 +55,7 @@ Son guncelleme: 2026-07-20
 - Teklif, revizyon, siparis ve siparis kalemi arasinda iliskisel kaynak/audit zinciri.
 - Company-scoped order/quote DAL ve cross-company SQLite testi.
 - Kullanici+firma kapsamli kalici siparis sepeti ve `/sepet` checkout ekrani.
+- Siparis server action'larinda dealer redirect siniri ve yalniz beklenen `OrderCartError` mesajlarini aciga cikaran hata sozlesmesi.
 - Teslimat adresi secimi ve checkout icinden yeni firma adresi olusturma.
 - Gonderim aninda server-side fiyat, firma, kullanici, urun ve stok yeniden dogrulamasi.
 - Cart version, company-scoped idempotency ve request hash ile cift/stale gonderim korumasi.
@@ -121,6 +122,8 @@ Son guncelleme: 2026-07-20
 - Bilinmeyen hesaplarda dummy bcrypt karsilastirmasi ile zamanlama farki azaltilir.
 - Bearer secret korumali rate-limit maintenance endpoint'i, CLI scheduler komutu ve audit kaydi.
 - `/api/health` authentication durumu ve admin dashboard `Giris guvenligi` metrigi.
+- Alarm webhook HMAC/timeout/redirect siniflandirmasi ile reminder, recovery ve yeniden escalation regresyon kapsami.
+- Runtime testlerine ek olarak bagimsiz `tsc --noEmit` test tipi kapisi.
 
 ## En Onemli Eksikler
 
@@ -146,10 +149,10 @@ Son guncelleme: 2026-07-20
 
 ## Bir Sonraki Dogru Adim
 
-UI yenilemesine gecmeden once production sertlestirmesinin kalan kod ici test paketleri tamamlanacak:
+UI yenilemesine gecmeden once production sertlestirmesinin kalan son denetimi tamamlanacak:
 
-- Kritik bayi siparis server action kabul testleri.
-- Alarm receiver HMAC/timeout/redirect ve reminder/re-escalation regresyonlari.
 - Production credential, DNS/TLS, scheduler ve merkezi log sink dis kabul listesi.
+- Backup restore ve S3/R2 medya provasi kanit sablonlari.
+- City Lojistik haric kalan production kod bosluklarinin son taramasi.
 
 City Lojistik canli adapteri, resmi API sozlesmesi gelene kadar kapsam disinda ve fail-closed kalir.

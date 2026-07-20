@@ -1,6 +1,9 @@
-import type { ReactElement } from "react";
-import { Children } from "react";
+import type { ReactElement, ReactNode } from "react";
+import { Children, isValidElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { ProductSearchParams } from "@/data/product-browser";
+import type { CatalogViewer } from "@/domain/catalog";
 
 const mocks = vi.hoisted(() => ({
   findCompany: vi.fn(),
@@ -46,9 +49,20 @@ import LoginPage from "@/app/giris/page";
 import ProductDetailPage from "@/app/urunler/[id]/page";
 import ProductsPage from "@/app/urunler/page";
 
-function childByType(element: ReactElement, type: unknown) {
+type ProductBrowserProps = {
+  basePath: string;
+  searchParams: ProductSearchParams;
+  viewer: CatalogViewer;
+  embedded?: boolean;
+};
+
+function childByType<Props extends object>(
+  element: ReactElement<{ children?: ReactNode }>,
+  type: unknown,
+) {
   return Children.toArray(element.props.children).find(
-    (child): child is ReactElement => typeof child === "object" && child !== null && "type" in child && child.type === type,
+    (child): child is ReactElement<Props> =>
+      isValidElement<Props>(child) && child.type === type,
   );
 }
 
@@ -69,7 +83,7 @@ describe("public commerce routes", () => {
     mocks.getCurrentUser.mockResolvedValue({ id: "admin-1", name: "Admin", role: "SUPER_ADMIN", companyId: null });
 
     const page = await ProductsPage({ searchParams: Promise.resolve({ q: "cam" }) });
-    const browser = childByType(page, mocks.productBrowser);
+    const browser = childByType<ProductBrowserProps>(page, mocks.productBrowser);
 
     expect(browser?.props).toEqual(expect.objectContaining({
       basePath: "/urunler",
@@ -84,7 +98,7 @@ describe("public commerce routes", () => {
     mocks.findCompany.mockResolvedValue({ status: "APPROVED", customerGroupId: "group-1" });
 
     const page = await ProductsPage({ searchParams: Promise.resolve({}) });
-    const browser = childByType(page, mocks.productBrowser);
+    const browser = childByType<ProductBrowserProps>(page, mocks.productBrowser);
 
     expect(browser?.props.viewer).toEqual({
       role: "DEALER_STAFF",
