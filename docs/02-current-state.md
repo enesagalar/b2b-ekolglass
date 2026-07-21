@@ -7,9 +7,9 @@ Son guncelleme: 2026-07-21
 - Aktif branch: `main`
 - Remote: `https://github.com/enesagalar/b2b-ekolglass.git`
 - Son bilinen commitler:
-  - `499555c Harden dealer order and alert workflows`
-  - `e987ddd Add production storage readiness and reconciliation`
-  - `52f0829 Isolate test database and enforce CI gates`
+  - `e9658fe Add recovery and internal auth evidence gates`
+  - `9665c9b Automate public production evidence gates`
+  - `4ca6361 Harden production release security gates`
 
 ## Calisan Temel Parcalar
 
