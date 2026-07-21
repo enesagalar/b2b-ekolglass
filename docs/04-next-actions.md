@@ -14,7 +14,8 @@ Tamamlananlar:
 - Aktor, gerekce, onceki/yeni durum ve iptal sayimlari audit log'a yaziliyor.
 - Eski fiyat/stok import ve company action eksik kayitlari mevcut kodla mutabik hale getirildi.
 - Dealer context askidaki firmayi aktif kullaniciya ragmen reddeden kalici testle guvenceye alindi.
-- 71 Vitest dosyasinda 336 test, 9 Node testi, lint, TypeScript ve production build basarili.
+- Audit yazimi zorla basarisiz oldugunda firma durumu, session ve token degisikliklerinin tamamen rollback oldugu SQLite trigger testiyle kanitlandi.
+- 71 Vitest dosyasinda 337 test, 9 Node testi, lint, TypeScript ve production build basarili.
 
 Siradaki kod paketi:
 

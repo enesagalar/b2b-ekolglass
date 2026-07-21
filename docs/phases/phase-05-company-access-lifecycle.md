@@ -27,7 +27,7 @@ Bir bayi firmasinin erisimini kullanicilari tek tek degistirmeden, veri ve sipar
 
 ## Kabul Kaniti
 
-- SQLite entegrasyon testi askilama, session iptali, token iptali, audit, stale komut ve yeniden etkinlestirmeyi kapsar.
+- SQLite entegrasyon testi askilama, session iptali, token iptali, audit hata enjeksiyonunda tam rollback, stale/ABA komut ve yeniden etkinlestirmeyi kapsar.
 - Admin firma detayinda mevcut duruma gore askilama veya yeniden acma formu gosterilir.
 - Authenticated smoke firma yasam dongusu kontrolunun render edildigini dogrular.
 

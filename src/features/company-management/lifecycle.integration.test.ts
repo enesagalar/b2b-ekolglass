@@ -260,6 +260,52 @@ describe("dealer-user lifecycle with SQLite", () => {
     expect(replayState.ok).toBe(false);
   });
 
+  it("rolls back company status and credential revocation when audit persistence fails", async () => {
+    const company = await prisma.company.findUniqueOrThrow({ where: { id: approvedCompanyId } });
+    const sessionHash = hashActivationToken(`${prefix}-rollback-session`);
+    const resetHash = hashPasswordResetToken(`${prefix}-rollback-reset`);
+    const triggerName = `company_lifecycle_rollback_${Date.now()}`;
+
+    await prisma.authSession.create({
+      data: { userId: userIds.resetA, tokenHash: sessionHash, expiresAt: future() },
+    });
+    await prisma.userPasswordResetToken.create({
+      data: { userId: userIds.resetA, tokenHash: resetHash, expiresAt: future() },
+    });
+    await prisma.$executeRawUnsafe(`
+      CREATE TRIGGER "${triggerName}"
+      BEFORE INSERT ON "AuditLog"
+      WHEN NEW."action" = 'company.suspended'
+      BEGIN
+        SELECT RAISE(ABORT, 'forced company lifecycle audit failure');
+      END
+    `);
+
+    try {
+      const state = await changeCompanyStatus(
+        { ok: false, message: "" },
+        companyStatusForm(
+          "APPROVED",
+          company.updatedAt,
+          "SUSPENDED",
+          "Rollback testi için firma erişimi kapatılıyor.",
+        ),
+      );
+
+      expect(state).toEqual({ ok: false, message: "Firma durumu güncellenemedi." });
+      expect((await prisma.company.findUniqueOrThrow({ where: { id: approvedCompanyId } })).status).toBe("APPROVED");
+      expect(await prisma.authSession.count({ where: { tokenHash: sessionHash } })).toBe(1);
+      expect((await prisma.userPasswordResetToken.findUniqueOrThrow({ where: { tokenHash: resetHash } })).revokedAt).toBeNull();
+      expect(await prisma.auditLog.count({
+        where: { entityType: "Company", entityId: approvedCompanyId, action: "company.suspended" },
+      })).toBe(0);
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${triggerName}"`);
+      await prisma.authSession.deleteMany({ where: { tokenHash: sessionHash } });
+      await prisma.userPasswordResetToken.deleteMany({ where: { tokenHash: resetHash } });
+    }
+  });
+
   it("suspends a company atomically and revokes dealer access credentials", async () => {
     const activationHash = hashActivationToken(`${prefix}-company-suspension-activation`);
     const resetHash = hashPasswordResetToken(`${prefix}-company-suspension-reset`);
