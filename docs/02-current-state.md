@@ -130,6 +130,8 @@ Son guncelleme: 2026-07-21
 - Release bazli doldurulabilir production kabul kanit sablonu.
 - Runtime commit/digest/release kimligiyle deploy edilen artifact'i dogrulayan secret-safe public production evidence collector ve manuel GitHub workflow'u.
 - Public evidence icin onayli DNS hedefi, public IP, HTTP->HTTPS, en az 30 gun TLS, health no-store ve kati robots/sitemap kapilari.
+- CI'da gercek migration+seed kullanan, kaynak DB'yi degistirmeyen ve artifact ureten izole backup/restore tatbikati.
+- Public evidence collector'da secret okumadan bes dahili cron rotasinin `401`, no-store, request ID ve cookie uretmeme siniri.
 - Authenticated smoke'un yalniz izole CI/staging veritabaninda calisabilecegi production guvenlik siniri.
 
 ## En Onemli Eksikler

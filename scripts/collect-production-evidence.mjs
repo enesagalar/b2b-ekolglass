@@ -11,6 +11,14 @@ const execFileAsync = promisify(execFile);
 const maxResponseBytes = 64 * 1024;
 const requiredRobotsRules = ["Disallow: /admin", "Disallow: /yonetim", "Disallow: /bayi/", "Disallow: /giris", "Disallow: /aktivasyon/", "Disallow: /parola-sifirla/", "Disallow: /api/"];
 const expectedSitemapPaths = ["/", "/urunler", "/bayi-basvurusu"];
+const internalAuthPaths = [
+  "/api/internal/outbox",
+  "/api/internal/backup",
+  "/api/internal/alerts",
+  "/api/internal/maintenance/system-jobs",
+  "/api/internal/maintenance/auth-rate-limit",
+];
+const invalidProbeAuthorization = "Bearer evidence-probe";
 
 export function parseArguments(argv, environment = process.env) {
   const options = {
@@ -136,6 +144,46 @@ async function requestEndpoint(baseUrl, pathname, timeoutMs) {
   } catch {
     return { status: 0, headers: {}, body: "", error: "request_failed" };
   }
+}
+
+async function probeInternalAuthBoundary(baseUrl, pathname, timeoutMs) {
+  try {
+    const response = await fetch(new URL(pathname, baseUrl), {
+      method: "POST",
+      redirect: "manual",
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: {
+        accept: "application/json",
+        authorization: invalidProbeAuthorization,
+      },
+    });
+    const data = safeJson(await readLimitedText(response));
+    const requestId = response.headers.get("x-request-id")?.trim() ?? "";
+    return {
+      method: "POST",
+      pathname,
+      status: response.status,
+      jsonErrorContract: Boolean(data && typeof data === "object" && !Array.isArray(data) && typeof data.error === "string"),
+      cacheNoStore: response.headers.get("cache-control")?.includes("no-store") === true,
+      requestIdPresent: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId),
+      setCookieAbsent: !response.headers.has("set-cookie"),
+    };
+  } catch {
+    return {
+      method: "POST",
+      pathname,
+      status: 0,
+      jsonErrorContract: false,
+      cacheNoStore: false,
+      requestIdPresent: false,
+      setCookieAbsent: false,
+      error: "request_failed",
+    };
+  }
+}
+
+async function internalAuthEvidence(baseUrl, timeoutMs) {
+  return Promise.all(internalAuthPaths.map((pathname) => probeInternalAuthBoundary(baseUrl, pathname, timeoutMs)));
 }
 
 async function httpRedirectEvidence(target, timeoutMs) {
@@ -328,6 +376,7 @@ export function evaluatePublicEvidence(evidence) {
   const sitemapUrls = evidence.http.sitemap.locations;
   const expectedOrigin = evidence.target.origin;
   const actualRelease = live?.release;
+  const internalAuth = Array.isArray(evidence.internalAuth) ? evidence.internalAuth : [];
   const dnsValues = [...evidence.dns.addresses, ...evidence.dns.cnames];
   const sitemapPaths = sitemapUrls.map((value) => {
     try {
@@ -356,6 +405,15 @@ export function evaluatePublicEvidence(evidence) {
     ["dns_resolution", evidence.dns.status === "ok" && evidence.dns.addresses.length > 0 && evidence.dns.addresses.every(isPublicIp)],
     ["dns_target", evidence.expectedDnsTargets.some((target) => dnsValues.includes(target))],
     ["tls_certificate", evidence.tls.status === "ok" ? evidence.tls.authorized === true && evidence.tls.daysRemaining >= 30 : evidence.tls.status === "skipped"],
+    ["internal_auth_boundaries", internalAuth.length === internalAuthPaths.length && new Set(internalAuth.map((probe) => probe.pathname)).size === internalAuthPaths.length && internalAuth.every((probe) =>
+      probe.method === "POST" &&
+      internalAuthPaths.includes(probe.pathname) &&
+      probe.status === 401 &&
+      probe.jsonErrorContract &&
+      probe.cacheNoStore &&
+      probe.requestIdPresent &&
+      probe.setCookieAbsent
+    )],
     ["collector_git_provenance", evidence.git.dirty === false && evidence.git.commit === evidence.expectedRelease.commitSha],
   ].map(([name, passed]) => ({ name, passed: Boolean(passed) }));
   return { status: checks.every((check) => check.passed) ? "pass" : "fail", checks };
@@ -364,13 +422,14 @@ export function evaluatePublicEvidence(evidence) {
 export async function collectPublicEvidence(options) {
   const target = new URL(options.baseUrl);
   const hostname = target.hostname.replace(/^\[|\]$/g, "");
-  const [home, liveness, readiness, health, robots, sitemap, git, dns, tlsResult, httpRedirect] = await Promise.all([
+  const [home, liveness, readiness, health, robots, sitemap, internalAuth, git, dns, tlsResult, httpRedirect] = await Promise.all([
     requestEndpoint(options.baseUrl, "/", options.timeoutMs),
     requestEndpoint(options.baseUrl, "/api/health/live", options.timeoutMs),
     requestEndpoint(options.baseUrl, "/api/health/ready", options.timeoutMs),
     requestEndpoint(options.baseUrl, "/api/health", options.timeoutMs),
     requestEndpoint(options.baseUrl, "/robots.txt", options.timeoutMs),
     requestEndpoint(options.baseUrl, "/sitemap.xml", options.timeoutMs),
+    internalAuthEvidence(options.baseUrl, options.timeoutMs),
     gitMetadata(),
     dnsEvidence(hostname),
     tlsEvidence(target, options.timeoutMs),
@@ -386,6 +445,7 @@ export async function collectPublicEvidence(options) {
     dns,
     tls: tlsResult,
     transport: { httpRedirect },
+    internalAuth,
     http: {
       home: { status: home.status, headers: home.headers, error: home.error ?? null },
       liveness: { status: liveness.status, data: sanitizeLiveness(safeJson(liveness.body)), headers: liveness.headers, error: liveness.error ?? null },

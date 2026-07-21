@@ -17,6 +17,7 @@
 | Artifact digest (SHA-256 / image digest) | `________________` |
 | Runtime `/api/health/live` release SHA / digest / ID | `________________` |
 | CI run URL / ID | `________________` |
+| CI recovery drill artifact | `________________` |
 | Deployment platform release URL / ID | `________________` |
 | Hedef ortam ve bolge | `production / ________________` |
 | Planlanan pencere (UTC) | `________________` |
@@ -64,6 +65,7 @@ Komut: `npm run preflight:production`
 
 | Adim | Komut / kontrol | Sonuc | Kanit URL/ID |
 |---|---|---|---|
+| Commit-seviyesi izole recovery tatbikati | `npm run recovery:drill` / CI artifact | [ ] Gecti [ ] Kaldi | `________________` |
 | Izlenen production backup | `npm run db:backup:run` | [ ] Gecti [ ] Kaldi | `________________` |
 | Manifest boyut ve SHA-256 dogrulamasi | Backup run sonucu | [ ] Gecti [ ] Kaldi | `________________` |
 | SQLite integrity / foreign key kontrolu | Backup run sonucu | [ ] Gecti [ ] Kaldi | `________________` |
@@ -77,6 +79,7 @@ Komut: `npm run preflight:production`
 - Restore test ortami ve zamani (UTC): `________________`
 - Restore edilen kritik tablo sayimlari kaniti: `________________`
 - [ ] Restore provasi canli veritabanina yazmadan tamamlanmistir.
+- [ ] CI recovery kaniti migration checksum, tamamlanmis backup, kaynak DB hash degismezligi ve gecici dosya temizligini dogrulamistir.
 - [ ] Backup bucket public degildir ve server-side encryption aktiftir.
 
 ## 5. S3/R2 Medya
@@ -158,12 +161,14 @@ Public salt-okunur otomasyon: `npm run evidence:collect` veya GitHub Actions `Pr
 | `GET /api/health/live` | HTTP 200 | `________________` | `________________` |
 | `GET /api/health/ready` | HTTP 200, `status=ready`; environment/database/mediaStorage `ok` | `________________` | `________________` |
 | `GET /api/health` | HTTP 200; operasyon sinyallerinde `error` yok | `________________` | `________________` |
+| Bes `POST /api/internal/*` auth probi | HTTP 401, no-store, request ID, set-cookie yok | `________________` | `________________` |
 
 - [ ] Readiness 503 iken release trafige acilmadi.
 - [ ] Health yanitlari secret, DB yolu, bucket/endpoint veya ham exception sizdirmiyor.
 - [ ] Scheduler gecikmesinin readiness yerine operasyon alarmi olarak ele alindigi dogrulandi.
 - [ ] Runtime release SHA, artifact digest ve release ID beklenen deployment degerleriyle birebir eslesti.
 - [ ] DNS onayli provider hedefine eslesti, TLS suresi en az 30 gun ve HTTP ayni host HTTPS'e yonlendi.
+- [ ] Public collector gercek cron secret'i kullanmadan tum internal auth sinirlarini dogruladi; reverse proxy Authorization header'i eklemedi veya degistirmedi.
 
 ## 10. Auth Ve Tenant Smoke
 

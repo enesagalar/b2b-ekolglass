@@ -54,6 +54,14 @@ Komut JSON sonucunda yalniz dosya adlarini, boyutu, hash'i ve correlation ID'yi 
 
 ## Izole Restore Provasi
 
+Her commit icin sifirdan migration ve seed uygulayan, snapshot olusturup izole geri yuklemeyi dogrulayan CI provasi:
+
+```bash
+npm run recovery:drill
+```
+
+Bu prova migration checksum'larini, tamamlanmis backup sayfalarini, integrity/foreign key kontrollerini, kritik tablo sayimlarini ve kaynak veritabaninin hash bazinda degismedigini kanitlar. `.test-data` altindaki gecici veriler basarili kanit yazilmadan once silinir. CI artifact'i production backup'i, offsite kopyayi veya gercek felaket kurtarma provasini ikame etmez.
+
 ```bash
 npm run db:restore:verify -- "C:\\backups\\ekolglass-....sqlite"
 ```

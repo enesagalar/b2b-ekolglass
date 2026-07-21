@@ -2,6 +2,24 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-21 - Recovery ve internal auth kabul kapilari
+
+Tamamlananlar:
+
+- Her commit icin gercek migration ve seed uygulayan izole SQLite backup/restore tatbikati eklendi.
+- Tatbikat migration checksum'larini, tamamlanmis backup sayfalarini, snapshot hash/satir sayilarini, integrity/foreign key sonucunu ve kaynak DB'nin degismedigini dogruluyor.
+- Tatbikat gecici verileri kanit yazilmadan once temizliyor; artifact yalniz sinirli ve secretsiz alanlar iceriyor.
+- Public production collector bes dahili cron rotasina gercek secret okumadan sabit gecersiz token ile tek-atim POST yaparak `401` sinirini dogruluyor.
+- Internal auth kaniti JSON hata sozlesmesi, no-store, request ID ve set-cookie olmamasi kontrollerini kapsiyor; response body artifact'e yazilmiyor.
+- CI recovery artifact'i ve basarisiz tatbikatta release'i durduran kalite kapisi eklendi.
+- 70 Vitest dosyasinda 331 test, 9 Node testi, lint, TypeScript, high/critical audit, production build ve localhost internal-auth probi basarili.
+
+Siradaki kabul paketi:
+
+1. Gercek production hostu ve deployment kimligiyle public evidence workflow'unu calistirmak.
+2. Gercek SMTP, S3/R2 medya, offsite backup/restore, scheduler ve alarm receiver kanitlarini toplamak.
+3. Dis kabul kaydi tamamlaninca UI degisimi icin proje sahibinden acik onay istemek.
+
 ## 2026-07-21 - Public production kanit otomasyonu
 
 Tamamlananlar:

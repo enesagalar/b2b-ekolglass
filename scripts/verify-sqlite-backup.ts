@@ -9,6 +9,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(JSON.stringify({ ok: false, error: "Restore verification tamamlanamadi.", errorType: error instanceof Error ? error.name : "UnknownError" }));
   process.exitCode = 1;
 });

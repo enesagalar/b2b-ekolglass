@@ -48,6 +48,18 @@ jobs:
       - name: Verify migration integrity
         run: npm run prisma:migrate:verify
 
+      - name: Run isolated backup and restore drill
+        run: npm run recovery:drill -- --output=.test-data/recovery-drill-evidence.json
+
+      - name: Upload recovery drill evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-drill-evidence
+          path: .test-data/recovery-drill-evidence.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Start production server
         run: |
           npm start > .test-data/server.log 2>&1 &

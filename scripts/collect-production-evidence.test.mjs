@@ -65,6 +65,18 @@ test("public gate requires health, headers, public sitemap, DNS, TLS, and clean 
   assert.deepEqual(failed.checks.filter((check) => !check.passed).map((check) => check.name), ["sitemap_public_only", "collector_git_provenance"]);
 });
 
+test("public gate requires every internal endpoint to reject the secret-safe probe", () => {
+  const evidence = fixture();
+  evidence.internalAuth[1].status = 200;
+
+  const failed = evaluatePublicEvidence(evidence);
+  assert.equal(failed.status, "fail");
+  assert.deepEqual(failed.checks.filter((check) => !check.passed).map((check) => check.name), ["internal_auth_boundaries"]);
+  const serialized = JSON.stringify(evidence.internalAuth);
+  assert.equal(serialized.includes("evidence-probe"), false);
+  assert.equal(serialized.includes("body"), false);
+});
+
 function fixture() {
   return {
     target: { origin: "https://portal.ekolglass.com", protocol: "https:" },
@@ -74,6 +86,21 @@ function fixture() {
     git: { commit: "a".repeat(40), dirty: false },
     dns: { status: "ok", addresses: ["8.8.8.8"], cnames: ["portal.provider.example"] },
     tls: { status: "ok", authorized: true, daysRemaining: 90 },
+    internalAuth: [
+      "/api/internal/outbox",
+      "/api/internal/backup",
+      "/api/internal/alerts",
+      "/api/internal/maintenance/system-jobs",
+      "/api/internal/maintenance/auth-rate-limit",
+    ].map((pathname) => ({
+      method: "POST",
+      pathname,
+      status: 401,
+      jsonErrorContract: true,
+      cacheNoStore: true,
+      requestIdPresent: true,
+      setCookieAbsent: true,
+    })),
     http: {
       home: {
         status: 200,

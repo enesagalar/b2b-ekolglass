@@ -2,7 +2,7 @@
 
 ## Amac
 
-Bu arac deploy edilmis portalin yalniz public ve salt okunur yuzeylerinden secret-safe release kaniti toplar. Tek basina `GO` karari vermez; sonuc her zaman operator kaniti gerektiren release kaydinin bir parcasidir.
+Bu arac deploy edilmis portalin public yuzeylerinden ve dahili is rotalarinin yalniz yetkisiz erisim sinirindan secret-safe release kaniti toplar. Tek basina `GO` karari vermez; sonuc her zaman operator kaniti gerektiren release kaydinin bir parcasidir.
 
 ## Zorunlu Girdiler
 
@@ -29,6 +29,7 @@ GitHub Actions altinda ayni akis `Production Public Evidence` workflow'u manuel 
 - Sitemap'in yalniz `/`, `/urunler` ve `/bayi-basvurusu` rotalarini icermesi.
 - DNS sonucunun public adreslere cozulmesi ve onayli CNAME/IP hedeflerinden biriyle eslesmesi.
 - TLS zinciri/hostname dogrulamasi ve en az 30 gun sertifika suresi.
+- Bes dahili cron endpoint'inin sabit, kisa ve gecersiz bearer token ile `401` vermesi; JSON hata sozlesmesi, `no-store`, request ID ve cookie uretmeme siniri.
 - Collector checkout'unun beklenen commit'te ve temiz olmasi.
 
 ## Guvenlik Siniri
@@ -37,11 +38,13 @@ GitHub Actions altinda ayni akis `Production Public Evidence` workflow'u manuel 
 - Response govdeleri en fazla 64 KB okunur.
 - Yalniz allowlist header ve JSON alanlari kaydedilir.
 - Cookie, authorization, set-cookie, raw exception, PEM, environment dump veya signed URL kaydedilmez.
+- Dahili endpoint problari tek istektir, retry yapmaz ve gercek cron secret'larini environment'tan okumaz.
+- Reverse proxy `/api/internal/*` isteklerinde `Authorization` header'ini eklememeli veya degistirmemelidir; aksi halde bu guvenlik probi calistirilmaz.
 - Robots govdesi ve gecersiz/query iceren sitemap URL'si artifact'e yazilmaz.
 - Artifact basarisiz kontrolde de uretilir; `releaseDecision` degeri yine `OPERATOR_EVIDENCE_REQUIRED` kalir.
 
 ## Kapsam Disi
 
-Bu arac migration, gercek S3 upload/read, SMTP teslimi, offsite backup/restore, scheduler/dead-man, authenticated tenant smoke, rollback veya insan onayini kanitlamaz. Bunlar `production-release-evidence-template.md` icinde ayri erisim kontrollu kanitlarla tamamlanir.
+Bu arac gercek S3 upload/read, SMTP teslimi, offsite backup/restore, scheduler/dead-man, authenticated tenant smoke, rollback veya insan onayini kanitlamaz. Commit seviyesindeki migration ve recovery kaniti CI'daki `recovery:drill` artifact'inden; dis ortam kabulleri `production-release-evidence-template.md` icindeki erisim kontrollu kayitlardan tamamlanir.
 
 `npm run smoke:admin` production veritabaninda calistirilmaz. Script sentetik kullanici ve operasyon kayitlari olusturdugu icin yalniz her kosuda sifirlanan izole CI/staging veritabanina karsi kullanilir.

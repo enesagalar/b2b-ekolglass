@@ -25,6 +25,7 @@
     "system-jobs:maintain": "node --env-file=.env scripts/run-system-job-maintenance.mjs",
     "system-alerts:run": "node --env-file=.env scripts/run-system-alert-dispatch.mjs",
     "db:restore:verify": "tsx scripts/verify-sqlite-backup.ts",
+    "recovery:drill": "tsx scripts/run-isolated-recovery-drill.ts",
     "media:reconcile": "tsx --env-file=.env scripts/reconcile-media.ts",
     "preflight:production": "tsx scripts/production-preflight.ts",
     "evidence:collect": "node scripts/collect-production-evidence.mjs",
