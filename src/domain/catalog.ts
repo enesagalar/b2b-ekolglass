@@ -113,6 +113,8 @@ export type CatalogStockCandidate = {
 export function getProductPublicationReadiness(
   product: {
     prices: Array<{
+      amount: { toString(): string };
+      minQuantity: number;
       priceList: {
         companyId?: string | null;
         customerGroupId?: string | null;
@@ -125,13 +127,17 @@ export function getProductPublicationReadiness(
   },
   now = new Date(),
 ) {
-  const hasGeneralPrice = product.prices.some(({ priceList }) =>
-    !priceList.companyId &&
-    !priceList.customerGroupId &&
-    priceList.isActive &&
-    priceList.startsAt <= now &&
-    (!priceList.endsAt || priceList.endsAt >= now),
-  );
+  const hasGeneralPrice = product.prices.some(({ amount, minQuantity, priceList }) => {
+    const numericAmount = Number(amount.toString());
+    return minQuantity === 1 &&
+      Number.isFinite(numericAmount) &&
+      numericAmount > 0 &&
+      !priceList.companyId &&
+      !priceList.customerGroupId &&
+      priceList.isActive &&
+      priceList.startsAt <= now &&
+      (!priceList.endsAt || priceList.endsAt >= now);
+  });
   const availableStock = product.stockItems.reduce(
     (sum, stock) => sum + Math.max(0, stock.quantity - stock.reservedQuantity),
     0,

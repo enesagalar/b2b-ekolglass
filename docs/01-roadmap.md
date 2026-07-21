@@ -189,10 +189,17 @@ Kapsam:
 
 Siradaki sira:
 
-1. Tekil/toplu yayin ve urun importunu atomiklestiren katalog yazma butunlugu paketi.
-2. Fiziksel/rezerve degisimleri manuel, CSV, rezervasyon, iptal ve sevkiyat kaynaklariyla aciklayan append-only stok hareket defteri.
-3. Merkezi log sink, staging alarm receiver kabul kaniti ve sifreli offsite backup aktarimi.
-4. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
+1. Fiziksel/rezerve degisimleri manuel, CSV, rezervasyon, iptal ve sevkiyat kaynaklariyla aciklayan append-only stok hareket defteri.
+2. Merkezi log sink, staging alarm receiver kabul kaniti ve sifreli offsite backup aktarimi.
+3. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
+
+Tamamlanan katalog yazma butunlugu dilimi:
+
+- Tekil ve toplu yayinda transaction ici fiyat/stok readiness kontrolu.
+- Pozitif, genel kapsamli `minQuantity=1` standart bayi fiyati zorunlulugu.
+- Admin urun CSV importunda kategori, urun, ilk stok ve audit icin tam atomiklik.
+- SQLite hata enjeksiyonlu yayin/import rollback kaniti.
+- Firma iskontolu standart bayi fiyatinin siparis snapshot kaniti.
 
 Tamamlanan gozlemlenebilirlik dilimi:
 

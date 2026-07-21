@@ -1,10 +1,10 @@
 "use server";
 
 import { createHash } from "node:crypto";
-import { revalidatePath } from "next/cache";
 
 import { parseEkolProductCsv } from "@/domain/product-import";
 import { requirePermissionUser } from "@/lib/auth";
+import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
 import { prisma } from "@/lib/prisma";
 
 export type ProductImportState = {
@@ -45,41 +45,41 @@ export async function importProductsCsvAction(
     return { ok: false, message: error instanceof Error ? error.message : "CSV okunamadi." };
   }
 
-  const categoryIds = new Map<string, string>();
-  for (const category of parsed.categories) {
-    const saved = await prisma.productCategory.upsert({
-      where: { slug: category.slug },
-      update: { name: category.name, sortOrder: category.sortOrder },
-      create: category,
-      select: { id: true, slug: true },
-    });
-    categoryIds.set(saved.slug, saved.id);
-  }
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const categoryIds = new Map<string, string>();
+      for (const category of parsed.categories) {
+        const saved = await tx.productCategory.upsert({
+          where: { slug: category.slug },
+          update: { name: category.name, sortOrder: category.sortOrder },
+          create: category,
+          select: { id: true, slug: true },
+        });
+        categoryIds.set(saved.slug, saved.id);
+      }
 
-  const existing = await prisma.product.findMany({
-    where: { code: { in: parsed.products.map((product) => product.code) } },
-    select: { id: true, code: true },
-  });
-  const existingCodes = new Set(existing.map((product) => product.code));
-  const createRows = parsed.products
-    .filter((product) => !existingCodes.has(product.code))
-    .map((product) => ({
-      ...product,
-      categoryId: categoryIds.get(product.categorySlug)!,
-      categorySlug: undefined,
-      orderMode: "ORDER_ONLY",
-      status: "DRAFT",
-      isCustomAvailable: false,
-    }));
-  const updateRows = parsed.products.filter((product) => existingCodes.has(product.code));
+      const existing = await tx.product.findMany({
+        where: { code: { in: parsed.products.map((product) => product.code) } },
+        select: { id: true, code: true },
+      });
+      const existingCodes = new Set(existing.map((product) => product.code));
+      const createRows = parsed.products
+        .filter((product) => !existingCodes.has(product.code))
+        .map((product) => ({
+          ...product,
+          categoryId: categoryIds.get(product.categorySlug)!,
+          categorySlug: undefined,
+          orderMode: "ORDER_ONLY",
+          status: "DRAFT",
+          isCustomAvailable: false,
+        }));
+      const updateRows = parsed.products.filter((product) => existingCodes.has(product.code));
 
-  for (const batch of chunks(createRows, 250)) {
-    await prisma.product.createMany({ data: batch });
-  }
-  for (const batch of chunks(updateRows, 100)) {
-    await prisma.$transaction(
-      batch.map((product) =>
-        prisma.product.update({
+      for (const batch of chunks(createRows, 250)) {
+        await tx.product.createMany({ data: batch });
+      }
+      for (const product of updateRows) {
+        await tx.product.update({
           where: { code: product.code },
           data: {
             name: product.name,
@@ -98,55 +98,61 @@ export async function importProductsCsvAction(
             processingNotes: product.processingNotes,
             compatibilityNotes: product.compatibilityNotes,
           },
-        }),
-      ),
+        });
+      }
+
+      const importedProducts = await tx.product.findMany({
+        where: { code: { in: parsed.products.map((product) => product.code) } },
+        select: { id: true },
+      });
+      const stockRows = await tx.stockItem.findMany({
+        where: { productId: { in: importedProducts.map((product) => product.id) }, warehouseCode: "MERKEZ" },
+        select: { productId: true },
+      });
+      const productsWithStock = new Set(stockRows.map((stock) => stock.productId));
+      for (const batch of chunks(importedProducts.filter((product) => !productsWithStock.has(product.id)), 250)) {
+        await tx.stockItem.createMany({
+          data: batch.map((product) => ({
+            productId: product.id,
+            warehouseCode: "MERKEZ",
+            quantity: 0,
+            reservedQuantity: 0,
+            visibility: "SIMPLIFIED",
+            status: "ASK_FOR_AVAILABILITY",
+          })),
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: actor.id,
+          action: "product.csv.import",
+          entityType: "Product",
+          metadata: JSON.stringify({
+            fileName: file.name,
+            sha256: createHash("sha256").update(buffer).digest("hex"),
+            created: createRows.length,
+            updated: updateRows.length,
+            skipped: parsed.skippedRows,
+          }),
+        },
+      });
+      return { created: createRows.length, updated: updateRows.length };
+    }, { timeout: 60_000, maxWait: 10_000 });
+
+    revalidatePathsBestEffort(
+      ["/admin/urunler", "/admin/urunler/yayin-hazirligi", "/urunler", "/bayi/urunler"],
+      "catalog.import_cache_revalidation_failed",
+      { actorUserId: actor.id },
     );
+    return {
+      ok: true,
+      message: "CSV kataloğu içeri alındı. Yeni ürünler fiyat ve stok tanımlanana kadar taslakta tutulur.",
+      created: result.created,
+      updated: result.updated,
+      skipped: parsed.skippedRows,
+    };
+  } catch {
+    return { ok: false, message: "CSV aktarımı tamamlanamadı. Hiçbir katalog kaydı değiştirilmedi." };
   }
-
-  const importedProducts = await prisma.product.findMany({
-    where: { code: { in: parsed.products.map((product) => product.code) } },
-    select: { id: true },
-  });
-  const stockRows = await prisma.stockItem.findMany({
-    where: { productId: { in: importedProducts.map((product) => product.id) }, warehouseCode: "MERKEZ" },
-    select: { productId: true },
-  });
-  const productsWithStock = new Set(stockRows.map((stock) => stock.productId));
-  for (const batch of chunks(importedProducts.filter((product) => !productsWithStock.has(product.id)), 250)) {
-    await prisma.stockItem.createMany({
-      data: batch.map((product) => ({
-        productId: product.id,
-        warehouseCode: "MERKEZ",
-        quantity: 0,
-        reservedQuantity: 0,
-        visibility: "SIMPLIFIED",
-        status: "ASK_FOR_AVAILABILITY",
-      })),
-    });
-  }
-
-  await prisma.auditLog.create({
-    data: {
-      actorUserId: actor.id,
-      action: "product.csv.import",
-      entityType: "Product",
-      metadata: JSON.stringify({
-        fileName: file.name,
-        sha256: createHash("sha256").update(buffer).digest("hex"),
-        created: createRows.length,
-        updated: updateRows.length,
-        skipped: parsed.skippedRows,
-      }),
-    },
-  });
-
-  revalidatePath("/admin/urunler");
-  revalidatePath("/urunler");
-  return {
-    ok: true,
-    message: "CSV katalogu iceri alindi. Yeni urunler fiyat ve stok tanimlanana kadar taslakta tutulur.",
-    created: createRows.length,
-    updated: updateRows.length,
-    skipped: parsed.skippedRows,
-  };
 }

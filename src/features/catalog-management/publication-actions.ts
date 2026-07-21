@@ -1,12 +1,12 @@
 "use server";
 
 import { randomBytes } from "crypto";
-import { revalidatePath } from "next/cache";
 
 import { getProductPublicationReadiness } from "@/domain/catalog";
 import { productBulkPublicationSchema } from "@/domain/validation";
 import type { CatalogActionState } from "@/features/catalog-management/actions";
 import { requirePermissionUser } from "@/lib/auth";
+import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
 import { prisma } from "@/lib/prisma";
 
 const failure = (message: string): CatalogActionState => ({ ok: false, message });
@@ -39,6 +39,8 @@ export async function publishReadyProducts(
           code: true,
           prices: {
             select: {
+              amount: true,
+              minQuantity: true,
               priceList: {
                 select: {
                   companyId: true,
@@ -102,16 +104,16 @@ export async function publishReadyProducts(
 
     if (!result.ok) return result;
 
-    revalidatePath("/");
-    revalidatePath("/urunler");
-    revalidatePath("/bayi/urunler");
-    revalidatePath("/admin/urunler");
-    revalidatePath("/admin/urunler/yayin-hazirligi");
+    revalidatePathsBestEffort(
+      ["/", "/urunler", "/bayi/urunler", "/admin/urunler", "/admin/urunler/yayin-hazirligi"],
+      "catalog.publication_cache_revalidation_failed",
+      { batchId },
+    );
 
     return result;
   } catch (error) {
     return failure(
-      error instanceof Error
+      error instanceof Error && error.message.startsWith("Ürünlerden biri işlem sırasında değişti")
         ? error.message
         : "Toplu yayın işlemi tamamlanamadı.",
     );

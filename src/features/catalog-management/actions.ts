@@ -1,7 +1,6 @@
 "use server";
 
 import { randomBytes } from "crypto";
-import { revalidatePath } from "next/cache";
 
 import {
   categoryFormSchema,
@@ -18,6 +17,7 @@ import {
 import { getProductPublicationReadiness } from "@/domain/catalog";
 import { Prisma } from "@/generated/prisma/client";
 import { requirePermissionUser } from "@/lib/auth";
+import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
 import { prisma } from "@/lib/prisma";
 
 export type CatalogActionState = {
@@ -108,14 +108,11 @@ function getCompatibilityDuplicateKey(input: {
 }
 
 function revalidateProductSurfaces(productId?: string) {
-  revalidatePath("/");
-  revalidatePath("/admin/urunler");
-  revalidatePath("/urunler");
-  revalidatePath("/bayi/urunler");
-
-  if (productId) {
-    revalidatePath(`/admin/urunler/${productId}`);
-  }
+  revalidatePathsBestEffort(
+    ["/", "/admin/urunler", "/urunler", "/bayi/urunler", ...(productId ? [`/admin/urunler/${productId}`] : [])],
+    "catalog.cache_revalidation_failed",
+    { productId },
+  );
 }
 
 export async function setProductPublicationStatus(
@@ -133,46 +130,62 @@ export async function setProductPublicationStatus(
   if (!parsed.success) return failure(getFirstValidationMessage(parsed.error.issues[0]?.message ?? ""));
 
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: parsed.data.productId },
-      select: {
-        id: true,
-        code: true,
-        status: true,
-        prices: {
-          select: {
-            priceList: {
-              select: {
-                companyId: true,
-                customerGroupId: true,
-                isActive: true,
-                startsAt: true,
-                endsAt: true,
+    const result = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({
+        where: { id: parsed.data.productId },
+        select: {
+          id: true,
+          code: true,
+          status: true,
+          prices: {
+            select: {
+              amount: true,
+              minQuantity: true,
+              priceList: {
+                select: {
+                  companyId: true,
+                  customerGroupId: true,
+                  isActive: true,
+                  startsAt: true,
+                  endsAt: true,
+                },
               },
             },
           },
+          stockItems: { select: { quantity: true, reservedQuantity: true } },
         },
-        stockItems: { select: { quantity: true, reservedQuantity: true } },
-      },
-    });
-    if (!product) return failure("Ürün bulunamadı.");
+      });
+      if (!product) return { state: failure("Ürün bulunamadı.") };
 
-    if (parsed.data.targetStatus === "ACTIVE") {
-      const readiness = getProductPublicationReadiness(product);
-      const missing = [
-        !readiness.hasGeneralPrice && "aktif genel bayi fiyatı",
-        readiness.availableStock <= 0 && "kullanılabilir stok",
-      ].filter(Boolean);
-      if (missing.length > 0) {
-        return failure(`Ürün yayınlanamadı. Eksik: ${missing.join(" ve ")}.`);
+      const expectedStatus = parsed.data.targetStatus === "ACTIVE" ? "DRAFT" : "ACTIVE";
+      if (product.status !== expectedStatus) {
+        return {
+          state: failure(
+            parsed.data.targetStatus === "ACTIVE"
+              ? "Yalnızca taslak ürünler yayına alınabilir."
+              : "Yalnızca yayındaki ürünler taslağa alınabilir.",
+          ),
+        };
       }
-    }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.product.update({
-        where: { id: product.id },
+      if (parsed.data.targetStatus === "ACTIVE") {
+        const readiness = getProductPublicationReadiness(product);
+        const missing = [
+          !readiness.hasGeneralPrice && "1 adet için aktif standart bayi fiyatı",
+          readiness.availableStock <= 0 && "kullanılabilir stok",
+        ].filter(Boolean);
+        if (missing.length > 0) {
+          return { state: failure(`Ürün yayınlanamadı. Eksik: ${missing.join(" ve ")}.`) };
+        }
+      }
+
+      const updated = await tx.product.updateMany({
+        where: { id: product.id, status: product.status },
         data: { status: parsed.data.targetStatus },
       });
+      if (updated.count !== 1) {
+        throw new Error("Ürün işlem sırasında değişti. Listeyi yenileyip tekrar deneyin.");
+      }
       await tx.auditLog.create({
         data: {
           actorUserId: user.id,
@@ -182,11 +195,19 @@ export async function setProductPublicationStatus(
           metadata: JSON.stringify({ code: product.code, previousStatus: product.status }),
         },
       });
+      return {
+        productId: product.id,
+        state: success(parsed.data.targetStatus === "ACTIVE" ? "Ürün yayına alındı." : "Ürün taslağa alındı."),
+      };
     });
-    revalidateProductSurfaces(product.id);
-    return success(parsed.data.targetStatus === "ACTIVE" ? "Ürün yayına alındı." : "Ürün taslağa alındı.");
+    if (result.productId) revalidateProductSurfaces(result.productId);
+    return result.state;
   } catch (error) {
-    return failure(error instanceof Error ? error.message : "Yayın durumu güncellenemedi.");
+    return failure(
+      error instanceof Error && error.message.startsWith("Ürün işlem sırasında değişti")
+        ? error.message
+        : "Yayın durumu güncellenemedi.",
+    );
   }
 }
 
@@ -233,9 +254,11 @@ export async function saveCategory(input: CatalogActionInput, maybeFormData?: Fo
     await writeAuditLog(user.id, parsed.data.id ? "category.update" : "category.create", "ProductCategory", category.id, {
       slug: category.slug,
     });
-    revalidatePath("/admin/urunler");
-    revalidatePath("/urunler");
-    revalidatePath("/bayi/urunler");
+    revalidatePathsBestEffort(
+      ["/admin/urunler", "/urunler", "/bayi/urunler"],
+      "catalog.category_cache_revalidation_failed",
+      { categoryId: category.id },
+    );
 
     return success(parsed.data.id ? "Kategori güncellendi." : "Kategori oluşturuldu.");
   } catch (error) {
@@ -291,9 +314,11 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
     await writeAuditLog(user.id, parsed.data.id ? "price_list.update" : "price_list.create", "PriceList", priceList.id, {
       currency: priceList.currency,
     });
-    revalidatePath("/admin/urunler");
-    revalidatePath("/urunler");
-    revalidatePath("/bayi/urunler");
+    revalidatePathsBestEffort(
+      ["/admin/urunler", "/urunler", "/bayi/urunler"],
+      "catalog.price_list_cache_revalidation_failed",
+      { priceListId: priceList.id },
+    );
 
     return success(parsed.data.id ? "Fiyat listesi güncellendi." : "Fiyat listesi oluşturuldu.");
   } catch (error) {

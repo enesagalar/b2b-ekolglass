@@ -34,6 +34,8 @@ const readyProduct = (id: string, code: string) => ({
   id,
   code,
   prices: [{
+    amount: { toString: () => "100" },
+    minQuantity: 1,
     priceList: {
       companyId: null,
       customerGroupId: null,
@@ -111,6 +113,31 @@ describe("bulk product publication", () => {
     expect(mocks.auditLogCreateMany).not.toHaveBeenCalled();
   });
 
+  it("rejects a product that only has a volume-tier general price", async () => {
+    mocks.productFindMany.mockResolvedValue([{
+      ...readyProduct("product-1", "E-001"),
+      prices: [{
+        amount: { toString: () => "90" },
+        minQuantity: 10,
+        priceList: {
+          companyId: null,
+          customerGroupId: null,
+          isActive: true,
+          startsAt: new Date("2026-01-01T00:00:00.000Z"),
+          endsAt: null,
+        },
+      }],
+    }]);
+
+    const state = await publishReadyProducts(
+      { ok: false, message: "" },
+      publicationForm("product-1"),
+    );
+
+    expect(state.ok).toBe(false);
+    expect(mocks.productUpdateMany).not.toHaveBeenCalled();
+  });
+
   it("rejects a stale selection if a product is missing or no longer a draft", async () => {
     mocks.productFindMany.mockResolvedValue([readyProduct("product-1", "E-001")]);
 
@@ -137,5 +164,20 @@ describe("bulk product publication", () => {
     expect(emptyState.message).toContain("en az bir ürün");
     expect(oversizedState.message).toContain("en fazla 50 ürün");
     expect(mocks.productFindMany).not.toHaveBeenCalled();
+  });
+
+  it("keeps a committed publication successful when cache revalidation fails", async () => {
+    mocks.productFindMany.mockResolvedValue([readyProduct("product-1", "E-001")]);
+    mocks.productUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.revalidatePath.mockImplementationOnce(() => {
+      throw new Error("cache unavailable");
+    });
+
+    const state = await publishReadyProducts(
+      { ok: false, message: "" },
+      publicationForm("product-1"),
+    );
+
+    expect(state).toEqual({ ok: true, message: "1 ürün yayına alındı." });
   });
 });

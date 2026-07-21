@@ -114,6 +114,11 @@ Son guncelleme: 2026-07-21
 - `/admin/urunler/yayin-hazirligi` ekraninda taslak urun KPI, arama, kategori/hazirlik filtresi ve sayfalama.
 - Fiyat ve stok kosullarini transaction icinde yeniden dogrulayan, 50 urun sinirli atomik toplu yayin komutu.
 - Toplu yayinda urun bazli audit kaydi ve stale/eksik secimde fail-closed davranis.
+- Tekil yayinda transaction ici readiness, kosullu durum gecisi ve ham altyapi hatasi sizdirmayan fail-closed davranis.
+- Yayin icin pozitif, genel kapsamli ve `minQuantity=1` standart bayi fiyati zorunlulugu.
+- Admin urun CSV importunda kategori, urun, ilk stok ve audit yazimlarinin tek transaction'da tamamlanmasi.
+- Yayin ve urun importu icin gercek SQLite trigger tabanli rollback kanitlari.
+- Firma iskontolu standart bayi fiyatinin checkout `unitPrice`, `lineTotal` ve `COMPANY_DISCOUNT` snapshot kaniti.
 - Genel bayi baz fiyati uzerine firma kartindan yuzdesel musteri iskontosu.
 - Stok gorunurlugu ve rol/durum kodlari icin Turkce kullanici etiketleri.
 - Login hatalari JSON audit sayimi yerine indeksli `AuthLoginFailure` modelinden e-posta + guvenilir IP bazinda sinirlanir.
@@ -143,8 +148,6 @@ Son guncelleme: 2026-07-21
    - Firma ve kullanici yasam dongusu detay/action seviyesinde testli; kritik hesap islemleri icin yeniden kimlik dogrulama urun karari bekliyor.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
-   - Tekil yayin readiness kontrolu transaction icine alinmali ve yayin fiyati `minQuantity=1` kosulunu zorunlu tutmali.
-   - Admin urun CSV importu kategori, urun, stok ve audit yazimlarini tek atomik transaction'da tamamlamali.
    - Fiziksel/rezerve stok sayaclari calisiyor; manuel, CSV, rezervasyon ve sevkiyat degisimlerini tek defterde aciklayan append-only stok hareket modeli bekliyor.
 
 3. Teklif/siparis akisinda kalanlar:

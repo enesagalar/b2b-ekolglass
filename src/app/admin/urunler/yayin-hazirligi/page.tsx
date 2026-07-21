@@ -74,6 +74,8 @@ export default async function ProductPublicationReadinessPage({
         category: { select: { name: true } },
         prices: {
           select: {
+            amount: true,
+            minQuantity: true,
             priceList: {
               select: {
                 companyId: true,

@@ -53,16 +53,25 @@ describe("catalog helpers", () => {
   it("requires an active general price and available stock before publication", () => {
     const now = new Date("2026-07-13T12:00:00.000Z");
     const ready = getProductPublicationReadiness({
-      prices: [{ priceList: { isActive: true, startsAt: new Date("2026-07-01T00:00:00.000Z") } }],
+      prices: [{ amount: { toString: () => "100" }, minQuantity: 1, priceList: { isActive: true, startsAt: new Date("2026-07-01T00:00:00.000Z") } }],
       stockItems: [{ quantity: 8, reservedQuantity: 3 }],
     }, now);
     const scopedOnly = getProductPublicationReadiness({
-      prices: [{ priceList: { companyId: "company-1", isActive: true, startsAt: new Date("2026-07-01T00:00:00.000Z") } }],
+      prices: [{ amount: { toString: () => "100" }, minQuantity: 1, priceList: { companyId: "company-1", isActive: true, startsAt: new Date("2026-07-01T00:00:00.000Z") } }],
       stockItems: [{ quantity: 8, reservedQuantity: 8 }],
     }, now);
 
     expect(ready).toEqual({ hasGeneralPrice: true, availableStock: 5, isReady: true });
     expect(scopedOnly).toEqual({ hasGeneralPrice: false, availableStock: 0, isReady: false });
+  });
+
+  it("does not publish a product whose general price starts above one unit", () => {
+    const readiness = getProductPublicationReadiness({
+      prices: [{ amount: { toString: () => "90" }, minQuantity: 10, priceList: { isActive: true, startsAt: new Date("2026-07-01T00:00:00.000Z") } }],
+      stockItems: [{ quantity: 8, reservedQuantity: 0 }],
+    }, new Date("2026-07-13T12:00:00.000Z"));
+
+    expect(readiness).toEqual({ hasGeneralPrice: false, availableStock: 8, isReady: false });
   });
 
   it("hides catalog prices from guests", () => {

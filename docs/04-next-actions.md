@@ -2,6 +2,30 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-21 - Katalog yazma butunlugu
+
+Tamamlananlar:
+
+- Tekil urun yayininda fiyat/stok readiness okumasi, kosullu durum guncellemesi ve audit tek transaction'a alindi.
+- Tekil ve toplu yayin yalniz pozitif, aktif, genel kapsamli `minQuantity=1` bayi fiyatini kabul ediyor.
+- Tekil durum gecisleri yalniz `DRAFT -> ACTIVE` ve `ACTIVE -> DRAFT` olarak sinirlandi.
+- Admin urun CSV importunda kategori, urun, ilk stok ve audit tek 60 saniyelik transaction icinde tamamlaniyor.
+- Audit hata enjeksiyonunda toplu yayin ve CSV importunun eksiksiz rollback oldugu gercek SQLite testleriyle kanitlandi.
+- Firma iskontolu standart bayi fiyatinin checkout snapshot'inda `COMPANY_DISCOUNT`, `unitPrice` ve `lineTotal` olarak korundugu test edildi.
+- Beklenmeyen veritabani hata ayrintilarinin admin yanitina sizmasi engellendi.
+- 73 Vitest dosyasinda 346 test, 9 Node testi, lint, TypeScript, high audit kapisi, production build ve 43 adimli authenticated smoke basarili.
+
+Siradaki kod paketi:
+
+1. `docs/phases/phase-05-stock-movement-ledger.md` kapsaminda append-only stok hareket defterini kurmak.
+2. Manuel stok, fiyat/stok CSV, rezervasyon, iptal ve sevkiyat kaynaklarini ayni hareket sozlesmesine baglamak.
+3. Tam regresyon ve recovery kanitindan sonra City haric production kod bosluklarini yeniden denetlemek.
+
+UI karari:
+
+- UI yenilemesine henuz gecilmedi.
+- Backend/production kabul paketleri kapandiginda proje sahibinden acik onay istenecek.
+
 ## 2026-07-21 - Firma erisim yasam dongusu
 
 Tamamlananlar:
@@ -17,11 +41,7 @@ Tamamlananlar:
 - Audit yazimi zorla basarisiz oldugunda firma durumu, session ve token degisikliklerinin tamamen rollback oldugu SQLite trigger testiyle kanitlandi.
 - 71 Vitest dosyasinda 337 test, 9 Node testi, lint, TypeScript ve production build basarili.
 
-Siradaki kod paketi:
-
-1. `docs/phases/phase-05-catalog-write-integrity.md` kapsaminda tekil/toplu yayin ve admin urun importunu atomiklestirmek.
-2. Ardindan `docs/phases/phase-05-stock-movement-ledger.md` kapsaminda append-only stok hareket defterini kurmak.
-3. Dis production credential kabullerini ayri operator kaniti olarak bekletmek.
+Bu kayittaki katalog paketi tamamlandi; aktif sira stok hareket defteridir.
 
 ## 2026-07-21 - Recovery ve internal auth kabul kapilari
 

@@ -68,6 +68,14 @@ async function clearRuntimeRecords() {
 }
 
 async function restoreMutableFixtures() {
+  await prisma.company.update({
+    where: { id: ids.companyA },
+    data: { discountRate: 0 },
+  });
+  await prisma.priceList.update({
+    where: { id: ids.companyList },
+    data: { companyId: ids.companyA },
+  });
   await prisma.product.update({
     where: { id: ids.tierProduct },
     data: {
@@ -566,6 +574,52 @@ describe("order cart submission and tenant isolation", () => {
     expect(persistedSnapshot.items[0]?.productNameSnapshot).toBe(
       "Server Tier Product",
     );
+  });
+
+  it("snapshots a company discount applied to the standard dealer price", async () => {
+    await prisma.company.update({
+      where: { id: ids.companyA },
+      data: { discountRate: 12.5 },
+    });
+    await prisma.priceList.update({
+      where: { id: ids.companyList },
+      data: { companyId: null },
+    });
+    await addOrderCartProduct(actorA, {
+      productId: ids.mutableProduct,
+      quantity: 2,
+    });
+    const cart = await prisma.orderCart.findUniqueOrThrow({
+      where: {
+        companyId_ownerUserId: {
+          companyId: ids.companyA,
+          ownerUserId: ids.userA,
+        },
+      },
+    });
+
+    const submitted = await submitOrderCart(actorA, {
+      cartId: cart.id,
+      cartVersion: cart.version,
+      deliveryAddressId: ids.addressA,
+      shipmentMethod: "ROAD",
+      idempotencyKey: `discount-${suffix}`,
+    });
+    const order = await prisma.order.findUniqueOrThrow({
+      where: { id: submitted.id },
+      include: { items: true },
+    });
+
+    expect(order.subtotal.toString()).toBe("87.5");
+    expect(order.items[0]).toMatchObject({
+      productId: ids.mutableProduct,
+      quantity: 2,
+      priceListId: ids.companyList,
+      priceMinQuantity: 1,
+      priceScope: "COMPANY_DISCOUNT",
+    });
+    expect(order.items[0]?.unitPrice?.toString()).toBe("43.75");
+    expect(order.items[0]?.lineTotal?.toString()).toBe("87.5");
   });
 
   it("rolls back the order and all stock changes when any cart item has insufficient stock", async () => {

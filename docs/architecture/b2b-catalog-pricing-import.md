@@ -20,7 +20,7 @@ Kaynak dosya `Ekol Glass Urun Listesi 13.07.2026 - GENEL LISTE.csv` UTF-8 kodlud
 - `E` ve rezistansli `R` kodlari desteklenir.
 - Dosyada fiyat veya fiziksel stok miktari yoktur. Beyaz, Yesil, Fume ve Galaxy sutunlari fiyat degil renk/varyant isaretidir.
 
-Import kod bazinda idempotenttir. Mevcut urunun teknik alanlari guncellenir; fiyat, stok miktari, yayin durumu ve siparis gecmisi ezilmez. Yeni urun `DRAFT`, `ORDER_ONLY`, sifir stok ve fiyatsiz olusur.
+Import kod bazinda idempotenttir. Mevcut urunun teknik alanlari guncellenir; fiyat, stok miktari, yayin durumu ve siparis gecmisi ezilmez. Yeni urun `DRAFT`, `ORDER_ONLY`, sifir stok ve fiyatsiz olusur. Admin importunda kategori, urun, ilk stok ve audit yazimlari tek transaction'dir; herhangi bir adim basarisizsa hicbir degisiklik kalmaz.
 
 ## Yayina Alma Kapisi
 
@@ -29,12 +29,12 @@ Bir urun bayiye siparis edilebilir olarak acilmadan once:
 1. Teknik bilgi ve urun kodu kontrol edilir.
 2. En az bir aktif net bayi fiyat satiri tanimlanir.
 3. Kullanilabilir fiziksel stok girilir ve stok durumu guncellenir.
-4. Urun gorseli/teknik dokumani eklenir.
+4. Urun gorseli/teknik dokumani katalog kalite kapsami icin eklenir; eksigi yayin engeli degildir.
 5. Yayin durumu `ACTIVE` yapilir.
 
 Fiyatsiz veya stoksuz urun otomatik yayina alinmaz. Portal tahmini fiyat veya sahte stok uretmez.
 
-Admin urun detayinda `Yayin hazirligi` paneli genel bayi fiyatini ve kullanilabilir stogu ayri ayri kontrol eder. Iki kosul da hazir oldugunda `Urunu yayinla` komutu etkinlesir; yayinlanan urun ana sayfa ve `/urunler` katalog akisina girer.
+Admin urun detayinda `Yayin hazirligi` paneli genel bayi fiyatini ve kullanilabilir stogu ayri ayri kontrol eder. Fiyat satiri aktif donemde, genel kapsamli, pozitif tutarli ve `minQuantity=1` olmalidir. Iki kosul da hazir oldugunda `Urunu yayinla` komutu etkinlesir; sunucu kosullari transaction icinde yeniden okur ve yayinlanan urun ana sayfa ile `/urunler` katalog akisina girer. Aktif medya eksigi siparisi engellemez; UI yenileme fazinda ayri bir katalog kalite uyarisi olarak gosterilecektir.
 
 Admin toplu yayin ekrani `/admin/urunler/yayin-hazirligi` altindadir. Taslaklar fiyat/stok eksigine gore filtrelenir; yalniz hazir urunler secilebilir. Sunucu secilen tum urunleri transaction icinde yeniden okur. Tek bir urun stale, fiyatsiz veya stoksuzsa hicbir urun yayinlanmaz. Tek komut 50 urunle sinirlidir ve her urun batch kimligiyle audit log'a yazilir.
 
