@@ -44,8 +44,9 @@ Her anlamli faz sonunda:
 
 - `http://localhost:3000/` public ana sayfa.
 - `http://localhost:3000/urunler` herkese açık ürün keşfi.
-- `http://localhost:3000/bayi/urunler` oturum açmış bayiye özel ürün ve fiyat ekranı.
-- `http://localhost:3000/giris` admin girisi.
+- `http://localhost:3000/urunler` public ve oturum acmis bayi icin ortak urun/fiyat ekrani.
+- `http://localhost:3000/giris` bayi girisi.
+- `http://localhost:3000/yonetim/giris` gizli ic ekip/admin girisi.
 - `http://localhost:3000/admin` admin dashboard.
 - `http://localhost:3000/admin/urunler` urun operasyonu.
 - `http://localhost:3000/admin/icerik` CMS ayarlari.

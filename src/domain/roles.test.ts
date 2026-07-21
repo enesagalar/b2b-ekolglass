@@ -35,6 +35,11 @@ describe("role permissions", () => {
     expect(hasPermission("DEALER_OWNER", "stock.export")).toBe(false);
   });
 
+  it("keeps company-wide access revocation out of sales roles", () => {
+    expect(hasPermission("ADMIN", "company.lifecycle.manage")).toBe(true);
+    expect(hasPermission("SALES_MANAGER", "company.lifecycle.manage")).toBe(false);
+  });
+
   it("separates internal admin roles from dealer roles", () => {
     expect(isAdminRole("SALES_STAFF")).toBe(true);
     expect(isAdminRole("DEALER_OWNER")).toBe(false);

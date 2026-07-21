@@ -536,6 +536,13 @@ try {
       companyDetailHtml.includes('name="discountRate"'),
     "Company discount management control not rendered",
   );
+  assert(
+    companyDetailHtml.includes("Firma erişimini askıya al") &&
+      companyDetailHtml.includes('name="expectedStatus"') &&
+      companyDetailHtml.includes('name="expectedUpdatedAt"') &&
+      companyDetailHtml.includes('name="changeReason"'),
+    "Company lifecycle controls not rendered",
+  );
 
   const invalidActivationResponse = await request(
     `/aktivasyon/${"x".repeat(43)}`,
@@ -1137,6 +1144,7 @@ console.log(
         "authenticated-dealer-application-detail",
         "authenticated-company-list",
         "authenticated-company-detail",
+        "authenticated-company-lifecycle",
         "invalid-activation-state",
         "dealer-login-role-redirect",
         "authenticated-dealer-commerce-home",

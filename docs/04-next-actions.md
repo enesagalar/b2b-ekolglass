@@ -2,6 +2,26 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-21 - Firma erisim yasam dongusu
+
+Tamamlananlar:
+
+- Admin firma detayina gerekceli firma askilama ve yeniden etkinlestirme kontrolu eklendi.
+- Askilama firma durumu, tum bayi session'lari ve acik aktivasyon/parola tokenlarini tek transaction icinde kapatiyor.
+- Kullanici durumlari ve siparis/teklif gecmisi korunuyor; dealer context askidaki firmayi merkezi olarak reddediyor.
+- Yalniz `APPROVED <-> SUSPENDED` gecisleri kabul ediliyor; `updatedAt` CAS stale ve ABA form etkisini engelliyor.
+- Credential geneli iptal eden komut ayri `company.lifecycle.manage` izniyle SUPER_ADMIN/ADMIN rollerine sinirlandi.
+- Aktor, gerekce, onceki/yeni durum ve iptal sayimlari audit log'a yaziliyor.
+- Eski fiyat/stok import ve company action eksik kayitlari mevcut kodla mutabik hale getirildi.
+- Dealer context askidaki firmayi aktif kullaniciya ragmen reddeden kalici testle guvenceye alindi.
+- 71 Vitest dosyasinda 336 test, 9 Node testi, lint, TypeScript ve production build basarili.
+
+Siradaki kod paketi:
+
+1. `docs/phases/phase-05-catalog-write-integrity.md` kapsaminda tekil/toplu yayin ve admin urun importunu atomiklestirmek.
+2. Ardindan `docs/phases/phase-05-stock-movement-ledger.md` kapsaminda append-only stok hareket defterini kurmak.
+3. Dis production credential kabullerini ayri operator kaniti olarak bekletmek.
+
 ## 2026-07-21 - Recovery ve internal auth kabul kapilari
 
 Tamamlananlar:

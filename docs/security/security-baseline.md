@@ -17,6 +17,8 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 - Admin dashboard sorgularindan once `admin.dashboard.read` kontrolu.
 - Auth session degisimi, expiry, pasif kullanici ve logout invalidation entegrasyon testleri.
 - Firma kapsamli bayi siparis/teklif veri izolasyonu testleri.
+- Firma askisinda tum bayi session ve acik aktivasyon/parola tokenlarini ayni transaction'da iptal eden yasam dongusu kapisi.
+- Firma geneli credential iptali icin satis rollerinden ayrilmis `company.lifecycle.manage` yetkisi ve `updatedAt` optimistic concurrency korumasi.
 - SameSite session cookie ve Next.js Server Action Origin/Host dogrulamasi.
 - HSTS, frame deny, MIME nosniff, referrer, permissions policy ve dar CSP savunma basliklari.
 - Production proxy/IP header sozlesmesi ve mutlak kalici SQLite yolu icin fail-closed preflight.

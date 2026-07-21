@@ -6,6 +6,7 @@ import { getStatusLabel } from "@/domain/statuses";
 import { getRoleLabel, hasPermission, isKnownRole } from "@/domain/roles";
 import { ActivationInvitationForm } from "@/features/company-management/invitation-form";
 import { CompanyDiscountForm } from "@/features/company-management/commercial-terms-form";
+import { CompanyLifecycleForm } from "@/features/company-management/company-lifecycle-form";
 import { DealerUserStatusActions, NewDealerUserForm, PasswordResetInvitationForm } from "@/features/company-management/user-management-forms";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -34,11 +35,18 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
   );
 }
 
+function companyStatusClass(status: string) {
+  if (status === "APPROVED") return "bg-teal-50 text-teal-800 ring-teal-100";
+  if (status === "SUSPENDED") return "bg-amber-50 text-amber-800 ring-amber-100";
+  return "bg-slate-100 text-slate-700 ring-slate-200";
+}
+
 export default async function CompanyDetailPage({ params }: PageProps<"/admin/firmalar/[id]">) {
   const { id } = await params;
   const actor = await requirePermissionUser("company.manage", `/admin/firmalar/${id}`);
   const canManageUsers = isKnownRole(actor.role) && hasPermission(actor.role, "company.user.manage");
   const canManageCredentials = isKnownRole(actor.role) && hasPermission(actor.role, "company.user.credentials.manage");
+  const canManageLifecycle = isKnownRole(actor.role) && hasPermission(actor.role, "company.lifecycle.manage");
 
   const company = await prisma.company.findUnique({
     where: { id },
@@ -85,7 +93,7 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
           </Link>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h2 className="text-2xl font-semibold text-slate-950">{company.displayName}</h2>
-            <span className="rounded bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800 ring-1 ring-teal-100">
+            <span className={`rounded px-2.5 py-1 text-xs font-semibold ring-1 ${companyStatusClass(company.status)}`}>
               {getStatusLabel(company.status)}
             </span>
           </div>
@@ -115,6 +123,13 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
               <InfoRow label="Vergi no" value={company.taxNumber} />
               <InfoRow label="İç not" value={company.internalNotes} />
             </dl>
+            {canManageLifecycle ? (
+              <CompanyLifecycleForm
+                companyId={company.id}
+                status={company.status}
+                updatedAt={company.updatedAt.toISOString()}
+              />
+            ) : null}
           </section>
 
           <section className={panelClass}>

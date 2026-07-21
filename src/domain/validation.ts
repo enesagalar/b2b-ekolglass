@@ -175,6 +175,21 @@ export const dealerUserStatusSchema = z.object({
   targetStatus: z.enum(["ACTIVE", "SUSPENDED", "DISABLED"]),
 });
 
+export const companyStatusSchema = z.object({
+  companyId: z.string().trim().min(1, "Firma zorunludur."),
+  expectedStatus: z.enum(["APPROVED", "SUSPENDED"]),
+  expectedUpdatedAt: z
+    .string()
+    .trim()
+    .refine((value) => !Number.isNaN(Date.parse(value)), "Firma sürümü geçersiz."),
+  targetStatus: z.enum(["APPROVED", "SUSPENDED"]),
+  changeReason: z
+    .string()
+    .trim()
+    .min(10, "Durum değişikliği gerekçesi en az 10 karakter olmalıdır.")
+    .max(500, "Durum değişikliği gerekçesi en fazla 500 karakter olabilir."),
+});
+
 export const credentialResetInvitationSchema = z.object({
   userId: z.string().trim().min(1, "Kullanıcı seçimi zorunludur."),
 });

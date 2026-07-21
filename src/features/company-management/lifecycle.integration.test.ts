@@ -13,6 +13,7 @@ vi.mock("@/lib/auth", () => ({ requirePermissionUser: mocks.requirePermissionUse
 
 import { resetDealerPassword } from "@/features/auth/password-reset-actions";
 import {
+  changeCompanyStatus,
   changeDealerUserStatus,
   createDealerUser,
   createPasswordResetInvitation,
@@ -26,6 +27,7 @@ const prefix = `lifecycle-${suffix}`;
 const approvedCompanyId = `${prefix}-approved-a`;
 const otherCompanyId = `${prefix}-approved-b`;
 const pendingCompanyId = `${prefix}-pending`;
+let approvedUpdatedAtBeforeSuspension: Date;
 
 const userIds = {
   scoped: `${prefix}-scoped-user`,
@@ -50,6 +52,21 @@ function statusForm(companyId: string, userId: string, targetStatus: string) {
 function resetInvitationForm(userId: string) {
   const formData = new FormData();
   formData.set("userId", userId);
+  return formData;
+}
+
+function companyStatusForm(
+  expectedStatus: string,
+  expectedUpdatedAt: Date,
+  targetStatus: string,
+  changeReason: string,
+) {
+  const formData = new FormData();
+  formData.set("companyId", approvedCompanyId);
+  formData.set("expectedStatus", expectedStatus);
+  formData.set("expectedUpdatedAt", expectedUpdatedAt.toISOString());
+  formData.set("targetStatus", targetStatus);
+  formData.set("changeReason", changeReason);
   return formData;
 }
 
@@ -121,7 +138,13 @@ describe("dealer-user lifecycle with SQLite", () => {
 
     if (ids.length > 0) {
       await prisma.auditLog.deleteMany({
-        where: { OR: [{ entityId: { in: ids } }, { actorUserId: { in: ids } }] },
+        where: {
+          OR: [
+            { entityId: { in: ids } },
+            { entityId: { in: [approvedCompanyId, otherCompanyId, pendingCompanyId] } },
+            { actorUserId: { in: ids } },
+          ],
+        },
       });
       await prisma.user.deleteMany({ where: { id: { in: ids } } });
     }
@@ -235,5 +258,112 @@ describe("dealer-user lifecycle with SQLite", () => {
 
     const replayState = await resetDealerPassword({ ok: false, message: "" }, resetForm);
     expect(replayState.ok).toBe(false);
+  });
+
+  it("suspends a company atomically and revokes dealer access credentials", async () => {
+    const activationHash = hashActivationToken(`${prefix}-company-suspension-activation`);
+    const resetHash = hashPasswordResetToken(`${prefix}-company-suspension-reset`);
+    const sessionHash = hashActivationToken(`${prefix}-company-suspension-session`);
+    const secondSessionHash = hashActivationToken(`${prefix}-company-suspension-session-2`);
+    const otherSessionHash = hashActivationToken(`${prefix}-other-company-session`);
+    const otherResetHash = hashPasswordResetToken(`${prefix}-other-company-reset`);
+    const companyBefore = await prisma.company.findUniqueOrThrow({ where: { id: approvedCompanyId } });
+    approvedUpdatedAtBeforeSuspension = companyBefore.updatedAt;
+    const statusesBefore = await prisma.user.findMany({
+      where: { companyId: approvedCompanyId },
+      select: { id: true, status: true },
+      orderBy: { id: "asc" },
+    });
+
+    await prisma.authSession.createMany({
+      data: [
+        { userId: userIds.resetA, tokenHash: sessionHash, expiresAt: future() },
+        { userId: userIds.reactivation, tokenHash: secondSessionHash, expiresAt: future() },
+        { userId: userIds.resetB, tokenHash: otherSessionHash, expiresAt: future() },
+      ],
+    });
+    await prisma.userActivationToken.create({
+      data: { userId: userIds.resetA, tokenHash: activationHash, expiresAt: future() },
+    });
+    await prisma.userPasswordResetToken.create({
+      data: { userId: userIds.resetA, tokenHash: resetHash, expiresAt: future() },
+    });
+    await prisma.userPasswordResetToken.create({
+      data: { userId: userIds.resetB, tokenHash: otherResetHash, expiresAt: future() },
+    });
+    const otherSessionCountBefore = await prisma.authSession.count({ where: { userId: userIds.resetB } });
+
+    const state = await changeCompanyStatus(
+      { ok: false, message: "" },
+      companyStatusForm(
+        "APPROVED",
+        approvedUpdatedAtBeforeSuspension,
+        "SUSPENDED",
+        "Tahsilat incelemesi nedeniyle erişim kapatıldı.",
+      ),
+    );
+
+    expect(state).toEqual(expect.objectContaining({ ok: true }));
+    expect(mocks.requirePermissionUser).toHaveBeenCalledWith("company.lifecycle.manage", "/admin/firmalar");
+    expect((await prisma.company.findUniqueOrThrow({ where: { id: approvedCompanyId } })).status).toBe("SUSPENDED");
+    expect(await prisma.authSession.count({
+      where: { userId: { in: statusesBefore.map((user) => user.id) } },
+    })).toBe(0);
+    expect((await prisma.userActivationToken.findUniqueOrThrow({ where: { tokenHash: activationHash } })).revokedAt).toBeInstanceOf(Date);
+    expect((await prisma.userPasswordResetToken.findUniqueOrThrow({ where: { tokenHash: resetHash } })).revokedAt).toBeInstanceOf(Date);
+    expect(await prisma.authSession.count({ where: { userId: userIds.resetB } })).toBe(otherSessionCountBefore);
+    expect((await prisma.userPasswordResetToken.findUniqueOrThrow({ where: { tokenHash: otherResetHash } })).revokedAt).toBeNull();
+    expect(await prisma.user.findMany({
+      where: { companyId: approvedCompanyId },
+      select: { id: true, status: true },
+      orderBy: { id: "asc" },
+    })).toEqual(statusesBefore);
+
+    const audit = await prisma.auditLog.findFirstOrThrow({
+      where: { entityType: "Company", entityId: approvedCompanyId, action: "company.suspended" },
+      orderBy: { createdAt: "desc" },
+    });
+    expect(JSON.parse(audit.metadata ?? "{}")).toEqual(expect.objectContaining({
+      fromStatus: "APPROVED",
+      toStatus: "SUSPENDED",
+      reason: "Tahsilat incelemesi nedeniyle erişim kapatıldı.",
+      revokedSessions: 2,
+      revokedActivationTokens: 1,
+      revokedPasswordResetTokens: 1,
+    }));
+  });
+
+  it("rejects stale company transitions and reactivates only from suspended", async () => {
+    const suspendedCompany = await prisma.company.findUniqueOrThrow({ where: { id: approvedCompanyId } });
+
+    const reactivated = await changeCompanyStatus(
+      { ok: false, message: "" },
+      companyStatusForm(
+        "SUSPENDED",
+        suspendedCompany.updatedAt,
+        "APPROVED",
+        "Ticari inceleme tamamlandı ve erişim onaylandı.",
+      ),
+    );
+    expect(reactivated).toEqual(expect.objectContaining({ ok: true }));
+    expect((await prisma.company.findUniqueOrThrow({ where: { id: approvedCompanyId } })).status).toBe("APPROVED");
+    expect(await prisma.auditLog.count({
+      where: { entityType: "Company", entityId: approvedCompanyId, action: "company.reactivated" },
+    })).toBe(1);
+
+    const stale = await changeCompanyStatus(
+      { ok: false, message: "" },
+      companyStatusForm(
+        "APPROVED",
+        approvedUpdatedAtBeforeSuspension,
+        "SUSPENDED",
+        "Eski sayfadan yinelenen askıya alma denemesi.",
+      ),
+    );
+    expect(stale).toEqual(expect.objectContaining({ ok: false }));
+    expect((await prisma.company.findUniqueOrThrow({ where: { id: approvedCompanyId } })).status).toBe("APPROVED");
+    expect(await prisma.auditLog.count({
+      where: { entityType: "Company", entityId: approvedCompanyId, action: "company.suspended" },
+    })).toBe(1);
   });
 });

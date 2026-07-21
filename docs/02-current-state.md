@@ -37,6 +37,7 @@ Son guncelleme: 2026-07-21
 - `/admin/firmalar` liste/detay ve aktivasyon daveti yonetimi.
 - `/aktivasyon/[token]` ilk parola ve hesap aktivasyonu.
 - Admin firma detayinda ek bayi kullanicisi olusturma, askilama, yeniden etkinlestirme ve soft devre disi birakma.
+- Firma duzeyinde gerekceli askilama/yeniden etkinlestirme; askida tum bayi session ve acik credential tokenlarini atomik iptal.
 - Ayri hash token modeliyle iki saatlik tek kullanimlik `/parola-sifirla/[token]` akisi.
 - Askilama ve parola yenilemede tum aktif oturumlarin iptali.
 - Dealer login role-based `/` yonlendirmesi; firma kimligi header'da gorunur.
@@ -138,11 +139,13 @@ Son guncelleme: 2026-07-21
 
 1. Bayi platformunda kalanlar:
    - Transactional e-posta adapteri hazir; production SMTP credential ve scheduler kurulumu bekliyor.
-   - Taslak urunlerin toplu yayin akisi hazir; toplu fiyat/stok preview ve onayli import hatti bekliyor.
-   - Company ownership list/dashboard seviyesinde testli; detay/action testleri eksik.
+   - Kontrollu fiyat/stok preview ve onayli import hatti tamamlandi; gercek ERP kolon eslestirmesi bekliyor.
+   - Firma ve kullanici yasam dongusu detay/action seviyesinde testli; kritik hesap islemleri icin yeniden kimlik dogrulama urun karari bekliyor.
 
 2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
-   - Firma bazli fiyat gorunurlugu UI'da basladi; bayi firma/onay akisi eksik oldugu icin gercek bayi testleri sonraki faza kaldi.
+   - Tekil yayin readiness kontrolu transaction icine alinmali ve yayin fiyati `minQuantity=1` kosulunu zorunlu tutmali.
+   - Admin urun CSV importu kategori, urun, stok ve audit yazimlarini tek atomik transaction'da tamamlamali.
+   - Fiziksel/rezerve stok sayaclari calisiyor; manuel, CSV, rezervasyon ve sevkiyat degisimlerini tek defterde aciklayan append-only stok hareket modeli bekliyor.
 
 3. Teklif/siparis akisinda kalanlar:
    - SMTP teslim ve outbox operasyon hatti hazir; production credential, scheduler ve alarm kanali kurulumu bekliyor.

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import {
   activationInvitationSchema,
   companyDiscountSchema,
+  companyStatusSchema,
   credentialResetInvitationSchema,
   dealerUserCreateSchema,
   dealerUserStatusSchema,
@@ -31,9 +32,132 @@ export type CompanyUserActionState = {
   expiresAt?: string;
 };
 
+export type CompanyLifecycleActionState = {
+  ok: boolean;
+  message: string;
+};
+
 type ActivationInvitationInput = FormData | ActivationInvitationState;
 
 const failure = (message: string): ActivationInvitationState => ({ ok: false, message });
+
+class CompanyLifecycleError extends Error {}
+
+export async function changeCompanyStatus(
+  _previousState: CompanyLifecycleActionState,
+  formData: FormData,
+): Promise<CompanyLifecycleActionState> {
+  const actor = await requirePermissionUser("company.lifecycle.manage", "/admin/firmalar");
+  const parsed = companyStatusSchema.safeParse({
+    companyId: formData.get("companyId"),
+    expectedStatus: formData.get("expectedStatus"),
+    expectedUpdatedAt: formData.get("expectedUpdatedAt"),
+    targetStatus: formData.get("targetStatus"),
+    changeReason: formData.get("changeReason"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Firma durum bilgisi geçersiz." };
+  }
+
+  const allowed =
+    (parsed.data.expectedStatus === "APPROVED" && parsed.data.targetStatus === "SUSPENDED") ||
+    (parsed.data.expectedStatus === "SUSPENDED" && parsed.data.targetStatus === "APPROVED");
+  if (!allowed) return { ok: false, message: "Bu firma durum geçişine izin verilmiyor." };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const company = await tx.company.findUnique({
+        where: { id: parsed.data.companyId },
+        select: {
+          status: true,
+          updatedAt: true,
+          users: {
+            where: { role: { in: ["DEALER_OWNER", "DEALER_STAFF"] } },
+            select: { id: true },
+          },
+        },
+      });
+      if (!company) throw new CompanyLifecycleError("Firma bulunamadı.");
+      const expectedUpdatedAt = new Date(parsed.data.expectedUpdatedAt);
+      if (
+        company.status !== parsed.data.expectedStatus ||
+        company.updatedAt.getTime() !== expectedUpdatedAt.getTime()
+      ) {
+        throw new CompanyLifecycleError("Firma durumu başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+      }
+
+      const updated = await tx.company.updateMany({
+        where: {
+          id: parsed.data.companyId,
+          status: parsed.data.expectedStatus,
+          updatedAt: expectedUpdatedAt,
+        },
+        data: { status: parsed.data.targetStatus },
+      });
+      if (updated.count !== 1) {
+        throw new CompanyLifecycleError("Firma durumu başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+      }
+
+      const userIds = company.users.map((user) => user.id);
+      let revokedSessions = 0;
+      let revokedActivationTokens = 0;
+      let revokedPasswordResetTokens = 0;
+      if (parsed.data.targetStatus === "SUSPENDED" && userIds.length > 0) {
+        const now = new Date();
+        const [sessions, activationTokens, passwordResetTokens] = await Promise.all([
+          tx.authSession.deleteMany({ where: { userId: { in: userIds } } }),
+          tx.userActivationToken.updateMany({
+            where: { userId: { in: userIds }, consumedAt: null, revokedAt: null },
+            data: { revokedAt: now },
+          }),
+          tx.userPasswordResetToken.updateMany({
+            where: { userId: { in: userIds }, consumedAt: null, revokedAt: null },
+            data: { revokedAt: now },
+          }),
+        ]);
+        revokedSessions = sessions.count;
+        revokedActivationTokens = activationTokens.count;
+        revokedPasswordResetTokens = passwordResetTokens.count;
+      }
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: actor.id,
+          action: parsed.data.targetStatus === "SUSPENDED" ? "company.suspended" : "company.reactivated",
+          entityType: "Company",
+          entityId: parsed.data.companyId,
+          metadata: JSON.stringify({
+            fromStatus: parsed.data.expectedStatus,
+            toStatus: parsed.data.targetStatus,
+            reason: parsed.data.changeReason,
+            dealerUserCount: userIds.length,
+            revokedSessions,
+            revokedActivationTokens,
+            revokedPasswordResetTokens,
+          }),
+        },
+      });
+    });
+
+    revalidatePath(`/admin/firmalar/${parsed.data.companyId}`);
+    revalidatePath("/admin/firmalar");
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      message: parsed.data.targetStatus === "SUSPENDED"
+        ? "Firma erişimi askıya alındı ve açık oturumlar kapatıldı."
+        : "Firma yeniden etkinleştirildi.",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof CompanyLifecycleError
+        ? error.message
+        : "Firma durumu güncellenemedi.",
+    };
+  }
+}
 
 export async function updateCompanyDiscount(
   _previousState: CompanyUserActionState,
