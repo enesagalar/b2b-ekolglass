@@ -13,6 +13,7 @@ import {
 import { getStatusLabel } from "@/domain/statuses";
 import { getOutboxHealth } from "@/integrations/outbox-health";
 import { getLoginSecurityHealth } from "@/features/auth/rate-limit-operations";
+import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -151,6 +152,7 @@ function formatDate(value: Date) {
 }
 
 export default async function AdminPage() {
+  await requirePermissionUser("admin.dashboard.read", "/admin");
   const dashboard = await getDashboardData();
 
   const pendingActions = [

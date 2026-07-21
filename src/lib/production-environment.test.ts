@@ -14,6 +14,7 @@ const validEnvironment = {
   BACKUP_S3_BUCKET: "ekolglass-production-backups",
   BACKUP_S3_REGION: "eu-central-1",
   BACKUP_S3_SERVER_SIDE_ENCRYPTION: "AES256",
+  BACKUP_S3_UPLOAD_TIMEOUT_MS: "120000",
   SYSTEM_JOB_LEASE_MINUTES: "5",
   BACKUP_JOB_LEASE_MINUTES: "30",
   OUTBOX_HEARTBEAT_WARN_AFTER_MINUTES: "6",
@@ -42,6 +43,8 @@ const validEnvironment = {
   SMTP_SECURE: "false",
   SMTP_REQUIRE_TLS: "true",
   MEDIA_STORAGE_PROVIDER: "LOCAL",
+  AUTH_TRUST_PROXY: "true",
+  AUTH_CLIENT_IP_HEADER: "x-forwarded-for",
   AUTH_SECRET: "a".repeat(48),
   AUTH_RATE_LIMIT_SECRET: "b".repeat(48),
   MAINTENANCE_CRON_SECRET: "c".repeat(48),
@@ -93,6 +96,37 @@ describe("validateProductionEnvironment", () => {
     expect(result.issues.map((issue) => issue.key)).toEqual(
       expect.arrayContaining(["DATABASE_BACKUP_ROOT", "BACKUP_HEARTBEAT_WARN_AFTER_MINUTES"]),
     );
+  });
+
+  it("requires an absolute persistent SQLite database path", () => {
+    for (const databaseUrl of ["postgresql://db.example/portal", "file:./production.db", "file:/tmp/portal.db", "file:./dev.db", "file::memory:"]) {
+      const result = validateProductionEnvironment({ ...validEnvironment, DATABASE_URL: databaseUrl });
+      expect(result.issues).toContainEqual(expect.objectContaining({ key: "DATABASE_URL" }));
+    }
+  });
+
+  it("keeps credential-bearing cron calls on the clean portal origin", () => {
+    const crossOrigin = validateProductionEnvironment({
+      ...validEnvironment,
+      OUTBOX_BASE_URL: "https://worker.example.com",
+    });
+    const credentialUrl = validateProductionEnvironment({
+      ...validEnvironment,
+      BACKUP_BASE_URL: "https://user:password@portal.ekolglass.com?token=secret#fragment",
+    });
+
+    expect(crossOrigin.issues).toContainEqual(expect.objectContaining({ key: "OUTBOX_BASE_URL" }));
+    expect(credentialUrl.issues).toContainEqual(expect.objectContaining({ key: "BACKUP_BASE_URL" }));
+    expect(JSON.stringify(credentialUrl)).not.toContain("password");
+    expect(JSON.stringify(credentialUrl)).not.toContain("token=secret");
+  });
+
+  it("requires an explicit trusted proxy IP header for production throttling", () => {
+    const disabled = validateProductionEnvironment({ ...validEnvironment, AUTH_TRUST_PROXY: "false" });
+    const unknownHeader = validateProductionEnvironment({ ...validEnvironment, AUTH_CLIENT_IP_HEADER: "x-client-ip" });
+
+    expect(disabled.issues).toContainEqual(expect.objectContaining({ key: "AUTH_TRUST_PROXY" }));
+    expect(unknownHeader.issues).toContainEqual(expect.objectContaining({ key: "AUTH_CLIENT_IP_HEADER" }));
   });
 
   it("requires an encrypted offsite backup target", () => {

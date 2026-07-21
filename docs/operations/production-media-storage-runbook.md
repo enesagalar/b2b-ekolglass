@@ -37,7 +37,9 @@ MEDIA_STORAGE_READINESS_TIMEOUT_MS="5000"
 - Bucket private kalabilir; medya uygulamanin `/media/[file]` route'u uzerinden sunulur.
 - Bucket versioning, lifecycle ve backup politikasi provider tarafinda acilmalidir.
 - Uygulama kimligine en az `HeadBucket`, prefix altinda `ListBucket`, `GetObject` ve `PutObject` yetkileri verilmelidir.
-- Readiness kontrolu bucket erisimini sure sinirli `HeadBucket` istegiyle sinar; endpoint, bucket veya anahtar degerlerini HTTP yanitina yazmaz.
+- S3 readiness kontrolu bucket erisimini sure sinirli `HeadBucket` istegiyle sinar; endpoint, bucket veya anahtar degerlerini HTTP yanitina yazmaz.
+- LOCAL readiness kontrolu storage kokunu olusturup uygulama kimligiyle okuma/yazma erisimini dogrular.
+- Readiness tek basina nesne yazma/okuma kaniti degildir; deployment kabulunde asagidaki upload/read/restart provasi zorunludur.
 
 ## Deployment Kontrolu
 

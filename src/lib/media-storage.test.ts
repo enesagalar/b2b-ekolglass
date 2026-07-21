@@ -58,6 +58,16 @@ describe("media storage readiness", () => {
     MEDIA_STORAGE_READINESS_TIMEOUT_MS: "1500",
   };
 
+  it("requires the local storage root to be writable", async () => {
+    const probeLocalStorage = vi.fn().mockRejectedValue(new Error("read only filesystem"));
+
+    await expect(checkMediaStorageReadiness(
+      { MEDIA_STORAGE_PROVIDER: "LOCAL" },
+      { probeLocalStorage },
+    )).resolves.toEqual({ status: "degraded", provider: "LOCAL", reason: "unreachable" });
+    expect(probeLocalStorage).toHaveBeenCalledWith(expect.stringMatching(/[\\/]storage[\\/]media$/));
+  });
+
   it("probes S3-compatible storage without exposing configuration details", async () => {
     const headBucket = vi.fn().mockResolvedValue({});
 

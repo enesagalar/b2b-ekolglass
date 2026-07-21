@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
     const offsite = await uploadVerifiedBackup({
       databasePath: result.databasePath,
       manifestPath: result.manifestPath,
+      checkpoint: async () => {
+        await heartbeatSystemJobRun({ runId: correlationId, leaseToken: activeLeaseToken });
+      },
     });
     await heartbeatSystemJobRun({ runId: correlationId, leaseToken: activeLeaseToken });
     const backup = {

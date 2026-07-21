@@ -13,6 +13,7 @@ const baseEnv = {
   BACKUP_OFFSITE_PROVIDER: "S3",
   BACKUP_S3_BUCKET: "ekolglass-backups",
   BACKUP_S3_REGION: "auto",
+  BACKUP_S3_UPLOAD_TIMEOUT_MS: "45000",
 };
 
 async function backupFixture() {
@@ -74,12 +75,18 @@ describe("offsite backup configuration", () => {
     })).toMatchObject({ encryption: { algorithm: "aws:kms", keyId: "alias/ekolglass-backups" } });
     expect(() => resolveOffsiteBackupConfig({ ...baseEnv, BACKUP_S3_SERVER_SIDE_ENCRYPTION: "none" })).toThrow("AES256 veya aws:kms");
   });
+
+  it("bounds the upload timeout", () => {
+    expect(resolveOffsiteBackupConfig(baseEnv)).toMatchObject({ uploadTimeoutMs: 45_000 });
+    expect(() => resolveOffsiteBackupConfig({ ...baseEnv, BACKUP_S3_UPLOAD_TIMEOUT_MS: "999" })).toThrow("BACKUP_S3_UPLOAD_TIMEOUT_MS");
+  });
 });
 
 describe("offsite backup upload", () => {
   it("uploads the database first and publishes the manifest last with private verified metadata", async () => {
     const fixture = await backupFixture();
     const sent: PutObjectCommand[] = [];
+    const checkpoint = vi.fn(async () => undefined);
     const client: OffsiteBackupClient = { send: vi.fn(async (command) => { sent.push(command); }) };
 
     const result = await uploadVerifiedBackup({
@@ -87,9 +94,15 @@ describe("offsite backup upload", () => {
       manifestPath: fixture.manifestPath,
       env: { ...baseEnv, BACKUP_S3_PREFIX: "/portal/backups/" },
       client,
+      checkpoint,
     });
 
     expect(sent).toHaveLength(2);
+    expect(checkpoint).toHaveBeenCalledOnce();
+    expect(client.send).toHaveBeenCalledTimes(2);
+    for (const [, options] of vi.mocked(client.send).mock.calls) {
+      expect(options?.abortSignal).toBeInstanceOf(AbortSignal);
+    }
     const databaseUpload = sent[0].input;
     const manifestUpload = sent[1].input;
     expect(databaseUpload.Key).toBe(`portal/backups/${fixture.databaseSha256}/ekolglass-test.sqlite`);

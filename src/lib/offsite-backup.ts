@@ -23,10 +23,11 @@ export type OffsiteBackupConfig =
       forcePathStyle: boolean;
       prefix: string;
       encryption: ServerSideEncryption;
+      uploadTimeoutMs: number;
     };
 
 export type OffsiteBackupClient = {
-  send(command: PutObjectCommand): Promise<unknown>;
+  send(command: PutObjectCommand, options?: { abortSignal?: AbortSignal }): Promise<unknown>;
 };
 
 function required(env: BackupEnvironment, key: string) {
@@ -41,6 +42,15 @@ function booleanValue(env: BackupEnvironment, key: string, fallback: boolean) {
   if (value === "true") return true;
   if (value === "false") return false;
   throw new Error(`${key} yalnızca true veya false olabilir.`);
+}
+
+function uploadTimeout(value: string | undefined) {
+  if (!value?.trim()) return 120_000;
+  const timeoutMs = Number(value);
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 900_000) {
+    throw new Error("BACKUP_S3_UPLOAD_TIMEOUT_MS 1000 ile 900000 arasinda bir tam sayi olmalidir.");
+  }
+  return timeoutMs;
 }
 
 function normalizePrefix(value: string | undefined) {
@@ -84,6 +94,7 @@ export function resolveOffsiteBackupConfig(env: BackupEnvironment = process.env)
     forcePathStyle: booleanValue(env, "BACKUP_S3_FORCE_PATH_STYLE", false),
     prefix: normalizePrefix(env.BACKUP_S3_PREFIX),
     encryption: resolveEncryption(env),
+    uploadTimeoutMs: uploadTimeout(env.BACKUP_S3_UPLOAD_TIMEOUT_MS),
   };
 }
 
@@ -139,6 +150,7 @@ export async function uploadVerifiedBackup(options: {
   manifestPath: string;
   env?: BackupEnvironment;
   client?: OffsiteBackupClient;
+  checkpoint?: () => Promise<void>;
 }) {
   const config = resolveOffsiteBackupConfig(options.env);
   if (config.provider === "DISABLED") return { status: "disabled" as const, provider: config.provider };
@@ -164,14 +176,15 @@ export async function uploadVerifiedBackup(options: {
     body: database,
     contentType: "application/vnd.sqlite3",
     checksum: databaseChecksum,
-  })));
+  })), { abortSignal: AbortSignal.timeout(config.uploadTimeoutMs) });
+  await options.checkpoint?.();
   await client.send(new PutObjectCommand(uploadInput({
     config,
     key: objectKey(config.prefix, databaseChecksum.hex, manifestFile),
     body: manifestBuffer,
     contentType: "application/json",
     checksum: manifestChecksum,
-  })));
+  })), { abortSignal: AbortSignal.timeout(config.uploadTimeoutMs) });
 
   return {
     status: "uploaded" as const,

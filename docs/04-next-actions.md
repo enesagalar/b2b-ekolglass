@@ -2,6 +2,36 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-21 - Production guvenlik ve dayaniklilik kapilari
+
+Tamamlananlar:
+
+- Admin dashboard verileri `admin.dashboard.read` izniyle, sorgular baslamadan once korunuyor.
+- Kategori ve uyumluluk `product.manage`, stok `stock.manage`, fiyatlar `price.manage` ile ayrildi; birlesik urun kaydi uc izni birlikte gerektiriyor.
+- Production preflight mutlak/kalici SQLite yolu, temiz ve ayni-origin cron URL'leri, guvenilir proxy konfigurasyonu ve acik istemci IP header'i gerektiriyor.
+- Tum rotalara frame, MIME sniffing, referrer, browser capability, HSTS ve CSP tabanli savunma basliklari eklendi.
+- LOCAL medya readiness kontrolu storage dizininin gercekten okunabilir/yazilabilir oldugunu siniyor.
+- Offsite backup aktarimlarina sinirli S3 timeout'u ve database/manifest upload'lari arasina lease heartbeat kontrolu eklendi.
+- Operator tarafindan her release icin doldurulacak `docs/operations/production-release-evidence-template.md` olusturuldu.
+- Guvenli transitive dependency guncellemesiyle yuksek seviye audit bulgusu kapatildi; `npm audit --audit-level=high` 0 high/critical ile geciyor.
+- 69 Vitest dosyasinda 328 test, 2 Node testi, lint, TypeScript, production build ve 42 adimli authenticated smoke basarili.
+
+Siradaki kod paketi:
+
+1. Production ortamina bagli credential, DNS/TLS, SMTP, scheduler, alarm receiver, medya upload/read ve backup restore kanitlarini toplamak.
+2. Release evidence sablonunu gercek staging/production kanitlariyla doldurmak.
+3. Dis kabul denetiminde yeni bloklayici bulunmazsa UI yenilemesi icin proje sahibinden acik onay istemek.
+
+Kabul edilen dependency takip borcu:
+
+- Next'in paketledigi PostCSS ve Prisma gelistirme sunucusu zincirinde toplam 5 moderate audit uyarisi bulunuyor.
+- `npm audit fix --force` Next'i 9.x'e dusuren hatali/breaking cozum onerdigi icin uygulanmadi; upstream uyumlu patch ciktiginda ayri dependency paketiyle kapatilacak.
+
+UI karari:
+
+- UI yenilemesine henuz gecilmedi.
+- City Lojistik resmi API sozlesmesi gelene kadar fail-closed ve bu kabul turunun disinda kalir.
+
 ## 2026-07-20 - Siparis action ve alarm regresyon kapilari
 
 Tamamlananlar:

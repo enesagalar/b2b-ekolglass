@@ -1,17 +1,15 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-20
+Son guncelleme: 2026-07-21
 
 ## Git Durumu
 
 - Aktif branch: `main`
 - Remote: `https://github.com/enesagalar/b2b-ekolglass.git`
 - Son bilinen commitler:
-  - `d6a5666 Split product category and price list admin screens`
-  - `bc4625d Add media soft deactivation workflow`
-  - `2934cc0 Enforce catalog price and stock visibility`
-  - `68bf9a7 Add product compatibility management and advisor reports`
-  - `4ead9a0 Add codex fleet operating guide`
+  - `499555c Harden dealer order and alert workflows`
+  - `e987ddd Add production storage readiness and reconciliation`
+  - `52f0829 Isolate test database and enforce CI gates`
 
 ## Calisan Temel Parcalar
 
@@ -124,6 +122,12 @@ Son guncelleme: 2026-07-20
 - `/api/health` authentication durumu ve admin dashboard `Giris guvenligi` metrigi.
 - Alarm webhook HMAC/timeout/redirect siniflandirmasi ile reminder, recovery ve yeniden escalation regresyon kapsami.
 - Runtime testlerine ek olarak bagimsiz `tsc --noEmit` test tipi kapisi.
+- Admin dashboard ve katalog mutation'larinda permission-bazli fail-closed yetki kapilari.
+- Production response'larinda HSTS, CSP frame/base/form sinirlari, nosniff, referrer, frame ve permissions policy basliklari.
+- Production preflight'ta mutlak kalici SQLite yolu, temiz ayni-origin scheduler URL'leri ve dogrulanmis proxy/IP header sozlesmesi.
+- LOCAL medya storage icin gercek okuma/yazma readiness kontrolu.
+- Offsite backup upload timeout'u ve database/manifest aktarimi arasinda lease heartbeat kontrolu.
+- Release bazli doldurulabilir production kabul kanit sablonu.
 
 ## En Onemli Eksikler
 
@@ -151,8 +155,8 @@ Son guncelleme: 2026-07-20
 
 UI yenilemesine gecmeden once production sertlestirmesinin kalan son denetimi tamamlanacak:
 
-- Production credential, DNS/TLS, scheduler ve merkezi log sink dis kabul listesi.
-- Backup restore ve S3/R2 medya provasi kanit sablonlari.
-- City Lojistik haric kalan production kod bosluklarinin son taramasi.
+- Tam regresyon, build ve authenticated smoke kapilarinin son kosusu.
+- Production credential, DNS/TLS, SMTP, scheduler ve merkezi log sink dis kabul listesi.
+- Gercek ortamda backup restore ve S3/R2 medya upload/read/reconciliation provasi.
 
 City Lojistik canli adapteri, resmi API sozlesmesi gelene kadar kapsam disinda ve fail-closed kalir.

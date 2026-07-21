@@ -107,6 +107,21 @@ assert(
   publicHomeResponse.status === 200,
   `Public home failed with ${publicHomeResponse.status}`,
 );
+for (const [header, expected] of [
+  ["strict-transport-security", "max-age=63072000; includeSubDomains"],
+  ["x-content-type-options", "nosniff"],
+  ["x-frame-options", "DENY"],
+  ["referrer-policy", "strict-origin-when-cross-origin"],
+]) {
+  assert(
+    publicHomeResponse.headers.get(header) === expected,
+    `Public home security header ${header} is missing or invalid`,
+  );
+}
+assert(
+  publicHomeResponse.headers.get("content-security-policy")?.includes("frame-ancestors 'none'"),
+  "Public home CSP does not block framing",
+);
 const publicHomeHtml = await publicHomeResponse.text();
 assert(
   publicHomeHtml.includes("EkolGlass Otomotiv Cam Çözümleri"),

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -103,6 +104,7 @@ export function createS3Client(config: Extract<MediaStorageConfig, { provider: "
 }
 
 type ReadinessDependencies = {
+  probeLocalStorage?: (root: string) => Promise<unknown>;
   headBucket?: (
     client: S3Client,
     bucket: string,
@@ -122,7 +124,16 @@ export async function checkMediaStorageReadiness(
   }
 
   if (config.provider === "LOCAL") {
-    return { status: "ok" as const, provider: config.provider };
+    const probeLocalStorage = dependencies.probeLocalStorage ?? (async (root: string) => {
+      await mkdir(root, { recursive: true });
+      await access(root, constants.R_OK | constants.W_OK);
+    });
+    try {
+      await probeLocalStorage(localStorageRoot());
+      return { status: "ok" as const, provider: config.provider };
+    } catch {
+      return { status: "degraded" as const, provider: config.provider, reason: "unreachable" as const };
+    }
   }
 
   const headBucket = dependencies.headBucket ?? ((client, bucket, abortSignal) => (

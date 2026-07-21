@@ -4,6 +4,8 @@
 
 Bu runbook bir release'in migration, runtime konfigurasyonu, health kapilari ve arka plan isleriyle birlikte kontrollu acilmasini tanimlar. `npm run build` tek basina production kabul kaniti degildir.
 
+Her release icin `docs/operations/production-release-evidence-template.md` kopyalanir ve tum zorunlu alanlar operator tarafindan doldurulur. Kanitsiz zorunlu madde `NO-GO` kabul edilir.
+
 ## Scheduler Gozlemlenebilirligi
 
 - Outbox endpoint'i en az dakikada bir, giris guvenligi bakimi en az saatte bir calistirilir.
@@ -27,10 +29,11 @@ Detayli model ve guvenlik kararlari icin `docs/architecture/observability-and-sy
 
 Zorunlu gruplar:
 
-- Veritabani: production'a ozel `DATABASE_URL`.
+- Veritabani: production'a ozel, mutlak ve kalici volume'u gosteren `file:` `DATABASE_URL`.
 - Backup: ayri failure domain'de S3/R2 bucket ve zorunlu server-side encryption.
 - Origin: HTTPS `NEXT_PUBLIC_SITE_URL`, `OUTBOX_BASE_URL`, `MAINTENANCE_BASE_URL`, `BACKUP_BASE_URL`, `SYSTEM_ALERT_BASE_URL`.
 - Auth: birbirinden farkli ve en az 32 karakterlik runtime secret'lari.
+- Proxy: yalniz forwarding header'larini overwrite eden proxy arkasinda `AUTH_TRUST_PROXY=true` ve tek `AUTH_CLIENT_IP_HEADER`.
 - E-posta: SMTP provider, host, TLS ve gonderici.
 - Medya: acik `LOCAL` veya eksiksiz `S3` konfigurasyonu.
 - Alarm: webhook provider, HTTPS/443 allowlist hedefi, ayri HMAC secret ve receiver idempotency kabul kaniti.
@@ -52,6 +55,7 @@ SQLite kullaniliyorsa tek-writer deployment, kalici disk, dosya kilidi ve ayni v
 3. `GET /api/health/ready` HTTP 200 ve `status=ready` vermelidir.
 4. `GET /api/health` operasyon sinyallerinde `error` olmamalidir.
 5. Readiness 503 ise trafik yeni surume yonlendirilmez.
+6. HTTPS yanitlarinda HSTS, CSP `frame-ancestors`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` ve `Permissions-Policy` dogrulanir.
 
 ## 4. Scheduler Kabulü
 

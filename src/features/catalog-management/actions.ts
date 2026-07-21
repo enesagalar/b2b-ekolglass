@@ -17,7 +17,7 @@ import {
 } from "@/domain/validation";
 import { getProductPublicationReadiness } from "@/domain/catalog";
 import { Prisma } from "@/generated/prisma/client";
-import { requireAdminUser, requirePermissionUser } from "@/lib/auth";
+import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export type CatalogActionState = {
@@ -191,7 +191,7 @@ export async function setProductPublicationStatus(
 }
 
 export async function saveCategory(input: CatalogActionInput, maybeFormData?: FormData): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("product.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -244,7 +244,7 @@ export async function saveCategory(input: CatalogActionInput, maybeFormData?: Fo
 }
 
 export async function savePriceList(input: CatalogActionInput, maybeFormData?: FormData): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("price.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -305,7 +305,9 @@ export async function saveProductBundle(
   input: CatalogActionInput,
   maybeFormData?: FormData,
 ): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("product.manage", "/admin/urunler");
+  await requirePermissionUser("stock.manage", "/admin/urunler");
+  await requirePermissionUser("price.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -451,7 +453,7 @@ export async function saveProductStock(
   input: CatalogActionInput,
   maybeFormData?: FormData,
 ): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("stock.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -509,7 +511,7 @@ export async function saveProductPrice(
   input: CatalogActionInput,
   maybeFormData?: FormData,
 ): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("price.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -563,7 +565,7 @@ export async function saveProductCompatibility(
   input: CatalogActionInput,
   maybeFormData?: FormData,
 ): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("product.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {
@@ -666,7 +668,7 @@ export async function deleteProductCompatibility(
   input: CatalogActionInput,
   maybeFormData?: FormData,
 ): Promise<CatalogActionState> {
-  const user = await requireAdminUser();
+  const user = await requirePermissionUser("product.manage", "/admin/urunler");
   const formData = resolveFormData(input, maybeFormData);
 
   if (!formData) {

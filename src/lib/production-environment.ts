@@ -34,6 +34,7 @@ const baseSchema = z.object({
   BACKUP_S3_BUCKET: z.string().min(1),
   BACKUP_S3_REGION: z.string().min(1),
   BACKUP_S3_SERVER_SIDE_ENCRYPTION: z.enum(["AES256", "aws:kms"]),
+  BACKUP_S3_UPLOAD_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(900_000),
   SYSTEM_JOB_LEASE_MINUTES: z.coerce.number().int().positive(),
   BACKUP_JOB_LEASE_MINUTES: z.coerce.number().int().positive(),
   OUTBOX_HEARTBEAT_WARN_AFTER_MINUTES: z.coerce.number().int().positive(),
@@ -63,6 +64,8 @@ const baseSchema = z.object({
   SMTP_REQUIRE_TLS: z.literal("true"),
   MEDIA_STORAGE_PROVIDER: z.enum(["LOCAL", "S3"]),
   MEDIA_STORAGE_READINESS_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).optional(),
+  AUTH_TRUST_PROXY: z.literal("true"),
+  AUTH_CLIENT_IP_HEADER: z.enum(["x-forwarded-for", "x-real-ip", "cf-connecting-ip"]),
 });
 
 function isStrongSecret(value: string | undefined) {
@@ -80,6 +83,36 @@ function isSecurePublicOrigin(value: string | undefined) {
   } catch {
     return false;
   }
+}
+
+function isCleanUrl(value: string | undefined) {
+  try {
+    const url = new URL(value ?? "");
+    return !url.username && !url.password && !url.search && !url.hash;
+  } catch {
+    return false;
+  }
+}
+
+function productionSqlitePath(value: string | undefined) {
+  if (!value?.startsWith("file:") || value.includes("?") || value.includes("#") || value.includes("\0")) return null;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(value.slice("file:".length));
+  } catch {
+    return null;
+  }
+  if (!decoded || decoded.toLowerCase() === ":memory:") return null;
+  if (!path.posix.isAbsolute(decoded) && !path.win32.isAbsolute(decoded)) return null;
+  const normalized = decoded.replaceAll("\\", "/").toLowerCase();
+  if (
+    normalized.endsWith("/dev.db") ||
+    normalized.endsWith("/test.db") ||
+    normalized.includes("/.test-data/") ||
+    normalized.startsWith("/tmp/") ||
+    normalized.includes("/appdata/local/temp/")
+  ) return null;
+  return decoded;
 }
 
 export function validateProductionEnvironment(env: RuntimeEnvironment = process.env) {
@@ -109,13 +142,25 @@ export function validateProductionEnvironment(env: RuntimeEnvironment = process.
   }
 
   for (const key of ["NEXT_PUBLIC_SITE_URL", "OUTBOX_BASE_URL", "MAINTENANCE_BASE_URL", "BACKUP_BASE_URL", "SYSTEM_ALERT_BASE_URL"] as const) {
-    if (!isSecurePublicOrigin(env[key]) && !issues.some((item) => item.key === key)) {
+    if ((!isSecurePublicOrigin(env[key]) || !isCleanUrl(env[key])) && !issues.some((item) => item.key === key)) {
       issues.push({ key, message: "Production için localhost olmayan HTTPS origin gerekli." });
     }
   }
 
-  if (env.DATABASE_URL === "file:./dev.db") {
-    issues.push({ key: "DATABASE_URL", message: "Development veritabanı production'da kullanılamaz." });
+  let publicOrigin: string | null = null;
+  try {
+    publicOrigin = new URL(env.NEXT_PUBLIC_SITE_URL ?? "").origin;
+  } catch {}
+  for (const key of ["OUTBOX_BASE_URL", "MAINTENANCE_BASE_URL", "BACKUP_BASE_URL", "SYSTEM_ALERT_BASE_URL"] as const) {
+    try {
+      if (publicOrigin && new URL(env[key] ?? "").origin !== publicOrigin && !issues.some((item) => item.key === key)) {
+        issues.push({ key, message: "Cron base URL portal origin'i ile aynı olmalıdır." });
+      }
+    } catch {}
+  }
+
+  if (!productionSqlitePath(env.DATABASE_URL)) {
+    issues.push({ key: "DATABASE_URL", message: "Mutlak ve kalıcı file: SQLite yolu zorunludur." });
   }
 
   if (env.DATABASE_BACKUP_ROOT && !path.isAbsolute(env.DATABASE_BACKUP_ROOT)) {
@@ -127,6 +172,12 @@ export function validateProductionEnvironment(env: RuntimeEnvironment = process.
   }
   if (env.BACKUP_S3_SERVER_SIDE_ENCRYPTION === "aws:kms" && !env.BACKUP_S3_KMS_KEY_ID?.trim()) {
     issues.push({ key: "BACKUP_S3_KMS_KEY_ID", message: "KMS şifrelemesi için key kimliği zorunludur." });
+  }
+
+  const backupUploadTimeoutMs = Number.parseInt(env.BACKUP_S3_UPLOAD_TIMEOUT_MS ?? "", 10);
+  const backupLeaseMinutes = Number.parseInt(env.BACKUP_JOB_LEASE_MINUTES ?? "", 10);
+  if (Number.isInteger(backupUploadTimeoutMs) && Number.isInteger(backupLeaseMinutes) && backupUploadTimeoutMs >= backupLeaseMinutes * 60_000) {
+    issues.push({ key: "BACKUP_S3_UPLOAD_TIMEOUT_MS", message: "S3 upload timeout backup lease suresinden kisa olmalidir." });
   }
 
   const integer = (key: string) => Number.parseInt(env[key] ?? "", 10);

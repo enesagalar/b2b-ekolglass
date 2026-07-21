@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   createSqliteBackup: vi.fn(),
   verifySqliteBackup: vi.fn(async () => ({ ok: true })),
-  uploadVerifiedBackup: vi.fn(async () => ({ status: "uploaded", provider: "S3" })),
+  uploadVerifiedBackup: vi.fn(async (options?: { checkpoint?: () => Promise<void> }) => {
+    void options;
+    return { status: "uploaded", provider: "S3" };
+  }),
   beginSystemJobRun: vi.fn(async () => ({ replayed: false, run: { leaseToken: "backup-lease" } })),
   heartbeatSystemJobRun: vi.fn(async () => ({ updated: true })),
   finishSystemJobRun: vi.fn(async () => ({ updated: true })),
@@ -60,6 +63,10 @@ describe("internal database backup route", () => {
         manifest: { byteSize: 4096, sha256: "a".repeat(64), createdAt: "2026-07-16T12:00:00.000Z" },
       };
     });
+    mocks.uploadVerifiedBackup.mockImplementationOnce(async (options) => {
+      await options?.checkpoint?.();
+      return { status: "uploaded", provider: "S3" };
+    });
 
     const response = await POST(new NextRequest("http://localhost/api/internal/backup", {
       method: "POST",
@@ -77,11 +84,12 @@ describe("internal database backup route", () => {
       },
       correlationId: requestId,
     });
-    expect(mocks.heartbeatSystemJobRun).toHaveBeenCalledTimes(3);
+    expect(mocks.heartbeatSystemJobRun).toHaveBeenCalledTimes(4);
     expect(mocks.verifySqliteBackup).toHaveBeenCalledOnce();
     expect(mocks.uploadVerifiedBackup).toHaveBeenCalledWith({
       databasePath: "C:\\backups\\bundle\\backup.sqlite",
       manifestPath: "C:\\backups\\bundle\\backup.manifest.json",
+      checkpoint: expect.any(Function),
     });
     expect(mocks.finishSystemJobRun).toHaveBeenCalledWith(expect.objectContaining({ status: "SUCCEEDED", resultCount: 1 }));
   });

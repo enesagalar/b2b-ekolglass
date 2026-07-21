@@ -14,6 +14,7 @@ BACKUP_S3_BUCKET="ekolglass-production-backups"
 BACKUP_S3_REGION="eu-central-1"
 BACKUP_S3_PREFIX="portal/database-backups"
 BACKUP_S3_SERVER_SIDE_ENCRYPTION="AES256"
+BACKUP_S3_UPLOAD_TIMEOUT_MS="120000"
 ```
 
 Production backup root uygulama deploy dizininden bagimsiz, kalici ve erisimi sinirli bir volume olmalidir. Backup dosyalari web root altinda servis edilmez.
@@ -45,7 +46,9 @@ Komut:
 7. Scheduler akisi yayinlanan snapshot uzerinde izole restore provasi yapar; job ancak bundan sonra `SUCCEEDED` olur.
 8. Dogrulanmis database nesnesi once, manifest nesnesi son yazilacak sekilde content-addressed S3/R2 anahtarina aktarilir.
 9. Aktarim SHA-256 transport checksum'i, private bucket politikasi ve `AES256` veya `aws:kms` server-side encryption zorunluluguyla yapilir.
-10. Offsite aktarim basarisizsa `DATABASE_BACKUP` isi `FAILED` olur ve sistem alarm yasam dongusune girer.
+10. Her S3 nesne aktarimi acik timeout ile sinirlanir; timeout backup lease suresinden kisa olmak zorundadir.
+11. Database ve manifest aktarimlari arasinda lease heartbeat yenilenir; lease kaybi manifest yayinini engeller.
+12. Offsite aktarim basarisizsa `DATABASE_BACKUP` isi `FAILED` olur ve sistem alarm yasam dongusune girer.
 
 Komut JSON sonucunda yalniz dosya adlarini, boyutu, hash'i ve correlation ID'yi doner; mutlak host yolu veya secret loglanmaz. Scheduler non-zero exit'i kritik alarm saymalidir.
 

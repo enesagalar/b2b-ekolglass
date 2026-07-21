@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   productCompatibilityFindFirst: vi.fn(),
   productCompatibilityFindMany: vi.fn(),
   productCompatibilityUpdate: vi.fn(),
-  requireAdminUser: vi.fn(),
+  requirePermissionUser: vi.fn(),
   revalidatePath: vi.fn(),
   stockItemUpsert: vi.fn(),
 }));
@@ -17,7 +17,7 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/lib/auth", () => ({
-  requireAdminUser: mocks.requireAdminUser,
+  requirePermissionUser: mocks.requirePermissionUser,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -40,7 +40,11 @@ vi.mock("@/lib/prisma", () => ({
 
 import {
   deleteProductCompatibility,
+  saveCategory,
+  savePriceList,
+  saveProductBundle,
   saveProductCompatibility,
+  saveProductPrice,
   saveProductStock,
 } from "./actions";
 
@@ -64,7 +68,7 @@ function compatibilityForm(overrides: Record<string, string> = {}) {
 describe("catalog management actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.requireAdminUser.mockResolvedValue({ id: "admin-1" });
+    mocks.requirePermissionUser.mockResolvedValue({ id: "admin-1" });
     mocks.auditLogCreate.mockResolvedValue({});
     mocks.productCompatibilityCreate.mockResolvedValue({
       id: "compatibility-1",
@@ -82,6 +86,21 @@ describe("catalog management actions", () => {
     mocks.productCompatibilityFindFirst.mockResolvedValue(null);
     mocks.productCompatibilityFindMany.mockResolvedValue([]);
     mocks.stockItemUpsert.mockResolvedValue({ id: "stock-1" });
+  });
+
+  it.each([
+    ["kategori", saveCategory, ["product.manage"]],
+    ["fiyat listesi", savePriceList, ["price.manage"]],
+    ["urun paketi", saveProductBundle, ["product.manage", "stock.manage", "price.manage"]],
+    ["stok", saveProductStock, ["stock.manage"]],
+    ["urun fiyati", saveProductPrice, ["price.manage"]],
+    ["uyumluluk", saveProductCompatibility, ["product.manage"]],
+    ["uyumluluk silme", deleteProductCompatibility, ["product.manage"]],
+  ])("%s islemini gereken izinlerle korur", async (_label, action, permissions) => {
+    await action(new FormData());
+
+    expect(mocks.requirePermissionUser.mock.calls.map(([permission]) => permission)).toEqual(permissions);
+    expect(mocks.requirePermissionUser).toHaveBeenCalledWith(expect.any(String), "/admin/urunler");
   });
 
   it("rejects duplicate product compatibility records before create", async () => {
