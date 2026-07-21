@@ -3,6 +3,7 @@ import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { hash } from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { recordStockMovement } from "../src/domain/stock-movement";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",
@@ -110,29 +111,55 @@ async function main() {
   ];
 
   for (const product of products) {
-    const savedProduct = await prisma.product.upsert({
-      where: { code: product.code },
-      update: product,
-      create: product,
-    });
-
-    await prisma.stockItem.upsert({
-      where: {
-        productId_warehouseCode: {
+    await prisma.$transaction(async (tx) => {
+      const savedProduct = await tx.product.upsert({
+        where: { code: product.code },
+        update: product,
+        create: product,
+      });
+      const currentStock = await tx.stockItem.findUnique({
+        where: {
+          productId_warehouseCode: {
+            productId: savedProduct.id,
+            warehouseCode: "MERKEZ",
+          },
+        },
+      });
+      const targetQuantity = product.orderMode === "QUOTE_ONLY" ? 0 : 18;
+      const stock = await tx.stockItem.upsert({
+        where: {
+          productId_warehouseCode: {
+            productId: savedProduct.id,
+            warehouseCode: "MERKEZ",
+          },
+        },
+        update: {
+          quantity: targetQuantity,
+          status: product.orderMode === "QUOTE_ONLY" ? "MADE_TO_ORDER" : "IN_STOCK",
+        },
+        create: {
           productId: savedProduct.id,
           warehouseCode: "MERKEZ",
+          quantity: targetQuantity,
+          status: product.orderMode === "QUOTE_ONLY" ? "MADE_TO_ORDER" : "IN_STOCK",
         },
-      },
-      update: {
-        quantity: product.orderMode === "QUOTE_ONLY" ? 0 : 18,
-        status: product.orderMode === "QUOTE_ONLY" ? "MADE_TO_ORDER" : "IN_STOCK",
-      },
-      create: {
+      });
+      await recordStockMovement(tx, {
+        stockItemId: stock.id,
         productId: savedProduct.id,
-        warehouseCode: "MERKEZ",
-        quantity: product.orderMode === "QUOTE_ONLY" ? 0 : 18,
-        status: product.orderMode === "QUOTE_ONLY" ? "MADE_TO_ORDER" : "IN_STOCK",
-      },
+        productCode: savedProduct.code,
+        warehouseCode: stock.warehouseCode,
+        movementType: currentStock ? "MANUAL_ADJUSTMENT" : "INITIAL_STOCK",
+        before: {
+          quantity: currentStock?.quantity ?? 0,
+          reservedQuantity: currentStock?.reservedQuantity ?? 0,
+        },
+        after: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity },
+        reason: currentStock ? "Seed verisi stok bakiyesi esitlemesi." : "Seed verisi ilk stok bakiyesi.",
+        sourceType: "DATABASE_SEED",
+        sourceId: savedProduct.id,
+        idempotencyKey: `database-seed:${savedProduct.id}:${currentStock?.updatedAt.getTime() ?? "new"}:${targetQuantity}`,
+      });
     });
   }
 

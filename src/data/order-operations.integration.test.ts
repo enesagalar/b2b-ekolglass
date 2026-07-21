@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { transitionOrderStatus } from "@/data/order-operations";
+import { recordStockMovement } from "@/domain/stock-movement";
 import { prisma } from "@/lib/prisma";
 
 const suffix = `${Date.now()}-${randomUUID().slice(0, 8)}`;
@@ -18,6 +19,34 @@ const ids = {
 const actor = { userId: ids.user };
 const orderIds = new Set<string>();
 let originalCheckoutLock: { version: number; updatedAt: Date } | null = null;
+
+async function adjustFixtureStock(stockItemId: string, quantity: number, reservedQuantity: number) {
+  await prisma.$transaction(async (tx) => {
+    const before = await tx.stockItem.findUniqueOrThrow({
+      where: { id: stockItemId },
+      include: { product: { select: { code: true } } },
+    });
+    if (before.quantity === quantity && before.reservedQuantity === reservedQuantity) return;
+    const after = await tx.stockItem.update({
+      where: { id: stockItemId },
+      data: { quantity, reservedQuantity },
+    });
+    await recordStockMovement(tx, {
+      stockItemId,
+      productId: before.productId,
+      productCode: before.product.code,
+      warehouseCode: before.warehouseCode,
+      movementType: "MANUAL_ADJUSTMENT",
+      before: { quantity: before.quantity, reservedQuantity: before.reservedQuantity },
+      after: { quantity: after.quantity, reservedQuantity: after.reservedQuantity },
+      actorUserId: ids.user,
+      reason: "Entegrasyon testi stok fixture bakiyesi ayari.",
+      sourceType: "TEST_FIXTURE",
+      sourceId: stockItemId,
+      idempotencyKey: `test-fixture:${stockItemId}:${randomUUID()}`,
+    });
+  });
+}
 
 type ItemFixture = {
   productId: string;
@@ -142,14 +171,8 @@ async function cleanupRuntimeFixtures() {
   await prisma.order.deleteMany({ where: { id: { in: currentOrderIds } } });
   orderIds.clear();
 
-  await prisma.stockItem.updateMany({
-    where: { id: ids.stockA },
-    data: { quantity: 20, reservedQuantity: 0 },
-  });
-  await prisma.stockItem.updateMany({
-    where: { id: ids.stockB },
-    data: { quantity: 20, reservedQuantity: 0 },
-  });
+  await adjustFixtureStock(ids.stockA, 20, 0);
+  await adjustFixtureStock(ids.stockB, 20, 0);
 }
 
 describe("order status operations", () => {
@@ -227,6 +250,8 @@ describe("order status operations", () => {
         },
       ],
     });
+    await adjustFixtureStock(ids.stockA, 20, 0);
+    await adjustFixtureStock(ids.stockB, 20, 0);
   });
 
   afterEach(cleanupRuntimeFixtures);
@@ -289,10 +314,7 @@ describe("order status operations", () => {
   });
 
   it("releases active reservations on cancellation without changing stock quantity", async () => {
-    await prisma.stockItem.update({
-      where: { id: ids.stockA },
-      data: { quantity: 12, reservedQuantity: 4 },
-    });
+    await adjustFixtureStock(ids.stockA, 12, 4);
     const order = await createOrder("CONFIRMED", [
       {
         productId: ids.productA,
@@ -331,6 +353,16 @@ describe("order status operations", () => {
       releaseReason: "ORDER_CANCELLED",
     });
     expect(reservation.releasedAt).toBeInstanceOf(Date);
+    expect(await prisma.stockMovement.findFirstOrThrow({
+      where: { sourceType: "ORDER_TRANSITION", sourceId: order.id, movementType: "ORDER_RELEASE" },
+    })).toMatchObject({
+      physicalDelta: 0,
+      reservedDelta: -4,
+      beforeQuantity: 12,
+      afterQuantity: 12,
+      beforeReservedQuantity: 4,
+      afterReservedQuantity: 0,
+    });
     await expectHistoryAndAudit(
       order.id,
       "CONFIRMED",
@@ -353,14 +385,8 @@ describe("order status operations", () => {
   });
 
   it("consumes every reservation, decrements stock, and creates a shipment when shipped", async () => {
-    await prisma.stockItem.update({
-      where: { id: ids.stockA },
-      data: { quantity: 8, reservedQuantity: 2 },
-    });
-    await prisma.stockItem.update({
-      where: { id: ids.stockB },
-      data: { quantity: 10, reservedQuantity: 3 },
-    });
+    await adjustFixtureStock(ids.stockA, 8, 2);
+    await adjustFixtureStock(ids.stockB, 10, 3);
     const order = await createOrder("READY_FOR_SHIPMENT", [
       {
         productId: ids.productA,
@@ -420,6 +446,22 @@ describe("order status operations", () => {
       trackingNumber: "TRK-12345",
     });
     expect(shipment.shippedAt).toBeInstanceOf(Date);
+    expect(await prisma.stockMovement.findMany({
+      where: { sourceType: "ORDER_TRANSITION", sourceId: order.id, movementType: "ORDER_CONSUME" },
+      orderBy: { stockItemId: "asc" },
+      select: {
+        stockItemId: true,
+        physicalDelta: true,
+        reservedDelta: true,
+        beforeQuantity: true,
+        afterQuantity: true,
+        beforeReservedQuantity: true,
+        afterReservedQuantity: true,
+      },
+    })).toEqual([
+      { stockItemId: ids.stockA, physicalDelta: -2, reservedDelta: -2, beforeQuantity: 8, afterQuantity: 6, beforeReservedQuantity: 2, afterReservedQuantity: 0 },
+      { stockItemId: ids.stockB, physicalDelta: -3, reservedDelta: -3, beforeQuantity: 10, afterQuantity: 7, beforeReservedQuantity: 3, afterReservedQuantity: 0 },
+    ]);
     await expectHistoryAndAudit(
       order.id,
       "READY_FOR_SHIPMENT",
@@ -451,10 +493,7 @@ describe("order status operations", () => {
   });
 
   it("rolls back shipping when an order item is missing an active reservation", async () => {
-    await prisma.stockItem.update({
-      where: { id: ids.stockA },
-      data: { quantity: 9, reservedQuantity: 2 },
-    });
+    await adjustFixtureStock(ids.stockA, 9, 2);
     const order = await createOrder("READY_FOR_SHIPMENT", [
       {
         productId: ids.productA,

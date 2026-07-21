@@ -83,6 +83,9 @@ Son guncelleme: 2026-07-21
 - Admin fiyat listesi alt ekrani: `/admin/urunler/fiyat-listeleri`.
 - Admin urun detay sayfasi.
 - Admin urun detayinda stok/fiyat guncelleme formlari.
+- Fiziksel/rezerve delta, once/sonra bakiye, aktor, gerekce ve kaynak snapshot'li append-only stok hareket defteri.
+- Manuel stok, fiyat/stok CSV, urun paketi, seed, rezervasyon, teklif donusumu, iptal ve sevkiyatta transaction ici hareket kaydi.
+- `/admin/raporlar?view=stock-movements` filtreli stok hareketleri ve stok sayaci/hareket defteri mutabakati.
 - Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
 - Admin urun detayinda medya/teknik dosya soft aktif/pasif yonetimi.
 - Admin urun detayinda uyumluluk/OEM ekleme ve guncelleme.
@@ -147,8 +150,8 @@ Son guncelleme: 2026-07-21
    - Kontrollu fiyat/stok preview ve onayli import hatti tamamlandi; gercek ERP kolon eslestirmesi bekliyor.
    - Firma ve kullanici yasam dongusu detay/action seviyesinde testli; kritik hesap islemleri icin yeniden kimlik dogrulama urun karari bekliyor.
 
-2. Urun yonetimi ilerledi ama bazi operasyonlar tamamlanmadi:
-   - Fiziksel/rezerve stok sayaclari calisiyor; manuel, CSV, rezervasyon ve sevkiyat degisimlerini tek defterde aciklayan append-only stok hareket modeli bekliyor.
+2. Urun ve stok yonetiminde ic kod kapsami tamamlandi:
+   - Fiziksel/rezerve stok sayaclari, rezervasyon defteri ve append-only hareket defteri birlikte mutabakat uretiyor.
 
 3. Teklif/siparis akisinda kalanlar:
    - SMTP teslim ve outbox operasyon hatti hazir; production credential, scheduler ve alarm kanali kurulumu bekliyor.

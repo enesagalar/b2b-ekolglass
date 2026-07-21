@@ -13,8 +13,10 @@ import {
   productPublicationSchema,
   productPriceFormSchema,
   stockFormSchema,
+  stockAdjustmentFormSchema,
 } from "@/domain/validation";
 import { getProductPublicationReadiness } from "@/domain/catalog";
+import { recordStockMovement } from "@/domain/stock-movement";
 import { Prisma } from "@/generated/prisma/client";
 import { requirePermissionUser } from "@/lib/auth";
 import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
@@ -218,7 +220,6 @@ export async function saveCategory(input: CatalogActionInput, maybeFormData?: Fo
   if (!formData) {
     return failure("Form verisi alınamadı.");
   }
-
   const parsed = categoryFormSchema.safeParse({
     id: formData.get("id") || undefined,
     name: formData.get("name"),
@@ -338,6 +339,8 @@ export async function saveProductBundle(
   if (!formData) {
     return failure("Form verisi alınamadı.");
   }
+  const bundleIdempotencyKey = String(formData.get("idempotencyKey") ?? "");
+  if (bundleIdempotencyKey.length < 16) return failure("Ürün işlem anahtarı geçersizdir.");
 
   const productParsed = productFormSchema.safeParse({
     id: formData.get("id") || undefined,
@@ -415,7 +418,15 @@ export async function saveProductBundle(
         ? await tx.product.update({ where: { id: productParsed.data.id }, data: productData })
         : await tx.product.create({ data: productData });
 
-      await tx.stockItem.upsert({
+      const currentStock = await tx.stockItem.findUnique({
+        where: {
+          productId_warehouseCode: {
+            productId: product.id,
+            warehouseCode: stockParsed.data.warehouseCode,
+          },
+        },
+      });
+      const stock = await tx.stockItem.upsert({
         where: {
           productId_warehouseCode: {
             productId: product.id,
@@ -435,6 +446,23 @@ export async function saveProductBundle(
           visibility: stockParsed.data.visibility,
           status: stockParsed.data.status,
         },
+      });
+      await recordStockMovement(tx, {
+        stockItemId: stock.id,
+        productId: product.id,
+        productCode: product.code,
+        warehouseCode: stock.warehouseCode,
+        movementType: currentStock ? "MANUAL_ADJUSTMENT" : "INITIAL_STOCK",
+        before: {
+          quantity: currentStock?.quantity ?? 0,
+          reservedQuantity: currentStock?.reservedQuantity ?? 0,
+        },
+        after: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity },
+        actorUserId: user.id,
+        reason: currentStock ? "Ürün paket kaydında stok düzeltmesi." : "Yeni ürün ilk stok bakiyesi.",
+        sourceType: "PRODUCT_BUNDLE",
+        sourceId: product.id,
+        idempotencyKey: `product-bundle:${bundleIdempotencyKey}:${stock.id}`,
       });
 
       await tx.productPrice.upsert({
@@ -456,16 +484,18 @@ export async function saveProductBundle(
         },
       });
 
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: productParsed.data.id ? "product.update_bundle" : "product.create_bundle",
+          entityType: "Product",
+          entityId: product.id,
+          metadata: JSON.stringify({ code: product.code, stockItemId: stock.id }),
+        },
+      });
+
       return product;
     });
-
-    await writeAuditLog(
-      user.id,
-      productParsed.data.id ? "product.update_bundle" : "product.create_bundle",
-      "Product",
-      result.id,
-      { code: result.code },
-    );
     revalidateProductSurfaces(result.id);
 
     return success(productParsed.data.id ? "Ürün güncellendi." : "Ürün, stok ve fiyat kaydı oluşturuldu.");
@@ -485,13 +515,16 @@ export async function saveProductStock(
     return failure("Form verisi alınamadı.");
   }
 
-  const parsed = stockFormSchema.safeParse({
+  const parsed = stockAdjustmentFormSchema.safeParse({
     productId: formData.get("productId"),
     warehouseCode: formData.get("warehouseCode"),
     quantity: formData.get("quantity") || 0,
     reservedQuantity: 0,
     visibility: formData.get("visibility"),
     status: formData.get("status"),
+    expectedUpdatedAt: formData.get("expectedUpdatedAt") || undefined,
+    idempotencyKey: formData.get("idempotencyKey"),
+    reason: formData.get("reason"),
   });
 
   if (!parsed.success || !parsed.data.productId) {
@@ -499,35 +532,96 @@ export async function saveProductStock(
   }
 
   try {
-    await prisma.stockItem.upsert({
-      where: {
-        productId_warehouseCode: {
-          productId: parsed.data.productId,
-          warehouseCode: parsed.data.warehouseCode,
-        },
-      },
-      update: {
-        quantity: parsed.data.quantity,
-        visibility: parsed.data.visibility,
-        status: parsed.data.status,
-      },
-      create: {
-        productId: parsed.data.productId,
-        warehouseCode: parsed.data.warehouseCode,
-        quantity: parsed.data.quantity,
-        reservedQuantity: 0,
-        visibility: parsed.data.visibility,
-        status: parsed.data.status,
-      },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      const replay = await tx.stockMovement.findUnique({
+        where: { idempotencyKey: `manual:${parsed.data.idempotencyKey}` },
+        select: { id: true },
+      });
+      if (replay) return { replay: true };
 
-    await writeAuditLog(user.id, "stock.upsert", "StockItem", parsed.data.productId, {
-      warehouseCode: parsed.data.warehouseCode,
+      const product = await tx.product.findUnique({
+        where: { id: parsed.data.productId },
+        select: { id: true, code: true },
+      });
+      if (!product) throw new Error("STOCK_PRODUCT_NOT_FOUND");
+      const current = await tx.stockItem.findUnique({
+        where: {
+          productId_warehouseCode: {
+            productId: product.id,
+            warehouseCode: parsed.data.warehouseCode,
+          },
+        },
+      });
+      if (current && (!parsed.data.expectedUpdatedAt || current.updatedAt.toISOString() !== parsed.data.expectedUpdatedAt)) {
+        throw new Error("STOCK_STALE_BALANCE");
+      }
+      if (!current && parsed.data.expectedUpdatedAt) throw new Error("STOCK_STALE_BALANCE");
+
+      const before = {
+        quantity: current?.quantity ?? 0,
+        reservedQuantity: current?.reservedQuantity ?? 0,
+      };
+      if (parsed.data.quantity < before.reservedQuantity) throw new Error("STOCK_BELOW_RESERVED");
+      const stock = current
+        ? await tx.stockItem.update({
+            where: { id: current.id },
+            data: {
+              quantity: parsed.data.quantity,
+              visibility: parsed.data.visibility,
+              status: parsed.data.status,
+            },
+          })
+        : await tx.stockItem.create({
+            data: {
+              productId: product.id,
+              warehouseCode: parsed.data.warehouseCode,
+              quantity: parsed.data.quantity,
+              reservedQuantity: 0,
+              visibility: parsed.data.visibility,
+              status: parsed.data.status,
+            },
+          });
+      await recordStockMovement(tx, {
+        stockItemId: stock.id,
+        productId: product.id,
+        productCode: product.code,
+        warehouseCode: stock.warehouseCode,
+        movementType: "MANUAL_ADJUSTMENT",
+        before,
+        after: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity },
+        actorUserId: user.id,
+        reason: parsed.data.reason,
+        sourceType: "MANUAL",
+        sourceId: parsed.data.idempotencyKey,
+        idempotencyKey: `manual:${parsed.data.idempotencyKey}`,
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: "stock.adjusted",
+          entityType: "StockItem",
+          entityId: stock.id,
+          metadata: JSON.stringify({
+            productId: product.id,
+            warehouseCode: stock.warehouseCode,
+            beforeQuantity: before.quantity,
+            afterQuantity: stock.quantity,
+            reason: parsed.data.reason,
+          }),
+        },
+      });
+      return { replay: false };
     });
     revalidateProductSurfaces(parsed.data.productId);
 
-    return success("Stok güncellendi.");
+    return success(result.replay ? "Bu stok düzeltmesi daha önce uygulanmış." : "Stok güncellendi ve hareket defterine kaydedildi.");
   } catch (error) {
+    if (error instanceof Error && error.message === "STOCK_STALE_BALANCE") {
+      return failure("Stok bakiyesi başka bir işlem tarafından değiştirildi. Sayfayı yenileyip tekrar deneyin.");
+    }
+    if (error instanceof Error && error.message === "STOCK_BELOW_RESERVED") {
+      return failure("Fiziksel stok rezerve miktarın altına indirilemez.");
+    }
     return failure(mapCatalogMutationError(error));
   }
 }

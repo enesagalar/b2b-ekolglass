@@ -187,11 +187,18 @@ Kapsam:
 - Bildirim altyapisi.
 - ERP/MES entegrasyon servis sinirlari.
 
-Siradaki sira:
+Kalan sira:
 
-1. Fiziksel/rezerve degisimleri manuel, CSV, rezervasyon, iptal ve sevkiyat kaynaklariyla aciklayan append-only stok hareket defteri.
-2. Merkezi log sink, staging alarm receiver kabul kaniti ve sifreli offsite backup aktarimi.
+1. Merkezi log sink, staging alarm receiver kabul kaniti ve sifreli offsite backup aktarimi.
+2. Production SMTP, S3/R2, scheduler, DNS/TLS ve deployment kabul kanitlari.
 3. City Lojistik canli adapteri; API dokumani ve test hesabi geldiginde.
+
+Tamamlanan stok hareket defteri dilimi:
+
+- Manuel, CSV, urun paketi, seed, siparis rezervasyonu, teklif donusumu, iptal ve sevkiyat ayni append-only deftere baglandi.
+- SQLite append-only, sira ve bakiye zinciri korumalari eklendi.
+- Admin filtreli hareket listesi ve stok/hareket mutabakati acildi.
+- Rollback, idempotency ve stok delta denklemleri entegrasyon testleriyle kanitlandi.
 
 Tamamlanan katalog yazma butunlugu dilimi:
 

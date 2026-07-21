@@ -540,6 +540,35 @@ describe("order cart submission and tenant isolation", () => {
         where: { orderItem: { orderId: order.id } },
       }),
     ).toBe(2);
+    expect(await prisma.stockMovement.findMany({
+      where: { sourceType: "ORDER", sourceId: order.id },
+      orderBy: { stockItemId: "asc" },
+      select: {
+        stockItemId: true,
+        movementType: true,
+        physicalDelta: true,
+        reservedDelta: true,
+        beforeReservedQuantity: true,
+        afterReservedQuantity: true,
+      },
+    })).toEqual([
+      {
+        stockItemId: ids.tierStockA,
+        movementType: "ORDER_RESERVATION",
+        physicalDelta: 0,
+        reservedDelta: 3,
+        beforeReservedQuantity: 1,
+        afterReservedQuantity: 4,
+      },
+      {
+        stockItemId: ids.tierStockB,
+        movementType: "ORDER_RESERVATION",
+        physicalDelta: 0,
+        reservedDelta: 7,
+        beforeReservedQuantity: 2,
+        afterReservedQuantity: 9,
+      },
+    ]);
     expect(
       await prisma.orderStatusHistory.count({ where: { orderId: order.id } }),
     ).toBe(1);

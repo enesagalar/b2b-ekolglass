@@ -293,6 +293,36 @@ model StockItem {
   @@index([status, updatedAt])
 }
 
+model StockMovement {
+  id                     String   @id @default(cuid())
+  stockItemId            String
+  productId              String
+  productCode            String
+  warehouseCode          String
+  movementType           String
+  sequence               Int
+  physicalDelta          Int
+  reservedDelta          Int
+  beforeQuantity         Int
+  afterQuantity          Int
+  beforeReservedQuantity Int
+  afterReservedQuantity  Int
+  actorUserId            String?
+  reason                 String
+  sourceType             String
+  sourceId               String
+  idempotencyKey         String   @unique
+  payloadHash            String
+  metadata               String?
+  createdAt              DateTime @default(now())
+
+  @@unique([stockItemId, sequence])
+  @@index([productId, warehouseCode, createdAt])
+  @@index([movementType, createdAt])
+  @@index([sourceType, sourceId, createdAt])
+  @@index([stockItemId, createdAt])
+}
+
 model CatalogImportBatch {
   id          String             @id @default(cuid())
   kind        String             @default("PRICE_STOCK")
@@ -915,29 +945,29 @@ model IntegrationReplayCommand {
 }
 
 model SystemJobRun {
-  id            String   @id @default(cuid())
-  runId         String   @unique
+  id            String    @id @default(cuid())
+  runId         String    @unique
   jobKey        String
-  status        String   @default("RUNNING")
+  status        String    @default("RUNNING")
   trigger       String
   correlationId String
   leaseToken    String
-  startedAt     DateTime @default(now())
-  heartbeatAt   DateTime @default(now())
+  startedAt     DateTime  @default(now())
+  heartbeatAt   DateTime  @default(now())
   completedAt   DateTime?
   durationMs    Int?
   resultCount   Int?
   errorCode     String?
   metadata      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([jobKey, startedAt])
   @@index([status, startedAt])
 }
 
 model SystemJobState {
-  jobKey              String   @id
+  jobKey              String    @id
   currentRunId        String?
   leaseToken          String?
   leaseExpiresAt      DateTime?
@@ -947,20 +977,20 @@ model SystemJobState {
   lastSucceededAt     DateTime?
   lastFailedAt        DateTime?
   lastStatus          String?
-  consecutiveFailures Int      @default(0)
+  consecutiveFailures Int       @default(0)
   lastDurationMs      Int?
   lastResultCount     Int?
   lastErrorCode       String?
-  updatedAt           DateTime @updatedAt
+  updatedAt           DateTime  @updatedAt
 
   @@index([leaseExpiresAt])
   @@index([lastStatus, lastCompletedAt])
 }
 
 model SystemAlertState {
-  jobKey                 String   @id
-  status                 String   @default("RESOLVED")
-  currentSeverity        String   @default("none")
+  jobKey                 String    @id
+  status                 String    @default("RESOLVED")
+  currentSeverity        String    @default("none")
   lastQueuedSeverity     String?
   lastEventType          String?
   reasonCode             String?
@@ -971,9 +1001,9 @@ model SystemAlertState {
   lastQueuedAt           DateTime?
   lastDeliveredAt        DateTime?
   lastDeliveredEventType String?
-  version                Int      @default(0)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  version                Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   @@index([status, currentSeverity, lastObservedAt])
 }

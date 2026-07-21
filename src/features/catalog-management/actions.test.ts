@@ -9,6 +9,14 @@ const mocks = vi.hoisted(() => ({
   productCompatibilityUpdate: vi.fn(),
   requirePermissionUser: vi.fn(),
   revalidatePath: vi.fn(),
+  transaction: vi.fn(),
+  productFindUnique: vi.fn(),
+  stockItemCreate: vi.fn(),
+  stockItemFindUnique: vi.fn(),
+  stockItemUpdate: vi.fn(),
+  stockMovementCreate: vi.fn(),
+  stockMovementFindFirst: vi.fn(),
+  stockMovementFindUnique: vi.fn(),
   stockItemUpsert: vi.fn(),
 }));
 
@@ -22,6 +30,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    $transaction: mocks.transaction,
     auditLog: {
       create: mocks.auditLogCreate,
     },
@@ -33,7 +42,18 @@ vi.mock("@/lib/prisma", () => ({
       update: mocks.productCompatibilityUpdate,
     },
     stockItem: {
+      create: mocks.stockItemCreate,
+      findUnique: mocks.stockItemFindUnique,
+      update: mocks.stockItemUpdate,
       upsert: mocks.stockItemUpsert,
+    },
+    stockMovement: {
+      create: mocks.stockMovementCreate,
+      findFirst: mocks.stockMovementFindFirst,
+      findUnique: mocks.stockMovementFindUnique,
+    },
+    product: {
+      findUnique: mocks.productFindUnique,
     },
   },
 }));
@@ -86,6 +106,34 @@ describe("catalog management actions", () => {
     mocks.productCompatibilityFindFirst.mockResolvedValue(null);
     mocks.productCompatibilityFindMany.mockResolvedValue([]);
     mocks.stockItemUpsert.mockResolvedValue({ id: "stock-1" });
+    mocks.productFindUnique.mockResolvedValue({ id: "product-1", code: "EGL-001" });
+    mocks.stockItemFindUnique.mockResolvedValue(null);
+    mocks.stockItemCreate.mockResolvedValue({
+      id: "stock-1",
+      productId: "product-1",
+      warehouseCode: "MERKEZ",
+      quantity: 12,
+      reservedQuantity: 0,
+      visibility: "SIMPLIFIED",
+      status: "IN_STOCK",
+    });
+    mocks.stockMovementFindFirst.mockResolvedValue(null);
+    mocks.stockMovementFindUnique.mockResolvedValue(null);
+    mocks.stockMovementCreate.mockResolvedValue({ id: "movement-1" });
+    mocks.transaction.mockImplementation(async (callback) => callback({
+      auditLog: { create: mocks.auditLogCreate },
+      product: { findUnique: mocks.productFindUnique },
+      stockItem: {
+        create: mocks.stockItemCreate,
+        findUnique: mocks.stockItemFindUnique,
+        update: mocks.stockItemUpdate,
+      },
+      stockMovement: {
+        create: mocks.stockMovementCreate,
+        findFirst: mocks.stockMovementFindFirst,
+        findUnique: mocks.stockMovementFindUnique,
+      },
+    }));
   });
 
   it.each([
@@ -239,23 +287,14 @@ describe("catalog management actions", () => {
     formData.set("reservedQuantity", "999");
     formData.set("visibility", "SIMPLIFIED");
     formData.set("status", "IN_STOCK");
+    formData.set("idempotencyKey", "12345678-1234-1234-1234-123456789012");
+    formData.set("reason", "Yeni teslimat sonrasi fiziksel stok sayimi.");
 
     const state = await saveProductStock(formData);
 
     expect(state.ok).toBe(true);
-    expect(mocks.stockItemUpsert).toHaveBeenCalledWith({
-      where: {
-        productId_warehouseCode: {
-          productId: "product-1",
-          warehouseCode: "MERKEZ",
-        },
-      },
-      update: {
-        quantity: 12,
-        visibility: "SIMPLIFIED",
-        status: "IN_STOCK",
-      },
-      create: {
+    expect(mocks.stockItemCreate).toHaveBeenCalledWith({
+      data: {
         productId: "product-1",
         warehouseCode: "MERKEZ",
         quantity: 12,
@@ -264,5 +303,13 @@ describe("catalog management actions", () => {
         status: "IN_STOCK",
       },
     });
+    expect(mocks.stockMovementCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        physicalDelta: 12,
+        reservedDelta: 0,
+        beforeReservedQuantity: 0,
+        afterReservedQuantity: 0,
+      }),
+    }));
   });
 });

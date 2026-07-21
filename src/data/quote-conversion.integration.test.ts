@@ -171,6 +171,14 @@ describe("approved quote to order conversion", () => {
     expect(persistedQuote.statusHistory).toHaveLength(1);
     expect((await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockA } })).reservedQuantity).toBe(4);
     expect((await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockB } })).reservedQuantity).toBe(3);
+    expect(await prisma.stockMovement.findMany({
+      where: { sourceType: "QUOTE_CONVERSION_ORDER", sourceId: order.id },
+      orderBy: { stockItemId: "asc" },
+      select: { movementType: true, physicalDelta: true, reservedDelta: true },
+    })).toEqual([
+      { movementType: "ORDER_RESERVATION", physicalDelta: 0, reservedDelta: 4 },
+      { movementType: "ORDER_RESERVATION", physicalDelta: 0, reservedDelta: 3 },
+    ]);
 
     await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, idempotencyKey: crypto.randomUUID() })).rejects.toMatchObject({ code: "CONFLICT" } satisfies Partial<QuoteOperationError>);
   });
@@ -205,5 +213,6 @@ describe("approved quote to order conversion", () => {
       idempotencyKey: crypto.randomUUID(),
     })).rejects.toMatchObject({ code: "INVALID_CONVERSION" } satisfies Partial<QuoteOperationError>);
     expect(await prisma.order.count({ where: { sourceQuoteId: quote.id } })).toBe(0);
+    expect(await prisma.stockMovement.count({ where: { sourceType: "QUOTE_CONVERSION_ORDER", sourceId: quote.id } })).toBe(0);
   });
 });

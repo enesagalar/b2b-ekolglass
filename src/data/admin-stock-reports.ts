@@ -69,6 +69,9 @@ type StockRow = Prisma.StockItemGetPayload<{ select: typeof stockSelect }> & {
   visibilityLabel: string;
   ledgerReservedQuantity: number;
   hasLedgerMismatch: boolean;
+  movementPhysicalQuantity: number;
+  movementReservedQuantity: number;
+  hasMovementMismatch: boolean;
 };
 
 function compareRows(a: StockRow, b: StockRow, sort: StockReportFilters["sort"]) {
@@ -111,6 +114,13 @@ async function loadStockSnapshot(filters: StockReportFilters) {
           _sum: { quantity: true },
         })
       : [];
+    const movementBalances = rawRows.length
+      ? await tx.stockMovement.groupBy({
+          by: ["stockItemId"],
+          where: { stockItemId: { in: rawRows.map((row) => row.id) } },
+          _sum: { physicalDelta: true, reservedDelta: true },
+        })
+      : [];
     const ledgerMap = new Map(
       activeReservations.map((reservation) => [
         reservation.stockItemId,
@@ -118,10 +128,16 @@ async function loadStockSnapshot(filters: StockReportFilters) {
       ]),
     );
     const snapshotAt = new Date();
+    const movementMap = new Map(movementBalances.map((movement) => [movement.stockItemId, {
+      quantity: movement._sum.physicalDelta ?? 0,
+      reservedQuantity: movement._sum.reservedDelta ?? 0,
+    }]));
     const rows: StockRow[] = rawRows.map((row) => {
       const availableQuantity = row.quantity - row.reservedQuantity;
       const operationalClass = deriveStockOperationalClass(row.quantity, row.reservedQuantity);
       const ledgerReservedQuantity = ledgerMap.get(row.id) ?? 0;
+      const movementBalance = movementMap.get(row.id) ?? { quantity: 0, reservedQuantity: 0 };
+      const hasMovementMismatch = movementBalance.quantity !== row.quantity || movementBalance.reservedQuantity !== row.reservedQuantity;
       return {
         ...row,
         availableQuantity,
@@ -130,7 +146,10 @@ async function loadStockSnapshot(filters: StockReportFilters) {
         declaredStatusLabel: getStatusLabel(row.status),
         visibilityLabel: visibilityLabels[row.visibility] ?? row.visibility,
         ledgerReservedQuantity,
-        hasLedgerMismatch: ledgerReservedQuantity !== row.reservedQuantity,
+        hasLedgerMismatch: ledgerReservedQuantity !== row.reservedQuantity || hasMovementMismatch,
+        movementPhysicalQuantity: movementBalance.quantity,
+        movementReservedQuantity: movementBalance.reservedQuantity,
+        hasMovementMismatch,
       };
     }).filter((row) =>
       filters.availability === "ALL" || row.operationalClass === filters.availability,
@@ -186,7 +205,14 @@ export async function getAdminStockExportRows(filters: StockReportFilters): Prom
     declaredStatusLabel: row.declaredStatusLabel,
     visibilityLabel: row.visibilityLabel,
     ledgerStatusLabel: row.hasLedgerMismatch
-      ? `Uyumsuz: sayaç ${row.reservedQuantity}, aktif rezervasyon ${row.ledgerReservedQuantity}`
+      ? [
+          row.reservedQuantity !== row.ledgerReservedQuantity
+            ? `rezervasyon sayacı ${row.reservedQuantity}, aktif rezervasyon ${row.ledgerReservedQuantity}`
+            : null,
+          row.hasMovementMismatch
+            ? `stok sayacı ${row.quantity}/${row.reservedQuantity}, hareket defteri ${row.movementPhysicalQuantity}/${row.movementReservedQuantity}`
+            : null,
+        ].filter(Boolean).join("; ")
       : "Tutarlı",
     updatedAt: row.updatedAt,
     snapshotAt: snapshot.snapshotAt,

@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 
 import { QuoteOperationError } from "@/data/quote-operations";
+import { recordStockMovement } from "@/domain/stock-movement";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
 
@@ -113,6 +114,7 @@ export async function convertApprovedQuoteToOrder(
                           orderBy: { warehouseCode: "asc" },
                           select: {
                             id: true,
+                            warehouseCode: true,
                             quantity: true,
                             reservedQuantity: true,
                           },
@@ -286,6 +288,21 @@ export async function convertApprovedQuoteToOrder(
             "CONFLICT",
           );
         }
+        await recordStockMovement(tx, {
+          stockItemId: stock.id,
+          productId: snapshot.product.id,
+          productCode: snapshot.product.code,
+          warehouseCode: stock.warehouseCode,
+          movementType: "ORDER_RESERVATION",
+          before: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity },
+          after: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity + allocation },
+          actorUserId: actor.userId,
+          reason: "Onaylı teklif siparişe dönüştürülürken stok rezervasyonu.",
+          sourceType: "QUOTE_CONVERSION_ORDER",
+          sourceId: order.id,
+          idempotencyKey: `quote-order-reservation:${order.id}:${stock.id}`,
+          metadata: { quoteId: quote.id, orderItemId: orderItem.id, allocation },
+        });
         await tx.stockReservation.create({
           data: {
             orderItemId: orderItem.id,

@@ -14,6 +14,7 @@ import {
 } from "@/domain/order-credit";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
+import { recordStockMovement } from "@/domain/stock-movement";
 
 export type OrderActor = {
   userId: string;
@@ -338,6 +339,7 @@ export async function submitOrderCart(
                   orderBy: { warehouseCode: "asc" },
                   select: {
                     id: true,
+                    warehouseCode: true,
                     quantity: true,
                     reservedQuantity: true,
                     status: true,
@@ -527,6 +529,21 @@ export async function submitOrderCart(
           throw new OrderCartError(
             `${snapshot.productNameSnapshot} stok kaydı eşzamanlı olarak değişti. Lütfen tekrar deneyin.`,
           );
+        await recordStockMovement(tx, {
+          stockItemId: stock.id,
+          productId: snapshot.productId,
+          productCode: snapshot.productCodeSnapshot,
+          warehouseCode: stock.warehouseCode,
+          movementType: "ORDER_RESERVATION",
+          before: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity },
+          after: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity + allocation },
+          actorUserId: actor.userId,
+          reason: "Bayi sipariş sepeti stok rezervasyonu.",
+          sourceType: "ORDER",
+          sourceId: order.id,
+          idempotencyKey: `order-reservation:${order.id}:${stock.id}`,
+          metadata: { orderItemId: orderItem.id, allocation },
+        });
         await tx.stockReservation.create({
           data: {
             orderItemId: orderItem.id,

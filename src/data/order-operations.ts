@@ -10,6 +10,7 @@ import {
   type OrderStatus,
 } from "@/domain/order-transitions";
 import { getStatusLabel } from "@/domain/statuses";
+import { recordStockMovement } from "@/domain/stock-movement";
 import { prisma } from "@/lib/prisma";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
 
@@ -51,6 +52,8 @@ type ReservationRow = {
   quantity: number;
   status: string;
   stockItem: {
+    productId: string;
+    product: { code: string };
     quantity: number;
     reservedQuantity: number;
     warehouseCode: string;
@@ -105,6 +108,8 @@ function groupActiveReservations(
     {
       stockItemId: string;
       warehouseCode: string;
+      productId: string;
+      productCode: string;
       quantity: number;
       beforeQuantity: number;
       beforeReservedQuantity: number;
@@ -124,6 +129,8 @@ function groupActiveReservations(
         groups.set(reservation.stockItemId, {
           stockItemId: reservation.stockItemId,
           warehouseCode: reservation.stockItem.warehouseCode,
+          productId: reservation.stockItem.productId,
+          productCode: reservation.stockItem.product.code,
           quantity: reservation.quantity,
           beforeQuantity: reservation.stockItem.quantity,
           beforeReservedQuantity: reservation.stockItem.reservedQuantity,
@@ -142,6 +149,7 @@ async function mutateReservations(
   tx: Prisma.TransactionClient,
   items: Array<{ quantity: number; reservations: ReservationRow[] }>,
   mode: "RELEASE" | "CONSUME",
+  context: { orderId: string; actorUserId: string; idempotencyKey: string },
 ) {
   assertCompleteActiveReservations(items);
   const groups = groupActiveReservations(items);
@@ -168,15 +176,39 @@ async function mutateReservations(
       );
     }
 
+    const afterQuantity = group.beforeQuantity - (mode === "CONSUME" ? group.quantity : 0);
+    const afterReservedQuantity = group.beforeReservedQuantity - group.quantity;
+    await recordStockMovement(tx, {
+      stockItemId: group.stockItemId,
+      productId: group.productId,
+      productCode: group.productCode,
+      warehouseCode: group.warehouseCode,
+      movementType: mode === "RELEASE" ? "ORDER_RELEASE" : "ORDER_CONSUME",
+      before: {
+        quantity: group.beforeQuantity,
+        reservedQuantity: group.beforeReservedQuantity,
+      },
+      after: {
+        quantity: afterQuantity,
+        reservedQuantity: afterReservedQuantity,
+      },
+      actorUserId: context.actorUserId,
+      reason: mode === "RELEASE" ? "Sipariş iptalinde rezervasyon serbest bırakıldı." : "Sipariş sevkinde fiziksel ve rezerve stok tüketildi.",
+      sourceType: "ORDER_TRANSITION",
+      sourceId: context.orderId,
+      idempotencyKey: `order-transition:${context.orderId}:${context.idempotencyKey}:${mode}:${group.stockItemId}`,
+      metadata: { reservationIds: group.reservationIds, quantity: group.quantity },
+    });
+
     stockChanges.push({
       stockItemId: group.stockItemId,
       warehouseCode: group.warehouseCode,
       quantity: group.quantity,
       beforeQuantity: group.beforeQuantity,
       afterQuantity:
-        group.beforeQuantity - (mode === "CONSUME" ? group.quantity : 0),
+        afterQuantity,
       beforeReservedQuantity: group.beforeReservedQuantity,
-      afterReservedQuantity: group.beforeReservedQuantity - group.quantity,
+      afterReservedQuantity,
     });
   }
 
@@ -293,6 +325,8 @@ export async function transitionOrderStatus(
                     quantity: true,
                     reservedQuantity: true,
                     warehouseCode: true,
+                    productId: true,
+                    product: { select: { code: true } },
                   },
                 },
               },
@@ -396,7 +430,11 @@ export async function transitionOrderStatus(
     };
 
     if (input.targetStatus === "CANCELLED") {
-      reservationEffect = await mutateReservations(tx, order.items, "RELEASE");
+      reservationEffect = await mutateReservations(tx, order.items, "RELEASE", {
+        orderId: order.id,
+        actorUserId: actor.userId,
+        idempotencyKey: input.idempotencyKey,
+      });
       await tx.shipment.updateMany({
         where: {
           orderId: order.id,
@@ -414,7 +452,11 @@ export async function transitionOrderStatus(
           "INVALID_TRANSITION",
         );
       }
-      reservationEffect = await mutateReservations(tx, order.items, "CONSUME");
+      reservationEffect = await mutateReservations(tx, order.items, "CONSUME", {
+        orderId: order.id,
+        actorUserId: actor.userId,
+        idempotencyKey: input.idempotencyKey,
+      });
       await tx.shipment.upsert({
         where: { orderId: order.id },
         create: {

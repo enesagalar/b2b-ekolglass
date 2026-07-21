@@ -415,6 +415,12 @@ export const stockFormSchema = z
     }
   });
 
+export const stockAdjustmentFormSchema = stockFormSchema.and(z.object({
+  expectedUpdatedAt: optionalText(80),
+  idempotencyKey: z.string().trim().min(16, "Stok işlem anahtarı geçersizdir.").max(160),
+  reason: z.string().trim().min(10, "Stok düzeltme gerekçesi en az 10 karakter olmalıdır.").max(500),
+}));
+
 export const productPriceFormSchema = z.object({
   productId: optionalText(120),
   priceListId: z.string().trim().min(1, "Fiyat listesi seçilmelidir."),

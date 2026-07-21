@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { deriveStockStatus } from "@/domain/catalog";
+import { recordStockMovement } from "@/domain/stock-movement";
 import { parsePriceStockCsv } from "@/domain/price-stock-import";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -111,6 +112,8 @@ export async function applyPriceStockImportBatch(batchId: string) {
 
       const productIds = batch.rows.map((row) => row.productId).filter((id): id is string => Boolean(id));
       const currentStocks = await tx.stockItem.findMany({ where: { productId: { in: productIds } } });
+      const products = await tx.product.findMany({ where: { id: { in: productIds } }, select: { id: true, code: true } });
+      const productCodeMap = new Map(products.map((product) => [product.id, product.code]));
       const stockMap = new Map(currentStocks.map((stock) => [`${stock.productId}:${stock.warehouseCode}`, stock]));
       for (const row of batch.rows) {
         if (!row.productId || row.netPrice === null || row.stockQuantity === null || !row.warehouseCode || !row.stockVisibility) throw new Error(`Satır ${row.rowNumber} eksik veri içeriyor.`);
@@ -122,10 +125,26 @@ export async function applyPriceStockImportBatch(batchId: string) {
           update: { amount: row.netPrice },
           create: { productId: row.productId, priceListId: batch.priceListId, minQuantity: 1, amount: row.netPrice },
         });
-        await tx.stockItem.upsert({
+        const before = { quantity: current?.quantity ?? 0, reservedQuantity: reserved };
+        const stock = await tx.stockItem.upsert({
           where: { productId_warehouseCode: { productId: row.productId, warehouseCode: row.warehouseCode } },
           update: { quantity: row.stockQuantity, visibility: row.stockVisibility, status: deriveStockStatus(row.stockQuantity, reserved) },
           create: { productId: row.productId, warehouseCode: row.warehouseCode, quantity: row.stockQuantity, reservedQuantity: 0, visibility: row.stockVisibility, status: deriveStockStatus(row.stockQuantity, 0) },
+        });
+        await recordStockMovement(tx, {
+          stockItemId: stock.id,
+          productId: row.productId,
+          productCode: productCodeMap.get(row.productId) ?? row.productCode,
+          warehouseCode: row.warehouseCode,
+          movementType: "CSV_IMPORT",
+          before,
+          after: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity },
+          actorUserId: actor.id,
+          reason: `Onaylı fiyat/stok aktarımı: ${batch.fileName}`,
+          sourceType: "CATALOG_IMPORT_BATCH",
+          sourceId: batch.id,
+          idempotencyKey: `catalog-import:${batch.id}:${row.id}`,
+          metadata: { rowNumber: row.rowNumber, fileHash: batch.fileHash },
         });
       }
       await tx.catalogImportBatch.update({ where: { id: batch.id }, data: { status: "APPLIED", appliedAt: now } });

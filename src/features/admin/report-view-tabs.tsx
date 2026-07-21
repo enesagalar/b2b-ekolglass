@@ -1,18 +1,19 @@
 import Link from "next/link";
-import { BarChart3, Boxes } from "lucide-react";
+import { BarChart3, Boxes, History } from "lucide-react";
 
 export function ReportViewTabs({
   active,
   canViewSales,
   canViewStock,
 }: {
-  active: "sales" | "stock";
+  active: "sales" | "stock" | "stock-movements";
   canViewSales: boolean;
   canViewStock: boolean;
 }) {
   const tabs = [
     canViewSales ? { key: "sales" as const, label: "Satış", href: "/admin/raporlar?view=sales", icon: BarChart3 } : null,
     canViewStock ? { key: "stock" as const, label: "Stok", href: "/admin/raporlar?view=stock", icon: Boxes } : null,
+    canViewStock ? { key: "stock-movements" as const, label: "Hareketler", href: "/admin/raporlar?view=stock-movements", icon: History } : null,
   ].filter((tab): tab is NonNullable<typeof tab> => tab !== null);
 
   return (

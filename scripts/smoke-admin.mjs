@@ -269,6 +269,20 @@ assert(
     adminStockReportHtml.includes("Kullanılabilir"),
   "Admin stock report content not rendered",
 );
+const adminStockMovementResponse = await request("/admin/raporlar?view=stock-movements", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  adminStockMovementResponse.status === 200,
+  `Authenticated admin stock movement report failed with ${adminStockMovementResponse.status}`,
+);
+const adminStockMovementHtml = await adminStockMovementResponse.text();
+assert(
+  adminStockMovementHtml.includes("Stok hareket defteri") &&
+    adminStockMovementHtml.includes("Tüm hareketler") &&
+    adminStockMovementHtml.includes("Tüm kaynaklar"),
+  "Admin stock movement report content not rendered",
+);
 
 const smokeAdminOrderId = `smoke-admin-order-${Date.now()}`;
 const smokeAdminOrderNumber = `SMOKE-ORDER-${Date.now()}`;
@@ -1136,6 +1150,7 @@ console.log(
         "authenticated-admin-orders",
         "authenticated-admin-reports",
         "authenticated-admin-stock-report",
+        "authenticated-admin-stock-movements",
         "authenticated-admin-order-detail",
         "authenticated-admin-quote-archive",
         "authenticated-admin-quote-detail",

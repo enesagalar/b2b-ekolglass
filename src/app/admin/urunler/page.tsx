@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   ArrowLeft,
   ArrowRight,
@@ -435,6 +436,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             </div>
             {canCreateProduct ? (
               <CatalogActionForm action={saveProductBundle} className="mt-5 grid gap-5">
+                <input type="hidden" name="idempotencyKey" value={randomUUID()} />
                 <ProductCoreFields categories={categories} />
                 <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
                   <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">

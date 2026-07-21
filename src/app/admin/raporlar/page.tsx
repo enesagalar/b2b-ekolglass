@@ -24,6 +24,7 @@ import {
 } from "@/features/dealer/dealer-ui";
 import { ReportViewTabs } from "@/features/admin/report-view-tabs";
 import { StockReportView } from "@/features/admin/stock-report-view";
+import { StockMovementReportView } from "@/features/admin/stock-movement-report-view";
 import { requireAdminUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +60,9 @@ export default async function AdminReportsPage({
   const canViewStock = hasPermission(actor.role, "stock.read.detailed");
   const canExportStock = hasPermission(actor.role, "stock.export");
   const requestedView = first(params.view);
-  const activeView = requestedView === "stock" && canViewStock
+  const activeView = requestedView === "stock-movements" && canViewStock
+    ? "stock-movements"
+    : requestedView === "stock" && canViewStock
     ? "stock"
     : canViewSales
       ? "sales"
@@ -67,6 +70,14 @@ export default async function AdminReportsPage({
         ? "stock"
         : null;
   if (!activeView) redirect("/admin");
+  if (activeView === "stock-movements") {
+    return (
+      <div className="grid gap-6">
+        <ReportViewTabs active="stock-movements" canViewSales={canViewSales} canViewStock={canViewStock} />
+        <StockMovementReportView searchParams={params} />
+      </div>
+    );
+  }
   if (activeView === "stock") {
     return (
       <div className="grid gap-6">

@@ -65,6 +65,17 @@ describe("price/stock import with SQLite", () => {
     expect(applied.status).toBe("APPLIED");
     expect(price.amount.toString()).toBe("875.5");
     expect(stock).toMatchObject({ quantity: 9, reservedQuantity: 2, visibility: "DETAILED" });
+    expect(await prisma.stockMovement.findFirstOrThrow({
+      where: { sourceType: "CATALOG_IMPORT_BATCH", sourceId: batch.id, stockItemId: stock.id },
+    })).toMatchObject({
+      movementType: "CSV_IMPORT",
+      physicalDelta: 5,
+      reservedDelta: 0,
+      beforeQuantity: 4,
+      afterQuantity: 9,
+      beforeReservedQuantity: 2,
+      afterReservedQuantity: 2,
+    });
     expect(batchId).toBe(batch.id);
   });
 });

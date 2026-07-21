@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -257,6 +258,8 @@ export default async function AdminProductDetailPage({
               Depo stok satiri ekle veya guncelle
             </div>
             <input type="hidden" name="productId" value={product.id} />
+            <input type="hidden" name="expectedUpdatedAt" value={product.stockItems[0]?.updatedAt.toISOString() ?? ""} />
+            <input type="hidden" name="idempotencyKey" value={randomUUID()} />
             <div className="grid gap-3 lg:grid-cols-6">
               <label className={labelClass}>
                 Depo
@@ -291,6 +294,10 @@ export default async function AdminProductDetailPage({
                     </option>
                   ))}
                 </select>
+              </label>
+              <label className={`${labelClass} lg:col-span-2`}>
+                Düzeltme gerekçesi
+                <input name="reason" required minLength={10} maxLength={500} placeholder="Sayım, kabul veya düzeltme nedenini yazın" className={inputClass} />
               </label>
               <div className="flex items-end">
                 <SubmitButton label="Stok kaydet" />

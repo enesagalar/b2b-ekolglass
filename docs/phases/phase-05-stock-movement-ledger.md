@@ -1,6 +1,6 @@
 # Faz 5 - Stok Hareket Defteri
 
-Durum: Katalog yazma butunlugu paketinden sonra.
+Durum: Tamamlandi (2026-07-21).
 
 ## Problem
 
@@ -28,3 +28,15 @@ Durum: Katalog yazma butunlugu paketinden sonra.
 3. Rezervasyon, iptal ve sevkiyat delta denklemleri entegrasyon testlerinde kanitlanir.
 4. Append-only sinir veritabani seviyesinde korunur.
 5. Tam test, lint, TypeScript, build ve authenticated smoke basarilidir.
+
+## Tamamlanan Uygulama
+
+- `StockMovement` fiziksel ve rezerve delta, once/sonra bakiye, urun/depo snapshot'i, aktor, gerekce, kaynak, sira ve payload hash alanlariyla eklendi.
+- Hareket satirlari SQLite tetikleyicileriyle update/delete islemlerine kapatildi; sira ve bakiye zinciri insert aninda dogrulaniyor.
+- Mevcut stoklar migration sirasinda acilis bakiyesiyle geriye donuk olarak deftere alindi.
+- Manuel duzeltme stale `updatedAt`, zorunlu gerekce ve idempotency anahtari kullaniyor; rezerve miktarin altina fiziksel stok indirilemiyor.
+- Urun paketi, seed, fiyat/stok CSV, bayi siparisi, teklif donusumu, iptal ve sevkiyat ayni transaction icinde ortak hareket sozlesmesini kullaniyor.
+- `/admin/raporlar?view=stock-movements` urun/kaynak, depo, hareket, kaynak turu ve tarih filtreleriyle acildi.
+- Stok raporu aktif rezervasyon defteriyle birlikte hareket toplamlarini da guncel sayaclarla karsilastiriyor ve kritik uyumsuzlugu gosteriyor.
+- Rollback, idempotency, append-only, rezervasyon, release ve consume denklemleri gercek SQLite entegrasyon testleriyle kanitlandi.
+- Son kalite kapisi: 35/35 migration, 74 Vitest dosyasi / 349 test, 9 Node testi, lint, TypeScript ve production build basarili.

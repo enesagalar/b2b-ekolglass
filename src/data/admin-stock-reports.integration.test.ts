@@ -7,6 +7,7 @@ import {
   resolveStockReportFilters,
 } from "@/domain/stock-reporting";
 import { getStatusLabel } from "@/domain/statuses";
+import { recordStockMovement } from "@/domain/stock-movement";
 import { prisma } from "@/lib/prisma";
 
 import {
@@ -139,6 +140,27 @@ describe("admin stock reports", () => {
           status: "IN_STOCK",
         },
       ],
+    });
+    await prisma.$transaction(async (tx) => {
+      const stocks = await tx.stockItem.findMany({
+        where: { id: { in: stockIds } },
+        include: { product: { select: { code: true } } },
+      });
+      for (const stock of stocks) {
+        await recordStockMovement(tx, {
+          stockItemId: stock.id,
+          productId: stock.productId,
+          productCode: stock.product.code,
+          warehouseCode: stock.warehouseCode,
+          movementType: "OPENING_BALANCE",
+          before: { quantity: 0, reservedQuantity: 0 },
+          after: { quantity: stock.quantity, reservedQuantity: stock.reservedQuantity },
+          reason: "Stok raporu entegrasyon testi acilis bakiyesi.",
+          sourceType: "TEST_FIXTURE",
+          sourceId: stock.id,
+          idempotencyKey: `stock-report-opening:${stock.id}`,
+        });
+      }
     });
     await prisma.company.create({
       data: {

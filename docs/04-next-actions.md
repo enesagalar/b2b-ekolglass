@@ -2,6 +2,29 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-21 - Append-only stok hareket defteri
+
+Tamamlananlar:
+
+- Fiziksel ve rezerve stok degisimleri ortak `StockMovement` sozlesmesine baglandi.
+- Manuel, urun paketi, seed, fiyat/stok CSV, bayi siparisi, teklif donusumu, iptal ve sevkiyat kaynaklari ayni transaction icinde hareket uretiyor.
+- SQLite seviyesinde append-only, sira ve once/sonra bakiye zinciri korumalari eklendi.
+- Manuel stok duzeltmesine stale form, zorunlu gerekce ve idempotency korumasi eklendi.
+- Admin raporlarina filtreli hareket defteri ve stok/hareket mutabakat uyarisi eklendi.
+- Rollback, tekrar oynatma, rezervasyon, release ve consume denklemleri entegrasyon testleriyle kanitlandi.
+- 35/35 migration, 74 Vitest dosyasinda 349 test, 9 Node testi, lint, TypeScript ve production build basarili.
+
+Siradaki kod paketi:
+
+1. City Lojistik haric production kod bosluklarini son kez taramak ve yalniz ic ortamda tamamlanabilenleri kapatmak.
+2. Authenticated smoke, recovery ve GitHub CI kanitlarini son commit uzerinde yenilemek.
+3. Dis credential/DNS kabul maddelerini kod eksiklerinden ayirip UI yenilemesine hazirlik kararini proje sahibine sunmak.
+
+UI karari:
+
+- UI yenilemesine henuz gecilmedi.
+- City haric ic kod kabul listesi kapandiginda proje sahibinden acik onay istenecek.
+
 ## 2026-07-21 - Katalog yazma butunlugu
 
 Tamamlananlar:
@@ -15,9 +38,9 @@ Tamamlananlar:
 - Beklenmeyen veritabani hata ayrintilarinin admin yanitina sizmasi engellendi.
 - 73 Vitest dosyasinda 346 test, 9 Node testi, lint, TypeScript, high audit kapisi, production build ve 43 adimli authenticated smoke basarili.
 
-Siradaki kod paketi:
+Bu paketten sonraki kod paketi:
 
-1. `docs/phases/phase-05-stock-movement-ledger.md` kapsaminda append-only stok hareket defterini kurmak.
+1. Append-only stok hareket defteri paketine gecmek.
 2. Manuel stok, fiyat/stok CSV, rezervasyon, iptal ve sevkiyat kaynaklarini ayni hareket sozlesmesine baglamak.
 3. Tam regresyon ve recovery kanitindan sonra City haric production kod bosluklarini yeniden denetlemek.
 
@@ -41,7 +64,7 @@ Tamamlananlar:
 - Audit yazimi zorla basarisiz oldugunda firma durumu, session ve token degisikliklerinin tamamen rollback oldugu SQLite trigger testiyle kanitlandi.
 - 71 Vitest dosyasinda 337 test, 9 Node testi, lint, TypeScript ve production build basarili.
 
-Bu kayittaki katalog paketi tamamlandi; aktif sira stok hareket defteridir.
+Bu kayittaki katalog paketi ve onu izleyen stok hareket defteri tamamlandi; aktif sira City haric son production kod bosluk denetimidir.
 
 ## 2026-07-21 - Recovery ve internal auth kabul kapilari
 
