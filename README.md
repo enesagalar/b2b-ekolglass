@@ -10,7 +10,7 @@ Bu repo bir demo vitrin degil; public site, dealer portal, admin/CMS ve entegras
 - TypeScript
 - Tailwind CSS
 - Prisma 7
-- SQLite lokal gelistirme, PostgreSQL hedef mimari
+- SQLite lokal gelistirme ve ilk production deployment; yatay olcekleme oncesi PostgreSQL gecis karari
 - Vitest
 
 ## Ana Moduller
@@ -47,6 +47,7 @@ http://127.0.0.1:3000
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test
 npm run build
 npx prisma migrate status
@@ -78,8 +79,8 @@ Kod yazmayan proje sahibi icin en pratik takip sirasi:
 
 Siradaki ana faz:
 
-- `docs/phases/phase-02-5-admin-ux-shell.md`
-- `docs/ux/admin-shell-spec.md`
+- `docs/phases/phase-05-production-gap-closure.md`
+- UI yenilemesi, bu fazdaki ic P1 kapilarindan sonra proje sahibinin acik onayiyla baslayacak.
 
 ## Not
 

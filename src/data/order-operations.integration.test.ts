@@ -344,6 +344,7 @@ describe("order status operations", () => {
     ).toMatchObject({
       quantity: 12,
       reservedQuantity: 0,
+      status: "IN_STOCK",
     });
     const reservation = await prisma.stockReservation.findFirstOrThrow({
       where: { orderItem: { orderId: order.id } },
@@ -419,11 +420,11 @@ describe("order status operations", () => {
     const stocks = await prisma.stockItem.findMany({
       where: { id: { in: [ids.stockA, ids.stockB] } },
       orderBy: { id: "asc" },
-      select: { id: true, quantity: true, reservedQuantity: true },
+      select: { id: true, quantity: true, reservedQuantity: true, status: true },
     });
     expect(stocks).toEqual([
-      { id: ids.stockA, quantity: 6, reservedQuantity: 0 },
-      { id: ids.stockB, quantity: 7, reservedQuantity: 0 },
+      { id: ids.stockA, quantity: 6, reservedQuantity: 0, status: "IN_STOCK" },
+      { id: ids.stockB, quantity: 7, reservedQuantity: 0, status: "IN_STOCK" },
     ]);
     const reservations = await prisma.stockReservation.findMany({
       where: { orderItem: { orderId: order.id } },

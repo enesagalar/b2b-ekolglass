@@ -85,6 +85,7 @@ Son guncelleme: 2026-07-21
 - Admin urun detayinda stok/fiyat guncelleme formlari.
 - Fiziksel/rezerve delta, once/sonra bakiye, aktor, gerekce ve kaynak snapshot'li append-only stok hareket defteri.
 - Manuel stok, fiyat/stok CSV, urun paketi, seed, rezervasyon, teklif donusumu, iptal ve sevkiyatta transaction ici hareket kaydi.
+- Rezervasyon, teklif donusumu, iptal ve sevkiyatta fiziksel/rezerve bakiyeden transaction ici stok durumu turetimi.
 - `/admin/raporlar?view=stock-movements` filtreli stok hareketleri ve stok sayaci/hareket defteri mutabakati.
 - Admin urun detayinda medya/teknik dosya ekleme ve guncelleme.
 - Admin urun detayinda medya/teknik dosya soft aktif/pasif yonetimi.
@@ -142,6 +143,8 @@ Son guncelleme: 2026-07-21
 - CI'da gercek migration+seed kullanan, kaynak DB'yi degistirmeyen ve artifact ureten izole backup/restore tatbikati.
 - Public evidence collector'da secret okumadan bes dahili cron rotasinin `401`, no-store, request ID ve cookie uretmeme siniri.
 - Authenticated smoke'un yalniz izole CI/staging veritabaninda calisabilecegi production guvenlik siniri.
+- Fiziksel `.env` dosyasina bagimli olmayan scheduler/backup/medya CLI komutlari.
+- Production preflight zorunlu baslangic komutu, bagimsiz typecheck CI kapisi ve tek kullanimlik bos-veritabani ilk admin bootstrap'i.
 
 ## En Onemli Eksikler
 
@@ -150,8 +153,9 @@ Son guncelleme: 2026-07-21
    - Kontrollu fiyat/stok preview ve onayli import hatti tamamlandi; gercek ERP kolon eslestirmesi bekliyor.
    - Firma ve kullanici yasam dongusu detay/action seviyesinde testli; kritik hesap islemleri icin yeniden kimlik dogrulama urun karari bekliyor.
 
-2. Urun ve stok yonetiminde ic kod kapsami tamamlandi:
-   - Fiziksel/rezerve stok sayaclari, rezervasyon defteri ve append-only hareket defteri birlikte mutabakat uretiyor.
+2. Urun ve stok yonetiminde cekirdek sayaç kapsami tamamlandi:
+   - Fiziksel/rezerve stok sayaclari, turetilen stok durumu, rezervasyon defteri ve append-only hareket defteri birlikte mutabakat uretiyor.
+   - Tekil fiyat, CMS ve medya yazimlarinin audit atomikligi; firma ticari kosullarinin stale-form korumasi kalan P1 kapanis isidir.
 
 3. Teklif/siparis akisinda kalanlar:
    - SMTP teslim ve outbox operasyon hatti hazir; production credential, scheduler ve alarm kanali kurulumu bekliyor.
@@ -167,8 +171,11 @@ Son guncelleme: 2026-07-21
 
 ## Bir Sonraki Dogru Adim
 
-UI yenilemesine gecmeden once production sertlestirmesinin kalan son denetimi tamamlanacak:
+UI yenilemesine gecmeden once production sertlestirmesinin kalan P1 paketleri tamamlanacak:
 
+- Public basvuru ile aktivasyon/parola sifirlama abuse-limitleri.
+- Fiyat/CMS/medya audit atomikligi, medya telafisi ve firma ticari kosul CAS korumasi.
+- Degismez deployment artifact'i ve rollback manifesti; platform secimine baglidir.
 - Tam regresyon, build ve authenticated smoke kapilarinin son kosusu.
 - Production credential, DNS/TLS, SMTP, scheduler ve merkezi log sink dis kabul listesi.
 - Gercek ortamda backup restore ve S3/R2 medya upload/read/reconciliation provasi.

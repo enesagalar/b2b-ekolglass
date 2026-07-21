@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 
 import { QuoteOperationError } from "@/data/quote-operations";
+import { deriveStockStatus } from "@/domain/catalog";
 import { recordStockMovement } from "@/domain/stock-movement";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
@@ -280,7 +281,13 @@ export async function convertApprovedQuoteToOrder(
             reservedQuantity: stock.reservedQuantity,
             quantity: { gte: stock.reservedQuantity + allocation },
           },
-          data: { reservedQuantity: { increment: allocation } },
+          data: {
+            reservedQuantity: { increment: allocation },
+            status: deriveStockStatus(
+              stock.quantity,
+              stock.reservedQuantity + allocation,
+            ),
+          },
         });
         if (reserved.count !== 1) {
           throw new QuoteOperationError(

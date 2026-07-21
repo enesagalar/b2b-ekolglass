@@ -23,9 +23,11 @@ Detayli model ve guvenlik kararlari icin `docs/architecture/observability-and-sy
 1. Temiz commit uzerinde `npm ci` calistirilir.
 2. `npm run check` lint, tum testler ve production build'i tamamlar.
 3. `npm run prisma:migrate:verify` uygulanmis migration adlarini ve checksum'larini repository ile karsilastirir.
-4. Production secret ve servis degerleri deployment platformuna tanimlanir.
-5. Ayni environment ile `npm run preflight:production` calistirilir.
-6. Migration veya environment preflight basarisizsa release durdurulur; cikti SQL, secret veya mutlak veritabani yolu gostermez.
+4. Ilk kurulumda ve yalniz `User` tablosu tamamen bosken one-shot `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` ve guclu `BOOTSTRAP_ADMIN_PASSWORD` secret'lari enjekte edilerek `npm run db:bootstrap-admin` calistirilir.
+5. Bootstrap basarili olduktan sonra bu uc deger secret store ve operator ortamindan silinir; genel `db:seed` production bootstrap araci olarak kullanilmaz.
+6. Production secret ve servis degerleri deployment platformuna tanimlanir.
+7. Ayni environment ile `npm run preflight:production` calistirilir. Normal production baslangici da bu kapidan fail-closed gecer.
+8. Migration, bootstrap veya environment preflight basarisizsa release durdurulur; cikti SQL, secret veya mutlak veritabani yolu gostermez.
 
 Zorunlu gruplar:
 

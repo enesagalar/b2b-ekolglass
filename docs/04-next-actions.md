@@ -2,6 +2,33 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-21 - Son production bosluk denetimi, paket 1
+
+Tamamlananlar:
+
+- Guvenlik, ticaret/veri butunlugu ve deployment hazirligi uc bagimsiz agent kolunda salt okunur denetlendi; dogrudan yetki asimi veya firmalar arasi veri sizintisi bulunmadi.
+- Siparis ve teklif rezervasyonu, siparis iptali ve sevkiyat artik `StockItem.status` degerini fiziksel ve rezerve bakiyeden ayni transaction icinde turetiyor.
+- Tam rezervasyon `RESERVED`, dusuk kullanilabilir bakiye `LOW_STOCK`, sifir fiziksel bakiye `OUT_OF_STOCK` olarak katalog ve admin yuzeylerine yansiyor.
+- Scheduler, backup ve medya CLI komutlarinin fiziksel `.env` dosyasi zorunlulugu kaldirildi; platform secret store process environment'i tek basina yeterli.
+- `npm start` production preflight'i zorunlu calistiriyor; izole CI sunucusu acik isimli `start:ci` komutunu kullaniyor.
+- Bagimsiz `npm run typecheck` komutu ve CI kapisi eklendi.
+- Demo seed calistirmadan, yalniz tamamen bos `User` tablosunda tek seferlik `SUPER_ADMIN` olusturan `db:bootstrap-admin` komutu eklendi.
+- Bootstrap kullanici ve audit kaydini ayni transaction'da olusturuyor; ikinci kullanim fail-closed reddediliyor.
+- Stok yasam dongusu icin 4 dosyada 49 secili test; toplamda 74 Vitest dosyasinda 349 test, 9 Node testi, lint, typecheck, production build, 35/35 migration ve 44 adimli authenticated smoke basarili. Bootstrap basari + tekrar reddi izole migration veritabaninda kanitlandi.
+
+Siradaki kod paketi:
+
+1. Public bayi basvurusu icin HMAC'li IP/e-posta rate limit, duplicate penceresi ve kalici abuse testleri.
+2. Aktivasyon ve parola sifirlama denemelerini token fingerprint'inden bagimsiz guvenilir IP limitiyle korumak.
+3. Fiyat, CMS ayari ve medya mutation'larini audit ile atomik yapmak; banner storage hatasinda telafi/yetim yasam dongusunu tanimlamak.
+4. Firma ticari kosullarinda `expectedUpdatedAt` stale-form korumasi ve ham altyapi hata sanitization'i.
+5. Platform secildikten sonra degismez deployment artifact'i, digest, manifest ve rollback otomasyonu.
+
+UI karari:
+
+- UI yenilemesine henuz hazir degiliz; yukaridaki ic P1 kod kapilari kapanacak.
+- SMTP, S3/R2, backup bucket, scheduler, alarm receiver, DNS/TLS ve proxy kabul kanitlari dis ortam bagimliligidir; kod tamamlandi diye isaretlenmeyecek.
+
 ## 2026-07-21 - Append-only stok hareket defteri
 
 Tamamlananlar:

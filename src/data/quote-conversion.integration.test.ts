@@ -169,8 +169,8 @@ describe("approved quote to order conversion", () => {
     const persistedQuote = await prisma.quoteRequest.findUniqueOrThrow({ where: { id: quote.id }, include: { statusHistory: true } });
     expect(persistedQuote).toMatchObject({ status: "CONVERTED_TO_ORDER", version: 2 });
     expect(persistedQuote.statusHistory).toHaveLength(1);
-    expect((await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockA } })).reservedQuantity).toBe(4);
-    expect((await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockB } })).reservedQuantity).toBe(3);
+    expect(await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockA }, select: { reservedQuantity: true, status: true } })).toEqual({ reservedQuantity: 4, status: "RESERVED" });
+    expect(await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stockB }, select: { reservedQuantity: true, status: true } })).toEqual({ reservedQuantity: 3, status: "LOW_STOCK" });
     expect(await prisma.stockMovement.findMany({
       where: { sourceType: "QUOTE_CONVERSION_ORDER", sourceId: order.id },
       orderBy: { stockItemId: "asc" },

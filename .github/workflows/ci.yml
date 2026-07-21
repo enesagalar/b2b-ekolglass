@@ -40,7 +40,11 @@ jobs:
       - run: npm ci
       - run: npm run prisma:generate
       - run: npm audit --audit-level=high
-      - run: npm run check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:node
+      - run: npm run test
+      - run: npm run build
 
       - name: Prepare isolated smoke database
         run: npm run test:db:prepare -- .test-data/smoke.db
@@ -62,7 +66,7 @@ jobs:
 
       - name: Start production server
         run: |
-          npm start > .test-data/server.log 2>&1 &
+          npm run start:ci > .test-data/server.log 2>&1 &
           echo $! > .test-data/server.pid
 
       - name: Wait for liveness

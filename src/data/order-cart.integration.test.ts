@@ -516,19 +516,17 @@ describe("order cart submission and tenant isolation", () => {
       { stockItemId: ids.tierStockB, quantity: 7, status: "ACTIVE" },
     ]);
     expect(
-      (
-        await prisma.stockItem.findUniqueOrThrow({
-          where: { id: ids.tierStockA },
-        })
-      ).reservedQuantity,
-    ).toBe(4);
+      await prisma.stockItem.findUniqueOrThrow({
+        where: { id: ids.tierStockA },
+        select: { reservedQuantity: true, status: true },
+      }),
+    ).toEqual({ reservedQuantity: 4, status: "RESERVED" });
     expect(
-      (
-        await prisma.stockItem.findUniqueOrThrow({
-          where: { id: ids.tierStockB },
-        })
-      ).reservedQuantity,
-    ).toBe(9);
+      await prisma.stockItem.findUniqueOrThrow({
+        where: { id: ids.tierStockB },
+        select: { reservedQuantity: true, status: true },
+      }),
+    ).toEqual({ reservedQuantity: 9, status: "LOW_STOCK" });
     expect(
       await prisma.orderCart.count({
         where: { companyId: ids.companyA, ownerUserId: ids.userA },

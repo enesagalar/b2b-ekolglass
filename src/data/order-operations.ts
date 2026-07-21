@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { Prisma } from "@/generated/prisma/client";
+import { deriveStockStatus } from "@/domain/catalog";
 import {
   orderExposureStatuses,
   requiresCommercialReview,
@@ -167,6 +168,10 @@ async function mutateReservations(
         ...(mode === "CONSUME"
           ? { quantity: { decrement: group.quantity } }
           : {}),
+        status: deriveStockStatus(
+          group.beforeQuantity - (mode === "CONSUME" ? group.quantity : 0),
+          group.beforeReservedQuantity - group.quantity,
+        ),
       },
     });
     if (stock.count !== 1) {

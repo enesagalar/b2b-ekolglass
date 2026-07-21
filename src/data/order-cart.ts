@@ -4,6 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { buildCatalogPriceWhere } from "@/data/catalog-access";
 import {
+  deriveStockStatus,
   selectCatalogPriceForQuantity,
   type CatalogViewer,
 } from "@/domain/catalog";
@@ -523,7 +524,13 @@ export async function submitOrderCart(
             reservedQuantity: stock.reservedQuantity,
             quantity: { gte: stock.reservedQuantity + allocation },
           },
-          data: { reservedQuantity: { increment: allocation } },
+          data: {
+            reservedQuantity: { increment: allocation },
+            status: deriveStockStatus(
+              stock.quantity,
+              stock.reservedQuantity + allocation,
+            ),
+          },
         });
         if (reserved.count !== 1)
           throw new OrderCartError(
