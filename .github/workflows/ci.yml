@@ -39,6 +39,7 @@ jobs:
 
       - run: npm ci
       - run: npm run prisma:generate
+      - run: npm audit --audit-level=high
       - run: npm run check
 
       - name: Prepare isolated smoke database

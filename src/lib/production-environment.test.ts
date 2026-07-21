@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { validateProductionEnvironment } from "./production-environment";
 
 const validEnvironment = {
+  APP_COMMIT_SHA: "a".repeat(40),
+  APP_ARTIFACT_DIGEST: `sha256:${"b".repeat(64)}`,
+  APP_RELEASE_ID: "production-2026.07.21-1",
   DATABASE_URL: "file:/var/lib/ekolglass/production.db",
   NEXT_PUBLIC_SITE_URL: "https://portal.ekolglass.com",
   OUTBOX_BASE_URL: "https://portal.ekolglass.com",
@@ -73,6 +76,21 @@ describe("validateProductionEnvironment", () => {
       expect.arrayContaining(["AUTH_SECRET", "NEXT_PUBLIC_SITE_URL"]),
     );
     expect(JSON.stringify(result)).not.toContain("replace-with-leaked-secret");
+  });
+
+  it("requires immutable deployment identity", () => {
+    const result = validateProductionEnvironment({
+      ...validEnvironment,
+      APP_COMMIT_SHA: "main",
+      APP_ARTIFACT_DIGEST: "sha256:unknown",
+      APP_RELEASE_ID: "release with spaces",
+    });
+
+    expect(result.issues.map((issue) => issue.key)).toEqual(expect.arrayContaining([
+      "APP_COMMIT_SHA",
+      "APP_ARTIFACT_DIGEST",
+      "APP_RELEASE_ID",
+    ]));
   });
 
   it("blocks an accidental City activation before the verified adapter exists", () => {

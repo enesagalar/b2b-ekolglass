@@ -23,6 +23,9 @@ const requiredSecretKeys = [
 ] as const;
 
 const baseSchema = z.object({
+  APP_COMMIT_SHA: z.string().regex(/^[a-f0-9]{40}$/i),
+  APP_ARTIFACT_DIGEST: z.string().regex(/^sha256:[a-f0-9]{64}$/i),
+  APP_RELEASE_ID: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/),
   DATABASE_URL: z.string().min(1),
   NEXT_PUBLIC_SITE_URL: z.string().url(),
   OUTBOX_BASE_URL: z.string().url(),

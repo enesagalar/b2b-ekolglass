@@ -1,0 +1,67 @@
+name: Production Public Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Clean HTTPS portal origin, for example https://portal.ekolglass.com
+        required: true
+        type: string
+      expected_commit_sha:
+        description: Full 40-character commit SHA deployed to the target
+        required: true
+        type: string
+      expected_artifact_digest:
+        description: Immutable deployment digest in sha256:<64 hex> format
+        required: true
+        type: string
+      expected_release_id:
+        description: Non-secret deployment platform release ID
+        required: true
+        type: string
+      expected_dns_targets:
+        description: Comma-separated approved CNAME or public IP targets
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-evidence-${{ inputs.base_url }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.expected_commit_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run test:node
+
+      - name: Collect secret-safe public evidence
+        env:
+          EVIDENCE_BASE_URL: ${{ inputs.base_url }}
+          EVIDENCE_EXPECTED_COMMIT_SHA: ${{ inputs.expected_commit_sha }}
+          EVIDENCE_EXPECTED_ARTIFACT_DIGEST: ${{ inputs.expected_artifact_digest }}
+          EVIDENCE_EXPECTED_RELEASE_ID: ${{ inputs.expected_release_id }}
+          EVIDENCE_EXPECTED_DNS_TARGETS: ${{ inputs.expected_dns_targets }}
+        run: npm run evidence:collect -- --output=.test-data/production-public-evidence.json
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-public-evidence-${{ github.run_id }}
+          path: .test-data/production-public-evidence.json
+          if-no-files-found: error
+          retention-days: 30

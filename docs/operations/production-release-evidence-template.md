@@ -15,6 +15,7 @@
 | Tag | `________________` |
 | Build / artifact ID | `________________` |
 | Artifact digest (SHA-256 / image digest) | `________________` |
+| Runtime `/api/health/live` release SHA / digest / ID | `________________` |
 | CI run URL / ID | `________________` |
 | Deployment platform release URL / ID | `________________` |
 | Hedef ortam ve bolge | `production / ________________` |
@@ -35,7 +36,7 @@ Komut: `npm run preflight:production`
 | HTTPS origin degerleri | [ ] Gecti [ ] Kaldi | `________________` |
 | Auth secret ayrimi ve minimum uzunluklar | [ ] Gecti [ ] Kaldi | `________________` |
 | SMTP/TLS ve dogrulanmis gonderici | [ ] Gecti [ ] Kaldi | `________________` |
-| S3/R2 medya provider yapilandirmasi | [ ] Gecti [ ] Kaldi | `________________` |
+| LOCAL/S3 medya provider yapilandirmasi | [ ] Gecti [ ] Kaldi | `________________` |
 | Sifreli offsite backup provider | [ ] Gecti [ ] Kaldi | `________________` |
 | Alarm webhook allowlist/HMAC yapilandirmasi | [ ] Gecti [ ] Kaldi | `________________` |
 | Scheduler lease/warning/critical sirasi | [ ] Gecti [ ] Kaldi | `________________` |
@@ -44,6 +45,7 @@ Komut: `npm run preflight:production`
 - Preflight run ID / correlation ID: `________________`
 - Secret-store referanslari ve surumleri (deger yazmayin): `________________`
 - [ ] Preflight ciktisinda secret veya mutlak veritabani yolu bulunmadigi kontrol edildi.
+- [ ] Preflight'in yalniz konfigurasyonu dogruladigi; SMTP teslimi, S3 yazma/okuma ve provider policy kabulunun ilgili bolumlerde ayrica kanitlandigi kabul edildi.
 
 ## 3. Migration
 
@@ -149,6 +151,8 @@ Komut: `npm run preflight:production`
 
 ## 9. Health Kapilari
 
+Public salt-okunur otomasyon: `npm run evidence:collect` veya GitHub Actions `Production Public Evidence`. Kullanim ve guvenlik siniri: `docs/operations/production-public-evidence.md`.
+
 | Endpoint | Beklenen | Gercek | Correlation ID / kanit URL |
 |---|---|---|---|
 | `GET /api/health/live` | HTTP 200 | `________________` | `________________` |
@@ -158,10 +162,14 @@ Komut: `npm run preflight:production`
 - [ ] Readiness 503 iken release trafige acilmadi.
 - [ ] Health yanitlari secret, DB yolu, bucket/endpoint veya ham exception sizdirmiyor.
 - [ ] Scheduler gecikmesinin readiness yerine operasyon alarmi olarak ele alindigi dogrulandi.
+- [ ] Runtime release SHA, artifact digest ve release ID beklenen deployment degerleriyle birebir eslesti.
+- [ ] DNS onayli provider hedefine eslesti, TLS suresi en az 30 gun ve HTTP ayni host HTTPS'e yonlendi.
 
 ## 10. Auth Ve Tenant Smoke
 
-Otomatik smoke komutu: `npm run smoke:admin`
+Izole CI/staging smoke komutu: `npm run smoke:admin`
+
+> **Production'da calistirmayin.** Bu script sentetik kullanici, siparis, teklif ve basvuru kayitlari olusturur. Yalniz her kosuda sifirlanan izole CI/staging veritabanina karsi kullanilir. Production kabulunde bu tablodaki davranislar CI entegrasyon testleri ve onayli, salt-okunur/manual production kontrolleriyle ayri ayri kanitlanir.
 
 | Senaryo | Sonuc | Kullanici/tenant referansi | Kanit URL/ID |
 |---|---|---|---|

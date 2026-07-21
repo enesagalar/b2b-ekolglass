@@ -149,6 +149,14 @@ assert(
   "Sitemap exposed private routes",
 );
 
+const robotsResponse = await request("/robots.txt");
+assert(robotsResponse.status === 200, `Robots failed with ${robotsResponse.status}`);
+const robotsText = await robotsResponse.text();
+for (const privateRoute of ["/admin", "/yonetim", "/bayi/", "/giris", "/aktivasyon/", "/parola-sifirla/", "/api/"]) {
+  assert(robotsText.includes(`Disallow: ${privateRoute}`), `Robots does not disallow ${privateRoute}`);
+}
+assert(robotsText.includes("Sitemap:"), "Robots does not advertise the canonical sitemap");
+
 const loginResponse = await request("/yonetim/giris?next=/admin");
 assert(
   loginResponse.status === 200,

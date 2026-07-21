@@ -2,6 +2,27 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-21 - Public production kanit otomasyonu
+
+Tamamlananlar:
+
+- Public production kanit collector'i health, security header, robots/sitemap, DNS/TLS ve HTTP->HTTPS kontrolleriyle eklendi.
+- Runtime liveness yaniti immutable commit SHA, artifact digest ve release ID yayinlayacak sekilde deployment kimligine baglandi.
+- Collector beklenen release kimligini runtime ile birebir karsilastiriyor; runner checkout'u production artifact kaniti sayilmiyor.
+- DNS sonucu public adres ve onayli CNAME/IP hedefiyle, TLS sertifikasi en az 30 gun kalan sureyle sinirlaniyor.
+- GitHub `Production Public Evidence` manuel workflow'u redakte artifact yukleyip public gate hatasinda release'i durduruyor.
+- Ana CI'ya `npm audit --audit-level=high` kapisi eklendi.
+- Parola sifirlama rotasi robots private sinirina eklendi.
+- `smoke:admin` production komutu olmaktan cikarildi; yalniz izole CI/staging veritabaninda kullanilacagi dokumante edildi.
+- Iki bagimsiz agent guvenlik/operasyon denetimiyle release identity ve production smoke siniri dogrulandi.
+- 70 Vitest dosyasinda 331 test, 7 Node testi, lint, TypeScript, high/critical audit, production build ve 42 adimli authenticated smoke basarili.
+
+Siradaki kabul paketi:
+
+1. Portal host ve deployment platformu kesinlestiginde workflow variable/input degerlerini gercek DNS ve artifact kimligiyle doldurmak.
+2. Gercek SMTP teslimi, S3 medya upload/read, offsite backup/restore, scheduler ve alarm receiver kanitlarini toplamak.
+3. Dis kabul kaydi tamamlaninca UI degisimi icin proje sahibinden acik onay istemek.
+
 ## 2026-07-21 - Production guvenlik ve dayaniklilik kapilari
 
 Tamamlananlar:

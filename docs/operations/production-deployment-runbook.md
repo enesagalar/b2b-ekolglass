@@ -30,6 +30,7 @@ Detayli model ve guvenlik kararlari icin `docs/architecture/observability-and-sy
 Zorunlu gruplar:
 
 - Veritabani: production'a ozel, mutlak ve kalici volume'u gosteren `file:` `DATABASE_URL`.
+- Release kimligi: artifact build asamasinda uretilen `APP_COMMIT_SHA`, `APP_ARTIFACT_DIGEST` ve deployment platformundan `APP_RELEASE_ID`.
 - Backup: ayri failure domain'de S3/R2 bucket ve zorunlu server-side encryption.
 - Origin: HTTPS `NEXT_PUBLIC_SITE_URL`, `OUTBOX_BASE_URL`, `MAINTENANCE_BASE_URL`, `BACKUP_BASE_URL`, `SYSTEM_ALERT_BASE_URL`.
 - Auth: birbirinden farkli ve en az 32 karakterlik runtime secret'lari.
@@ -69,8 +70,9 @@ SQLite kullaniliyorsa tek-writer deployment, kalici disk, dosya kilidi ve ayni v
 
 ## 5. Smoke Ve Rollback
 
-1. Admin ve bayi oturum smoke akislari production benzeri ortamda tamamlanir.
-2. Aktivasyon e-postasi, medya yukleme, siparis ve stok rezervasyon akislari kontrol edilir.
-3. Kritik hata halinde trafik onceki uygulama surumune dondurulur.
-4. Migration geriye uyumlu degilse veritabani yalniz dogrulanmis backup ve yazili restore proseduruyle geri alinir.
-5. Rollback nedeni, correlation ID'ler ve etkilenen release commit'i audit olayina kaydedilir.
+1. `npm run smoke:admin` yalniz sifirlanan izole CI/staging veritabaninda tamamlanir; production veritabaninda calistirilmaz.
+2. Deploy edilen public origin `npm run evidence:collect` veya `Production Public Evidence` workflow'u ile salt-okunur dogrulanir.
+3. Aktivasyon e-postasi, medya yukleme, siparis ve stok rezervasyon akislari onayli staging/sentetik hesaplarla kontrol edilir.
+4. Kritik hata halinde trafik onceki uygulama surumune dondurulur.
+5. Migration geriye uyumlu degilse veritabani yalniz dogrulanmis backup ve yazili restore proseduruyle geri alinir.
+6. Rollback nedeni, correlation ID'ler ve etkilenen release commit'i audit olayina kaydedilir.

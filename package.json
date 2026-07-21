@@ -27,6 +27,7 @@
     "db:restore:verify": "tsx scripts/verify-sqlite-backup.ts",
     "media:reconcile": "tsx --env-file=.env scripts/reconcile-media.ts",
     "preflight:production": "tsx scripts/production-preflight.ts",
+    "evidence:collect": "node scripts/collect-production-evidence.mjs",
     "catalog:import": "tsx scripts/import-products-csv.ts",
     "check": "npm run lint && npm run test:node && npm run test && npm run build"
   },

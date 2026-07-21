@@ -128,6 +128,9 @@ Son guncelleme: 2026-07-21
 - LOCAL medya storage icin gercek okuma/yazma readiness kontrolu.
 - Offsite backup upload timeout'u ve database/manifest aktarimi arasinda lease heartbeat kontrolu.
 - Release bazli doldurulabilir production kabul kanit sablonu.
+- Runtime commit/digest/release kimligiyle deploy edilen artifact'i dogrulayan secret-safe public production evidence collector ve manuel GitHub workflow'u.
+- Public evidence icin onayli DNS hedefi, public IP, HTTP->HTTPS, en az 30 gun TLS, health no-store ve kati robots/sitemap kapilari.
+- Authenticated smoke'un yalniz izole CI/staging veritabaninda calisabilecegi production guvenlik siniri.
 
 ## En Onemli Eksikler
 

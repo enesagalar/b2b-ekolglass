@@ -67,5 +67,5 @@ export function structuredLog(level: LogLevel, event: string, context: LogContex
 }
 
 export function correlationHeaders(correlationId: string) {
-  return { "x-request-id": correlationId };
+  return { "cache-control": "no-store", "x-request-id": correlationId };
 }
