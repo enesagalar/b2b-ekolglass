@@ -21,7 +21,7 @@ import { requirePermissionUser } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 const pageSize = 25;
-const panelClass = "rounded-lg border border-slate-200 bg-white shadow-sm";
+const panelClass = "rounded-lg border border-slate-200 bg-white";
 const inputClass =
   "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700";
 
@@ -77,20 +77,17 @@ export default async function AdminOrdersPage({
     <div className="grid gap-6">
       <section className="border-b border-slate-200 pb-5">
         <p className="text-sm font-semibold text-teal-800">Satış operasyonu</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-950">
-          Siparişler
-        </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
           Bayilerden gelen siparişleri, teslimat bilgilerini ve ayrılan stokları
           firma bazında izleyin.
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid overflow-hidden rounded-lg border border-slate-200 bg-white divide-y divide-slate-200 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <article key={metric.label} className={`${panelClass} p-4`}>
+            <article key={metric.label} className="p-5">
               <div className="flex items-center justify-between">
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-md ${metric.tone}`}

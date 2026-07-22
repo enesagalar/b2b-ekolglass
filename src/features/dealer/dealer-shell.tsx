@@ -54,7 +54,7 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
         </Link>
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5" aria-label="Bayi portalı">
+      <nav className="sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 py-5" aria-label="Bayi portalı">
         <p className="px-2 text-xs font-semibold uppercase text-white/35">Çalışma Alanı</p>
         <div className="mt-2 grid gap-1">
           {navigation.map((item) => {
@@ -67,7 +67,7 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
                 href={item.href}
                 onClick={onNavigate}
                 className={`flex min-h-13 items-center gap-3 rounded-lg px-3 py-2 transition ${
-                  active ? "bg-white/12 text-white ring-1 ring-inset ring-white/10" : "text-white/68 hover:bg-white/7 hover:text-white"
+                  active ? "bg-white/11 text-white" : "text-white/68 hover:bg-white/7 hover:text-white"
                 }`}
               >
                 <Icon size={18} aria-hidden="true" />
@@ -142,7 +142,7 @@ export function DealerShell({
       ) : null}
 
       <div className="min-w-0 lg:pl-[244px]">
-        <header className="sticky top-0 z-20 border-b border-black/8 bg-white/82 backdrop-blur-2xl">
+        <header className="sticky top-0 z-20 border-b border-black/8 bg-white/78 backdrop-blur-2xl">
           <div className="flex min-h-[72px] items-center justify-between gap-4 px-4 py-3 md:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -173,10 +173,11 @@ export function DealerShell({
               <form action={logout}>
                 <button
                   type="submit"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  aria-label="Çıkış yap"
+                  title="Çıkış yap"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
                 >
                   <LogOut size={16} aria-hidden="true" />
-                  <span className="hidden sm:inline">Çıkış</span>
                 </button>
               </form>
             </div>

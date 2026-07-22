@@ -2,6 +2,14 @@
 
 Son guncelleme: 2026-07-22
 
+## Yerel Kabul Sunucusu
+
+- Kullanici kabul adresi `http://localhost:3000` optimize `next start` modunda calisir.
+- Development gerektiğinde ayri `.next-dev` dizini kullanilir; dev derleme sureleri kullanici hiz kabulunun parcasi degildir.
+- Admin/bayi sidebar kaydirmasi gorunur sistem scrollbar'i olmadan mouse, touchpad ve klavye ile calisir.
+- Admin, bayi ve urun rotalarinda anlik loading sinirlari vardir; paylasilan shell gezinme sirasinda etkilesimli kalir.
+- Session DAL ayni React render gecisinde tekrarlanan DB okumalarini tekillestirir.
+
 ## Local Gelistirme Cikti Izolasyonu
 
 - `next dev` `.next-dev`, production build ve `next start` `.next` dizinini kullanir.

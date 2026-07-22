@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  Bell,
   Boxes,
   Building2,
   ChevronRight,
@@ -217,7 +216,7 @@ function SidebarContent({
         </Link>
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+      <nav className="sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <div className="grid gap-5">
           {getVisibleNavigationSections(role).map((section) => (
             <section key={section.label}>
@@ -233,7 +232,7 @@ function SidebarContent({
                       (item.href !== "/admin" &&
                         pathname.startsWith(`${item.href}/`)));
                   const className = isActive
-                    ? "bg-white/12 text-white ring-1 ring-inset ring-white/10"
+                    ? "bg-white/11 text-white"
                     : item.soon
                       ? "text-white/30"
                       : "text-white/68 hover:bg-white/7 hover:text-white";
@@ -362,7 +361,7 @@ export function AdminShell({
       ) : null}
 
       <div className="lg:pl-[244px]">
-        <header className="sticky top-0 z-20 border-b border-black/8 bg-white/82 backdrop-blur-2xl">
+        <header className="sticky top-0 z-20 border-b border-black/8 bg-white/78 backdrop-blur-2xl">
           <div className="flex min-h-[72px] items-center justify-between gap-4 px-4 py-3 md:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -390,14 +389,7 @@ export function AdminShell({
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Bildirimler"
-                className="hidden h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 md:flex"
-              >
-                <Bell size={18} aria-hidden="true" />
-              </button>
-              <div className="hidden min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 md:block">
+              <div className="hidden min-w-0 border-r border-slate-200 pr-4 text-right md:block">
                 <p className="truncate text-xs font-semibold text-slate-900">
                   {user.name}
                 </p>
@@ -408,10 +400,11 @@ export function AdminShell({
               <form action={logout}>
                 <button
                   type="submit"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  aria-label="Çıkış yap"
+                  title="Çıkış yap"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
                 >
                   <LogOut size={16} aria-hidden="true" />
-                  <span className="hidden sm:inline">Çıkış</span>
                 </button>
               </form>
             </div>

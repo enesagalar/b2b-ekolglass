@@ -3,6 +3,7 @@ import "server-only";
 import { randomBytes, createHash } from "crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { hasPermission, isAdminRole, isKnownRole, type Permission, type Role } from "@/domain/roles";
 import { prisma } from "@/lib/prisma";
@@ -52,7 +53,7 @@ export async function createUserSession(userId: string) {
   });
 }
 
-export async function getCurrentUser() {
+const readCurrentUser = cache(async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
@@ -88,6 +89,10 @@ export async function getCurrentUser() {
   }
 
   return session.user;
+});
+
+export async function getCurrentUser() {
+  return readCurrentUser();
 }
 
 export async function clearCurrentSession() {

@@ -2,6 +2,17 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-22 - Sidebar ve algilanan performans iyilestirmesi
+
+- Admin ve bayi sidebar kaydirmasi korunurken Windows scrollbar izi tamamen kaldirildi.
+- Next.js gelistirme rozeti ve rota derleme gecikmeleri kullanici kabul ortamindan cikarildi; localhost 3000 optimize production sunucusu olarak calisiyor.
+- Admin, bayi ve urun rota ailelerine paylasilan layout'u koruyan hafif loading/progress yuzeyleri eklendi.
+- Ayni render gecisinde tekrarlanan session/kullanici sorgulari Next.js auth rehberine uygun React `cache` ile tekillestirildi.
+- Admin header'daki islevsiz bildirim aksiyonu kaldirildi; kullanici ve cikis alani sadelestirildi.
+- Siparisler ekraninda tekrar eden baslik ve uc ayri KPI karti yerine tek parca telemetri yuzeyi kullanildi.
+- Production sicak yanit olcumleri: bayi basvurusu yaklasik 98 ms, giris 226 ms, katalog 466 ms. Dev ortamindaki 6-20 saniyelik ilk rota derlemeleri kullanici akisinda artik yok.
+- 377 Vitest, 9 odakli auth testi, lint, typecheck ve production build basarili.
+
 ## 2026-07-22 - Localhost asset ve mobil yerlesim hotfix
 
 - Eski `next start` ile `next dev` sureclerinin ayni `.next` dizinini kullanmasi CSS asset hash'lerini bozuyordu; stylesiz HTML sorununun kok nedeni kapatildi.
