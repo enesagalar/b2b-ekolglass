@@ -13,11 +13,11 @@ test("container runs as non-root with a persistent data volume", async () => {
 test("container fails closed before migration and traffic", async () => {
   const dockerfile = await readFile("Dockerfile", "utf8");
   const command = dockerfile.match(/CMD \["sh", "-c", "([^"]+)"\]/)?.[1] ?? "";
-  const preflight = command.indexOf("npm run preflight:production");
-  const migration = command.indexOf("npm run prisma:migrate:deploy");
-  const backup = command.indexOf("npm run db:release-prepare");
-  const preMigrationIntegrity = command.indexOf("npm run prisma:migrate:verify -- --allow-pending");
-  const postMigrationIntegrity = command.lastIndexOf("npm run prisma:migrate:verify");
+  const preflight = command.indexOf("scripts/production-preflight.ts");
+  const migration = command.indexOf("node_modules/prisma/build/index.js migrate deploy");
+  const backup = command.indexOf("scripts/prepare-production-database.ts");
+  const preMigrationIntegrity = command.indexOf("scripts/verify-migration-integrity.ts --allow-pending");
+  const postMigrationIntegrity = command.lastIndexOf("scripts/verify-migration-integrity.ts");
   const server = command.indexOf("next start");
 
   assert.ok(preflight >= 0);

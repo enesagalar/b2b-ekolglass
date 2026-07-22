@@ -14,6 +14,7 @@ Tamamlanan repo ici uygulama:
 - CI GHCR image, registry digest, SBOM, provenance, fixable high/critical image taramasi, attestation ve release manifesti uretecek sekilde genisletildi.
 - GitHub Actions SHA pinleme, dependency review, Dependabot ve CODEOWNERS eklendi.
 - Registry digest tabanli release manifesti ve makinece dogrulanan rollback manifesti eklendi.
+- Ilk GHCR image taramasinda base image global npm aracinda bulunan duzeltilebilir aciklar nedeniyle runtime npm/npx kaldirildi; uygulama komutlari dogrudan Node giris noktalarina baglandi.
 
 Son repo kapisi:
 

@@ -18,6 +18,7 @@ Bir OCI arsiv dosyasinin SHA-256 checksum'u registry manifest digest'i degildir.
 
 - Node taban image'i digest ile sabittir.
 - Runtime `node` kullanicisi ile calisir.
+- Build asamasinda npm kullanilir; final runtime image global npm/npx icermez ve operasyon giris noktalarini dogrudan Node ile calistirir.
 - SQLite, backup ve LOCAL medya ayni kalici `/data` volume agacini kullanir.
 - Production platformu tek replica ve `Recreate` semantigi saglamalidir.
 - Root filesystem salt okunur olabilir; yalniz `/data` ve zorunlu runtime cache alani yazilabilir baglanir.

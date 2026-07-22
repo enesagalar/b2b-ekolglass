@@ -35,7 +35,9 @@ RUN apt-get update \
   && chown -R node:node /data /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev \
+  && npm cache clean --force \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 COPY --from=builder --chown=node:node /app/.next ./.next
 COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/prisma ./prisma
@@ -50,4 +52,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["sh", "-c", "npm run preflight:production && npm run db:release-prepare && npm run prisma:migrate:verify -- --allow-pending && npm run prisma:migrate:deploy && npm run prisma:migrate:verify && exec node node_modules/next/dist/bin/next start"]
+CMD ["sh", "-c", "node node_modules/tsx/dist/cli.mjs scripts/production-preflight.ts && node node_modules/tsx/dist/cli.mjs scripts/prepare-production-database.ts && node node_modules/tsx/dist/cli.mjs scripts/verify-migration-integrity.ts --allow-pending && node node_modules/prisma/build/index.js migrate deploy && node node_modules/tsx/dist/cli.mjs scripts/verify-migration-integrity.ts && exec node node_modules/next/dist/bin/next start"]
