@@ -16,18 +16,18 @@ Tamamlanan repo ici uygulama:
 - Registry digest tabanli release manifesti ve makinece dogrulanan rollback manifesti eklendi.
 - Ilk GHCR image taramasinda base image global npm aracinda bulunan duzeltilebilir aciklar nedeniyle runtime npm/npx kaldirildi; uygulama komutlari dogrudan Node giris noktalarina baglandi.
 
-Son repo kapisi:
+Tamamlanan son repo kapisi:
 
 1. Yerel kapilar tamamlandi: 82 Vitest dosyasinda 377 test, 19 Node testi, lint, typecheck ve uyarisiz production build basarili.
 2. Recovery drill, 36/36 migration integrity, 44 adimli authenticated smoke ve `npm audit` sifir bulgu ile basarili.
-3. Yeni commit uzerinde GitHub `quality` ve `release-artifact` job'larinin basarisi bekleniyor.
-4. GHCR digest, image taramasi, attestation ve release manifest artifact'inin olustugu teyit edilecek.
+3. GitHub `quality` ve `release-artifact` job'lari run `29917064374` uzerinde basarili.
+4. GHCR digest `sha256:7258a243822028d7330956c82fe5af6e144ac783edf3f50fb0715f1de2918c2f`; Trivy, Sigstore/Rekor attestation ve 90 gunluk release manifest artifact'i dogrulandi.
 
 Dis production kabulleri hosting/bolge, tek replica/volume, DNS/TLS, SMTP, medya S3/R2, offsite restore, scheduler, merkezi log, dead-man alarmi ve gercek platform rollback tatbikatidir.
 
 UI karari:
 
-- Son repo ve GitHub artifact kapisi basarili oldugunda UI yenilemesine gecis icin proje sahibinden acik onay istenecek.
+- Repo ve GitHub artifact kapisi tamamlandi. UI yenilemesine gecmeye haziriz; proje sahibinden acik tasarim onayi ve yonlendirmesi istenecek.
 - Dis production kabulleri UI calismasini degil, canliya cikis GO kararini engeller.
 
 ## 2026-07-22 - Production bosluk kapatma, paket 3
