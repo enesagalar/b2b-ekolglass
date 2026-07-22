@@ -36,7 +36,7 @@ MEDIA_STORAGE_READINESS_TIMEOUT_MS="5000"
 - Statik anahtar kullaniliyorsa ikisi birlikte secret manager uzerinden verilir.
 - Bucket private kalabilir; medya uygulamanin `/media/[file]` route'u uzerinden sunulur.
 - Bucket versioning, lifecycle ve backup politikasi provider tarafinda acilmalidir.
-- Uygulama kimligine en az `HeadBucket`, prefix altinda `ListBucket`, `GetObject` ve `PutObject` yetkileri verilmelidir.
+- Uygulama kimligine en az `HeadBucket`, prefix altinda `ListBucket`, `GetObject`, `PutObject` ve telafi icin `DeleteObject` yetkileri verilmelidir.
 - S3 readiness kontrolu bucket erisimini sure sinirli `HeadBucket` istegiyle sinar; endpoint, bucket veya anahtar degerlerini HTTP yanitina yazmaz.
 - LOCAL readiness kontrolu storage kokunu olusturup uygulama kimligiyle okuma/yazma erisimini dogrular.
 - Readiness tek basina nesne yazma/okuma kaniti degildir; deployment kabulunde asagidaki upload/read/restart provasi zorunludur.
@@ -51,3 +51,12 @@ MEDIA_STORAGE_READINESS_TIMEOUT_MS="5000"
 6. Farkli provider'a gecis yapilacaksa eski nesneler once tasinir; DB `storageProvider` degeri plansiz toplu degistirilmez.
 7. `npm run media:reconcile` ile aktif eksik nesne, orphan nesne ve gecersiz object key raporu incelenir. Komut LOCAL ve S3 provider'larini salt okunur tarar.
 8. Cok buyuk bucket'larda varsayilan 100.000 nesne guvenlik siniri gerekceli olarak `--max-objects=N` ile artirilir; reconciliation hicbir nesneyi silmez.
+
+## Banner Retention ve Telafi
+
+- Yeni banner nesnesi UUID + SHA-256 object key ile tek yukleme denemesine ait olur.
+- DB veya audit transaction'i basarisizsa yeni nesne uygulama tarafindan idempotent olarak silinir.
+- Basarili banner degisiminde onceki nesne hemen silinmez; audit `previousObjectKey` bagini korur.
+- Eski/orphan banner nesneleri en az 30 gun saklanir. `media:reconcile` salt okunur kalir.
+- Otomatik cleanup eklenirse silmeden hemen once aktif `MediaAsset.objectKey` referansi yeniden kontrol edilir.
+- S3/R2 versioning acik, non-current version lifecycle'i en az 90 gun olmalidir.

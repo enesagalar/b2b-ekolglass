@@ -1,6 +1,6 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-21
+Son guncelleme: 2026-07-22
 
 ## Git Durumu
 
@@ -77,6 +77,9 @@ Son guncelleme: 2026-07-21
   - Mobil menu
   - Operasyon dashboard
 - Admin CMS ayar ekrani.
+- CMS ayarlarinda sabit anahtar allowlist'i, `isEditable`/tip kontrolu, stale-form CAS ve transaction ici audit.
+- Banner medyasinda atomik DB/audit, benzersiz sahiplikli object key ve basarisiz transaction storage telafisi.
+- Fiyat listesi, urun fiyati ve firma ticari kosullarinda stale-form ve audit rollback korumasi.
 - Admin urun/kategori/fiyat/stok yonetimi.
 - Admin urun liste arama/filtre/sayfalama.
 - Admin kategori yonetimi alt ekrani: `/admin/urunler/kategoriler`.

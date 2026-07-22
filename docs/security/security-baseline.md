@@ -22,7 +22,10 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 - SameSite session cookie ve Next.js Server Action Origin/Host dogrulamasi.
 - HSTS, frame deny, MIME nosniff, referrer, permissions policy ve dar CSP savunma basliklari.
 - Production proxy/IP header sozlesmesi ve mutlak kalici SQLite yolu icin fail-closed preflight.
-- Dependency audit'te high/critical bulgu yok; transitive moderate bulgular dokumante edilip upstream patch takibine alindi.
+- Dependency audit'i Next.js 16.2.11, Prisma 7.9.0 ve guvenli transitive override'larla sifir bilinen bulgu veriyor.
+- Fiyat listesi, urun fiyati, firma ticari kosulu ve CMS yazimlarinda optimistic concurrency ile transaction ici audit.
+- Banner upload'inda ayni-origin fail-closed siniri, benzersiz object key ve DB/audit hatasinda storage telafisi.
+- Beklenmeyen ticari/CMS altyapi hatalarinda correlation ID'li guvenli kullanici mesaji.
 - Production seed'de varsayilan admin sifresi engeli.
 - `.env.example` repoya dahil, `.env` dosyalari ignore.
 

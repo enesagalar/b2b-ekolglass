@@ -15,6 +15,7 @@ import { getEmailConfig } from "@/integrations/email/config";
 import { deriveActivationToken, getActivationExpiry, hashActivationToken } from "@/lib/activation-token";
 import { requirePermissionUser } from "@/lib/auth";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
+import { getCorrelationId, structuredLog } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
 import { derivePasswordResetToken, getPasswordResetExpiry, hashPasswordResetToken } from "@/lib/password-reset-token";
 
@@ -42,6 +43,7 @@ type ActivationInvitationInput = FormData | ActivationInvitationState;
 const failure = (message: string): ActivationInvitationState => ({ ok: false, message });
 
 class CompanyLifecycleError extends Error {}
+class CompanyCommercialTermsError extends Error {}
 
 export async function changeCompanyStatus(
   _previousState: CompanyLifecycleActionState,
@@ -166,6 +168,7 @@ export async function updateCompanyDiscount(
   const actor = await requirePermissionUser("company.manage", "/admin/firmalar");
   const parsed = companyDiscountSchema.safeParse({
     companyId: formData.get("companyId"),
+    expectedUpdatedAt: formData.get("expectedUpdatedAt"),
     discountRate: formData.get("discountRate"),
     paymentTerms: formData.get("paymentTerms") || undefined,
     creditPolicy: formData.get("creditPolicy"),
@@ -186,12 +189,18 @@ export async function updateCompanyDiscount(
           paymentTerms: true,
           creditPolicy: true,
           creditLimit: true,
+          updatedAt: true,
         },
       });
-      if (!company) throw new Error("Firma bulunamadı.");
+      if (!company) throw new CompanyCommercialTermsError("Firma bulunamadı.");
 
-      await tx.company.update({
-        where: { id: parsed.data.companyId },
+      const expectedUpdatedAt = new Date(parsed.data.expectedUpdatedAt);
+      if (company.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+        throw new CompanyCommercialTermsError("Ticari koşullar başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+      }
+
+      const updated = await tx.company.updateMany({
+        where: { id: parsed.data.companyId, updatedAt: expectedUpdatedAt },
         data: {
           discountRate: parsed.data.discountRate,
           paymentTerms: parsed.data.paymentTerms ?? null,
@@ -202,6 +211,9 @@ export async function updateCompanyDiscount(
               : null,
         },
       });
+      if (updated.count !== 1) {
+        throw new CompanyCommercialTermsError("Ticari koşullar başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+      }
       await tx.auditLog.create({
         data: {
           actorUserId: actor.id,
@@ -231,9 +243,14 @@ export async function updateCompanyDiscount(
     revalidatePath("/sepet");
     return { ok: true, message: "Ticari koşullar güncellendi." };
   } catch (error) {
+    if (error instanceof CompanyCommercialTermsError) {
+      return { ok: false, message: error.message };
+    }
+    const correlationId = getCorrelationId();
+    structuredLog("error", "company.commercial_terms.failed", { correlationId, error });
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "İskonto oranı güncellenemedi.",
+      message: `Ticari koşullar güncellenemedi. Destek kodu: ${correlationId}`,
     };
   }
 }

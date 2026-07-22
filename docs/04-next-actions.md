@@ -2,6 +2,35 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-22 - Production bosluk kapatma, paket 3
+
+Tamamlananlar:
+
+- Fiyat listesi ve urun fiyati yazimlari audit ile tek transaction'a alindi.
+- Fiyat listesi ve urun fiyati guncellemelerine `expectedUpdatedAt` stale-form korumasi eklendi; urun fiyatinda sessiz upsert kaldirildi.
+- Fiyat audit'i gercek fiyat satiri kimligi ile onceki/yeni ticari degerleri sakliyor.
+- Fiyat liste ve urun fiyat yuzeyleri `price.read` olmadan hassas fiyat verisi sorgulamiyor veya gostermiyor.
+- Firma iskonto, odeme ve kredi kosullari CAS ile korundu; beklenmeyen DB hatalari correlation ID ile sanitize edildi.
+- CMS yalniz uc izinli anahtar, `homepage/TEXT/isEditable` kayit tipi ve guncel surumle yaziliyor.
+- CMS ayari ve audit ayni transaction'da; no-op, stale ve audit rollback davranislari kalici testlerle kanitlandi.
+- CMS CTA degeri public ana sayfa arama butonuna baglandi.
+- Banner pointer'i ve audit atomiklestirildi; benzersiz UUID+SHA-256 object key ve transaction hatasinda storage telafisi eklendi.
+- Eski banner nesneleri icin minimum 30 gun retention, S3/R2 non-current version icin minimum 90 gun karari kaydedildi.
+- Unit ve gercek SQLite rollback/telafi testleri eklendi.
+- 81 Vitest dosyasinda 375 test, 9 Node testi, lint, typecheck, production build, 36/36 migration ve 44 adimli authenticated smoke basarili.
+
+Siradaki kod paketi:
+
+1. Paket 4 icin degismez deployment artifact'i, digest ve rollback manifesti uretmek.
+2. Hosting platformu netlesmeden tamamlanamayan volume, DNS/TLS, SMTP, medya bucket, backup ve scheduler kabullerini dis bagimlilik olarak ayirmak.
+3. Son tam regresyon, recovery, authenticated smoke ve GitHub CI kanitlarini son commit uzerinde yenilemek.
+4. Ic kod kapilari kapaninca proje sahibine `UI degisikligine haziriz` kararini sunmak.
+
+UI karari:
+
+- Paket 3 tamamlandi; UI yenilemesi henuz baslatilmadi.
+- Paket 4 ic kod ve artifact kapisi tamamlandiktan sonra acik onay istenecek.
+
 ## 2026-07-22 - Production bosluk kapatma, paket 2
 
 Tamamlananlar:

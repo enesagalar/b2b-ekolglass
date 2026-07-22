@@ -220,6 +220,7 @@ describe("catalog validation schemas", () => {
   it("accepts valid company discounts and rejects values outside zero to one hundred", () => {
     const terms = {
       companyId: "company-1",
+      expectedUpdatedAt: "2026-07-22T10:00:00.000Z",
       creditPolicy: "UNSET",
       changeReason: "Yıllık ticari değerlendirme",
     };

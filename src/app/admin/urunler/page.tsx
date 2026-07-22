@@ -26,6 +26,7 @@ import {
   stockVisibilities,
 } from "@/domain/catalog";
 import { getStatusLabel, stockStatuses } from "@/domain/statuses";
+import { hasPermission, isKnownRole } from "@/domain/roles";
 import {
   saveCategory,
   savePriceList,
@@ -34,6 +35,7 @@ import {
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
 import { ProductImportForm } from "@/features/catalog-management/product-import-form";
 import { Prisma } from "@/generated/prisma/client";
+import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -345,6 +347,8 @@ function PriceFields({
 }
 
 export default async function AdminProductsPage({ searchParams }: { searchParams: AdminProductsSearchParams }) {
+  const actor = await requirePermissionUser("product.read", "/admin/urunler");
+  const canReadPrice = isKnownRole(actor.role) && hasPermission(actor.role, "price.read");
   const resolvedSearchParams = await searchParams;
   const query = getSearchParam(resolvedSearchParams, "q")?.trim() ?? "";
   const categoryId = getSearchParam(resolvedSearchParams, "categoryId") ?? "";
@@ -365,15 +369,16 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: { _count: { select: { products: true } } },
     }),
-    prisma.priceList.findMany({
+    canReadPrice ? prisma.priceList.findMany({
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
-    }),
+    }) : Promise.resolve([]),
     prisma.product.findMany({
       where: productWhere,
       include: {
         category: true,
         stockItems: { orderBy: { warehouseCode: "asc" } },
         prices: {
+          where: canReadPrice ? {} : { id: "__price_access_denied__" },
           include: { priceList: true },
           orderBy: [{ priceList: { name: "asc" } }, { minQuantity: "asc" }],
         },
@@ -386,7 +391,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       prisma.product.count(),
       prisma.product.count({ where: { status: "ACTIVE" } }),
       prisma.stockItem.count({ where: { status: { in: ["LOW_STOCK", "OUT_OF_STOCK"] } } }),
-      prisma.priceList.count({ where: { isActive: true } }),
+      canReadPrice ? prisma.priceList.count({ where: { isActive: true } }) : Promise.resolve(0),
     ]),
     prisma.product.count({ where: productWhere }),
   ]);
@@ -505,7 +510,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               </p>
               <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Kategori ekranina git</span>
             </Link>
-            <Link
+            {canReadPrice ? <Link
               href="/admin/urunler/fiyat-listeleri"
               className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
             >
@@ -514,7 +519,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 {priceLists.length} fiyat listesi, bayi gruplari ve ileride firma bazli fiyatlar icin temel veri.
               </p>
               <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Fiyat listelerine git</span>
-            </Link>
+            </Link> : null}
           </aside>
 
           <aside className="hidden">
@@ -591,6 +596,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 {priceLists.map((priceList) => (
                   <CatalogActionForm key={priceList.id} action={savePriceList} className="rounded-md border border-slate-200 p-3">
                     <input type="hidden" name="id" value={priceList.id} />
+                    <input type="hidden" name="expectedUpdatedAt" value={priceList.updatedAt.toISOString()} />
                     <div className="grid gap-2">
                       <input name="name" defaultValue={priceList.name} className={inputClass} />
                       <select name="currency" defaultValue={priceList.currency} className={inputClass}>
@@ -694,14 +700,14 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                   <th className="px-4 py-3">Kategori</th>
                   <th className="px-4 py-3">Durum</th>
                   <th className="px-4 py-3">Stok</th>
-                  <th className="px-4 py-3">Fiyat</th>
+                  {canReadPrice ? <th className="px-4 py-3">Fiyat</th> : null}
                   <th className="px-4 py-3">Yönetim</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((product) => {
                   const stock = product.stockItems[0];
-                  const price = product.prices[0];
+                  const price = canReadPrice ? product.prices[0] : null;
                   const vehicle = [product.vehicleBrand, product.vehicleModel].filter(Boolean).join(" ");
                   return (
                     <tr key={product.id} className="border-t border-slate-200 align-top">
@@ -720,12 +726,12 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                         <p className="font-semibold text-slate-900">{stock ? `${stock.quantity} adet` : "Stok yok"}</p>
                         <p className="mt-1 text-xs text-slate-500">{stock ? getStatusLabel(stock.status) : "Depo satırı ekleyin"}</p>
                       </td>
-                      <td className="px-4 py-4">
+                      {canReadPrice ? <td className="px-4 py-4">
                         <p className="font-semibold text-slate-900">
                           {price ? `${price.priceList.currency} ${price.amount.toString()}` : "Fiyat yok"}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">{price ? price.priceList.name : "Liste satırı ekleyin"}</p>
-                      </td>
+                      </td> : null}
                       <td className="px-4 py-4">
                         <Link
                           href={`/admin/urunler/${product.id}`}

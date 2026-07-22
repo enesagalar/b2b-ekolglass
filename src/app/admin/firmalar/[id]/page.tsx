@@ -145,6 +145,7 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
             </dl>
             <CompanyDiscountForm
               companyId={company.id}
+              updatedAt={company.updatedAt.toISOString()}
               discountRate={company.discountRate.toString()}
               paymentTerms={company.paymentTerms ?? ""}
               creditPolicy={company.creditPolicy}

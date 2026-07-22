@@ -1,7 +1,7 @@
-import { ImageIcon, Save } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 
-import { updateSiteSetting } from "@/features/site-settings/actions";
 import { HeroMediaUpload } from "@/features/site-settings/hero-media-upload";
+import { SiteSettingForm } from "@/features/site-settings/site-setting-form";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -41,29 +41,24 @@ export default async function AdminContentPage() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         {settings.map((setting) => (
-          <form key={setting.key} action={updateSiteSetting} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <input type="hidden" name="key" value={setting.key} />
-            <label htmlFor={setting.key} className="text-sm font-semibold text-slate-900">
-              {setting.label}
-            </label>
-            <textarea
-              id={setting.key}
-              name="value"
-              rows={setting.key.endsWith("subtitle") ? 4 : 2}
-              defaultValue={setting.value}
-              className="mt-3 w-full resize-none rounded-md border border-slate-300 px-3 py-3 text-sm outline-none transition focus:border-teal-700"
-            />
-            <button className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900">
-              <Save size={16} aria-hidden="true" />
-              Kaydet
-            </button>
-          </form>
+          <SiteSettingForm
+            key={setting.key}
+            setting={{
+              key: setting.key,
+              label: setting.label,
+              value: setting.value,
+              updatedAt: setting.updatedAt.toISOString(),
+            }}
+          />
         ))}
       </section>
 
       <section className="grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm xl:grid-cols-[1.1fr_0.9fr]">
         <div className="min-h-72 bg-slate-900 bg-cover bg-center" style={{ backgroundImage: `url(${heroMedia?.url ?? "/ekolglass-commerce-hero.png"})` }} role="img" aria-label={heroMedia?.altText ?? "Ana sayfa banner önizlemesi"} />
-        <HeroMediaUpload defaultAltText={heroMedia?.altText ?? "EkolGlass otomotiv cam uretim hatti"} />
+        <HeroMediaUpload
+          defaultAltText={heroMedia?.altText ?? "EkolGlass otomotiv cam uretim hatti"}
+          expectedUpdatedAt={heroMedia?.updatedAt.toISOString() ?? ""}
+        />
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white shadow-sm">

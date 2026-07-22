@@ -20,6 +20,7 @@ import { recordStockMovement } from "@/domain/stock-movement";
 import { Prisma } from "@/generated/prisma/client";
 import { requirePermissionUser } from "@/lib/auth";
 import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
+import { getCorrelationId, structuredLog } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
 
 export type CatalogActionState = {
@@ -31,6 +32,7 @@ type CatalogActionInput = FormData | CatalogActionState;
 
 const success = (message: string): CatalogActionState => ({ ok: true, message });
 const failure = (message: string): CatalogActionState => ({ ok: false, message });
+class CatalogMutationConflictError extends Error {}
 
 function resolveFormData(input: CatalogActionInput, maybeFormData?: FormData) {
   return input instanceof FormData ? input : maybeFormData;
@@ -46,7 +48,7 @@ function mapCatalogMutationError(error: unknown) {
       return "Benzersiz olması gereken bir alan zaten kullanılıyor. Kod, slug, fiyat kademesi veya depo kodunu kontrol edin.";
     }
 
-    if (error.code === "P2003") {
+    if (error.code === "P2003" && error.meta?.modelName !== "AuditLog") {
       return "Seçilen ilişkili kayıt bulunamadı. Kategori, fiyat listesi veya ürün seçimini kontrol edin.";
     }
 
@@ -58,7 +60,9 @@ function mapCatalogMutationError(error: unknown) {
     }
   }
 
-  return "Kayıt sırasında beklenmeyen bir hata oluştu.";
+  const correlationId = getCorrelationId();
+  structuredLog("error", "catalog.mutation.failed", { correlationId, error });
+  return `Kayıt sırasında beklenmeyen bir hata oluştu. Destek kodu: ${correlationId}`;
 }
 
 async function writeAuditLog(userId: string, action: string, entityType: string, entityId?: string, metadata?: unknown) {
@@ -277,6 +281,7 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
 
   const parsed = priceListFormSchema.safeParse({
     id: formData.get("id") || undefined,
+    expectedUpdatedAt: formData.get("expectedUpdatedAt") || undefined,
     name: formData.get("name"),
     currency: formData.get("currency"),
     scope: formData.get("scope") || "PUBLIC",
@@ -303,17 +308,61 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
       priority: parsed.data.priority,
       isActive: parsed.data.isActive,
     };
-    const priceList = parsed.data.id
-      ? await prisma.priceList.update({
-          where: { id: parsed.data.id },
-          data: scopedData,
-        })
-      : await prisma.priceList.create({
+    const priceList = await prisma.$transaction(async (tx) => {
+      const previous = parsed.data.id
+        ? await tx.priceList.findUnique({ where: { id: parsed.data.id } })
+        : null;
+      let saved;
+      if (parsed.data.id) {
+        const expectedUpdatedAt = new Date(parsed.data.expectedUpdatedAt!);
+        if (!previous || previous.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+          throw new CatalogMutationConflictError("Fiyat listesi başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+        }
+        const updated = await tx.priceList.updateMany({
+          where: { id: parsed.data.id, updatedAt: expectedUpdatedAt },
           data: scopedData,
         });
+        if (updated.count !== 1) {
+          throw new CatalogMutationConflictError("Fiyat listesi başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+        }
+        saved = await tx.priceList.findUniqueOrThrow({ where: { id: parsed.data.id } });
+      } else {
+        saved = await tx.priceList.create({ data: scopedData });
+      }
 
-    await writeAuditLog(user.id, parsed.data.id ? "price_list.update" : "price_list.create", "PriceList", priceList.id, {
-      currency: priceList.currency,
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: parsed.data.id ? "price_list.update" : "price_list.create",
+          entityType: "PriceList",
+          entityId: saved.id,
+          metadata: JSON.stringify({
+            previous: previous
+              ? {
+                  name: previous.name,
+                  currency: previous.currency,
+                  companyId: previous.companyId,
+                  customerGroupId: previous.customerGroupId,
+                  startsAt: previous.startsAt.toISOString(),
+                  endsAt: previous.endsAt?.toISOString() ?? null,
+                  priority: previous.priority,
+                  isActive: previous.isActive,
+                }
+              : null,
+            next: {
+              name: saved.name,
+              currency: saved.currency,
+              companyId: saved.companyId,
+              customerGroupId: saved.customerGroupId,
+              startsAt: saved.startsAt.toISOString(),
+              endsAt: saved.endsAt?.toISOString() ?? null,
+              priority: saved.priority,
+              isActive: saved.isActive,
+            },
+          }),
+        },
+      });
+      return saved;
     });
     revalidatePathsBestEffort(
       ["/admin/urunler", "/urunler", "/bayi/urunler"],
@@ -323,6 +372,7 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
 
     return success(parsed.data.id ? "Fiyat listesi güncellendi." : "Fiyat listesi oluşturuldu.");
   } catch (error) {
+    if (error instanceof CatalogMutationConflictError) return failure(error.message);
     return failure(mapCatalogMutationError(error));
   }
 }
@@ -638,6 +688,8 @@ export async function saveProductPrice(
   }
 
   const parsed = productPriceFormSchema.safeParse({
+    id: formData.get("id") || undefined,
+    expectedUpdatedAt: formData.get("expectedUpdatedAt") || undefined,
     productId: formData.get("productId"),
     priceListId: formData.get("priceListId"),
     amount: formData.get("amount"),
@@ -647,35 +699,61 @@ export async function saveProductPrice(
   if (!parsed.success || !parsed.data.productId) {
     return failure(parsed.success ? "Ürün seçimi zorunludur." : getFirstValidationMessage(parsed.error.issues[0]?.message ?? ""));
   }
+  const productId = parsed.data.productId;
 
   try {
-    await prisma.productPrice.upsert({
-      where: {
-        productId_priceListId_minQuantity: {
-          productId: parsed.data.productId,
-          priceListId: parsed.data.priceListId,
-          minQuantity: parsed.data.minQuantity,
-        },
-      },
-      update: {
-        amount: parsed.data.amount,
-      },
-      create: {
-        productId: parsed.data.productId,
+    await prisma.$transaction(async (tx) => {
+      const compoundKey = {
+        productId,
         priceListId: parsed.data.priceListId,
-        amount: parsed.data.amount,
         minQuantity: parsed.data.minQuantity,
-      },
+      };
+      let previous = null;
+      let price;
+      if (parsed.data.id) {
+        previous = await tx.productPrice.findUnique({ where: { id: parsed.data.id } });
+        const expectedUpdatedAt = new Date(parsed.data.expectedUpdatedAt!);
+        if (
+          !previous ||
+          previous.productId !== productId ||
+          previous.priceListId !== parsed.data.priceListId ||
+          previous.minQuantity !== parsed.data.minQuantity ||
+          previous.updatedAt.getTime() !== expectedUpdatedAt.getTime()
+        ) {
+          throw new CatalogMutationConflictError("Ürün fiyatı başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+        }
+        const updated = await tx.productPrice.updateMany({
+          where: { id: parsed.data.id, updatedAt: expectedUpdatedAt },
+          data: { amount: parsed.data.amount },
+        });
+        if (updated.count !== 1) {
+          throw new CatalogMutationConflictError("Ürün fiyatı başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+        }
+        price = await tx.productPrice.findUniqueOrThrow({ where: { id: parsed.data.id } });
+      } else {
+        price = await tx.productPrice.create({ data: { ...compoundKey, amount: parsed.data.amount } });
+      }
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: previous ? "product_price.update" : "product_price.create",
+          entityType: "ProductPrice",
+          entityId: price.id,
+          metadata: JSON.stringify({
+            productId,
+            priceListId: parsed.data.priceListId,
+            minQuantity: parsed.data.minQuantity,
+            previousAmount: previous?.amount.toString() ?? null,
+            amount: price.amount.toString(),
+          }),
+        },
+      });
     });
-
-    await writeAuditLog(user.id, "product_price.upsert", "ProductPrice", parsed.data.productId, {
-      priceListId: parsed.data.priceListId,
-      minQuantity: parsed.data.minQuantity,
-    });
-    revalidateProductSurfaces(parsed.data.productId);
+    revalidateProductSurfaces(productId);
 
     return success("Fiyat güncellendi.");
   } catch (error) {
+    if (error instanceof CatalogMutationConflictError) return failure(error.message);
     return failure(mapCatalogMutationError(error));
   }
 }

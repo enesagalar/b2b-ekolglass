@@ -19,6 +19,7 @@ import {
 
 import { getProductPublicationReadiness, getProductStatusLabel, getStockVisibilityLabel, stockVisibilities } from "@/domain/catalog";
 import { getStatusLabel, stockStatuses } from "@/domain/statuses";
+import { hasPermission, isKnownRole } from "@/domain/roles";
 import {
   deleteProductCompatibility,
   saveProductCompatibility,
@@ -29,6 +30,7 @@ import {
   setProductMediaStatus,
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
+import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -104,6 +106,9 @@ export default async function AdminProductDetailPage({
 }) {
   const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
   const activeTab = getSearchParam(resolvedSearchParams, "tab") ?? "genel";
+  const actor = await requirePermissionUser("product.read", `/admin/urunler/${id}`);
+  const canReadPrice = isKnownRole(actor.role) && hasPermission(actor.role, "price.read");
+  if (activeTab === "fiyat" && !canReadPrice) notFound();
 
   const [product, priceLists] = await Promise.all([
     prisma.product.findUnique({
@@ -112,6 +117,7 @@ export default async function AdminProductDetailPage({
         category: true,
         stockItems: { orderBy: { warehouseCode: "asc" } },
         prices: {
+          where: canReadPrice ? {} : { id: "__price_access_denied__" },
           include: { priceList: true },
           orderBy: [{ priceList: { name: "asc" } }, { minQuantity: "asc" }],
         },
@@ -119,9 +125,9 @@ export default async function AdminProductDetailPage({
         mediaAssets: { orderBy: [{ isActive: "desc" }, { title: "asc" }] },
       },
     }),
-    prisma.priceList.findMany({
+    canReadPrice ? prisma.priceList.findMany({
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
-    }),
+    }) : Promise.resolve([]),
   ]);
 
   if (!product) {
@@ -131,7 +137,19 @@ export default async function AdminProductDetailPage({
   const auditLogs =
     activeTab === "audit"
       ? await prisma.auditLog.findMany({
-          where: { entityType: "Product", entityId: product.id },
+          where: {
+            OR: [
+              { entityType: "Product", entityId: product.id },
+              ...(canReadPrice && product.prices.length > 0
+                ? [
+                    {
+                      entityType: "ProductPrice",
+                      entityId: { in: product.prices.map((price) => price.id) },
+                    },
+                  ]
+                : []),
+            ],
+          },
           include: { actor: true },
           orderBy: { createdAt: "desc" },
           take: 30,
@@ -208,7 +226,7 @@ export default async function AdminProductDetailPage({
       </section>
 
       <nav className="flex gap-2 overflow-x-auto border-b border-slate-200 pb-2">
-        {tabs.map((tab) => {
+        {tabs.filter((tab) => tab.key !== "fiyat" || canReadPrice).map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
 
@@ -347,7 +365,7 @@ export default async function AdminProductDetailPage({
           <CatalogActionForm action={saveProductPrice} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
               <Plus size={16} aria-hidden="true" />
-              Fiyat satiri ekle veya guncelle
+              Yeni fiyat satiri ekle
             </div>
             <input type="hidden" name="productId" value={product.id} />
             <div className="grid gap-3 lg:grid-cols-[1.4fr_0.7fr_0.7fr_auto]">
@@ -393,7 +411,27 @@ export default async function AdminProductDetailPage({
                       <td className="px-4 py-4 font-semibold text-slate-950">{price.priceList.name}</td>
                       <td className="px-4 py-4">{price.priceList.currency}</td>
                       <td className="px-4 py-4">{price.minQuantity}</td>
-                      <td className="px-4 py-4 font-semibold">{price.amount.toString()}</td>
+                      <td className="px-4 py-4">
+                        <CatalogActionForm action={saveProductPrice} className="flex min-w-52 items-center gap-2">
+                          <input type="hidden" name="id" value={price.id} />
+                          <input type="hidden" name="expectedUpdatedAt" value={price.updatedAt.toISOString()} />
+                          <input type="hidden" name="productId" value={product.id} />
+                          <input type="hidden" name="priceListId" value={price.priceListId} />
+                          <input type="hidden" name="minQuantity" value={price.minQuantity} />
+                          <input
+                            name="amount"
+                            inputMode="decimal"
+                            required
+                            defaultValue={price.amount.toString()}
+                            aria-label={`${price.priceList.name} fiyatı`}
+                            className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 px-2 text-sm font-semibold outline-none focus:border-teal-700"
+                          />
+                          <button type="submit" className="inline-flex h-9 items-center gap-1 rounded-md bg-slate-950 px-3 text-xs font-semibold text-white hover:bg-slate-800">
+                            <Save size={14} aria-hidden="true" />
+                            Kaydet
+                          </button>
+                        </CatalogActionForm>
+                      </td>
                       <td className="px-4 py-4">{price.priceList.isActive ? "Aktif" : "Pasif"}</td>
                     </tr>
                   ))}

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { checkMediaStorageReadiness, detectImageMime, getMediaStorageHealth, resolveMediaStorageConfig } from "./media-storage";
+import { checkMediaStorageReadiness, detectImageMime, getMediaStorageHealth, mediaObjectKeyPattern, resolveMediaStorageConfig } from "./media-storage";
 
 describe("media storage validation", () => {
   it("detects supported image signatures", () => {
@@ -12,6 +12,12 @@ describe("media storage validation", () => {
   it("rejects extension-only and script content", () => {
     expect(detectImageMime(Buffer.from("<script>alert(1)</script>"))).toBeNull();
     expect(detectImageMime(Buffer.from("<svg xmlns='http://www.w3.org/2000/svg'></svg>"))).toBeNull();
+  });
+
+  it("accepts legacy hashes and uniquely owned upload object keys", () => {
+    expect(mediaObjectKeyPattern.test(`${"a".repeat(64)}.png`)).toBe(true);
+    expect(mediaObjectKeyPattern.test(`11111111-1111-4111-8111-111111111111-${"b".repeat(64)}.webp`)).toBe(true);
+    expect(mediaObjectKeyPattern.test(`shared-${"b".repeat(64)}.webp`)).toBe(false);
   });
 });
 

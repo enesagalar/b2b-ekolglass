@@ -77,6 +77,10 @@ export const dealerApplicationReviewSchema = z
 export const companyDiscountSchema = z
   .object({
     companyId: z.string().trim().min(1, "Firma seçimi zorunludur."),
+    expectedUpdatedAt: z
+      .string()
+      .trim()
+      .refine((value) => !Number.isNaN(Date.parse(value)), "Firma sürümü geçersiz."),
     discountRate: z.preprocess(
       parseOptionalDecimal,
       z
@@ -132,9 +136,32 @@ export const mediaAssetStatusFormSchema = z.object({
   isActive: checkboxBoolean.default(false),
 });
 
+export const editableSiteSettingKeys = [
+  "homepage.hero.title",
+  "homepage.hero.subtitle",
+  "homepage.hero.cta",
+] as const;
+
 export const siteSettingSchema = z.object({
-  key: z.string().min(3).max(120),
+  key: z.enum(editableSiteSettingKeys),
   value: z.string().min(1).max(2000),
+  expectedUpdatedAt: z
+    .string()
+    .trim()
+    .refine((value) => !Number.isNaN(Date.parse(value)), "CMS kaydı sürümü geçersiz."),
+}).superRefine((data, context) => {
+  const limits = {
+    "homepage.hero.title": 120,
+    "homepage.hero.subtitle": 500,
+    "homepage.hero.cta": 40,
+  } as const;
+  if (data.value.length > limits[data.key]) {
+    context.addIssue({
+      code: "custom",
+      path: ["value"],
+      message: `Bu alan en fazla ${limits[data.key]} karakter olabilir.`,
+    });
+  }
 });
 
 export const homepageHeroMediaSchema = z.object({
@@ -244,6 +271,7 @@ export const categoryFormSchema = z
 export const priceListFormSchema = z
   .object({
     id: optionalText(120),
+    expectedUpdatedAt: optionalText(80),
     name: z.string().trim().min(2, "Fiyat listesi adı zorunludur.").max(140),
     currency: z.enum(currencies),
     scope: z.enum(["PUBLIC", "CUSTOMER_GROUP", "COMPANY"]),
@@ -260,6 +288,9 @@ export const priceListFormSchema = z
     }
     if (data.scope === "COMPANY" && !data.companyId) {
       context.addIssue({ code: "custom", path: ["companyId"], message: "Firma secilmelidir." });
+    }
+    if (data.id && (!data.expectedUpdatedAt || Number.isNaN(Date.parse(data.expectedUpdatedAt)))) {
+      context.addIssue({ code: "custom", path: ["expectedUpdatedAt"], message: "Fiyat listesi sürümü geçersiz." });
     }
     if (data.startsAt && Number.isNaN(Date.parse(data.startsAt))) {
       context.addIssue({ code: "custom", path: ["startsAt"], message: "Baslangic tarihi gecersiz." });
@@ -422,6 +453,8 @@ export const stockAdjustmentFormSchema = stockFormSchema.and(z.object({
 }));
 
 export const productPriceFormSchema = z.object({
+  id: optionalText(120),
+  expectedUpdatedAt: optionalText(80),
   productId: optionalText(120),
   priceListId: z.string().trim().min(1, "Fiyat listesi seçilmelidir."),
   amount: z.preprocess(
@@ -433,6 +466,10 @@ export const productPriceFormSchema = z.object({
     .int()
     .min(1, "Minimum adet en az 1 olmalıdır.")
     .default(1),
+}).superRefine((data, context) => {
+  if (data.id && (!data.expectedUpdatedAt || Number.isNaN(Date.parse(data.expectedUpdatedAt)))) {
+    context.addIssue({ code: "custom", path: ["expectedUpdatedAt"], message: "Ürün fiyatı sürümü geçersiz." });
+  }
 });
 
 export const quoteCartAddSchema = z.object({

@@ -36,6 +36,7 @@ async function getHomepageData() {
     dealerSummary,
     heroTitle: settingMap.get("homepage.hero.title") ?? "EkolGlass Otomotiv Cam Çözümleri",
     heroSubtitle: settingMap.get("homepage.hero.subtitle") ?? "Araç ve ürün koduna göre camı bulun, stok durumunu ve bayi fiyatınızı görüntüleyin.",
+    heroCta: settingMap.get("homepage.hero.cta") ?? "Ürün Ara",
   };
 }
 
@@ -57,7 +58,7 @@ export default async function Home() {
             <form action={productHref} className="mt-8 flex max-w-2xl rounded-md bg-white p-1.5 shadow-2xl">
               <Search size={20} className="ml-3 mt-2.5 shrink-0 text-slate-400" aria-hidden="true" />
               <input name="q" placeholder="Ürün kodu, OEM, marka veya model" className="h-11 min-w-0 flex-1 px-3 text-sm text-slate-950 outline-none" />
-              <button type="submit" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white">Ürün Ara <ArrowRight size={16} aria-hidden="true" /></button>
+              <button type="submit" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white">{data.heroCta} <ArrowRight size={16} aria-hidden="true" /></button>
             </form>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href={productHref} className="inline-flex h-11 items-center gap-2 rounded-md border border-white/30 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur">Tüm Ürünler</Link>

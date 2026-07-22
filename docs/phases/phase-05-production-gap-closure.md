@@ -30,12 +30,15 @@ Durum: Tamamlandi.
 
 ### Paket 3 - Ticari/CMS mutation butunlugu
 
-Durum: Siradaki.
+Durum: Tamamlandi.
 
-- Fiyat listesi ve urun fiyati ile audit ayni transaction'da.
-- CMS key allowlist, `isEditable`, stale-form ve audit rollback sozlesmesi.
-- Banner DB/audit atomikligi, storage telafisi ve eski nesne retention karari.
-- Firma ticari kosullarinda optimistic concurrency.
+- Fiyat listesi ve urun fiyati ile audit ayni transaction'da; mevcut kayitlar `expectedUpdatedAt` CAS ile korunur.
+- Urun fiyati sessiz upsert yerine acik create/update kimligi ve surumu kullanir.
+- Fiyat okuma yuzeyleri `price.read` olmadan sorgu veya render yapmaz.
+- CMS key allowlist, `isEditable`, kayit tipi, stale-form, no-op ve audit rollback sozlesmesi.
+- CTA CMS ayari public ana sayfadaki arama aksiyonuna baglandi.
+- Banner DB/audit atomikligi, UUID+checksum object key, storage telafisi ve 30 gun eski nesne retention karari.
+- Firma ticari kosullarinda optimistic concurrency ve audit rollback.
 - Beklenmeyen altyapi hatalarinda correlation ID'li guvenli kullanici mesaji.
 
 ### Paket 4 - Deployment artifact ve son kabul
@@ -60,4 +63,4 @@ Bu maddeler gercek ortam kaniti olmadan tamamlandi sayilmaz.
 
 ## UI Gecis Kapisi
 
-Paket 3 kapanmadan UI yenilemesi baslamaz. Paket 4'teki dis platform maddeleri acikca ayrildiktan sonra proje sahibine `UI degisikligine haziriz` karari sunulur.
+Paket 3 kapandi. Paket 4'teki deployment artifact ve dis platform maddeleri acikca ayrildiktan sonra proje sahibine `UI degisikligine haziriz` karari sunulur.

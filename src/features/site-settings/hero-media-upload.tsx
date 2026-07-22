@@ -4,7 +4,13 @@ import { ImageUp, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-export function HeroMediaUpload({ defaultAltText }: { defaultAltText: string }) {
+export function HeroMediaUpload({
+  defaultAltText,
+  expectedUpdatedAt,
+}: {
+  defaultAltText: string;
+  expectedUpdatedAt: string;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -22,6 +28,7 @@ export function HeroMediaUpload({ defaultAltText }: { defaultAltText: string }) 
 
   return (
     <form onSubmit={submit} className="grid content-center gap-4 p-5">
+      <input type="hidden" name="expectedUpdatedAt" value={expectedUpdatedAt} />
       <div><p className="text-sm font-semibold text-teal-800">Ana banner görseli</p><h3 className="mt-1 text-xl font-semibold text-slate-950">Bilgisayardan görsel seç</h3></div>
       <label className="grid gap-2 text-sm font-semibold text-slate-800">Görsel dosyası<input name="file" type="file" accept="image/jpeg,image/png,image/webp" required className="block w-full rounded-md border border-slate-300 p-2 text-sm font-normal file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:font-semibold" /></label>
       <p className="text-xs leading-5 text-slate-500">JPEG, PNG veya WebP. En fazla 5 MB. Geniş yatay görsel önerilir.</p>

@@ -3,9 +3,9 @@ import path from "node:path";
 
 import { ListObjectsV2Command, type ListObjectsV2CommandOutput, type S3Client } from "@aws-sdk/client-s3";
 
-import { createS3Client, type MediaStorageConfig } from "./media-storage";
+import { createS3Client, mediaObjectKeyPattern, type MediaStorageConfig } from "./media-storage";
 
-export const mediaObjectKeyPattern = /^[a-f0-9]{64}\.(?:jpg|png|webp)$/;
+export { mediaObjectKeyPattern };
 
 export type MediaAssetReference = {
   objectKey: string;

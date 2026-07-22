@@ -1,9 +1,9 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const mediaTypes = {
   "image/jpeg": "jpg",
@@ -29,6 +29,7 @@ export type MediaStorageConfig =
     };
 
 export const maxImageUploadBytes = 5 * 1024 * 1024;
+export const mediaObjectKeyPattern = /^(?:[a-f0-9]{64}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-[a-f0-9]{64})\.(?:jpg|png|webp)$/;
 
 export function detectImageMime(buffer: Buffer) {
   if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "image/jpeg" as const;
@@ -161,7 +162,7 @@ export async function storeImage(buffer: Buffer) {
   if (!mimeType) throw new Error("Yalnız JPEG, PNG veya WebP görsel yüklenebilir.");
   if (!buffer.length || buffer.length > maxImageUploadBytes) throw new Error("Görsel 5 MB sınırını aşamaz.");
   const checksum = createHash("sha256").update(buffer).digest("hex");
-  const objectKey = `${checksum}.${mediaTypes[mimeType]}`;
+  const objectKey = `${randomUUID()}-${checksum}.${mediaTypes[mimeType]}`;
   const config = resolveMediaStorageConfig();
   if (config.provider === "LOCAL") {
     await mkdir(localStorageRoot(), { recursive: true });
@@ -182,7 +183,7 @@ export async function storeImage(buffer: Buffer) {
 }
 
 export async function readStoredImage(objectKey: string, provider?: string | null) {
-  if (!/^[a-f0-9]{64}\.(?:jpg|png|webp)$/.test(objectKey)) return null;
+  if (!mediaObjectKeyPattern.test(objectKey)) return null;
   const config = resolveMediaStorageConfig();
   if (provider && provider !== config.provider) return null;
   if (config.provider === "LOCAL") return readFile(localObjectPath(objectKey)).catch(() => null);
@@ -195,4 +196,21 @@ export async function readStoredImage(objectKey: string, provider?: string | nul
     if (status === 404) return null;
     throw error;
   }
+}
+
+export async function deleteStoredImage(objectKey: string, provider?: string | null) {
+  if (!mediaObjectKeyPattern.test(objectKey)) return false;
+  const config = resolveMediaStorageConfig();
+  if (provider && provider !== config.provider) return false;
+  if (config.provider === "LOCAL") {
+    await unlink(localObjectPath(objectKey)).catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== "ENOENT") throw error;
+    });
+    return true;
+  }
+  await createS3Client(config).send(new DeleteObjectCommand({
+    Bucket: config.bucket,
+    Key: objectPath(config.prefix, objectKey),
+  }));
+  return true;
 }

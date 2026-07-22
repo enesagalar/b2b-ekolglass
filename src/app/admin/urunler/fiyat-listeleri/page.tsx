@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, Calculator, Save, Tags } from "lucide-react";
 import { currencies } from "@/domain/catalog";
 import { savePriceList } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
+import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ function dateInput(value: Date | null) {
 }
 
 export default async function AdminPriceListsPage() {
+  await requirePermissionUser("price.read", "/admin/urunler/fiyat-listeleri");
   const [priceLists, customerGroups, companies] = await Promise.all([
     prisma.priceList.findMany({
       orderBy: [{ isActive: "desc" }, { priority: "desc" }, { name: "asc" }],
@@ -116,6 +118,7 @@ export default async function AdminPriceListsPage() {
           {priceLists.map((priceList) => (
             <CatalogActionForm key={priceList.id} action={savePriceList} className="grid gap-3 rounded-lg border border-slate-200 p-4">
               <input type="hidden" name="id" value={priceList.id} />
+              <input type="hidden" name="expectedUpdatedAt" value={priceList.updatedAt.toISOString()} />
               <label className={labelClass}>
                 Liste adi
                 <input name="name" required defaultValue={priceList.name} className={inputClass} />

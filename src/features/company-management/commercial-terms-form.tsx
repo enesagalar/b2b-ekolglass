@@ -12,12 +12,14 @@ const initialState: CompanyUserActionState = { ok: false, message: "" };
 
 export function CompanyDiscountForm({
   companyId,
+  updatedAt,
   discountRate,
   paymentTerms,
   creditPolicy,
   creditLimit,
 }: {
   companyId: string;
+  updatedAt: string;
   discountRate: string;
   paymentTerms: string;
   creditPolicy: string;
@@ -29,6 +31,7 @@ export function CompanyDiscountForm({
   return (
     <form action={action} className="border-t border-slate-200 px-5 py-5" aria-busy={pending}>
       <input type="hidden" name="companyId" value={companyId} />
+      <input type="hidden" name="expectedUpdatedAt" value={updatedAt} />
       <div className="flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-800">
           <Percent size={17} aria-hidden="true" />
