@@ -131,11 +131,11 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
             </button>
           </form>
 
-          <div className="ml-auto lg:ml-2">
+          <div className="ml-auto hidden sm:block lg:ml-2">
             <AccountActions identity={identity} />
           </div>
 
-          <details className="group relative lg:hidden">
+          <details className="group relative ml-auto lg:hidden">
             <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg text-[#303236] hover:bg-black/5" aria-label="Menüyü aç">
               <Menu size={20} aria-hidden="true" />
             </summary>
@@ -152,9 +152,18 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
                     <Link href="/bayi" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Bayi çalışma alanı</Link>
                     <Link href="/bayi/siparisler" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Siparişlerim</Link>
                     <Link href="/sepet" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Sipariş sepeti</Link>
+                    <form action={logout}><button type="submit" className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium hover:bg-black/5"><LogOut size={17} /> Çıkış yap</button></form>
+                  </>
+                ) : identity?.audience === "admin" ? (
+                  <>
+                    <Link href="/admin" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Yönetim paneli</Link>
+                    <form action={logout}><button type="submit" className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium hover:bg-black/5"><LogOut size={17} /> Çıkış yap</button></form>
                   </>
                 ) : (
-                  <Link href="/bayi-basvurusu" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Bayi Başvurusu</Link>
+                  <>
+                    <Link href="/giris" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Bayi Girişi</Link>
+                    <Link href="/bayi-basvurusu" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Bayi Başvurusu</Link>
+                  </>
                 )}
               </nav>
             </div>

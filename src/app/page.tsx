@@ -92,7 +92,7 @@ export default async function Home() {
       >
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,16,20,0.76)_0%,rgba(12,16,20,0.48)_38%,rgba(12,16,20,0.04)_72%)]" aria-hidden="true" />
         <div className="relative mx-auto flex min-h-[560px] max-w-[1440px] items-center px-5 py-16 sm:min-h-[620px] md:px-8">
-          <div className="max-w-2xl">
+          <div className="w-full min-w-0 max-w-2xl">
             <p className="text-sm font-semibold text-white/72">EkolGlass B2B Satış Portalı</p>
             <h1 className="mt-5 max-w-xl text-4xl font-semibold leading-[1.08] sm:text-5xl md:text-6xl">
               {data.heroTitle}
@@ -100,16 +100,16 @@ export default async function Home() {
             <p className="mt-5 max-w-xl text-base leading-7 text-white/78 sm:text-lg">
               {data.heroSubtitle}
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link href="/urunler" className="inline-flex h-12 items-center gap-2 rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white hover:bg-[#004f7c]">
+            <div className="mt-8 grid w-full gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
+              <Link href="/urunler" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white hover:bg-[#004f7c] sm:justify-start">
                 {data.heroCta} <ArrowRight size={16} aria-hidden="true" />
               </Link>
               {data.identity?.audience === "dealer" ? (
-                <Link href="/bayi" className="inline-flex h-12 items-center gap-2 text-sm font-semibold text-white hover:text-white/75">
+                <Link href="/bayi" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/25 bg-black/15 px-5 text-sm font-semibold text-white hover:text-white/75 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0">
                   Bayi çalışma alanına git <ArrowRight size={16} aria-hidden="true" />
                 </Link>
               ) : (
-                <Link href="/giris" className="inline-flex h-12 items-center gap-2 text-sm font-semibold text-white hover:text-white/75">
+                <Link href="/giris" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/25 bg-black/15 px-5 text-sm font-semibold text-white hover:text-white/75 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0">
                   Bayi hesabına giriş <ArrowRight size={16} aria-hidden="true" />
                 </Link>
               )}

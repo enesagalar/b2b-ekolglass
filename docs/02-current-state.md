@@ -2,6 +2,12 @@
 
 Son guncelleme: 2026-07-22
 
+## Local Gelistirme Cikti Izolasyonu
+
+- `next dev` `.next-dev`, production build ve `next start` `.next` dizinini kullanir.
+- Bu ayrim acik localhost sunucusunun production build sonrasinda eski/eksik CSS ve JavaScript asset'i sunmasini engeller.
+- Aktif yerel adres: `http://localhost:3000`.
+
 ## Faz 6 UI Durumu
 
 - Premium responsive UI fazi tamamlandi.

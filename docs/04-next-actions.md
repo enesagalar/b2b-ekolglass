@@ -2,6 +2,15 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-22 - Localhost asset ve mobil yerlesim hotfix
+
+- Eski `next start` ile `next dev` sureclerinin ayni `.next` dizinini kullanmasi CSS asset hash'lerini bozuyordu; stylesiz HTML sorununun kok nedeni kapatildi.
+- Development ciktilari `.next-dev`, production build/start ciktilari `.next` altina ayrildi.
+- Localhost tek guncel dev sureciyle `http://localhost:3000` adresinde yeniden baslatildi; 3001 sureci kapatildi.
+- Production build dev sunucusu acikken tamamlandi; build sonrasinda public sayfa ve CSS asset'i HTTP 200 vermeye devam etti.
+- Mobil header hesap aksiyonlari menu icine alindi; hamburger ve iki hero CTA 390 px'de tamamen gorunur hale getirildi.
+- 377 Vitest, lint, typecheck, production build, masaustu ve mobil tarayici kontrolleri basarili.
+
 ## 2026-07-22 - Faz 6 premium responsive UI tamamlandi
 
 Tamamlananlar:
