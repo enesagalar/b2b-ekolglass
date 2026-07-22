@@ -2,6 +2,33 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-22 - Production bosluk kapatma, paket 2
+
+Tamamlananlar:
+
+- Public bayi basvurusu atomik, HMAC'li e-posta ve guvenilir IP pencere sayaclariyla sinirlandi.
+- 24 saatlik claim-token duplicate kilidi, tekrar ve eszamanli gonderimlerde tek basvuru ve tek audit kaydi uretiyor.
+- Aktivasyon/parola sifirlama audit metadata taramasi kaldirildi; farkli tokenlarla ayni IP'den limit atlama kapatildi.
+- Credential akislari token, flow-IP ve aktivasyon+reset ortak global IP kovasiyla korunuyor.
+- Production'da guvenilir client IP yoksa is kaydi veya token lookup yapilmadan istek reddediliyor.
+- Limiter ve audit metadata'sinda ham IP/token tutulmuyor.
+- Maintenance expired login failure, security bucket ve duplicate claim kayitlarini tek transaction'da temizliyor.
+- SQLite `ON CONFLICT ... RETURNING` atomik sayaclari, concurrent duplicate, rotating token, migration ve audit rollback testleri eklendi.
+- 36/36 migration, 77 Vitest dosyasinda 358 test, 9 Node testi, lint, typecheck ve production build basarili.
+
+Siradaki kod paketi:
+
+1. Fiyat listesi ve urun fiyati yazimlarini audit ile ayni transaction'a almak.
+2. CMS key allowlist, `isEditable`, stale-form ve audit rollback sozlesmesi.
+3. Banner DB/audit atomikligi, storage telafisi ve eski nesne retention karari.
+4. Firma ticari kosullarinda `expectedUpdatedAt` optimistic concurrency.
+5. Beklenmeyen altyapi hatalarini correlation ID ile sanitize etmek.
+
+UI karari:
+
+- Paket 3 kapanmadan UI yenilemesine gecilmeyecek.
+- CDN/WAF volumetrik korumasi deployment platformu seciminde dis kabul maddesi olarak kalir.
+
 ## 2026-07-21 - Son production bosluk denetimi, paket 1
 
 Tamamlananlar:

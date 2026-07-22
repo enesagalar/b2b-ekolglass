@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveTrustedClientIp } from "./request-security";
+import { requiresTrustedClientIp, resolveTrustedClientIp } from "./request-security";
 
 function requestHeaders(values: Record<string, string>) {
   return new Headers(values);
@@ -45,5 +45,14 @@ describe("trusted client IP resolution", () => {
       requestHeaders({ "x-client-ip": "203.0.113.10" }),
       { NODE_ENV: "test", AUTH_TRUST_PROXY: "true", AUTH_CLIENT_IP_HEADER: "x-client-ip" },
     )).toBeNull();
+  });
+});
+
+describe("trusted client IP requirement", () => {
+  it("fails closed for a real production origin but permits localhost previews", () => {
+    expect(requiresTrustedClientIp({ NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: "https://portal.ekolglass.com" })).toBe(true);
+    expect(requiresTrustedClientIp({ NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: "http://localhost:3000" })).toBe(false);
+    expect(requiresTrustedClientIp({ NODE_ENV: "test" })).toBe(false);
+    expect(requiresTrustedClientIp({ NODE_ENV: "production" })).toBe(true);
   });
 });

@@ -4,39 +4,32 @@ import { hash } from "bcryptjs";
 import { headers } from "next/headers";
 
 import { passwordResetSchema } from "@/domain/validation";
+import {
+  consumeSecurityRateLimit,
+  createSecurityRateLimitContext,
+  type SecurityRateLimitContext,
+} from "@/features/auth/security-rate-limit";
 import { hashPasswordResetToken } from "@/lib/password-reset-token";
 import { prisma } from "@/lib/prisma";
+import { requiresTrustedClientIp, resolveTrustedClientIp } from "@/lib/request-security";
 
 export type PasswordResetState = { ok: boolean; message: string; completed?: boolean };
 
-const FAILED_RESET_WINDOW_MINUTES = 15;
-const MAX_FAILED_RESET_ATTEMPTS = 8;
-
-async function recordResetFailure(fingerprint: string, reason: string, userId?: string) {
-  const requestHeaders = await headers();
-  await prisma.auditLog.create({
-    data: {
-      action: "auth.password_reset.failed",
-      entityType: "UserPasswordResetToken",
-      entityId: userId,
-      metadata: JSON.stringify({
-        fingerprint,
-        reason,
-        ipAddress: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim(),
-        userAgent: requestHeaders.get("user-agent"),
-      }),
-    },
-  });
-}
-
-async function getFailedResetCount(fingerprint: string) {
-  return prisma.auditLog.count({
-    where: {
-      action: "auth.password_reset.failed",
-      entityType: "UserPasswordResetToken",
-      createdAt: { gte: new Date(Date.now() - FAILED_RESET_WINDOW_MINUTES * 60 * 1000) },
-      metadata: { contains: fingerprint },
-    },
+async function recordResetFailure(
+  context: SecurityRateLimitContext,
+  fingerprint: string,
+  reason: string,
+  userId?: string,
+) {
+  await prisma.$transaction(async (tx) => {
+    await tx.auditLog.create({
+      data: {
+        action: "auth.password_reset.failed",
+        entityType: "UserPasswordResetToken",
+        entityId: userId,
+        metadata: JSON.stringify({ fingerprint, reason }),
+      },
+    });
   });
 }
 
@@ -49,11 +42,23 @@ export async function resetDealerPassword(
     password: formData.get("password"),
     passwordConfirm: formData.get("passwordConfirm"),
   });
-  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Parola bilgileri geçersiz." };
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Parola bilgileri geçersiz." };
+  }
 
   const tokenHash = hashPasswordResetToken(parsed.data.token);
   const fingerprint = tokenHash.slice(0, 16);
-  if ((await getFailedResetCount(fingerprint)) >= MAX_FAILED_RESET_ATTEMPTS) {
+  const requestHeaders = await headers();
+  const ipAddress = resolveTrustedClientIp(requestHeaders);
+  if (requiresTrustedClientIp() && !ipAddress) {
+    return { ok: false, message: "İstek güvenlik doğrulamasından geçemedi. Lütfen daha sonra tekrar deneyin." };
+  }
+  const rateLimitContext = createSecurityRateLimitContext(
+    "PASSWORD_RESET",
+    tokenHash,
+    ipAddress,
+  );
+  if ((await consumeSecurityRateLimit(rateLimitContext)).limited) {
     return { ok: false, message: "Çok fazla başarısız deneme yapıldı. Lütfen daha sonra tekrar deneyin." };
   }
 
@@ -67,7 +72,7 @@ export async function resetDealerPassword(
     candidate.user.status !== "ACTIVE" || !["DEALER_OWNER", "DEALER_STAFF"].includes(candidate.user.role) ||
     candidate.user.company?.status !== "APPROVED"
   ) {
-    await recordResetFailure(fingerprint, "invalid_or_expired_token", candidate?.userId);
+    await recordResetFailure(rateLimitContext, fingerprint, "invalid_or_expired_token", candidate?.userId);
     return { ok: false, message: "Parola sıfırlama bağlantısı geçersiz, kullanılmış veya süresi dolmuş." };
   }
 
@@ -99,12 +104,29 @@ export async function resetDealerPassword(
         data: { revokedAt: now },
       });
       await tx.auditLog.create({
-        data: { actorUserId: token.userId, action: "auth.password_reset.succeeded", entityType: "User", entityId: token.userId },
+        data: {
+          actorUserId: token.userId,
+          action: "auth.password_reset.succeeded",
+          entityType: "User",
+          entityId: token.userId,
+        },
+      });
+      await tx.securityRateLimitBucket.deleteMany({
+        where: {
+          scope: rateLimitContext.scope,
+          keyType: "SUBJECT",
+          keyHash: rateLimitContext.subjectKey,
+        },
       });
     });
     return { ok: true, completed: true, message: "Parolanız yenilendi. Yeni parolanızla giriş yapabilirsiniz." };
   } catch (error) {
-    await recordResetFailure(fingerprint, error instanceof Error ? error.message : "reset_failed", candidate.userId);
+    await recordResetFailure(
+      rateLimitContext,
+      fingerprint,
+      error instanceof Error ? error.message : "reset_failed",
+      candidate.userId,
+    ).catch(() => undefined);
     return { ok: false, message: "Parola sıfırlama bağlantısı geçersiz, kullanılmış veya süresi dolmuş." };
   }
 }

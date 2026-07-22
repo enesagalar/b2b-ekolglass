@@ -96,6 +96,33 @@ model AuthLoginFailure {
   @@index([expiresAt])
 }
 
+model SecurityRateLimitBucket {
+  id              String   @id
+  scope           String
+  keyType         String
+  keyHash         String
+  windowStartedAt DateTime
+  attemptCount    Int
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([scope, keyType, keyHash])
+  @@index([expiresAt])
+}
+
+model DealerApplicationDeduplication {
+  emailKey      String   @id
+  claimToken    String
+  applicationId String?  @unique
+  acceptedAt    DateTime
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
 model Company {
   id                  String              @id @default(cuid())
   legalName           String
@@ -159,6 +186,7 @@ model DealerApplication {
 
   @@index([status, createdAt])
   @@index([companyId])
+  @@index([email, createdAt])
 }
 
 model Address {

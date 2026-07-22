@@ -56,6 +56,10 @@ Her yeni public/dealer feature icin:
 - SQLite kullanilacaksa tek writer/instance, mutlak kalici volume, izlenen backup ve restore provasi zorunlu; yatay olceklemede PostgreSQL gecisi once tamamlanmali.
 - `AUTH_SECRET` guclu ve ortama ozel olmali.
 - `AUTH_RATE_LIMIT_SECRET` ayri, en az 32 karakter ve placeholder olmayan bir secret olmali.
+- Public bayi basvurusu ile aktivasyon/parola sifirlama limiter anahtarlari domain-separated HMAC-SHA256 olmali; ham e-posta, IP veya token guard tablolarinda tutulmamali.
+- Credential akislari farkli tokenlarla ayni IP'den yapilan denemeleri flow ve global IP pencerelerinde birlikte saymali.
+- Production'da `resolveTrustedClientIp` sonuc vermezse public credential ve bayi basvuru mutation'i is verisine erismeden fail-closed reddedilmeli.
+- Veritabani limiter'i volumetrik DDoS korumasi degildir; production ingress/CDN/WAF ayri request/body/rate siniri uygulamalidir.
 - `AUTH_TRUST_PROXY` yalniz forwarding header'ini overwrite eden dogrulanmis proxy arkasinda acilmali.
 - `SEED_ADMIN_PASSWORD` production'da zorunlu olmali.
 - HTTPS zorunlu.

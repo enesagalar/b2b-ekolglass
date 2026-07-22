@@ -4,8 +4,14 @@ import { hash } from "bcryptjs";
 import { headers } from "next/headers";
 
 import { accountActivationSchema } from "@/domain/validation";
+import {
+  consumeSecurityRateLimit,
+  createSecurityRateLimitContext,
+  type SecurityRateLimitContext,
+} from "@/features/auth/security-rate-limit";
 import { hashActivationToken } from "@/lib/activation-token";
 import { prisma } from "@/lib/prisma";
+import { requiresTrustedClientIp, resolveTrustedClientIp } from "@/lib/request-security";
 
 export type AccountActivationState = {
   ok: boolean;
@@ -13,38 +19,21 @@ export type AccountActivationState = {
   activated?: boolean;
 };
 
-const FAILED_ACTIVATION_WINDOW_MINUTES = 15;
-const MAX_FAILED_ACTIVATION_ATTEMPTS = 8;
-
 class AccountActivationError extends Error {}
 
-async function recordActivationFailure(fingerprint: string, reason: string) {
-  const requestHeaders = await headers();
-
-  await prisma.auditLog.create({
-    data: {
-      action: "auth.activation.failed",
-      entityType: "UserActivationToken",
-      metadata: JSON.stringify({
-        fingerprint,
-        reason,
-        ipAddress: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim(),
-        userAgent: requestHeaders.get("user-agent"),
-      }),
-    },
-  });
-}
-
-async function getFailedActivationCount(fingerprint: string) {
-  const since = new Date(Date.now() - FAILED_ACTIVATION_WINDOW_MINUTES * 60 * 1000);
-
-  return prisma.auditLog.count({
-    where: {
-      action: "auth.activation.failed",
-      entityType: "UserActivationToken",
-      createdAt: { gte: since },
-      metadata: { contains: fingerprint },
-    },
+async function recordActivationFailure(
+  context: SecurityRateLimitContext,
+  fingerprint: string,
+  reason: string,
+) {
+  await prisma.$transaction(async (tx) => {
+    await tx.auditLog.create({
+      data: {
+        action: "auth.activation.failed",
+        entityType: "UserActivationToken",
+        metadata: JSON.stringify({ fingerprint, reason }),
+      },
+    });
   });
 }
 
@@ -64,8 +53,18 @@ export async function activateInvitedAccount(
 
   const tokenHash = hashActivationToken(parsed.data.token);
   const fingerprint = tokenHash.slice(0, 16);
+  const requestHeaders = await headers();
+  const ipAddress = resolveTrustedClientIp(requestHeaders);
+  if (requiresTrustedClientIp() && !ipAddress) {
+    return { ok: false, message: "İstek güvenlik doğrulamasından geçemedi. Lütfen daha sonra tekrar deneyin." };
+  }
+  const rateLimitContext = createSecurityRateLimitContext(
+    "ACCOUNT_ACTIVATION",
+    tokenHash,
+    ipAddress,
+  );
 
-  if ((await getFailedActivationCount(fingerprint)) >= MAX_FAILED_ACTIVATION_ATTEMPTS) {
+  if ((await consumeSecurityRateLimit(rateLimitContext)).limited) {
     return { ok: false, message: "Çok fazla başarısız deneme yapıldı. Lütfen daha sonra tekrar deneyin." };
   }
 
@@ -86,7 +85,7 @@ export async function activateInvitedAccount(
     !candidate.user.companyId ||
     candidate.user.company?.status !== "APPROVED"
   ) {
-    await recordActivationFailure(fingerprint, "invalid_or_expired_token");
+    await recordActivationFailure(rateLimitContext, fingerprint, "invalid_or_expired_token");
     return { ok: false, message: "Aktivasyon bağlantısı geçersiz, kullanılmış veya süresi dolmuş." };
   }
 
@@ -123,21 +122,13 @@ export async function activateInvitedAccount(
         },
         data: { consumedAt: now },
       });
-
-      if (consumed.count !== 1) {
-        throw new AccountActivationError("concurrent_token_use");
-      }
+      if (consumed.count !== 1) throw new AccountActivationError("concurrent_token_use");
 
       await tx.user.update({
         where: { id: activationToken.user.id },
-        data: {
-          status: "ACTIVE",
-          passwordHash,
-        },
+        data: { status: "ACTIVE", passwordHash },
       });
-
       await tx.authSession.deleteMany({ where: { userId: activationToken.user.id } });
-
       await tx.userActivationToken.updateMany({
         where: {
           userId: activationToken.user.id,
@@ -147,7 +138,6 @@ export async function activateInvitedAccount(
         },
         data: { revokedAt: now },
       });
-
       await tx.auditLog.create({
         data: {
           actorUserId: activationToken.user.id,
@@ -155,6 +145,13 @@ export async function activateInvitedAccount(
           entityType: "User",
           entityId: activationToken.user.id,
           metadata: JSON.stringify({ companyId: activationToken.user.companyId }),
+        },
+      });
+      await tx.securityRateLimitBucket.deleteMany({
+        where: {
+          scope: rateLimitContext.scope,
+          keyType: "SUBJECT",
+          keyHash: rateLimitContext.subjectKey,
         },
       });
     });
@@ -166,7 +163,7 @@ export async function activateInvitedAccount(
     };
   } catch (error) {
     const reason = error instanceof AccountActivationError ? error.message : "activation_failed";
-    await recordActivationFailure(fingerprint, reason);
+    await recordActivationFailure(rateLimitContext, fingerprint, reason).catch(() => undefined);
     return { ok: false, message: "Aktivasyon bağlantısı geçersiz, kullanılmış veya süresi dolmuş." };
   }
 }

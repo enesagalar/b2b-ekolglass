@@ -126,6 +126,9 @@ Son guncelleme: 2026-07-21
 - Genel bayi baz fiyati uzerine firma kartindan yuzdesel musteri iskontosu.
 - Stok gorunurlugu ve rol/durum kodlari icin Turkce kullanici etiketleri.
 - Login hatalari JSON audit sayimi yerine indeksli `AuthLoginFailure` modelinden e-posta + guvenilir IP bazinda sinirlanir.
+- Bayi basvurusu atomik HMAC e-posta/IP bucket'lari ve claim-token duplicate kilidiyle korunur.
+- Aktivasyon ve parola sifirlama token, flow-IP ve ortak global IP bucket'lariyla rotating-token saldirisini sinirlar.
+- Production credential/public form akislari guvenilir client IP eksiginde fail-closed davranir; raw IP/token limiter veya failure audit kaydina yazilmaz.
 - Rate-limit anahtarlari HMAC'lidir; production secret ve proxy guven siniri fail-closed uygulanir.
 - Bilinmeyen hesaplarda dummy bcrypt karsilastirmasi ile zamanlama farki azaltilir.
 - Bearer secret korumali rate-limit maintenance endpoint'i, CLI scheduler komutu ve audit kaydi.
@@ -173,7 +176,6 @@ Son guncelleme: 2026-07-21
 
 UI yenilemesine gecmeden once production sertlestirmesinin kalan P1 paketleri tamamlanacak:
 
-- Public basvuru ile aktivasyon/parola sifirlama abuse-limitleri.
 - Fiyat/CMS/medya audit atomikligi, medya telafisi ve firma ticari kosul CAS korumasi.
 - Degismez deployment artifact'i ve rollback manifesti; platform secimine baglidir.
 - Tam regresyon, build ve authenticated smoke kapilarinin son kosusu.

@@ -18,15 +18,19 @@ Durum: Tamamlandi.
 
 ### Paket 2 - Public abuse ve credential deneme sinirlari
 
-Durum: Siradaki.
+Durum: Tamamlandi.
 
-- Bayi basvurusunda HMAC'li IP/e-posta rate limit ve duplicate pencere.
-- Aktivasyon ve parola sifirlamada farkli tokenlarla limit asmayi engelleyen guvenilir IP anahtari.
-- Raw IP saklamama, expiry indeksleri, maintenance ve regresyon testleri.
+- Bayi basvurusunda atomik HMAC'li IP/e-posta pencere sayaclari ve 24 saatlik duplicate claim.
+- Ayni e-postadan eszamanli gonderimler tek `DealerApplication` ve tek audit kaydi uretir.
+- Aktivasyon ve parola sifirlamada token, flow-IP ve iki akis toplam global IP siniri.
+- Raw IP/token limiter tablolarinda veya failure audit metadata'sinda saklanmaz.
+- Production'da guvenilir client IP cozulemezse token veya basvuru sorgusundan once fail-closed red.
+- Expired login, security bucket ve duplicate claim kayitlari ayni maintenance transaction'inda temizlenir.
+- SQLite atomik sayac, concurrent duplicate, rotating-token IP siniri, migration ve audit rollback testleri.
 
 ### Paket 3 - Ticari/CMS mutation butunlugu
 
-Durum: Bekliyor.
+Durum: Siradaki.
 
 - Fiyat listesi ve urun fiyati ile audit ayni transaction'da.
 - CMS key allowlist, `isEditable`, stale-form ve audit rollback sozlesmesi.
@@ -56,4 +60,4 @@ Bu maddeler gercek ortam kaniti olmadan tamamlandi sayilmaz.
 
 ## UI Gecis Kapisi
 
-Paket 2 ve Paket 3 kapanmadan UI yenilemesi baslamaz. Paket 4'teki dis platform maddeleri acikca ayrildiktan sonra proje sahibine `UI degisikligine haziriz` karari sunulur.
+Paket 3 kapanmadan UI yenilemesi baslamaz. Paket 4'teki dis platform maddeleri acikca ayrildiktan sonra proje sahibine `UI degisikligine haziriz` karari sunulur.

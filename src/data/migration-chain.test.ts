@@ -105,6 +105,14 @@ describe("SQLite migration chain", () => {
         'AuthLoginFailure_ipKey_createdAt_idx',
         'AuthLoginFailure_expiresAt_idx'
       )`).get()).toEqual({ count: 3 });
+      expect(db.prepare(`SELECT COUNT(*) AS "count" FROM pragma_table_info('SecurityRateLimitBucket')`).get()).toEqual({ count: 9 });
+      expect(db.prepare(`SELECT COUNT(*) AS "count" FROM sqlite_master WHERE "type" = 'index' AND "name" IN (
+        'SecurityRateLimitBucket_scope_keyType_keyHash_key',
+        'SecurityRateLimitBucket_expiresAt_idx',
+        'DealerApplicationDeduplication_applicationId_key',
+        'DealerApplicationDeduplication_expiresAt_idx',
+        'DealerApplication_email_createdAt_idx'
+      )`).get()).toEqual({ count: 5 });
     } finally {
       db.close();
     }

@@ -5,6 +5,11 @@ const mocks = vi.hoisted(() => ({
   failureCount: vi.fn(),
   failureDeleteMany: vi.fn(),
   failureGroupBy: vi.fn(),
+  securityFindMany: vi.fn(),
+  securityCount: vi.fn(),
+  securityDeleteMany: vi.fn(),
+  duplicateCount: vi.fn(),
+  duplicateDeleteMany: vi.fn(),
 }));
 
 vi.mock("@/features/auth/login-rate-limit", () => ({
@@ -20,11 +25,18 @@ vi.mock("@/lib/prisma", () => ({
     $transaction: vi.fn(async (callback) => callback({
       auditLog: { create: mocks.auditCreate },
       authLoginFailure: { deleteMany: mocks.failureDeleteMany },
+      securityRateLimitBucket: { deleteMany: mocks.securityDeleteMany },
+      dealerApplicationDeduplication: { deleteMany: mocks.duplicateDeleteMany },
     })),
     authLoginFailure: {
       count: mocks.failureCount,
       groupBy: mocks.failureGroupBy,
     },
+    securityRateLimitBucket: {
+      findMany: mocks.securityFindMany,
+      count: mocks.securityCount,
+    },
+    dealerApplicationDeduplication: { count: mocks.duplicateCount },
   },
 }));
 
@@ -39,6 +51,11 @@ describe("rate-limit operations", () => {
     mocks.failureCount.mockResolvedValue(0);
     mocks.failureGroupBy.mockResolvedValue([]);
     mocks.failureDeleteMany.mockResolvedValue({ count: 0 });
+    mocks.securityFindMany.mockResolvedValue([]);
+    mocks.securityCount.mockResolvedValue(0);
+    mocks.duplicateCount.mockResolvedValue(0);
+    mocks.securityDeleteMany.mockResolvedValue({ count: 0 });
+    mocks.duplicateDeleteMany.mockResolvedValue({ count: 0 });
     mocks.auditCreate.mockResolvedValue({});
   });
 
@@ -72,13 +89,40 @@ describe("rate-limit operations", () => {
     expect(health.expiredFailures).toBe(1_000);
   });
 
+  it("reports indexed public and credential buckets that reached their limit", async () => {
+    const now = new Date("2026-07-22T12:00:00.000Z");
+    mocks.securityFindMany.mockResolvedValue([
+      {
+        scope: "ACCOUNT_ACTIVATION",
+        keyType: "SUBJECT",
+        attemptCount: 8,
+        windowStartedAt: new Date("2026-07-22T11:55:00.000Z"),
+      },
+    ]);
+
+    const health = await getLoginSecurityHealth(now);
+
+    expect(health.status).toBe("degraded");
+    expect(health.securityActiveBuckets).toBe(1);
+    expect(health.securityKeysAtLimit).toBe(1);
+    expect(health.limitedSources).toBe(1);
+  });
+
   it("deletes only expired records and writes a system audit entry", async () => {
     const now = new Date("2026-07-14T12:00:00.000Z");
     mocks.failureDeleteMany.mockResolvedValue({ count: 27 });
+    mocks.securityDeleteMany.mockResolvedValue({ count: 4 });
+    mocks.duplicateDeleteMany.mockResolvedValue({ count: 2 });
 
     const result = await cleanupExpiredLoginFailures("cron", now);
 
-    expect(result).toEqual({ deleted: 27, completedAt: now });
+    expect(result).toEqual({
+      deleted: 33,
+      loginDeleted: 27,
+      securityBucketsDeleted: 4,
+      duplicateClaimsDeleted: 2,
+      completedAt: now,
+    });
     expect(mocks.failureDeleteMany).toHaveBeenCalledWith({
       where: { expiresAt: { lte: now } },
     });
@@ -86,7 +130,7 @@ describe("rate-limit operations", () => {
       data: expect.objectContaining({
         action: "auth.rate_limit.cleanup",
         entityType: "AuthLoginFailure",
-        metadata: expect.stringContaining('"deleted":27'),
+        metadata: expect.stringContaining('"deleted":33'),
       }),
     });
   });
