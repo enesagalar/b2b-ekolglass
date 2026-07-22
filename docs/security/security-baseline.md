@@ -2,6 +2,16 @@
 
 Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security islemleri faz kapisi olarak ele alinir.
 
+## Release Tedarik Zinciri
+
+- Node build surumu ve container base image digest ile sabittir.
+- GitHub Actions bagimliliklari tam commit SHA ile pinlenir ve checkout credential'i build agacinda tutulmaz.
+- `main` CI'i image'i GHCR'ye yollar; deploy kimligi registry manifest digest'idir.
+- Buildx SBOM/provenance ve GitHub artifact attestation uretir.
+- PR dependency review yuksek ve kritik yeni aciklari reddeder; Dependabot npm ve Actions guncellemelerini haftalik acar.
+- Runtime non-root calisir; secret, `.env`, database, backup ve medya build context'ine girmez.
+- Hareketli tag, arsiv checksum'u veya operatorun serbest girdigi digest tek basina release kaniti sayilmaz.
+
 ## Mevcut Uygulananlar
 
 - Admin route guard.

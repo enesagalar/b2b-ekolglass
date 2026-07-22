@@ -46,6 +46,7 @@ const validEnvironment = {
   SMTP_SECURE: "false",
   SMTP_REQUIRE_TLS: "true",
   MEDIA_STORAGE_PROVIDER: "LOCAL",
+  MEDIA_LOCAL_ROOT: "/data/media",
   AUTH_TRUST_PROXY: "true",
   AUTH_CLIENT_IP_HEADER: "x-forwarded-for",
   AUTH_SECRET: "a".repeat(48),

@@ -1,5 +1,3 @@
-import "server-only";
-
 import { isIP } from "node:net";
 
 import { z } from "zod";

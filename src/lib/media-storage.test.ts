@@ -28,7 +28,7 @@ describe("media storage configuration", () => {
 
   it("requires an explicit durable provider in production", () => {
     expect(() => resolveMediaStorageConfig({ NODE_ENV: "production" })).toThrow("MEDIA_STORAGE_PROVIDER");
-    expect(resolveMediaStorageConfig({ NODE_ENV: "production", MEDIA_STORAGE_PROVIDER: "LOCAL" })).toEqual({ provider: "LOCAL" });
+    expect(resolveMediaStorageConfig({ NODE_ENV: "production", MEDIA_STORAGE_PROVIDER: "LOCAL" })).toMatchObject({ provider: "LOCAL" });
     expect(getMediaStorageHealth({ NODE_ENV: "production" })).toEqual({ status: "degraded", provider: "MISCONFIGURED" });
   });
 

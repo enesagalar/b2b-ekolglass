@@ -1,0 +1,16 @@
+.git
+.github
+.next
+.test-data
+backups
+coverage
+node_modules
+storage
+.env*
+*.log
+*.db
+*.db-journal
+src/**/*.test.ts
+src/**/*.test.tsx
+scripts/*.test.mjs
+docs

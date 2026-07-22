@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "reason": "Sentetik rollback sozlesmesi dogrulama ornegi.",
+  "approvedAt": "2026-07-22T00:00:00.000Z",
+  "current": {
+    "releaseId": "production-current",
+    "commitSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "artifactDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "previous": {
+    "releaseId": "production-previous",
+    "commitSha": "cccccccccccccccccccccccccccccccccccccccc",
+    "artifactDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "migration": {
+    "compatibility": "BACKWARD_COMPATIBLE",
+    "backupManifestId": "verified-pre-migration-backup",
+    "backupSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+  }
+}

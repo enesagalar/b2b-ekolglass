@@ -15,7 +15,7 @@ export type MediaStorageProvider = "LOCAL" | "S3";
 export type StorageEnvironment = Record<string, string | undefined>;
 
 export type MediaStorageConfig =
-  | { provider: "LOCAL" }
+  | { provider: "LOCAL"; root: string }
   | {
       provider: "S3";
       bucket: string;
@@ -64,7 +64,8 @@ export function resolveMediaStorageConfig(env: StorageEnvironment = process.env)
   const provider = (configured || (env.NODE_ENV === "production" ? "" : "LOCAL")) as MediaStorageProvider | "";
   if (!provider) throw new Error("Production ortamında MEDIA_STORAGE_PROVIDER açıkça tanımlanmalıdır.");
   if (provider === "LOCAL") {
-    return { provider };
+    const configuredRoot = env.MEDIA_LOCAL_ROOT?.trim();
+    return { provider, root: configuredRoot || path.join(process.cwd(), "storage", "media") };
   }
   if (provider !== "S3") throw new Error("MEDIA_STORAGE_PROVIDER yalnızca LOCAL veya S3 olabilir.");
   const accessKeyId = env.MEDIA_S3_ACCESS_KEY_ID?.trim();
@@ -87,12 +88,8 @@ function objectPath(prefix: string, objectKey: string) {
   return `${prefix}/${objectKey}`;
 }
 
-function localStorageRoot() {
-  return path.join(/* turbopackIgnore: true */ process.cwd(), "storage", "media");
-}
-
-function localObjectPath(objectKey: string) {
-  return path.join(/* turbopackIgnore: true */ process.cwd(), "storage", "media", objectKey);
+function localObjectPath(root: string, objectKey: string) {
+  return path.join(/* turbopackIgnore: true */ root, objectKey);
 }
 
 export function createS3Client(config: Extract<MediaStorageConfig, { provider: "S3" }>) {
@@ -126,11 +123,11 @@ export async function checkMediaStorageReadiness(
 
   if (config.provider === "LOCAL") {
     const probeLocalStorage = dependencies.probeLocalStorage ?? (async (root: string) => {
-      await mkdir(root, { recursive: true });
-      await access(root, constants.R_OK | constants.W_OK);
+      await mkdir(/* turbopackIgnore: true */ root, { recursive: true });
+      await access(/* turbopackIgnore: true */ root, constants.R_OK | constants.W_OK);
     });
     try {
-      await probeLocalStorage(localStorageRoot());
+      await probeLocalStorage(config.root);
       return { status: "ok" as const, provider: config.provider };
     } catch {
       return { status: "degraded" as const, provider: config.provider, reason: "unreachable" as const };
@@ -165,8 +162,8 @@ export async function storeImage(buffer: Buffer) {
   const objectKey = `${randomUUID()}-${checksum}.${mediaTypes[mimeType]}`;
   const config = resolveMediaStorageConfig();
   if (config.provider === "LOCAL") {
-    await mkdir(localStorageRoot(), { recursive: true });
-    await writeFile(localObjectPath(objectKey), buffer, { flag: "wx" }).catch((error: NodeJS.ErrnoException) => {
+    await mkdir(/* turbopackIgnore: true */ config.root, { recursive: true });
+    await writeFile(/* turbopackIgnore: true */ localObjectPath(config.root, objectKey), buffer, { flag: "wx" }).catch((error: NodeJS.ErrnoException) => {
       if (error.code !== "EEXIST") throw error;
     });
   } else {
@@ -186,7 +183,7 @@ export async function readStoredImage(objectKey: string, provider?: string | nul
   if (!mediaObjectKeyPattern.test(objectKey)) return null;
   const config = resolveMediaStorageConfig();
   if (provider && provider !== config.provider) return null;
-  if (config.provider === "LOCAL") return readFile(localObjectPath(objectKey)).catch(() => null);
+  if (config.provider === "LOCAL") return readFile(/* turbopackIgnore: true */ localObjectPath(config.root, objectKey)).catch(() => null);
   try {
     const response = await createS3Client(config).send(new GetObjectCommand({ Bucket: config.bucket, Key: objectPath(config.prefix, objectKey) }));
     if (!response.Body) return null;
@@ -203,7 +200,7 @@ export async function deleteStoredImage(objectKey: string, provider?: string | n
   const config = resolveMediaStorageConfig();
   if (provider && provider !== config.provider) return false;
   if (config.provider === "LOCAL") {
-    await unlink(localObjectPath(objectKey)).catch((error: NodeJS.ErrnoException) => {
+    await unlink(/* turbopackIgnore: true */ localObjectPath(config.root, objectKey)).catch((error: NodeJS.ErrnoException) => {
       if (error.code !== "ENOENT") throw error;
     });
     return true;

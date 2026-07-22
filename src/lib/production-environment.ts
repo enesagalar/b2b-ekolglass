@@ -222,6 +222,8 @@ export function validateProductionEnvironment(env: RuntimeEnvironment = process.
     if (Boolean(env.MEDIA_S3_ACCESS_KEY_ID?.trim()) !== Boolean(env.MEDIA_S3_SECRET_ACCESS_KEY?.trim())) {
       issues.push({ key: "MEDIA_S3_ACCESS_KEY_ID", message: "S3 access key ve secret key birlikte tanımlanmalıdır." });
     }
+  } else if (env.MEDIA_STORAGE_PROVIDER === "LOCAL" && (!env.MEDIA_LOCAL_ROOT?.trim() || !path.isAbsolute(env.MEDIA_LOCAL_ROOT))) {
+    issues.push({ key: "MEDIA_LOCAL_ROOT", message: "LOCAL production medyası mutlak ve kalıcı volume yolu kullanmalıdır." });
   }
 
   if (env.CITY_LOJISTIK_ENABLED === "true") {

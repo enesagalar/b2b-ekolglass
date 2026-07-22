@@ -7,16 +7,18 @@ import { resolveSqliteDatabasePath } from "../src/lib/sqlite-backup";
 loadEnvConfig(process.cwd(), false);
 
 async function main() {
+  const allowPending = process.argv.slice(2).includes("--allow-pending");
   const result = await inspectMigrationIntegrity({
     databasePath: resolveSqliteDatabasePath(process.env.DATABASE_URL),
     migrationsRoot: path.join(process.cwd(), "prisma", "migrations"),
   });
-  if (!result.ok) {
+  const blockingIssues = allowPending ? result.issues.filter((issue) => issue.code !== "MIGRATION_PENDING") : result.issues;
+  if (blockingIssues.length > 0) {
     console.error(JSON.stringify({ status: "failed", ...result }, null, 2));
     process.exitCode = 1;
     return;
   }
-  console.log(JSON.stringify({ status: "ready", ...result }));
+  console.log(JSON.stringify({ status: "ready", ...result, ok: true, pendingCount: result.issues.length - blockingIssues.length }));
 }
 
 main().catch((error) => {

@@ -7,11 +7,16 @@ Son guncelleme: 2026-07-22
 - Aktif branch: `main`
 - Remote: `https://github.com/enesagalar/b2b-ekolglass.git`
 - Son bilinen commitler:
-  - `e9658fe Add recovery and internal auth evidence gates`
-  - `9665c9b Automate public production evidence gates`
-  - `4ca6361 Harden production release security gates`
+  - `12a9912 feat: enforce commercial and CMS mutation integrity`
+  - `a39b4ae Update vulnerable build dependencies`
+  - `742cd29 Harden public abuse rate limits`
 
 ## Calisan Temel Parcalar
+
+- Faz 5 Paket 4 repo ici deployment zinciri: digest-pinned OCI container, GHCR registry digest, SBOM/provenance/attestation ve release manifesti.
+- Container preflight, SQLite release-oncesi backup, migration integrity, migration deploy ve son integrity tamamlanmadan trafige acilmaz.
+- Makinece dogrulanabilir rollback manifest semasi ve validator.
+- Production preflight gercek CLI giris noktasi ve LOCAL medya kalici volume sozlesmesi testlidir.
 
 - Next.js App Router uygulamasi.
 - Prisma 7 + SQLite lokal veritabani.

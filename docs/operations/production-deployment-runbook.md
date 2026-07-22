@@ -22,12 +22,14 @@ Detayli model ve guvenlik kararlari icin `docs/architecture/observability-and-sy
 
 1. Temiz commit uzerinde `npm ci` calistirilir.
 2. `npm run check` lint, tum testler ve production build'i tamamlar.
-3. `npm run prisma:migrate:verify` uygulanmis migration adlarini ve checksum'larini repository ile karsilastirir.
-4. Ilk kurulumda ve yalniz `User` tablosu tamamen bosken one-shot `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` ve guclu `BOOTSTRAP_ADMIN_PASSWORD` secret'lari enjekte edilerek `npm run db:bootstrap-admin` calistirilir.
-5. Bootstrap basarili olduktan sonra bu uc deger secret store ve operator ortamindan silinir; genel `db:seed` production bootstrap araci olarak kullanilmaz.
-6. Production secret ve servis degerleri deployment platformuna tanimlanir.
-7. Ayni environment ile `npm run preflight:production` calistirilir. Normal production baslangici da bu kapidan fail-closed gecer.
-8. Migration, bootstrap veya environment preflight basarisizsa release durdurulur; cikti SQL, secret veya mutlak veritabani yolu gostermez.
+3. `main` CI'i GHCR image, registry digest, SBOM, provenance, attestation ve release manifesti uretir.
+4. Production'a kaynak kod veya hareketli tag degil, release manifestindeki `immutableReference` deploy edilir.
+5. `npm run prisma:migrate:verify` uygulanmis migration adlarini ve checksum'larini repository ile karsilastirir.
+6. Ilk kurulumda ve yalniz `User` tablosu tamamen bosken one-shot `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` ve guclu `BOOTSTRAP_ADMIN_PASSWORD` secret'lari enjekte edilerek `npm run db:bootstrap-admin` calistirilir.
+7. Bootstrap basarili olduktan sonra bu uc deger secret store ve operator ortamindan silinir; genel `db:seed` production bootstrap araci olarak kullanilmaz.
+8. Production secret ve servis degerleri deployment platformuna tanimlanir.
+9. Container preflight, release-oncesi backup ve migration integrity zincirinden fail-closed gecer.
+10. Migration, bootstrap veya environment preflight basarisizsa release durdurulur; cikti SQL, secret veya mutlak veritabani yolu gostermez.
 
 Zorunlu gruplar:
 
@@ -49,7 +51,7 @@ Zorunlu gruplar:
 3. `npm run prisma:migrate:deploy` ile yalniz repository migration'lari uygulanir.
 4. Migration hatasinda yeni uygulama surumu baslatilmaz.
 
-SQLite kullaniliyorsa tek-writer deployment, kalici disk, dosya kilidi ve ayni volume'da atomik backup zorunludur. Yatay olcekleme karari verilirse once PostgreSQL gecisi planlanir.
+SQLite kullaniliyorsa tek-writer deployment, `Recreate`, kalici `/data`, dosya kilidi ve migration oncesi dogrulanmis backup zorunludur. Yatay olcekleme karari verilirse once PostgreSQL gecisi planlanir.
 
 ## 3. Uygulama Acilisi
 
@@ -78,3 +80,5 @@ SQLite kullaniliyorsa tek-writer deployment, kalici disk, dosya kilidi ve ayni v
 4. Kritik hata halinde trafik onceki uygulama surumune dondurulur.
 5. Migration geriye uyumlu degilse veritabani yalniz dogrulanmis backup ve yazili restore proseduruyle geri alinir.
 6. Rollback nedeni, correlation ID'ler ve etkilenen release commit'i audit olayina kaydedilir.
+
+Makinece dogrulanan rollback manifesti ve ayrintili sira `docs/operations/oci-release-and-rollback.md` icindedir.

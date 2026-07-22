@@ -2,6 +2,33 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-22 - Production bosluk kapatma, paket 4
+
+Tamamlanan repo ici uygulama:
+
+- Digest-pinned Node tabanli, non-root ve `/data` volume sozlesmeli production Dockerfile eklendi.
+- Container preflight, mevcut DB backup'i, migration integrity, migration deploy ve son integrity kontrolu bitmeden Next prosesini baslatmiyor.
+- LOCAL medya production'da mutlak volume olmak zorunda; container `/data/media` kullanir.
+- Production preflight gercek CLI subprocess testiyle kanitlandi; `server-only` CLI zinciri hatasi kapatildi.
+- Recovery manifestindeki son migration secimi deterministik hale getirildi.
+- CI GHCR image, registry digest, SBOM, provenance, fixable high/critical image taramasi, attestation ve release manifesti uretecek sekilde genisletildi.
+- GitHub Actions SHA pinleme, dependency review, Dependabot ve CODEOWNERS eklendi.
+- Registry digest tabanli release manifesti ve makinece dogrulanan rollback manifesti eklendi.
+
+Son repo kapisi:
+
+1. Yerel kapilar tamamlandi: 82 Vitest dosyasinda 377 test, 19 Node testi, lint, typecheck ve uyarisiz production build basarili.
+2. Recovery drill, 36/36 migration integrity, 44 adimli authenticated smoke ve `npm audit` sifir bulgu ile basarili.
+3. Yeni commit uzerinde GitHub `quality` ve `release-artifact` job'larinin basarisi bekleniyor.
+4. GHCR digest, image taramasi, attestation ve release manifest artifact'inin olustugu teyit edilecek.
+
+Dis production kabulleri hosting/bolge, tek replica/volume, DNS/TLS, SMTP, medya S3/R2, offsite restore, scheduler, merkezi log, dead-man alarmi ve gercek platform rollback tatbikatidir.
+
+UI karari:
+
+- Son repo ve GitHub artifact kapisi basarili oldugunda UI yenilemesine gecis icin proje sahibinden acik onay istenecek.
+- Dis production kabulleri UI calismasini degil, canliya cikis GO kararini engeller.
+
 ## 2026-07-22 - Production bosluk kapatma, paket 3
 
 Tamamlananlar:

@@ -30,11 +30,13 @@ jobs:
       MEDIA_STORAGE_PROVIDER: LOCAL
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          node-version: 22
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.23.1
           cache: npm
 
       - run: npm ci
@@ -57,7 +59,7 @@ jobs:
 
       - name: Upload recovery drill evidence
         if: ${{ always() && hashFiles('.test-data/recovery-drill-evidence.json') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: recovery-drill-evidence
           path: .test-data/recovery-drill-evidence.json
@@ -87,7 +89,87 @@ jobs:
 
       - name: Upload server log on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: server-log
           path: .test-data/server.log
+          retention-days: 7
+
+  release-artifact:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.23.1
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push immutable OCI image
+        id: image
+        env:
+          IMAGE_REFERENCE: ghcr.io/${{ github.repository }}
+        run: |
+          mkdir -p .test-data
+          docker buildx build \
+            --platform linux/amd64 \
+            --build-arg APP_COMMIT_SHA="$GITHUB_SHA" \
+            --build-arg NEXT_PUBLIC_SITE_URL="https://portal.invalid" \
+            --tag "$IMAGE_REFERENCE:$GITHUB_SHA" \
+            --provenance=mode=max \
+            --sbom=true \
+            --metadata-file .test-data/build-metadata.json \
+            --push .
+          digest="$(jq -r '."containerimage.digest"' .test-data/build-metadata.json)"
+          test "${digest#sha256:}" != "$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          npm run release:manifest -- \
+            --metadata=.test-data/build-metadata.json \
+            --output=.test-data/release-manifest.json \
+            --commit-sha="$GITHUB_SHA" \
+            --image-ref="$IMAGE_REFERENCE" \
+            --platform=linux/amd64
+
+      - name: Scan immutable image for fixable high vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}@${{ steps.image.outputs.digest }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Attest published image provenance
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Upload release manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-manifest-${{ github.sha }}
+          path: |
+            .test-data/build-metadata.json
+            .test-data/release-manifest.json
+          if-no-files-found: error
+          retention-days: 90

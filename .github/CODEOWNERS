@@ -1,0 +1,6 @@
+/.github/ @enesagalar
+/Dockerfile @enesagalar
+/package.json @enesagalar
+/package-lock.json @enesagalar
+/prisma/migrations/ @enesagalar
+/scripts/create-release-artifact-manifest.mjs @enesagalar

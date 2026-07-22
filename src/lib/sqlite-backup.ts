@@ -59,7 +59,7 @@ function inspectDatabase(db: Database.Database) {
   if (tables.has("_prisma_migrations")) {
     appliedMigrations = (db.prepare('SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name ASC').all() as Array<{ migration_name: string }>).map((row) => row.migration_name);
     migrationCount = appliedMigrations.length;
-    latestMigration = (db.prepare('SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1').get() as { migration_name?: string } | undefined)?.migration_name ?? null;
+    latestMigration = appliedMigrations.at(-1) ?? null;
   }
   return { integrityCheck: "ok" as const, foreignKeyViolations, migrationCount, latestMigration, appliedMigrations, rowCounts };
 }

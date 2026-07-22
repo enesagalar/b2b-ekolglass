@@ -43,11 +43,14 @@ Durum: Tamamlandi.
 
 ### Paket 4 - Deployment artifact ve son kabul
 
-Durum: Platform karari bekliyor.
+Durum: Repo ici uygulama tamamlandi; son CI artifact kabulu bekliyor.
 
-- Degismez OCI/paket artifact'i ve SHA-256 digest.
-- Tek instance SQLite, kalici volume, migration-before-traffic ve rollback manifesti.
-- Son tam regresyon, recovery, authenticated smoke ve GitHub CI.
+- GHCR'de commit SHA etiketli degismez OCI image ve registry manifest digest'i.
+- SBOM, provenance, GitHub attestation ve 90 gunluk release manifest kaniti.
+- Digest-pinned Node base image, non-root runtime ve kalici `/data` sozlesmesi.
+- Preflight, migration-oncesi backup, migration integrity, deploy ve tekrar integrity sirasi.
+- Makinece dogrulanabilir rollback manifest semasi ve validator.
+- Son tam regresyon, recovery, authenticated smoke ve GitHub artifact CI kabulu bu turun son kapisidir.
 
 ## Dis Kabul Bagimliliklari
 
@@ -63,4 +66,4 @@ Bu maddeler gercek ortam kaniti olmadan tamamlandi sayilmaz.
 
 ## UI Gecis Kapisi
 
-Paket 3 kapandi. Paket 4'teki deployment artifact ve dis platform maddeleri acikca ayrildiktan sonra proje sahibine `UI degisikligine haziriz` karari sunulur.
+Paket 4 repo kapisi son GitHub artifact CI kosusu basarili oldugunda kapanir. Dis platform maddeleri production GO kararini engeller fakat bundan sonra UI gelistirmesini engellemez.
