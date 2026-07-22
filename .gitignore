@@ -36,6 +36,7 @@ yarn-error.log*
 .codex-dev-server*.log
 .codex-dev.*.log
 .codex-dev.log
+.codex-ui-dev*.log
 .codex-production-server*.log
 .codex-ci-server*.log
 .codex-server*.log

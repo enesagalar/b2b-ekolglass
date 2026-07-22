@@ -20,7 +20,7 @@ export function SiteSettingForm({
   const [state, action, pending] = useActionState(updateSiteSetting, initialState);
 
   return (
-    <form action={action} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm" aria-busy={pending}>
+    <form action={action} className="rounded-lg border border-slate-200 bg-white p-5" aria-busy={pending}>
       <input type="hidden" name="key" value={setting.key} />
       <input type="hidden" name="expectedUpdatedAt" value={setting.updatedAt} />
       <label htmlFor={setting.key} className="text-sm font-semibold text-slate-900">
@@ -31,17 +31,17 @@ export function SiteSettingForm({
         name="value"
         rows={setting.key.endsWith("subtitle") ? 4 : 2}
         defaultValue={setting.value}
-        className="mt-3 w-full resize-none rounded-md border border-slate-300 px-3 py-3 text-sm outline-none transition focus:border-teal-700"
+        className="mt-3 w-full resize-none rounded-lg border border-slate-300 px-3 py-3 text-sm outline-none transition focus:border-[#00639a]"
       />
       <button
         disabled={pending}
-        className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="mt-4 inline-flex h-11 items-center gap-2 rounded-lg bg-[#00639a] px-4 text-sm font-semibold text-white transition hover:bg-[#004f7c] disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         <Save size={16} aria-hidden="true" />
         {pending ? "Kaydediliyor" : "Kaydet"}
       </button>
       {state.message ? (
-        <p role="status" className={`mt-3 text-xs font-semibold ${state.ok ? "text-teal-800" : "text-red-700"}`}>
+        <p role="status" className={`mt-3 text-xs font-semibold ${state.ok ? "text-[#00639a]" : "text-red-700"}`}>
           {state.message}
         </p>
       ) : null}

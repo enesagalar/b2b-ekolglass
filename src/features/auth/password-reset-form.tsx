@@ -12,21 +12,21 @@ export function PasswordResetForm({ token }: { token: string }) {
   const [state, action, pending] = useActionState(resetDealerPassword, initialState);
 
   if (state.completed) return (
-    <div className="grid gap-5 rounded-lg border border-teal-200 bg-white p-6 shadow-sm">
-      <CheckCircle2 className="text-teal-800" size={28} aria-hidden="true" />
+    <div className="surface-panel grid gap-5 p-6 sm:p-7">
+      <CheckCircle2 className="text-[#00639a]" size={28} aria-hidden="true" />
       <div><h2 className="text-xl font-semibold text-slate-950">Parola yenilendi</h2><p className="mt-2 text-sm text-slate-600">{state.message}</p></div>
-      <Link href="/giris" className="inline-flex h-11 items-center justify-center rounded-md bg-teal-800 px-5 text-sm font-semibold text-white">Bayi girişine git</Link>
+      <Link href="/giris" className="inline-flex h-12 items-center justify-center rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white hover:bg-[#004f7b]">Bayi girişine git</Link>
     </div>
   );
 
   return (
-    <form action={action} className="grid gap-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <form action={action} className="surface-panel grid gap-5 p-6 sm:p-7">
       <input type="hidden" name="token" value={token} />
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">Yeni parola<input name="password" type="password" autoComplete="new-password" required minLength={12} className="h-11 rounded-md border border-slate-300 px-3 outline-none focus:border-teal-700" /></label>
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">Yeni parola tekrarı<input name="passwordConfirm" type="password" autoComplete="new-password" required minLength={12} className="h-11 rounded-md border border-slate-300 px-3 outline-none focus:border-teal-700" /></label>
+      <label className="grid gap-2 text-sm font-semibold text-slate-800">Yeni parola<input name="password" type="password" autoComplete="new-password" required minLength={12} className="h-12 rounded-lg border border-slate-300 bg-white px-3 outline-none focus:border-[#00639a]" /></label>
+      <label className="grid gap-2 text-sm font-semibold text-slate-800">Yeni parola tekrarı<input name="passwordConfirm" type="password" autoComplete="new-password" required minLength={12} className="h-12 rounded-lg border border-slate-300 bg-white px-3 outline-none focus:border-[#00639a]" /></label>
       <p className="text-xs leading-5 text-slate-500">En az 12 karakter; büyük harf, küçük harf ve rakam kullanın.</p>
       {state.message ? <p role="status" className="text-sm font-semibold text-red-700">{state.message}</p> : null}
-      <button disabled={pending} className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 text-sm font-semibold text-white disabled:opacity-60"><KeyRound size={17} />{pending ? "Yenileniyor" : "Parolayı yenile"}</button>
+      <button disabled={pending} className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white hover:bg-[#004f7b] disabled:opacity-60"><KeyRound size={17} />{pending ? "Yenileniyor" : "Parolayı yenile"}</button>
     </form>
   );
 }

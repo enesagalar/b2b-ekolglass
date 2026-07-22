@@ -14,14 +14,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: { default: "EkolGlass | Otomotiv Cam Çözümleri", template: "%s | EkolGlass" },
-  description: "EkolGlass otomotiv, otobüs, karavan, marine ve özel üretim cam çözümleri.",
+  title: { default: "EkolGlass B2B | Bayi Satış Portalı", template: "%s | EkolGlass B2B" },
+  description: "EkolGlass bayi ürün, fiyat, stok, sipariş ve sevkiyat portalı.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "tr_TR",
-    siteName: "EkolGlass",
-    images: [{ url: "/ekolglass-commerce-hero.png", width: 1897, height: 829, alt: "EkolGlass otomotiv cam üretimi" }],
+    siteName: "EkolGlass B2B",
+    images: [{ url: "/ekolglass-commerce-hero.png", width: 1897, height: 829, alt: "EkolGlass otomotiv cam çözümleri" }],
   },
 };
 

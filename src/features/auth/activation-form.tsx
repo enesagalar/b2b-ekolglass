@@ -16,8 +16,8 @@ export function AccountActivationForm({ token }: { token: string }) {
 
   if (state.activated) {
     return (
-      <div className="grid gap-5 rounded-lg border border-teal-200 bg-white p-6 shadow-sm">
-        <span className="flex h-11 w-11 items-center justify-center rounded-md bg-teal-50 text-teal-800">
+      <div className="surface-panel grid gap-5 p-6 sm:p-7">
+        <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#e8f4fa] text-[#00639a]">
           <CheckCircle2 size={23} aria-hidden="true" />
         </span>
         <div>
@@ -26,7 +26,7 @@ export function AccountActivationForm({ token }: { token: string }) {
         </div>
         <Link
           href="/giris?activated=1&next=/"
-          className="inline-flex h-11 items-center justify-center rounded-md bg-teal-800 px-5 text-sm font-semibold text-white transition hover:bg-teal-900"
+          className="inline-flex h-12 items-center justify-center rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white transition hover:bg-[#004f7b]"
         >
           Giriş ekranına git
         </Link>
@@ -35,7 +35,7 @@ export function AccountActivationForm({ token }: { token: string }) {
   }
 
   return (
-    <form action={action} className="grid gap-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <form action={action} className="surface-panel grid gap-5 p-6 sm:p-7">
       <input type="hidden" name="token" value={token} />
       <label className="grid gap-2 text-sm font-semibold text-slate-800">
         Yeni parola
@@ -45,7 +45,7 @@ export function AccountActivationForm({ token }: { token: string }) {
           autoComplete="new-password"
           required
           minLength={12}
-          className="h-11 rounded-md border border-slate-300 px-3 text-sm outline-none transition focus:border-teal-700"
+          className="h-12 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-[#00639a]"
         />
       </label>
       <label className="grid gap-2 text-sm font-semibold text-slate-800">
@@ -56,7 +56,7 @@ export function AccountActivationForm({ token }: { token: string }) {
           autoComplete="new-password"
           required
           minLength={12}
-          className="h-11 rounded-md border border-slate-300 px-3 text-sm outline-none transition focus:border-teal-700"
+          className="h-12 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-[#00639a]"
         />
       </label>
       <p className="text-xs leading-5 text-slate-500">
@@ -66,7 +66,7 @@ export function AccountActivationForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 text-sm font-semibold text-white transition hover:bg-teal-900 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white transition hover:bg-[#004f7b] disabled:cursor-not-allowed disabled:opacity-60"
       >
         <KeyRound size={17} aria-hidden="true" />
         {pending ? "Hesap aktifleştiriliyor" : "Parolayı belirle ve aktifleştir"}

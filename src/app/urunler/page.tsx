@@ -19,5 +19,5 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const company = dealerUser ? await prisma.company.findUnique({ where: { id: dealerUser.companyId! }, select: { status: true, customerGroupId: true, discountRate: true } }) : null;
   const viewer: CatalogViewer = dealerUser && company?.status === "APPROVED" ? { role: dealerUser.role as "DEALER_OWNER" | "DEALER_STAFF", companyId: dealerUser.companyId, customerGroupId: company.customerGroupId, discountRate: company.discountRate?.toString() ?? "0" } : { role: "GUEST" };
 
-  return <main className="min-h-screen bg-slate-50"><CommerceHeader identity={identity}/><ProductBrowser searchParams={resolved} viewer={viewer} basePath="/urunler"/><CommerceFooter identity={identity}/></main>;
+  return <main className="min-h-screen overflow-x-clip bg-[#f5f5f7]"><CommerceHeader identity={identity}/><ProductBrowser searchParams={resolved} viewer={viewer} basePath="/urunler"/><CommerceFooter identity={identity}/></main>;
 }

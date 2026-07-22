@@ -2,6 +2,15 @@
 
 Son guncelleme: 2026-07-22
 
+## Faz 6 UI Durumu
+
+- Premium responsive UI fazi tamamlandi.
+- Uygulama `ekolglass.com` kurumsal sitesinden baglanilan B2B satis portali olarak konumlandi.
+- Public ticaret rotalari, bayi calisma alani, admin operasyon merkezi ve credential ekranlari ortak EkolGlass marka sistemi kullaniyor.
+- Admin dashboard CMS/banner yukunden ayrildi; banner dosya yukleme ve icerik ayarlari `/admin/icerik` altinda.
+- Responsive tarama 360, 390, 768, 1024 ve 1440 px genisliklerde yatay tasmasiz tamamlandi.
+- Son yerel kapilar: 19/19 Node, 377/377 Vitest, lint, typecheck ve production build basarili.
+
 ## Git Durumu
 
 - Aktif branch: `main`

@@ -33,7 +33,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!product) notFound();
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen overflow-x-clip bg-[#f5f5f7]">
       <CommerceHeader identity={identity} />
       <ProductDetail product={product} viewer={viewer} basePath="/urunler" adminView={identity?.audience === "admin"} />
       <CommerceFooter identity={identity} />

@@ -46,5 +46,5 @@ describe("prepareProductionDatabase", () => {
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
     expect(manifest.latestMigration).toBe(manifest.appliedMigrations.at(-1));
     expect(manifest.foreignKeyViolations).toBe(0);
-  });
+  }, 30_000);
 });

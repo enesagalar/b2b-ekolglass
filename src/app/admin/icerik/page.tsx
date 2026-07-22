@@ -23,19 +23,19 @@ export default async function AdminContentPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="border-b border-slate-200 pb-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-md bg-teal-50 text-teal-800 ring-1 ring-teal-100">
+          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#eaf4fa] text-[#00639a] ring-1 ring-[#d9edf7]">
             <ImageIcon size={22} aria-hidden="true" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-teal-800">İçerik yönetimi</p>
-            <h2 className="text-2xl font-semibold text-slate-950">CMS temel ekranı</h2>
+            <p className="text-sm font-semibold text-[#00639a]">İçerik yönetimi</p>
+            <h2 className="text-2xl font-semibold text-slate-950">Ana sayfa ve bannerlar</h2>
           </div>
         </div>
         <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-          Ana sayfa banner metinleri ve CMS kayıtları buradan yönetilir. Tam blok editörü Faz 3.1 sonrasında
-          Payload/Directus kararına göre genişletilecek.
+          Satış portalının ana banner metnini, aksiyonunu ve görselini buradan güncelleyin. Değişiklikler kaydedildikten
+          sonra public ana sayfaya yansır.
         </p>
       </section>
 
@@ -53,15 +53,15 @@ export default async function AdminContentPage() {
         ))}
       </section>
 
-      <section className="grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="min-h-72 bg-slate-900 bg-cover bg-center" style={{ backgroundImage: `url(${heroMedia?.url ?? "/ekolglass-commerce-hero.png"})` }} role="img" aria-label={heroMedia?.altText ?? "Ana sayfa banner önizlemesi"} />
+      <section className="grid overflow-hidden rounded-lg border border-slate-200 bg-white xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="min-h-72 bg-slate-900 bg-cover bg-center xl:min-h-[420px]" style={{ backgroundImage: `url(${heroMedia?.url ?? "/ekolglass-commerce-hero.png"})` }} role="img" aria-label={heroMedia?.altText ?? "Ana sayfa banner önizlemesi"} />
         <HeroMediaUpload
           defaultAltText={heroMedia?.altText ?? "EkolGlass otomotiv cam uretim hatti"}
           expectedUpdatedAt={heroMedia?.updatedAt.toISOString() ?? ""}
         />
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-5 py-4">
           <h3 className="text-base font-semibold text-slate-950">CMS sayfaları</h3>
         </div>

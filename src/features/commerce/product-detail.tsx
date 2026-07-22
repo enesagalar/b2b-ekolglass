@@ -66,9 +66,9 @@ function DetailItem({
   value: string | number | null | undefined;
 }) {
   return (
-    <div className="border-b border-slate-100 py-4 last:border-b-0 sm:border-b-0 sm:py-0">
-      <dt className="text-xs font-semibold text-slate-500">{label}</dt>
-      <dd className="mt-1.5 text-sm font-semibold text-slate-900">
+    <div className="border-b border-[#ececef] py-4 last:border-b-0 sm:border-b-0 sm:py-0">
+      <dt className="text-xs font-medium text-[#68686d]">{label}</dt>
+      <dd className="mt-1.5 text-sm font-semibold text-[#1d1d1f]">
         {value || "Belirtilmemiş"}
       </dd>
     </div>
@@ -107,17 +107,17 @@ export function ProductDetail({
     <section
       className={
         embedded
-          ? "grid min-w-0 gap-6"
-          : "mx-auto grid max-w-[1440px] gap-6 px-4 py-8 md:px-6 md:py-10"
+          ? "grid min-w-0 gap-8"
+          : "mx-auto grid max-w-[1440px] gap-8 px-4 py-7 md:px-6 md:py-12"
       }
     >
       <nav
         aria-label="Sayfa yolu"
-        className="flex flex-wrap items-center gap-2 text-sm text-slate-500"
+        className="flex flex-wrap items-center gap-2 text-sm text-[#68686d]"
       >
         <Link
           href={basePath}
-          className="inline-flex items-center gap-1.5 font-semibold text-teal-800 transition hover:text-teal-950"
+          className="inline-flex items-center gap-1.5 font-semibold text-[#00639a] transition hover:text-[#004f7c]"
         >
           <ArrowLeft size={15} aria-hidden="true" />
           Ürünler
@@ -126,21 +126,21 @@ export function ProductDetail({
         <span className="font-mono text-xs text-slate-600">{product.code}</span>
       </nav>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)] xl:items-start">
+      <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.18fr)_minmax(380px,0.82fr)] xl:items-start xl:gap-12">
         <div className="grid min-w-0 gap-5">
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="relative flex aspect-[4/3] max-h-[620px] min-h-[280px] items-center justify-center overflow-hidden bg-slate-100 sm:aspect-[16/10]">
+          <div className="overflow-hidden rounded-lg border border-[#d9dadd] bg-white">
+            <div className="relative flex aspect-[4/3] max-h-[680px] min-h-[280px] items-center justify-center overflow-hidden bg-[#fbfbfd] p-4 sm:aspect-[16/10] sm:p-8">
               {primaryImage ? (
                 // Product media can be hosted by customer-managed domains, so the native element avoids a brittle host allowlist.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={primaryImage.url}
                   alt={primaryImage.altText}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-contain transition duration-300 hover:scale-[1.01]"
                 />
               ) : (
                 <div className="grid justify-items-center gap-4 px-6 text-center text-slate-400">
-                  <span className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-300 bg-white text-teal-800 shadow-sm">
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full border border-[#d9dadd] bg-white text-[#00639a]">
                     <CarFront size={42} strokeWidth={1.3} aria-hidden="true" />
                   </span>
                   <div>
@@ -153,7 +153,7 @@ export function ProductDetail({
                   </div>
                 </div>
               )}
-              <span className="absolute left-4 top-4 rounded-md bg-slate-950/90 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+              <span className="absolute left-4 top-4 rounded-md bg-white/88 px-3 py-1.5 text-xs font-semibold text-[#303236] shadow-sm backdrop-blur-lg">
                 {product.category.name}
               </span>
             </div>
@@ -170,7 +170,7 @@ export function ProductDetail({
                   href={image.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white transition hover:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+                  className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-[#d9dadd] bg-white transition hover:border-[#00639a] focus:outline-none focus:ring-2 focus:ring-[#00639a] focus:ring-offset-2"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -184,26 +184,26 @@ export function ProductDetail({
           ) : null}
         </div>
 
-        <aside className="grid gap-5 xl:sticky xl:top-24">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <aside className="grid gap-5 xl:sticky xl:top-28 xl:border-l xl:border-[#d9dadd] xl:pl-10">
+          <div className="p-1 sm:p-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs font-semibold text-teal-800">
+              <span className="font-mono text-xs font-semibold text-[#00639a]">
                 {product.code}
               </span>
-              <span className="rounded bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-900">
+              <span className="rounded bg-[#eef0f2] px-2 py-1 text-[11px] font-semibold text-[#4b4c50]">
                 Aktif ürün
               </span>
             </div>
-            <h1 className="mt-4 text-2xl font-semibold leading-tight text-slate-950 md:text-3xl">
+            <h1 className="mt-4 text-3xl font-semibold leading-[1.15] text-[#1d1d1f] md:text-4xl">
               {product.name}
             </h1>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
+            <p className="mt-4 text-sm leading-6 text-[#68686d]">
               {vehicle
                 ? `${vehicle} için ${product.glassPosition ?? product.glassType.toLocaleLowerCase("tr-TR")} çözümü.`
                 : `${product.glassType} cam çözümü.`}
             </p>
 
-            <div className="mt-6 grid grid-cols-2 gap-3 border-y border-slate-200 py-5 text-sm">
+            <div className="mt-7 grid grid-cols-2 gap-3 border-y border-[#d9dadd] py-5 text-sm">
               <div>
                 <p className="text-xs text-slate-500">Stok durumu</p>
                 <p className="mt-1 font-semibold text-emerald-700">
@@ -225,7 +225,7 @@ export function ProductDetail({
               </p>
               {price ? (
                 <>
-                  <p className="mt-1 text-2xl font-semibold text-slate-950">
+                  <p className="mt-2 text-4xl font-semibold text-[#1d1d1f]">
                     {formatPrice(price.amount, price.priceList.currency)}
                   </p>
                   {price.discountRate > 0 ? (
@@ -258,7 +258,7 @@ export function ProductDetail({
                   </p>
                   <Link
                     href="/admin"
-                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-teal-800 hover:text-teal-950"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#00639a] hover:text-[#004f7c]"
                   >
                     Yönetim paneline dön
                     <ExternalLink size={15} aria-hidden="true" />
@@ -267,13 +267,13 @@ export function ProductDetail({
               ) : viewer.role === "GUEST" ? (
                 <Link
                   href={`/giris?next=${encodeURIComponent(detailPath)}`}
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#00639a] px-4 text-sm font-semibold text-white transition hover:bg-[#004f7c] focus:outline-none focus:ring-2 focus:ring-[#00639a] focus:ring-offset-2"
                 >
                   <ShieldCheck size={17} aria-hidden="true" />
                   Bayi fiyatı için giriş yap
                 </Link>
               ) : (
-                <div className="rounded-md border border-slate-300 bg-slate-50 p-4">
+                <div className="rounded-lg border border-[#d9dadd] bg-[#fbfbfd] p-4">
                   <div className="mb-4 flex items-start gap-3">
                     <ShoppingCart className="mt-0.5 shrink-0 text-slate-800" size={19} aria-hidden="true" />
                     <div>
@@ -289,10 +289,10 @@ export function ProductDetail({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 divide-x divide-slate-200 rounded-lg border border-slate-200 bg-white py-4 text-center shadow-sm">
+          <div className="grid grid-cols-3 divide-x divide-[#d9dadd] border-y border-[#d9dadd] bg-white py-4 text-center">
             <div className="px-2">
               <Ruler
-                className="mx-auto text-teal-800"
+                className="mx-auto text-[#00639a]"
                 size={18}
                 aria-hidden="true"
               />
@@ -302,7 +302,7 @@ export function ProductDetail({
             </div>
             <div className="px-2">
               <PackageCheck
-                className="mx-auto text-teal-800"
+                className="mx-auto text-[#00639a]"
                 size={18}
                 aria-hidden="true"
               />
@@ -312,7 +312,7 @@ export function ProductDetail({
             </div>
             <div className="px-2">
               <Check
-                className="mx-auto text-teal-800"
+                className="mx-auto text-[#00639a]"
                 size={18}
                 aria-hidden="true"
               />
@@ -324,11 +324,11 @@ export function ProductDetail({
         </aside>
       </div>
 
-      <section className="border-y border-slate-200 bg-white px-5 py-6 sm:px-6">
+      <section className="border-y border-[#d9dadd] bg-white px-5 py-8 sm:px-6">
         <div className="flex items-center gap-3">
-          <Ruler className="text-teal-800" size={21} aria-hidden="true" />
+          <Ruler className="text-[#00639a]" size={21} aria-hidden="true" />
           <div>
-            <p className="text-xs font-semibold text-teal-800">Ürün tanımı</p>
+            <p className="text-xs font-semibold text-[#00639a]">Ürün tanımı</p>
             <h2 className="mt-1 text-xl font-semibold text-slate-950">
               Teknik özellikler
             </h2>
@@ -367,15 +367,15 @@ export function ProductDetail({
       {product.compatibilities.length ? (
         <section className="grid gap-4">
           <div>
-            <p className="text-xs font-semibold text-teal-800">
+            <p className="text-xs font-semibold text-[#00639a]">
               Araç eşleşmeleri
             </p>
             <h2 className="mt-1 text-xl font-semibold text-slate-950">
               Uyumluluk listesi
             </h2>
           </div>
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="hidden grid-cols-[1fr_1fr_0.7fr_0.8fr] gap-4 bg-slate-950 px-5 py-3 text-xs font-semibold text-white md:grid">
+          <div className="overflow-hidden rounded-lg border border-[#d9dadd] bg-white">
+            <div className="hidden grid-cols-[1fr_1fr_0.7fr_0.8fr] gap-4 bg-[#f0f1f3] px-5 py-3 text-xs font-semibold text-[#303236] md:grid">
               <span>Marka / model</span>
               <span>Model yılı</span>
               <span>OEM referansı</span>
@@ -432,9 +432,9 @@ export function ProductDetail({
       {documents.length ? (
         <section className="grid gap-4">
           <div className="flex items-center gap-3">
-            <Images className="text-teal-800" size={21} aria-hidden="true" />
+            <Images className="text-[#00639a]" size={21} aria-hidden="true" />
             <div>
-              <p className="text-xs font-semibold text-teal-800">Aktif medya</p>
+              <p className="text-xs font-semibold text-[#00639a]">Aktif medya</p>
               <h2 className="mt-1 text-xl font-semibold text-slate-950">
                 Dokümanlar
               </h2>
@@ -447,9 +447,9 @@ export function ProductDetail({
                 href={document.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex min-h-20 items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+                className="flex min-h-20 items-center gap-3 rounded-lg border border-[#d9dadd] bg-white p-4 transition hover:border-[#00639a] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#00639a] focus:ring-offset-2"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-800">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#eaf4fa] text-[#00639a]">
                   <FileText size={19} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
