@@ -12,7 +12,7 @@ function Detail({ label, value }: { label: string; value: string | null | undefi
   return (
     <div>
       <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
-      <dd className="mt-2 break-words text-sm font-semibold text-slate-950">{value || "Tanımlanmamış"}</dd>
+      <dd className="mt-2 break-words text-sm font-semibold text-slate-950">{value || "Bilgi eklenmemiş"}</dd>
     </div>
   );
 }
@@ -52,9 +52,18 @@ export default async function DealerAccountPage() {
             <h3 className="text-base font-semibold text-slate-950">Ticari koşullar</h3>
           </div>
           <dl className="grid gap-6 p-5">
-            <Detail label="Ödeme koşulu" value={company.paymentTerms} />
-            <Detail label="Kredi limiti" value={company.creditLimit ? formatPortalMoney(company.creditLimit) : null} />
-            <Detail label="Fiyat grubu kodu" value={company.customerGroup?.code} />
+            <Detail label="Vade (ödeme süresi)" value={company.paymentTerms ?? "Vade tanımlanmamış"} />
+            <Detail
+              label="Kredi limiti"
+              value={
+                company.creditPolicy === "UNLIMITED"
+                  ? "Limitsiz"
+                  : company.creditPolicy === "LIMITED" && company.creditLimit
+                    ? formatPortalMoney(company.creditLimit)
+                    : "Her siparişte ticari onay"
+              }
+            />
+            <Detail label="Fiyat grubu" value={company.customerGroup?.name} />
           </dl>
         </div>
       </section>

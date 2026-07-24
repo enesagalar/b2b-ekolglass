@@ -41,11 +41,17 @@ function isItemActive(pathname: string, href: string) {
   return pathname === href || (href !== "/bayi" && pathname.startsWith(`${href}/`));
 }
 
-function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function DealerSidebar({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate?: (href: string) => void;
+}) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-black/7 px-4 py-4">
-        <Link href="/" onClick={onNavigate} className="flex items-center gap-3">
+        <Link href="/" onClick={() => onNavigate?.("/")} prefetch className="flex items-center gap-3">
           <BrandLogo compact />
           <span>
             <span className="block text-sm font-semibold text-slate-950">EkolGlass Bayi</span>
@@ -65,7 +71,8 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={onNavigate}
+                onClick={() => onNavigate?.(item.href)}
+                prefetch
                 aria-current={active ? "page" : undefined}
                 className={`flex min-h-13 items-center gap-3 rounded-xl px-3 py-2 transition ${
                   active ? "portal-nav-item-active" : "portal-nav-item"
@@ -86,7 +93,8 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
       <div className="border-t border-black/7 p-4">
         <Link
           href="/"
-          onClick={onNavigate}
+          onClick={() => onNavigate?.("/")}
+          prefetch
           className="portal-nav-item flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition"
         >
           <Home size={17} aria-hidden="true" />
@@ -108,16 +116,29 @@ export function DealerShell({
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navigationRequest, setNavigationRequest] = useState<{
+    href: string;
+    fromPathname: string;
+  } | null>(null);
   const activeItem = useMemo(
     () => navigation.find((item) => isItemActive(pathname, item.href)) ?? navigation[0],
     [pathname],
   );
   const ActiveIcon = activeItem.icon;
 
+  const startNavigation = (href: string) => {
+    if (href !== pathname) {
+      setNavigationRequest({ href, fromPathname: pathname });
+    }
+  };
+  const navigationPending =
+    navigationRequest?.fromPathname === pathname &&
+    navigationRequest.href !== pathname;
+
   return (
     <div className="portal-shell min-h-screen text-[#1d1d1f]">
       <aside className="portal-sidebar fixed inset-y-3 left-3 z-30 hidden w-[252px] overflow-hidden rounded-[20px] xl:block">
-        <DealerSidebar pathname={pathname} />
+        <DealerSidebar pathname={pathname} onNavigate={startNavigation} />
       </aside>
 
       <NavigationDrawer
@@ -125,11 +146,20 @@ export function DealerShell({
         onClose={() => setMobileOpen(false)}
         ariaLabel="Bayi navigasyonu"
       >
-        <DealerSidebar pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+        <DealerSidebar
+          pathname={pathname}
+          onNavigate={(href) => {
+            startNavigation(href);
+            setMobileOpen(false);
+          }}
+        />
       </NavigationDrawer>
 
       <div className="min-w-0 xl:pl-[276px]">
-        <header className="portal-topbar sticky top-2 z-20 mx-2 rounded-2xl md:top-3 md:mx-3">
+        <header
+          className="portal-topbar sticky top-2 z-20 mx-2 overflow-hidden rounded-2xl md:top-3 md:mx-3"
+          aria-busy={navigationPending}
+        >
           <div className="flex min-h-[72px] items-center justify-between gap-4 px-4 py-3 md:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -169,6 +199,11 @@ export function DealerShell({
               </form>
             </div>
           </div>
+          {navigationPending ? (
+            <div className="route-progress-track rounded-none" aria-hidden="true">
+              <span className="route-progress-bar" />
+            </div>
+          ) : null}
         </header>
 
         <main className="portal-workspace mx-auto w-full max-w-[1520px] px-4 py-7 md:px-7 md:py-9">{children}</main>

@@ -198,14 +198,15 @@ function SidebarContent({
 }: {
   role: string;
   activeHref?: string;
-  onNavigate?: () => void;
+  onNavigate?: (href: string) => void;
 }) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-black/7 px-4 py-4">
         <Link
           href="/admin"
-          onClick={onNavigate}
+          onClick={() => onNavigate?.("/admin")}
+          prefetch
           className="flex items-center gap-3"
         >
           <BrandLogo compact />
@@ -270,7 +271,8 @@ function SidebarContent({
                     <Link
                       key={item.label}
                       href={item.href}
-                      onClick={onNavigate}
+                      onClick={() => onNavigate?.(item.href!)}
+                      prefetch
                       aria-current={isActive ? "page" : undefined}
                       className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 transition ${className}`}
                     >
@@ -287,7 +289,8 @@ function SidebarContent({
       <div className="border-t border-black/7 p-4">
         <Link
           href="/"
-          onClick={onNavigate}
+          onClick={() => onNavigate?.("/")}
+          prefetch
           className="portal-nav-item flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition"
         >
           <Home size={17} aria-hidden="true" />
@@ -311,16 +314,33 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [navigationRequest, setNavigationRequest] = useState<{
+    href: string;
+    fromPathname: string;
+  } | null>(null);
   const activeItem = useMemo(
     () => getActiveItem(pathname, user.role),
     [pathname, user.role],
   );
   const ActiveIcon = activeItem.icon;
 
+  const startNavigation = (href: string) => {
+    if (href !== pathname) {
+      setNavigationRequest({ href, fromPathname: pathname });
+    }
+  };
+  const navigationPending =
+    navigationRequest?.fromPathname === pathname &&
+    navigationRequest.href !== pathname;
+
   return (
     <div className="portal-shell min-h-screen text-[#1d1d1f]">
       <aside className="portal-sidebar fixed inset-y-3 left-3 z-30 hidden w-[252px] overflow-hidden rounded-[20px] xl:block">
-        <SidebarContent role={user.role} activeHref={activeItem.href} />
+        <SidebarContent
+          role={user.role}
+          activeHref={activeItem.href}
+          onNavigate={startNavigation}
+        />
       </aside>
 
       <NavigationDrawer
@@ -331,12 +351,18 @@ export function AdminShell({
         <SidebarContent
           role={user.role}
           activeHref={activeItem.href}
-          onNavigate={() => setIsMobileMenuOpen(false)}
+          onNavigate={(href) => {
+            startNavigation(href);
+            setIsMobileMenuOpen(false);
+          }}
         />
       </NavigationDrawer>
 
       <div className="xl:pl-[276px]">
-        <header className="portal-topbar sticky top-2 z-20 mx-2 rounded-2xl md:top-3 md:mx-3">
+        <header
+          className="portal-topbar sticky top-2 z-20 mx-2 overflow-hidden rounded-2xl md:top-3 md:mx-3"
+          aria-busy={navigationPending}
+        >
           <div className="flex min-h-[72px] items-center justify-between gap-4 px-4 py-3 md:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -384,6 +410,11 @@ export function AdminShell({
               </form>
             </div>
           </div>
+          {navigationPending ? (
+            <div className="route-progress-track rounded-none" aria-hidden="true">
+              <span className="route-progress-bar" />
+            </div>
+          ) : null}
         </header>
 
         <main className="portal-workspace mx-auto w-full max-w-[1520px] px-4 py-7 md:px-7 md:py-9">

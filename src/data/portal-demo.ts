@@ -76,7 +76,7 @@ export const catalogPreview = [
     category: "Yat / Marine Camı",
     vehicle: "Proje bazlı",
     type: "Lamine / Kavisli",
-    stock: "Stok sorunuz",
+    stock: "Stok teyidi gerekli",
     mode: "Sadece teklif",
   },
 ];

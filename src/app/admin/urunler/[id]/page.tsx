@@ -347,7 +347,7 @@ export default async function AdminProductDetailPage({
                     <div>
                       <p className="text-xs font-semibold text-slate-500">Rezerve</p>
                       <p className="mt-2 font-semibold text-amber-700">{stock.reservedQuantity}</p>
-                      <p className="mt-1 text-xs text-slate-500">{Math.max(0, stock.quantity - stock.reservedQuantity)} uygun</p>
+                      <p className="mt-1 text-xs text-slate-500">{Math.max(0, stock.quantity - stock.reservedQuantity)} kullanılabilir</p>
                     </div>
                     <label className={labelClass}>
                       Görünürlük

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { orderExposureStatuses } from "@/domain/order-credit";
 import { orderStatuses } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -59,6 +60,7 @@ export async function getDealerDashboardData(companyId: string) {
     activeProducts,
     recentOrders,
     recentQuotes,
+    creditExposure,
   ] = await Promise.all([
     prisma.order.count({
       where: { ...ownership, status: { in: openOrderStatuses } },
@@ -101,6 +103,14 @@ export async function getDealerDashboardData(companyId: string) {
         _count: { select: { items: true } },
       },
     }),
+    prisma.order.aggregate({
+      where: {
+        ...ownership,
+        status: { in: [...orderExposureStatuses] },
+        currency: "TRY",
+      },
+      _sum: { subtotal: true },
+    }),
   ]);
 
   return {
@@ -110,6 +120,9 @@ export async function getDealerDashboardData(companyId: string) {
     activeProducts,
     recentOrders,
     recentQuotes,
+    creditExposure: new Prisma.Decimal(
+      creditExposure._sum.subtotal?.toString() ?? "0",
+    ),
   };
 }
 
@@ -325,6 +338,7 @@ export function getDealerAccountData(companyId: string) {
       city: true,
       country: true,
       paymentTerms: true,
+      creditPolicy: true,
       creditLimit: true,
       customerGroup: { select: { code: true, name: true } },
       addresses: {

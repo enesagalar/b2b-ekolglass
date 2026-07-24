@@ -20,7 +20,11 @@ import {
 } from "@/domain/validation";
 import { prisma } from "@/lib/prisma";
 
-export type OrderActionState = { message?: string; ok?: boolean };
+export type OrderActionState = {
+  message?: string;
+  ok?: boolean;
+  cartQuantity?: number;
+};
 
 async function actor(nextPath: string) {
   const { user, company } = await requireDealerContext(nextPath);
@@ -53,8 +57,20 @@ export async function addOrderCartItemAction(
   } catch (error) {
     return { message: messageOf(error) };
   }
-  revalidatePath("/sepet");
-  redirect("/sepet?added=1");
+  const cartTotal = await prisma.orderCartItem.aggregate({
+    where: {
+      cart: {
+        companyId: orderActor.companyId,
+        ownerUserId: orderActor.userId,
+      },
+    },
+    _sum: { quantity: true },
+  });
+  return {
+    ok: true,
+    message: "Ürün sipariş sepetine eklendi.",
+    cartQuantity: cartTotal._sum.quantity ?? 0,
+  };
 }
 
 export async function updateOrderCartItemAction(formData: FormData) {
@@ -141,7 +157,7 @@ export async function submitOrderCartAction(
   });
   if (!parsed.success) return { message: parsed.error.issues[0]?.message };
   const orderActor = await actor("/sepet");
-  let order: { id: string };
+  let order: { id: string; status: string };
   try {
     order = await submitOrderCart(orderActor, parsed.data);
   } catch (error) {
@@ -149,5 +165,7 @@ export async function submitOrderCartAction(
   }
   revalidatePath("/bayi");
   revalidatePath("/bayi/siparisler");
-  redirect(`/bayi/siparisler/${order.id}?created=1`);
+  redirect(
+    `/bayi/siparisler/${order.id}?created=1${order.status === "WAITING_FOR_APPROVAL" ? "&review=1" : ""}`,
+  );
 }

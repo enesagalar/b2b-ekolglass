@@ -38,7 +38,7 @@ async function getDashboardData() {
     }),
     prisma.order.count({
       where: {
-        status: { in: ["SUBMITTED", "WAITING_FOR_APPROVAL", "CONFIRMED"] },
+        status: { in: ["SUBMITTED", "WAITING_FOR_APPROVAL"] },
       },
     }),
     prisma.stockItem.count({
@@ -87,14 +87,14 @@ async function getDashboardData() {
       {
         label: "Onay bekleyen sipariş",
         value: approvalOrders,
-        href: "/admin/siparisler?status=SUBMITTED",
+        href: "/admin/siparisler",
         icon: ClipboardCheck,
         tone: "slate",
       },
       {
         label: "Stok alarmı",
         value: lowStockCount,
-        href: "/admin/urunler",
+        href: "/admin/stok",
         icon: Boxes,
         tone: lowStockCount > 0 ? "amber" : "teal",
       },
@@ -166,16 +166,16 @@ export default async function AdminPage() {
     },
     {
       title: "Stok alarmı olan ürünleri kontrol et",
-      description: "Stok satırları ürün yönetimi ekranından güncellenebilir.",
-      value: dashboard.metrics[3].value,
+      description: "Kritik ve tükenen stokları stok merkezinden inceleyin.",
+      value: dashboard.metrics[2].value,
       label: "stok uyarısı",
-      href: "/admin/urunler",
+      href: "/admin/stok",
     },
     {
       title: "Sipariş operasyonunu yönet",
       description:
         "Yeni siparişleri, stok rezervasyonlarını ve teslimat bilgilerini inceleyin.",
-      value: dashboard.metrics[1].value + dashboard.metrics[2].value,
+      value: dashboard.metrics[1].value + dashboard.metrics[3].value,
       label: "operasyon kalemi",
       href: "/admin/siparisler",
     },
@@ -316,7 +316,7 @@ export default async function AdminPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-slate-900">
-                      {item.quantity - item.reservedQuantity} uygun
+                      {item.quantity - item.reservedQuantity} kullanılabilir
                     </span>
                     <span className="rounded bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
                       {getStatusLabel(item.status)}

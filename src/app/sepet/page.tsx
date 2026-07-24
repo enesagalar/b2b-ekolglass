@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowLeft,
+  CheckCircle2,
   PackageSearch,
   Save,
   ShoppingCart,
@@ -12,6 +14,10 @@ import { requireDealerContext } from "@/data/dealer-context";
 import { getOrderCart } from "@/data/order-cart";
 import { selectCatalogPriceForQuantity } from "@/domain/catalog";
 import {
+  orderExposureStatuses,
+  requiresCommercialReview,
+} from "@/domain/order-credit";
+import {
   CommerceFooter,
   CommerceHeader,
 } from "@/features/commerce/commerce-header";
@@ -20,6 +26,7 @@ import {
   updateOrderCartItemAction,
 } from "@/features/orders/actions";
 import { NewAddressForm, SubmitOrderForm } from "@/features/orders/order-forms";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +72,7 @@ export default async function OrderCartPage({
     name: user.name,
     companyId: company.id,
     companyName: company.displayName,
+    cartQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
   };
   const pricedItems = items.map((item) => {
     const price = selectCatalogPriceForQuantity(
@@ -90,6 +98,60 @@ export default async function OrderCartPage({
     (sum, item) => sum + (item.lineTotal ?? 0),
     0,
   );
+  const currencies = [
+    ...new Set(
+      pricedItems.flatMap((item) =>
+        item.price ? [item.price.priceList.currency] : [],
+      ),
+    ),
+  ];
+  const hasMissingPrice = pricedItems.some((item) => !item.price);
+  const hasStockIssue = pricedItems.some(
+    (item) => item.available < item.quantity,
+  );
+  const hasCurrencyIssue = currencies.length > 1;
+  const checkoutReady =
+    items.length > 0 &&
+    !hasMissingPrice &&
+    !hasStockIssue &&
+    !hasCurrencyIssue;
+  const exposureAggregate = checkoutReady
+    ? await prisma.order.aggregate({
+        where: {
+          companyId: company.id,
+          status: { in: [...orderExposureStatuses] },
+          currency,
+        },
+        _sum: { subtotal: true },
+      })
+    : null;
+  const creditExposureBefore = new Prisma.Decimal(
+    exposureAggregate?._sum.subtotal?.toString() ?? "0",
+  );
+  const creditExposureAfter = creditExposureBefore.add(
+    new Prisma.Decimal(subtotal),
+  );
+  const commercialReviewRequired =
+    checkoutReady &&
+    requiresCommercialReview({
+      policy: company.creditPolicy,
+      limit: company.creditLimit,
+      exposureAfter: creditExposureAfter,
+      currency,
+    });
+  const creditOverage =
+    company.creditPolicy === "LIMITED" &&
+    company.creditLimit &&
+    creditExposureAfter.gt(company.creditLimit)
+      ? creditExposureAfter.sub(company.creditLimit)
+      : null;
+  const checkoutIssue = hasMissingPrice
+    ? "Sepette fiyatı bulunmayan ürün var. Ürün fiyatı tanımlanmadan sipariş gönderilemez."
+    : hasStockIssue
+      ? "Sepette kullanılabilir stoktan fazla miktar bulunuyor. Adedi güncelleyin."
+      : hasCurrencyIssue
+        ? "Farklı para birimindeki ürünler aynı siparişte gönderilemez."
+        : null;
 
   return (
     <main className="min-h-screen overflow-x-clip bg-[#f5f5f7] text-[#1d1d1f]">
@@ -238,12 +300,101 @@ export default async function OrderCartPage({
                   operasyon onayında netleşir.
                 </p>
               </div>
+              <div className="border-b border-[#d9dadd] py-5">
+                <p className="text-xs font-semibold uppercase text-[#68686d]">
+                  Ticari hesap
+                </p>
+                <dl className="mt-3 grid gap-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-[#68686d]">Vade</dt>
+                    <dd className="text-right font-semibold">
+                      {company.paymentTerms ?? "Vade tanımlanmamış"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-[#68686d]">Kredi politikası</dt>
+                    <dd className="text-right font-semibold">
+                      {company.creditPolicy === "UNLIMITED"
+                        ? "Limitsiz"
+                        : company.creditPolicy === "LIMITED"
+                          ? "Limitli"
+                          : "Ticari onay gerekli"}
+                    </dd>
+                  </div>
+                  {company.creditPolicy === "LIMITED" &&
+                  company.creditLimit ? (
+                    <>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-[#68686d]">Kredi limiti</dt>
+                        <dd className="font-semibold">
+                          {money(company.creditLimit, "TRY")}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-[#68686d]">Açık sipariş riski</dt>
+                        <dd className="font-semibold">
+                          {money(creditExposureBefore, currency)}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-[#68686d]">
+                          Sipariş sonrası risk
+                        </dt>
+                        <dd className="font-semibold">
+                          {money(creditExposureAfter, currency)}
+                        </dd>
+                      </div>
+                    </>
+                  ) : null}
+                </dl>
+                {company.creditPolicy === "UNLIMITED" ? (
+                  <div className="mt-4 flex gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
+                    <CheckCircle2
+                      size={17}
+                      className="mt-0.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    Bu firma için kredi limiti uygulanmıyor.
+                  </div>
+                ) : commercialReviewRequired ? (
+                  <div className="mt-4 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950">
+                    <AlertTriangle
+                      size={17}
+                      className="mt-0.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      {creditOverage
+                        ? `Bu sipariş kredi limitini ${money(creditOverage, currency)} aşar.`
+                        : "Bu hesap için ticari onay gerekiyor."}{" "}
+                      Sipariş kaydedilir ve stok ayrılır; ticari onay verilmeden
+                      hazırlık süreci başlamaz.
+                    </span>
+                  </div>
+                ) : null}
+                {checkoutIssue ? (
+                  <div className="mt-4 flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-900">
+                    <AlertTriangle
+                      size={17}
+                      className="mt-0.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    {checkoutIssue}
+                  </div>
+                ) : null}
+              </div>
               <div className="pt-5">
                 <SubmitOrderForm
                   addresses={addresses}
                   idempotencyKey={randomUUID()}
                   cartId={cart!.id}
                   cartVersion={cart!.version}
+                  disabled={!checkoutReady}
+                  submitLabel={
+                    commercialReviewRequired
+                      ? "Ticari onaya gönder"
+                      : "Siparişi gönder"
+                  }
                 />
               </div>
             </aside>

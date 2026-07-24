@@ -243,8 +243,8 @@ export function resolveCatalogStockSummary(stockItems: CatalogStockCandidate[], 
     const availableQuantity = Math.max(0, totalQuantity - totalReserved);
 
     return {
-      label: totalQuantity > 0 ? `${availableQuantity} uygun / ${totalQuantity} stok` : "Stok sorunuz",
-      detail: stockItems.length > 0 ? `${stockItems.length} depo` : "Depo kaydi yok",
+      label: totalQuantity > 0 ? `${availableQuantity} kullanılabilir / ${totalQuantity} toplam` : "Stok teyidi gerekli",
+      detail: stockItems.length > 0 ? `${stockItems.length} depo` : "Depo kaydı bulunmuyor",
       status: deriveStockStatus(totalQuantity, totalReserved),
       isDetailed: true,
     };
@@ -253,8 +253,8 @@ export function resolveCatalogStockSummary(stockItems: CatalogStockCandidate[], 
   const simplifiedStock = stockItems.find((item) => item.visibility === "SIMPLIFIED");
 
   return {
-    label: simplifiedStock ? getStatusLabel(simplifiedStock.status) : "Stok sorunuz",
-    detail: "Net adet yetkiye bagli",
+    label: simplifiedStock ? getStatusLabel(simplifiedStock.status) : "Stok teyidi gerekli",
+    detail: "Net stok adedi yetkinize göre gösterilir",
     status: simplifiedStock?.status ?? "ASK_FOR_AVAILABILITY",
     isDetailed: false,
   };

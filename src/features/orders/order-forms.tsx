@@ -1,11 +1,20 @@
 "use client";
 
-import { LoaderCircle, MapPin, Plus, Send, ShoppingCart } from "lucide-react";
-import { useActionState } from "react";
+import {
+  CheckCircle2,
+  LoaderCircle,
+  MapPin,
+  Plus,
+  Send,
+  ShoppingCart,
+} from "lucide-react";
+import Link from "next/link";
+import { useActionState, useEffect, useState, useTransition } from "react";
 
 import {
   addOrderCartItemAction,
   createDealerAddressAction,
+  type OrderActionState,
   submitOrderCartAction,
 } from "@/features/orders/actions";
 
@@ -18,7 +27,36 @@ export function AddToOrderCartForm({
   disabled?: boolean;
   unavailableReason?: string;
 }) {
-  const [state, action, pending] = useActionState(addOrderCartItemAction, {});
+  const [state, setState] = useState<OrderActionState>({});
+  const [pending, startTransition] = useTransition();
+  const [dismissedQuantity, setDismissedQuantity] = useState<number | null>(
+    null,
+  );
+  const action = (formData: FormData) => {
+    startTransition(async () => {
+      setState(await addOrderCartItemAction({}, formData));
+    });
+  };
+  const showConfirmation =
+    Boolean(state.ok) &&
+    typeof state.cartQuantity === "number" &&
+    dismissedQuantity !== state.cartQuantity;
+
+  useEffect(() => {
+    if (!state.ok || typeof state.cartQuantity !== "number") return;
+    window.dispatchEvent(
+      new CustomEvent("ekolglass:cart-updated", {
+        detail: { quantity: state.cartQuantity },
+      }),
+    );
+    const quantity = state.cartQuantity;
+    const timer = window.setTimeout(
+      () => setDismissedQuantity(quantity),
+      4200,
+    );
+    return () => window.clearTimeout(timer);
+  }, [state]);
+
   return (
     <form action={action} className="grid gap-2">
       <input type="hidden" name="productId" value={productId} />
@@ -52,10 +90,32 @@ export function AddToOrderCartForm({
           {unavailableReason}
         </p>
       ) : null}
-      {state.message ? (
+      {state.message && !state.ok ? (
         <p role="status" className="text-xs font-semibold text-red-700">
           {state.message}
         </p>
+      ) : null}
+      {showConfirmation ? (
+        <div
+          role="status"
+          className="cart-confirmation fixed bottom-5 left-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-white/96 p-4 text-emerald-950 shadow-[0_18px_55px_rgba(20,29,36,0.18)] backdrop-blur-xl sm:left-auto sm:right-5 sm:w-[360px]"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+            <CheckCircle2 size={21} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block text-sm">Sepete eklendi</strong>
+            <span className="mt-0.5 block text-xs text-slate-600">
+              Sepetinizde {state.cartQuantity} ürün bulunuyor.
+            </span>
+          </span>
+          <Link
+            href="/sepet"
+            className="shrink-0 text-xs font-semibold text-[#00639a]"
+          >
+            Sepeti aç
+          </Link>
+        </div>
       ) : null}
     </form>
   );
@@ -151,11 +211,15 @@ export function SubmitOrderForm({
   idempotencyKey,
   cartId,
   cartVersion,
+  disabled = false,
+  submitLabel = "Siparişi gönder",
 }: {
   addresses: CheckoutAddress[];
   idempotencyKey: string;
   cartId: string;
   cartVersion: number;
+  disabled?: boolean;
+  submitLabel?: string;
 }) {
   const [state, action, pending] = useActionState(submitOrderCartAction, {});
   return (
@@ -217,7 +281,7 @@ export function SubmitOrderForm({
         </p>
       ) : null}
       <button
-        disabled={pending || !addresses.length}
+        disabled={pending || disabled || !addresses.length}
         className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 text-sm font-semibold text-white disabled:opacity-50"
       >
         {pending ? (
@@ -225,7 +289,7 @@ export function SubmitOrderForm({
         ) : (
           <Send size={18} />
         )}
-        Siparişi gönder
+        {submitLabel}
       </button>
     </form>
   );

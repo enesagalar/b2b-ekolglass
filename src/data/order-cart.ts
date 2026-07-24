@@ -283,6 +283,7 @@ export async function submitOrderCart(
       },
       select: {
         id: true,
+        status: true,
         companyId: true,
         createdById: true,
         requestHash: true,
@@ -455,13 +456,16 @@ export async function submitOrderCart(
       exposureAfter: creditExposureAfter,
       currency: currencies[0],
     });
+    const initialStatus = commercialReviewRequired
+      ? "WAITING_FOR_APPROVAL"
+      : "SUBMITTED";
 
     const order = await tx.order.create({
       data: {
         orderNumber: `SPR-${pricedAt.toISOString().slice(0, 10).replaceAll("-", "")}-${randomUUID().slice(0, 8).toUpperCase()}`,
         companyId: actor.companyId,
         createdById: actor.userId,
-        status: "SUBMITTED",
+        status: initialStatus,
         currency: currencies[0],
         subtotal,
         paymentTermsSnapshot: activeUser.company?.paymentTerms,
@@ -487,7 +491,7 @@ export async function submitOrderCart(
         sourceCartId: cart.id,
         sourceCartVersion: cart.version,
       },
-      select: { id: true, companyId: true, createdById: true },
+      select: { id: true, companyId: true, createdById: true, status: true },
     });
 
     for (const snapshot of snapshots) {
@@ -569,9 +573,11 @@ export async function submitOrderCart(
     await tx.orderStatusHistory.create({
       data: {
         orderId: order.id,
-        toStatus: "SUBMITTED",
+        toStatus: initialStatus,
         changedById: actor.userId,
-        note: "Bayi sipariş sepetinden gönderildi.",
+        note: commercialReviewRequired
+          ? "Bayi sipariş sepetinden gönderildi; ticari onaya alındı."
+          : "Bayi sipariş sepetinden gönderildi.",
       },
     });
     await tx.auditLog.create({

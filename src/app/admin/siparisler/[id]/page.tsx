@@ -211,8 +211,8 @@ export default async function AdminOrderDetailPage({
               Ticari değerlendirme
             </p>
             <dl className="mt-4 grid gap-3 text-sm">
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">Ödeme koşulu</dt><dd className="text-right font-semibold">{order.paymentTermsSnapshot ?? "Tanımlanmadı"}</dd></div>
-              <div className="flex justify-between gap-4"><dt className="text-slate-500">Kredi politikası</dt><dd className="text-right font-semibold">{order.creditPolicySnapshot === "UNLIMITED" ? "Limitsiz" : order.creditPolicySnapshot === "LIMITED" ? "Limitli" : "Tanımlanmadı"}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Vade (ödeme süresi)</dt><dd className="text-right font-semibold">{order.paymentTermsSnapshot ?? "Vade tanımlanmadı"}</dd></div>
+              <div className="flex justify-between gap-4"><dt className="text-slate-500">Kredi politikası</dt><dd className="text-right font-semibold">{order.creditPolicySnapshot === "UNLIMITED" ? "Limitsiz" : order.creditPolicySnapshot === "LIMITED" ? "Limitli" : "Her siparişte ticari onay"}</dd></div>
               <div className="flex justify-between gap-4"><dt className="text-slate-500">Kredi limiti</dt><dd className="text-right font-semibold">{order.creditLimitSnapshot ? formatPortalMoney(order.creditLimitSnapshot, order.currency) : "-"}</dd></div>
               <div className="flex justify-between gap-4"><dt className="text-slate-500">Önceki açık sipariş</dt><dd className="text-right font-semibold">{formatPortalMoney(order.creditExposureBefore, order.currency)}</dd></div>
               <div className="flex justify-between gap-4"><dt className="text-slate-500">Sipariş sonrası risk</dt><dd className="text-right font-semibold">{formatPortalMoney(order.creditExposureAfter, order.currency)}</dd></div>

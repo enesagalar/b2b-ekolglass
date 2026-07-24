@@ -12,7 +12,7 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/brand-logo";
 import { NavigationDrawer } from "@/components/navigation-drawer";
@@ -24,11 +24,18 @@ export type CommerceIdentity =
       name: string;
       companyId: string;
       companyName: string;
+      cartQuantity: number;
     }
   | { audience: "admin"; name: string }
   | null;
 
-function AccountActions({ identity }: { identity: CommerceIdentity }) {
+function AccountActions({
+  identity,
+  cartQuantity,
+}: {
+  identity: CommerceIdentity;
+  cartQuantity: number;
+}) {
   if (identity?.audience === "dealer") {
     return (
       <div className="flex items-center gap-1.5">
@@ -43,9 +50,17 @@ function AccountActions({ identity }: { identity: CommerceIdentity }) {
           href="/sepet"
           aria-label="Sipariş sepeti"
           title="Sipariş sepeti"
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-[#303236] hover:bg-black/5"
+          className="relative flex h-11 w-11 items-center justify-center rounded-lg text-[#303236] hover:bg-black/5"
         >
           <ShoppingBag size={19} aria-hidden="true" />
+          {cartQuantity > 0 ? (
+            <span
+              className="absolute right-0.5 top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-[#00639a] px-1 text-[10px] font-semibold leading-4 text-white"
+              aria-label={`Sepette ${cartQuantity} ürün var`}
+            >
+              {cartQuantity > 99 ? "99+" : cartQuantity}
+            </span>
+          ) : null}
         </Link>
         <form action={logout}>
           <button
@@ -98,6 +113,22 @@ function AccountActions({ identity }: { identity: CommerceIdentity }) {
 
 export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartQuantity, setCartQuantity] = useState(
+    identity?.audience === "dealer" ? identity.cartQuantity : 0,
+  );
+
+  useEffect(() => {
+    if (identity?.audience !== "dealer") return;
+
+    const updateCart = (event: Event) => {
+      const quantity = (event as CustomEvent<{ quantity?: number }>).detail
+        ?.quantity;
+      if (typeof quantity === "number") setCartQuantity(quantity);
+    };
+    window.addEventListener("ekolglass:cart-updated", updateCart);
+    return () =>
+      window.removeEventListener("ekolglass:cart-updated", updateCart);
+  }, [identity]);
 
   return (
     <header className="sticky top-0 z-30 px-2 pt-2 sm:px-4 sm:pt-3">
@@ -138,7 +169,10 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
           </form>
 
           <div className="ml-auto hidden sm:block lg:ml-2">
-            <AccountActions identity={identity} />
+            <AccountActions
+              identity={identity}
+              cartQuantity={cartQuantity}
+            />
           </div>
 
           <button
@@ -173,7 +207,14 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
               <>
                 <Link href="/bayi" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Bayi çalışma alanı</Link>
                 <Link href="/bayi/siparisler" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Siparişlerim</Link>
-                <Link href="/sepet" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Sipariş sepeti</Link>
+                <Link href="/sepet" onClick={() => setMobileOpen(false)} className="flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">
+                  Sipariş sepeti
+                  {cartQuantity > 0 ? (
+                    <span className="rounded-full bg-[#00639a] px-2 py-0.5 text-xs font-semibold text-white">
+                      {cartQuantity}
+                    </span>
+                  ) : null}
+                </Link>
                 <form action={logout}><button type="submit" className="flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-medium hover:bg-white/72"><LogOut size={17} /> Çıkış yap</button></form>
               </>
             ) : identity?.audience === "admin" ? (

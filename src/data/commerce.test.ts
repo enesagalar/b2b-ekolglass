@@ -2,12 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   findCompany: vi.fn(),
+  findCart: vi.fn(),
   getCurrentUser: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ getCurrentUser: mocks.getCurrentUser }));
 vi.mock("@/lib/prisma", () => ({
-  prisma: { company: { findUnique: mocks.findCompany } },
+  prisma: {
+    company: { findUnique: mocks.findCompany },
+    orderCart: { findUnique: mocks.findCart },
+  },
 }));
 
 import { getCommerceIdentity } from "./commerce";
@@ -15,6 +19,7 @@ import { getCommerceIdentity } from "./commerce";
 describe("commerce identity", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.findCart.mockResolvedValue(null);
   });
 
   it("exposes an admin identity without looking up a dealer company", async () => {
@@ -43,16 +48,29 @@ describe("commerce identity", () => {
       displayName: "Ekol Dealer",
       status: "APPROVED",
     });
+    mocks.findCart.mockResolvedValue({
+      items: [{ quantity: 2 }, { quantity: 3 }],
+    });
 
     await expect(getCommerceIdentity()).resolves.toEqual({
       audience: "dealer",
       name: "Dealer User",
       companyId: "company-1",
       companyName: "Ekol Dealer",
+      cartQuantity: 5,
     });
     expect(mocks.findCompany).toHaveBeenCalledWith({
       where: { id: "company-1" },
       select: { displayName: true, status: true },
+    });
+    expect(mocks.findCart).toHaveBeenCalledWith({
+      where: {
+        companyId_ownerUserId: {
+          companyId: "company-1",
+          ownerUserId: "dealer-1",
+        },
+      },
+      select: { items: { select: { quantity: true } } },
     });
   });
 

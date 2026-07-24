@@ -10,7 +10,10 @@ Tamamlandi.
 - `CANCELLED`, `DELIVERED` ve `DRAFT` acik siparis exposure'ina dahil degildir.
 - Ilk surumde kredi limiti TRY bazlidir. Farkli para birimi ticari inceleme gerektirir; otomatik kur donusumu yapilmaz.
 - `UNSET` manuel ticari inceleme, `LIMITED` tanimli limit kontrolu, `UNLIMITED` acik limitsiz politika anlamina gelir.
-- Limit asimi bayi siparisini kaybetmez veya checkout'u engellemez. Siparis olusur, stok ayrilir ve ticari onaya gider.
+- Limit asimi bayi siparisini kaybetmez veya checkout'u engellemez. Siparis
+  `WAITING_FOR_APPROVAL` durumunda olusur, stok ayrilir ve ticari onaya gider.
+- Bayi checkout'u limit, mevcut exposure, siparis sonrasi exposure ve asim
+  tutarini gonderimden once gosterir.
 - `CONFIRMED` gecisinde guncel firma kosullari ve exposure ayni transaction icinde yeniden hesaplanir.
 - Riskli onay icin hem `order.approve` hem `order.credit.override` yetkisi ve en az 10 karakterlik ic gerekce gerekir.
 

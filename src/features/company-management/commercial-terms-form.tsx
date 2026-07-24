@@ -41,7 +41,7 @@ export function CompanyDiscountForm({
             Ticari koşulları düzenle
           </label>
           <p className="mt-1 text-xs leading-5 text-slate-600">
-            Fiyat iskontosu, ödeme koşulu ve kredi politikası yeni sipariş değerlendirmelerinde kullanılır.
+            Fiyat iskontosu, vade ve kredi politikası yeni sipariş değerlendirmelerinde kullanılır.
           </p>
         </div>
       </div>
@@ -61,13 +61,13 @@ export function CompanyDiscountForm({
           />
         </label>
         <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
-          Ödeme koşulu
-          <input name="paymentTerms" defaultValue={paymentTerms} placeholder="30 gün" className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" />
+          Vade (ödeme süresi)
+          <input name="paymentTerms" defaultValue={paymentTerms} placeholder="Örn. 30 gün vade" className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" />
         </label>
         <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
           Kredi politikası
           <select name="creditPolicy" value={policy} onChange={(event) => setPolicy(event.target.value)} className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm">
-            <option value="UNSET">Tanımlanmadı</option>
+            <option value="UNSET">Her siparişte ticari onay</option>
             <option value="LIMITED">Limitli</option>
             <option value="UNLIMITED">Limitsiz</option>
           </select>

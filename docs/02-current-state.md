@@ -1,5 +1,34 @@
 # Guncel Proje Durumu
 
+## 2026-07-24 - Faz 7.3 gorev odakli UX paketi 2
+
+- Limitli kredi politikasinda acik siparis riski ve yeni sepet toplami ayni TRY
+  exposure sozlesmesiyle hesaplanir.
+- Limit asan veya ticari politikasi tanimsiz siparisler normal `SUBMITTED`
+  yerine `WAITING_FOR_APPROVAL` durumunda olusur. Stok ayrilir ancak ticari onay
+  verilmeden hazirlik baslamaz.
+- Limitsiz kredi politikasinda siparis normal akisla ilerler ve arayuzde
+  `Limitsiz` olarak acikca gosterilir.
+- Sepet; kredi limiti, acik siparis riski, siparis sonrasi risk, asim tutari ve
+  vadeyi gonderimden once gosterir.
+- Fiyati eksik, stogu yetersiz veya farkli para birimli sepet server isteginden
+  once bloke edilir ve nedeni kullaniciya anlatilir.
+- Urun sepete eklendiginde sayfa degismez; animasyonlu basari bildirimi ve
+  veritabani kaynakli canli sepet adedi guncellenir.
+- Sepete eklemede dinamik sayfalari gereksiz yere yeniden dogrulayan cache
+  invalidasyonlari kaldirildi; Server Action yaniti ve animasyon tek tiklamada
+  tamamlanir.
+- `Stok sorunuz` dili `Stok teyidi gerekli` olarak; `Odeme kosulu` dili
+  `Vade (odeme suresi)` olarak duzeltildi.
+- Admin ve bayi menulerinde tiklama aninda navigation progress gorunur; kritik
+  hedefler onceden getirilir.
+- Admin dashboard stok/siparis aksiyonlarindaki yanlis metrik indeksleri ve
+  stok hedef rotasi duzeltildi.
+- Yerel kabul: 19/19 Node, 386/386 Vitest, 47 authenticated HTTP smoke,
+  production build ve 390 px gercek browser akisi basarili. Limitli ve limitsiz
+  kredi, sayfada kalan sepete ekleme, animasyon, canli sayac ve yatay tasma
+  ayri ayri dogrulandi.
+
 ## 2026-07-24 - Faz 7.3 gorev odakli UX paketi 1
 
 - `docs/ux/task-oriented-ux-contract.md` tum admin, bayi ve ticaret ekranlari icin ortak anlasilabilirlik sozlesmesi olarak eklendi.
@@ -26,7 +55,7 @@
 - Dolu fiyat listesinin para birimi veya kapsami degistirilemez.
 - `/admin/stok` ayri operasyon rotasi olarak acildi; risk, rezervasyon, mutabakat, toplu aktarim ve hareket defteri baglantilari bir aradadir.
 - Coklu depo kaydinda yanlis satirin surum bilgisinin gonderilmesi duzeltildi.
-- Yerel kabul: 19/19 Node, 385/385 Vitest, 47 authenticated HTTP smoke, lint, typecheck, production build, release yasam dongusu demosu ve 0 production dependency vulnerability.
+- Yerel kabul: 19/19 Node, 386/386 Vitest, 47 authenticated HTTP smoke, lint, typecheck, production build, release yasam dongusu demosu ve 0 production dependency vulnerability.
 - 1440 px masaustu ile 390 px mobil fiyat/stok ekranlarinda yatay tasma ve browser console hatasi bulunmadi.
 - Depo ana verisi, depolar arasi transfer ve sayim oturumu Faz 7.2'nin kalan kapsamidir.
 - ERP, City Lojistik canli adapteri ve urun gorsel otomasyonu Faz 9'a ertelendi.

@@ -38,6 +38,7 @@ export const requireDealerContext = cache(async (nextPath = "/bayi") => {
       country: true,
       status: true,
       paymentTerms: true,
+      creditPolicy: true,
       creditLimit: true,
       discountRate: true,
       customerGroup: {

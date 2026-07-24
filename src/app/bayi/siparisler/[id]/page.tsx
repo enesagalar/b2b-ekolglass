@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   FileText,
@@ -47,14 +48,29 @@ export default async function DealerOrderDetailPage({
   return (
     <div className="grid gap-6">
       {query.created === "1" ? (
-        <section className="flex gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
-          <CheckCircle2 className="shrink-0" size={22} />
+        <section
+          className={`flex gap-3 rounded-lg border p-4 ${
+            order.commercialReviewRequired
+              ? "border-amber-200 bg-amber-50 text-amber-950"
+              : "border-emerald-200 bg-emerald-50 text-emerald-900"
+          }`}
+        >
+          {order.commercialReviewRequired ? (
+            <AlertTriangle className="shrink-0" size={22} />
+          ) : (
+            <CheckCircle2 className="shrink-0" size={22} />
+          )}
           <div>
             <h2 className="font-semibold">
-              Siparişiniz alındı ve stok ayrıldı
+              {order.commercialReviewRequired
+                ? "Siparişiniz ticari onaya alındı"
+                : "Siparişiniz alındı ve stok ayrıldı"}
             </h2>
             <p className="mt-1 text-sm">
               Sipariş numaranız: <strong>{order.orderNumber}</strong>
+              {order.commercialReviewRequired
+                ? " · Stok ayrıldı; onaydan sonra hazırlık başlayacak."
+                : null}
             </p>
           </div>
         </section>

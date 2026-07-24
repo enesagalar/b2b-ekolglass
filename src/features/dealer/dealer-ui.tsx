@@ -20,7 +20,9 @@ export function PortalStatus({ status }: { status: string }) {
       ? "bg-emerald-50 text-emerald-800"
       : status === "CANCELLED" || status === "REJECTED"
         ? "bg-red-50 text-red-700"
-        : status === "ON_HOLD" || status === "WAITING_FOR_CUSTOMER_INFO"
+        : status === "ON_HOLD" ||
+            status === "WAITING_FOR_CUSTOMER_INFO" ||
+            status === "WAITING_FOR_APPROVAL"
           ? "bg-amber-50 text-amber-800"
           : "bg-slate-100 text-slate-700";
 

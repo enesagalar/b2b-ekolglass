@@ -148,7 +148,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps<
               <dl className="grid gap-x-6 px-5 py-2 md:grid-cols-2">
                 <InfoRow label="Firma durumu" value={application.company.status} />
                 <InfoRow label="Müşteri grubu" value={application.company.customerGroup?.name} />
-                <InfoRow label="Ödeme koşulu" value={application.company.paymentTerms} />
+                <InfoRow label="Vade (ödeme süresi)" value={application.company.paymentTerms} />
                 <InfoRow label="Kredi limiti" value={application.company.creditLimit?.toString()} />
               </dl>
               <div className="border-t border-slate-200">
@@ -220,7 +220,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps<
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className={labelClass}>
-                  Ödeme koşulu
+                  Vade (ödeme süresi)
                   <input name="paymentTerms" defaultValue={application.company?.paymentTerms ?? ""} className={inputClass} placeholder="30 gün vadeli" />
                 </label>
                 <label className={labelClass}>

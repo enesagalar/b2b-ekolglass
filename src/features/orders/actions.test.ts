@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn((path: string): never => {
     throw new Error(`redirect:${path}`);
   }),
+  aggregateCartItems: vi.fn(),
   submitOrderCart: vi.fn(),
   updateOrderCartProduct: vi.fn(),
 }));
@@ -24,10 +25,17 @@ vi.mock("@/data/order-cart", () => ({
   submitOrderCart: mocks.submitOrderCart,
   updateOrderCartProduct: mocks.updateOrderCartProduct,
 }));
-vi.mock("@/lib/prisma", () => ({ prisma: {} }));
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    orderCartItem: { aggregate: mocks.aggregateCartItems },
+  },
+}));
 
 import { OrderCartError } from "@/data/order-cart";
-import { submitOrderCartAction } from "@/features/orders/actions";
+import {
+  addOrderCartItemAction,
+  submitOrderCartAction,
+} from "@/features/orders/actions";
 
 function submitForm(overrides: Record<string, string> = {}) {
   const data = new FormData();
@@ -53,6 +61,30 @@ describe("dealer order submit action", () => {
       },
     });
     mocks.submitOrderCart.mockResolvedValue({ id: "order-1" });
+    mocks.aggregateCartItems.mockResolvedValue({ _sum: { quantity: 4 } });
+  });
+
+  it("adds a product without leaving the page and returns the live cart quantity", async () => {
+    const form = new FormData();
+    form.set("productId", "product-1");
+    form.set("quantity", "2");
+
+    const result = await addOrderCartItemAction({}, form);
+
+    expect(result).toEqual({
+      ok: true,
+      message: "Ürün sipariş sepetine eklendi.",
+      cartQuantity: 4,
+    });
+    expect(mocks.addOrderCartProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "dealer-1",
+        companyId: "company-1",
+      }),
+      { productId: "product-1", quantity: 2 },
+    );
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
   it("rejects invalid input before authentication and order access", async () => {

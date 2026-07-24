@@ -17,19 +17,23 @@ Tamamlanan:
 5. Liste bazli yuzde veya sabit tutar artis/azalis.
 6. Dolu fiyat listesinin kapsam/para birimi degisikligine kilitlenmesi.
 7. Ayrik `/admin/stok` operasyon ekrani ve coklu depo satiri duzeltmesi.
-8. 19 Node, 385 Vitest, 47 authenticated smoke, production build, release demo ve mobil/masaustu browser kabulu.
+8. 19 Node, 386 Vitest, 47 authenticated smoke, production build, release demo ve mobil/masaustu browser kabulu.
 9. Ortak gorev odakli UX sozlesmesi ve fiyat/urun UX paketi 1.
 10. Toplu fiyat degisikliginde zorunlu onizleme ve ikinci onay.
 11. Admin/bayi yonlendirme ayrimi, urun siparis uygunlugu ve City secenegi tutarliligi.
+12. Kredi limiti, limitsiz hesap ve acik siparis riskiyle ticari onay akisi.
+13. Sayfada kalan sepete ekleme bildirimi ve canli sepet adedi.
+14. Stok/vade dili ile admin-bayi navigation geri bildirimi.
+15. Gercek browserda limitli/limitsiz kredi ve ayni sayfada sepet bildirimi
+    kabulu; gecici QA verilerinin test sonunda temizlenmesi.
 
 Siradaki repo ici paket:
 
 1. Stok/depo ve yayin hazirligi ekranlarini gorev odakli sadeleştirmek.
 2. Firma detayi ve bayi basvuru incelemesinde etki ozeti ve guvenli birincil aksiyon kurmak.
-3. Siparis durumlarini sonuc diliyle aciklamak; teknik history ve snapshot alanlarini ikincil seviyeye tasimak.
-4. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
-5. Tum kritik rotalarda tam regresyon ve masaustu/mobil browser kabulunu yenilemek.
-6. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+3. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
+4. Gercek cihaz mobil kabulunu kaydetmek.
+5. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
 
 Ertelenen ve cekirdek kabulu bloke etmeyen:
 

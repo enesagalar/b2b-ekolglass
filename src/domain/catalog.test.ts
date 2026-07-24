@@ -212,7 +212,7 @@ describe("catalog helpers", () => {
     );
 
     expect(stock.isDetailed).toBe(true);
-    expect(stock.label).toBe("11 uygun / 14 stok");
+    expect(stock.label).toBe("11 kullanılabilir / 14 toplam");
   });
 });
 

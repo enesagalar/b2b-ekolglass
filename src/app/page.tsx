@@ -204,7 +204,7 @@ export default async function Home() {
                     <h3 className="mt-2 min-h-12 text-sm font-semibold leading-6">{product.name}</h3>
                     <p className="mt-2 text-xs text-[#68686d]">{product.category.name} · {product.glassType}</p>
                     <div className="mt-4 flex items-center justify-between border-t border-[#ececef] pt-3">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${inStock ? "text-emerald-700" : "text-amber-700"}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{inStock ? "Stokta" : "Stok sorunuz"}</span>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${inStock ? "text-emerald-700" : "text-amber-700"}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{inStock ? "Stokta" : "Stok teyidi gerekli"}</span>
                       <ArrowRight size={16} className="text-[#00639a] transition group-hover:translate-x-0.5" aria-hidden="true" />
                     </div>
                   </div>

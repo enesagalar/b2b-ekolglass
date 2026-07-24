@@ -139,8 +139,15 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
             </div>
             <dl className="px-5 py-2">
               <InfoRow label="Müşteri grubu" value={company.customerGroup?.name} />
-              <InfoRow label="Ödeme koşulu" value={company.paymentTerms} />
-              <InfoRow label="Kredi limiti" value={company.creditLimit?.toString()} />
+              <InfoRow label="Vade (ödeme süresi)" value={company.paymentTerms} />
+              <InfoRow
+                label="Kredi limiti"
+                value={
+                  company.creditPolicy === "UNLIMITED"
+                    ? "Limitsiz"
+                    : company.creditLimit?.toString()
+                }
+              />
               <InfoRow label="Müşteri iskontosu" value={`%${company.discountRate.toString()}`} />
             </dl>
             <CompanyDiscountForm

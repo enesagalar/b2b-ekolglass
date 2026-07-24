@@ -12,12 +12,19 @@ import {
 import { requireDealerContext } from "@/data/dealer-context";
 import { getDealerDashboardData } from "@/data/dealer-portal";
 import { formatPortalDate, formatPortalMoney, PortalStatus } from "@/features/dealer/dealer-ui";
+import { Prisma } from "@/generated/prisma/client";
 
 export const dynamic = "force-dynamic";
 
 export default async function DealerDashboardPage() {
   const { company, user } = await requireDealerContext("/bayi");
   const dashboard = await getDealerDashboardData(company.id);
+  const creditSummary =
+    company.creditPolicy === "UNLIMITED"
+      ? "Limitsiz"
+      : company.creditPolicy === "LIMITED" && company.creditLimit
+        ? formatPortalMoney(company.creditLimit)
+        : "Ticari onaylı";
 
   const metrics = [
     { label: "Açık sipariş", value: dashboard.openOrders, icon: ClipboardList },
@@ -25,7 +32,7 @@ export default async function DealerDashboardPage() {
     { label: "Aktif ürün", value: dashboard.activeProducts, icon: Boxes },
     {
       label: "Kredi limiti",
-      value: company.creditLimit ? formatPortalMoney(company.creditLimit) : "Tanımlanmadı",
+      value: creditSummary,
       icon: CreditCard,
     },
   ];
@@ -64,7 +71,7 @@ export default async function DealerDashboardPage() {
       <section className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9dadd] pb-5 text-sm">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <p><span className="text-[#68686d]">Müşteri grubu</span> <strong className="ml-2">{company.customerGroup?.name ?? "Atanmamış"}</strong></p>
-          <p><span className="text-[#68686d]">Ödeme</span> <strong className="ml-2">{company.paymentTerms ?? "Tanımlanmamış"}</strong></p>
+          <p><span className="text-[#68686d]">Vade</span> <strong className="ml-2">{company.paymentTerms ?? "Vade tanımlanmamış"}</strong></p>
           <p><span className="text-[#68686d]">Firma iskontosu</span> <strong className="ml-2 text-emerald-700">%{Number(company.discountRate ?? 0).toLocaleString("tr-TR")}</strong></p>
         </div>
         <Link href="/bayi/hesabim" className="inline-flex items-center gap-1 font-semibold text-[#00639a]">
@@ -98,8 +105,14 @@ export default async function DealerDashboardPage() {
           <dl className="mt-5 divide-y divide-[#ececef] text-sm">
             <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Müşteri grubu</dt><dd className="text-right font-semibold">{company.customerGroup?.name ?? "Atanmamış"}</dd></div>
             <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Firma iskontosu</dt><dd className="font-semibold text-emerald-700">%{Number(company.discountRate ?? 0).toLocaleString("tr-TR")}</dd></div>
-            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Ödeme koşulu</dt><dd className="text-right font-semibold">{company.paymentTerms ?? "Tanımlanmamış"}</dd></div>
-            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Kredi limiti</dt><dd className="text-right font-semibold">{company.creditLimit ? formatPortalMoney(company.creditLimit) : "Tanımlanmamış"}</dd></div>
+            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Vade</dt><dd className="text-right font-semibold">{company.paymentTerms ?? "Vade tanımlanmamış"}</dd></div>
+            <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Kredi limiti</dt><dd className="text-right font-semibold">{creditSummary}</dd></div>
+            {company.creditPolicy === "LIMITED" && company.creditLimit ? (
+              <>
+                <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Açık sipariş riski</dt><dd className="text-right font-semibold">{formatPortalMoney(dashboard.creditExposure)}</dd></div>
+                <div className="flex items-center justify-between gap-4 py-3"><dt className="text-[#68686d]">Kullanılabilir limit</dt><dd className={`text-right font-semibold ${dashboard.creditExposure.gte(company.creditLimit) ? "text-amber-800" : "text-emerald-700"}`}>{formatPortalMoney(Prisma.Decimal.max(company.creditLimit.sub(dashboard.creditExposure), 0))}</dd></div>
+              </>
+            ) : null}
           </dl>
           <Link href="/bayi/hesabim" className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[#00639a]">Hesap ayrıntıları <ArrowRight size={15} /></Link>
         </aside>

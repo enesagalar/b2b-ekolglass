@@ -265,6 +265,21 @@ button {
   }
 }
 
+.cart-confirmation {
+  animation: cart-confirmation-in var(--motion-slow) var(--ease-premium) both;
+}
+
+@keyframes cart-confirmation-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Keeps legacy operational screens on the canonical EkolGlass accent while
    their dense workflow-specific layouts remain unchanged. */
 .portal-workspace .text-teal-700,

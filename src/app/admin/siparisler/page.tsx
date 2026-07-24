@@ -10,7 +10,7 @@ import {
 
 import { getAdminOrders } from "@/data/admin-orders";
 import { hasPermission, isKnownRole } from "@/domain/roles";
-import { orderStatuses } from "@/domain/statuses";
+import { getStatusLabel, orderStatuses } from "@/domain/statuses";
 import {
   formatPortalDate,
   formatPortalMoney,
@@ -127,7 +127,7 @@ export default async function AdminOrdersPage({
                 .filter((item) => item !== "DRAFT")
                 .map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {getStatusLabel(item)}
                   </option>
                 ))}
             </select>

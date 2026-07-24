@@ -70,7 +70,12 @@ async function clearRuntimeRecords() {
 async function restoreMutableFixtures() {
   await prisma.company.update({
     where: { id: ids.companyA },
-    data: { discountRate: 0 },
+    data: {
+      discountRate: 0,
+      creditPolicy: "UNSET",
+      creditLimit: null,
+      paymentTerms: null,
+    },
   });
   await prisma.priceList.update({
     where: { id: ids.companyList },
@@ -424,6 +429,14 @@ describe("order cart submission and tenant isolation", () => {
   });
 
   it("snapshots server-side tier pricing, product, and address data while reserving across stock rows idempotently", async () => {
+    await prisma.company.update({
+      where: { id: ids.companyA },
+      data: {
+        creditPolicy: "LIMITED",
+        creditLimit: 700,
+        paymentTerms: "30 gün vade",
+      },
+    });
     await addOrderCartProduct(actorA, {
       productId: ids.tierProduct,
       quantity: 10,
@@ -473,7 +486,10 @@ describe("order cart submission and tenant isolation", () => {
     expect(order.createdById).toBe(ids.userA);
     expect(order.currency).toBe("TRY");
     expect(order.subtotal.toString()).toBe("800");
-    expect(order.creditPolicySnapshot).toBe("UNSET");
+    expect(order.status).toBe("WAITING_FOR_APPROVAL");
+    expect(order.creditPolicySnapshot).toBe("LIMITED");
+    expect(order.creditLimitSnapshot?.toString()).toBe("700");
+    expect(order.paymentTermsSnapshot).toBe("30 gün vade");
     expect(order.creditExposureBefore.toString()).toBe("0");
     expect(order.creditExposureAfter.toString()).toBe("800");
     expect(order.commercialReviewRequired).toBe(true);
