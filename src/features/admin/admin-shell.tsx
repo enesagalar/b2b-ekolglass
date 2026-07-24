@@ -19,13 +19,13 @@ import {
   Settings,
   Truck,
   UsersRound,
-  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 
 import { logout } from "@/features/auth/actions";
 import { BrandLogo } from "@/components/brand-logo";
+import { NavigationDrawer } from "@/components/navigation-drawer";
 import {
   getRoleLabel,
   hasPermission,
@@ -192,50 +192,46 @@ function getActiveItem(pathname: string, role: string) {
 }
 
 function SidebarContent({
-  pathname,
   role,
+  activeHref,
   onNavigate,
 }: {
-  pathname: string;
   role: string;
+  activeHref?: string;
   onNavigate?: () => void;
 }) {
   return (
-    <div className="material-dark flex h-full flex-col text-white lg:rounded-r-2xl">
-      <div className="border-b border-white/10 px-4 py-4">
+    <div className="flex h-full flex-col">
+      <div className="border-b border-black/7 px-4 py-4">
         <Link
           href="/admin"
           onClick={onNavigate}
           className="flex items-center gap-3"
         >
-          <BrandLogo compact inverse />
+          <BrandLogo compact />
           <span>
-            <span className="block text-sm font-semibold">EkolGlass</span>
-            <span className="block text-xs text-white/50">Operasyon Merkezi</span>
+            <span className="block text-sm font-semibold text-slate-950">EkolGlass</span>
+            <span className="block text-xs text-slate-500">Operasyon Merkezi</span>
           </span>
         </Link>
       </div>
 
-      <nav className="sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 py-4">
-        <div className="grid gap-5">
+      <nav className="sidebar-scroll portal-nav-scroll min-h-0 flex-1 overflow-y-auto px-3 py-4">
+        <div className="portal-nav-sections grid gap-5">
           {getVisibleNavigationSections(role).map((section) => (
             <section key={section.label}>
-              <p className="px-2 text-xs font-semibold uppercase text-white/35">
+              <p className="px-2 text-[11px] font-semibold uppercase text-slate-400">
                 {section.label}
               </p>
               <div className="mt-2 grid gap-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive =
-                    Boolean(item.href) &&
-                    (pathname === item.href ||
-                      (item.href !== "/admin" &&
-                        pathname.startsWith(`${item.href}/`)));
+                  const isActive = Boolean(item.href) && item.href === activeHref;
                   const className = isActive
-                    ? "bg-white/11 text-white"
+                    ? "portal-nav-item-active"
                     : item.soon
-                      ? "text-white/30"
-                      : "text-white/68 hover:bg-white/7 hover:text-white";
+                      ? "text-slate-300"
+                      : "portal-nav-item";
 
                   const content = (
                     <>
@@ -244,18 +240,12 @@ function SidebarContent({
                         <span className="block truncate text-sm font-semibold">
                           {item.label}
                         </span>
-                        <span
-                          className={
-                            isActive
-                              ? "block truncate text-xs text-white/55"
-                              : "block truncate text-xs text-white/35"
-                          }
-                        >
+                        <span className={`portal-nav-description block truncate text-xs ${isActive ? "text-[#337da5]" : "text-slate-400"}`}>
                           {item.description}
                         </span>
                       </span>
                       {item.soon ? (
-                        <span className="rounded bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-400">
+                        <span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-400">
                           Yakında
                         </span>
                       ) : (
@@ -269,7 +259,7 @@ function SidebarContent({
                       <div
                         key={item.label}
                         aria-disabled="true"
-                        className={`flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 ${className}`}
+                        className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 ${className}`}
                       >
                         {content}
                       </div>
@@ -281,7 +271,8 @@ function SidebarContent({
                       key={item.label}
                       href={item.href}
                       onClick={onNavigate}
-                      className={`flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 transition ${className}`}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 transition ${className}`}
                     >
                       {content}
                     </Link>
@@ -293,11 +284,11 @@ function SidebarContent({
         </div>
       </nav>
 
-      <div className="border-t border-white/10 p-4">
+      <div className="border-t border-black/7 p-4">
         <Link
           href="/"
           onClick={onNavigate}
-          className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-white/65 transition hover:bg-white/8 hover:text-white"
+          className="portal-nav-item flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition"
         >
           <Home size={17} aria-hidden="true" />
           Public portala dön
@@ -327,48 +318,32 @@ export function AdminShell({
   const ActiveIcon = activeItem.icon;
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[244px] lg:block">
-        <SidebarContent pathname={pathname} role={user.role} />
+    <div className="portal-shell min-h-screen text-[#1d1d1f]">
+      <aside className="portal-sidebar fixed inset-y-3 left-3 z-30 hidden w-[252px] overflow-hidden rounded-[20px] xl:block">
+        <SidebarContent role={user.role} activeHref={activeItem.href} />
       </aside>
 
-      {isMobileMenuOpen ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
-            aria-label="Menüyü kapat"
-            className="absolute inset-0 bg-slate-950/60"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <aside className="relative h-full w-[286px] max-w-[86vw] shadow-2xl">
-            <div className="absolute right-3 top-3 z-10">
-              <button
-                type="button"
-                aria-label="Menüyü kapat"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-white"
-              >
-                <X size={18} aria-hidden="true" />
-              </button>
-            </div>
-            <SidebarContent
-              pathname={pathname}
-              role={user.role}
-              onNavigate={() => setIsMobileMenuOpen(false)}
-            />
-          </aside>
-        </div>
-      ) : null}
+      <NavigationDrawer
+        open={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        ariaLabel="Yönetim navigasyonu"
+      >
+        <SidebarContent
+          role={user.role}
+          activeHref={activeItem.href}
+          onNavigate={() => setIsMobileMenuOpen(false)}
+        />
+      </NavigationDrawer>
 
-      <div className="lg:pl-[244px]">
-        <header className="sticky top-0 z-20 border-b border-black/8 bg-white/78 backdrop-blur-2xl">
+      <div className="xl:pl-[276px]">
+        <header className="portal-topbar sticky top-2 z-20 mx-2 rounded-2xl md:top-3 md:mx-3">
           <div className="flex min-h-[72px] items-center justify-between gap-4 px-4 py-3 md:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 aria-label="Menüyü aç"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 lg:hidden"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-black/8 bg-white/74 text-slate-700 shadow-sm xl:hidden"
               >
                 <Menu size={20} aria-hidden="true" />
               </button>
@@ -411,7 +386,7 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="portal-workspace mx-auto w-full max-w-[1520px] px-4 py-6 md:px-6 md:py-8">
+        <main className="portal-workspace mx-auto w-full max-w-[1520px] px-4 py-7 md:px-7 md:py-9">
           {children}
         </main>
       </div>

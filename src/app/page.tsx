@@ -85,11 +85,16 @@ export default async function Home() {
       <CommerceHeader identity={data.identity} />
 
       <section
-        className="relative mx-auto mt-2 min-h-[560px] max-w-[1600px] overflow-hidden bg-[#20252b] bg-cover bg-[position:68%_center] text-white sm:mt-3 sm:min-h-[620px] sm:rounded-xl sm:bg-center"
-        style={{ backgroundImage: `url(${heroImage})` }}
-        role="img"
-        aria-label={data.heroMedia?.altText ?? "EkolGlass otomotiv cam üretimi"}
+        className="relative mx-auto mt-2 min-h-[560px] max-w-[1600px] overflow-hidden bg-[#20252b] text-white sm:mt-3 sm:min-h-[620px] sm:rounded-xl"
       >
+        <Image
+          src={heroImage}
+          alt={data.heroMedia?.altText ?? "EkolGlass otomotiv cam üretimi"}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[68%_center] sm:object-center"
+        />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,16,20,0.76)_0%,rgba(12,16,20,0.48)_38%,rgba(12,16,20,0.04)_72%)]" aria-hidden="true" />
         <div className="relative mx-auto flex min-h-[560px] max-w-[1440px] items-center px-5 py-16 sm:min-h-[620px] md:px-8">
           <div className="w-full min-w-0 max-w-2xl">

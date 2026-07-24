@@ -32,29 +32,44 @@ export default async function DealerDashboardPage() {
 
   return (
     <div className="grid min-w-0 gap-8">
-      <section className="flex flex-col justify-between gap-5 border-b border-[#d9dadd] pb-7 md:flex-row md:items-end">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#00639a]">{company.displayName}</p>
-          <h2 className="mt-2 text-3xl font-semibold text-[#1d1d1f] md:text-4xl">İyi günler, {user.name.split(" ")[0]}</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#68686d]">
-            Sipariş, sevkiyat ve ticari hesabınızın güncel durumunu buradan takip edin.
-          </p>
+      <section className="overflow-hidden rounded-[16px] bg-[#171b1f] text-white shadow-[0_24px_70px_rgba(20,29,36,0.16)]">
+        <div className="flex flex-col justify-between gap-6 border-b border-white/10 px-5 py-7 md:flex-row md:items-end md:px-7 md:py-8">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#71b8dc]">{company.displayName}</p>
+            <h2 className="mt-2 text-3xl font-semibold md:text-4xl">İyi günler, {user.name.split(" ")[0]}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/62">
+              Sipariş, sevkiyat ve ticari hesabınızın güncel durumunu buradan takip edin.
+            </p>
+          </div>
+          <Link href="/urunler" className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0879b1] px-5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(0,99,154,0.25)] hover:bg-[#0a6d9e]">
+            <PackageSearch size={17} aria-hidden="true" /> Yeni Sipariş
+          </Link>
         </div>
-        <Link href="/urunler" className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white hover:bg-[#004f7c]">
-          <PackageSearch size={17} aria-hidden="true" /> Yeni Sipariş
-        </Link>
+        <div className="grid grid-cols-2 md:grid-cols-4" aria-label="Firma özeti">
+          {metrics.map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <div key={metric.label} className="min-w-0 border-b border-r border-white/10 px-5 py-5 last:border-r-0 md:border-b-0 md:px-6">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="truncate text-xs font-medium text-white/48">{metric.label}</p>
+                  <Icon size={17} className="shrink-0 text-[#71b8dc]" aria-hidden="true" />
+                </div>
+                <p className="mt-3 truncate text-2xl font-semibold text-white">{metric.value}</p>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
-      <section className="grid gap-4 border-b border-[#d9dadd] pb-7 sm:grid-cols-2 xl:grid-cols-4" aria-label="Firma özeti">
-        {metrics.map((metric, index) => {
-          const Icon = metric.icon;
-          return (
-            <div key={metric.label} className={`flex items-start justify-between gap-4 ${index ? "sm:border-l sm:border-[#d9dadd] sm:pl-5" : ""}`}>
-              <div><p className="text-sm text-[#68686d]">{metric.label}</p><p className="mt-2 text-3xl font-semibold text-[#1d1d1f]">{metric.value}</p></div>
-              <Icon size={20} className="mt-1 text-[#00639a]" aria-hidden="true" />
-            </div>
-          );
-        })}
+      <section className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9dadd] pb-5 text-sm">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <p><span className="text-[#68686d]">Müşteri grubu</span> <strong className="ml-2">{company.customerGroup?.name ?? "Atanmamış"}</strong></p>
+          <p><span className="text-[#68686d]">Ödeme</span> <strong className="ml-2">{company.paymentTerms ?? "Tanımlanmamış"}</strong></p>
+          <p><span className="text-[#68686d]">Firma iskontosu</span> <strong className="ml-2 text-emerald-700">%{Number(company.discountRate ?? 0).toLocaleString("tr-TR")}</strong></p>
+        </div>
+        <Link href="/bayi/hesabim" className="inline-flex items-center gap-1 font-semibold text-[#00639a]">
+          Hesap ayrıntıları <ArrowRight size={15} aria-hidden="true" />
+        </Link>
       </section>
 
       <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.6fr)]">

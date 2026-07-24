@@ -6,6 +6,9 @@
   --surface: #ffffff;
   --surface-subtle: #fbfbfd;
   --surface-muted: #f0f1f3;
+  --glass: rgba(252, 252, 253, 0.78);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --glass-line: rgba(255, 255, 255, 0.82);
   --brand: #00639a;
   --brand-hover: #004f7c;
   --brand-soft: #eaf4fa;
@@ -49,6 +52,7 @@ textarea {
 
 a,
 button {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
   transition-duration: var(--motion-fast);
   transition-timing-function: var(--ease-premium);
 }
@@ -59,57 +63,100 @@ button {
 }
 
 .brand-logo {
-  position: relative;
-  display: block;
-  width: 176px;
-  height: 60px;
-  overflow: hidden;
+  display: inline-flex;
+  width: 184px;
+  height: 68px;
+  align-items: center;
+  justify-content: center;
   flex: none;
 }
 
 .brand-logo img {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 350px;
-  height: auto;
-  max-width: none;
-  transform: translate(-50%, -50%);
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .brand-mark {
   display: inline-flex;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: white;
-  color: var(--brand);
-  font-size: 12px;
-  font-weight: 750;
+  border: 1px solid rgba(0, 76, 119, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.brand-mark img {
+  width: 30px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .brand-mark-inverse {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
+  border-color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.64);
 }
 
 .material-nav {
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  background: rgba(250, 250, 252, 0.82);
-  box-shadow: 0 16px 50px rgba(31, 35, 40, 0.1);
-  -webkit-backdrop-filter: saturate(170%) blur(22px);
-  backdrop-filter: saturate(170%) blur(22px);
+  border: 1px solid var(--glass-line);
+  background: var(--glass);
+  box-shadow:
+    0 18px 55px rgba(31, 35, 40, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
 }
 
-.material-dark {
-  background: rgba(27, 32, 38, 0.96);
-  box-shadow: 0 18px 60px rgba(12, 16, 20, 0.2);
-  -webkit-backdrop-filter: saturate(130%) blur(24px);
-  backdrop-filter: saturate(130%) blur(24px);
+.portal-shell {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, #f7f8fa 0, #f2f4f6 100%);
+}
+
+.portal-sidebar {
+  border: 1px solid rgba(255, 255, 255, 0.94);
+  background: rgba(249, 250, 251, 0.74);
+  color: var(--foreground);
+  box-shadow:
+    0 24px 70px rgba(28, 38, 46, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: saturate(165%) blur(26px);
+  backdrop-filter: saturate(165%) blur(26px);
+}
+
+.portal-topbar {
+  border: 1px solid rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 14px 42px rgba(28, 38, 46, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: saturate(170%) blur(24px);
+  backdrop-filter: saturate(170%) blur(24px);
+}
+
+.portal-nav-item {
+  color: #51565c;
+}
+
+.portal-nav-item:hover {
+  background: rgba(255, 255, 255, 0.72);
+  color: #17191c;
+}
+
+.portal-nav-item-active {
+  background: rgba(0, 99, 154, 0.09);
+  color: #004f7c;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 99, 154, 0.1),
+    inset 3px 0 0 var(--brand);
+}
+
+.portal-nav-scroll {
+  mask-image: linear-gradient(to bottom, transparent 0, black 12px, black calc(100% - 12px), transparent 100%);
 }
 
 .surface-panel {
@@ -144,12 +191,29 @@ button {
 
 .sidebar-scroll {
   overscroll-behavior: contain;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-color: transparent transparent;
+  scrollbar-width: thin;
 }
 
 .sidebar-scroll::-webkit-scrollbar {
-  display: none;
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.sidebar-scroll:hover {
+  scrollbar-color: rgba(89, 96, 103, 0.3) transparent;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(89, 96, 103, 0.3);
 }
 
 .route-progress-track {
@@ -223,12 +287,18 @@ button {
 
 @media (max-width: 639px) {
   .brand-logo {
-    width: 132px;
-    height: 46px;
+    width: 148px;
+    height: 54px;
+  }
+}
+
+@media (max-height: 820px) and (min-width: 1024px) {
+  .portal-nav-description {
+    display: none;
   }
 
-  .brand-logo img {
-    width: 264px;
+  .portal-nav-sections {
+    gap: 0.75rem;
   }
 }
 

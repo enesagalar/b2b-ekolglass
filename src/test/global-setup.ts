@@ -6,8 +6,17 @@ import { prepareMigratedTestDatabase, seedTestDatabase } from "./database-fixtur
 const testDataRoot = path.join(process.cwd(), ".test-data");
 const testDatabaseUrl = "file:./.test-data/vitest.db";
 
+function removeTestData() {
+  rmSync(testDataRoot, {
+    recursive: true,
+    force: true,
+    maxRetries: 8,
+    retryDelay: 125,
+  });
+}
+
 export default function setup() {
-  rmSync(testDataRoot, { recursive: true, force: true });
+  removeTestData();
   mkdirSync(testDataRoot, { recursive: true });
   process.env.DATABASE_URL = testDatabaseUrl;
 
@@ -15,11 +24,11 @@ export default function setup() {
     prepareMigratedTestDatabase(path.join(testDataRoot, "vitest.db"));
     seedTestDatabase(testDatabaseUrl);
   } catch (error) {
-    rmSync(testDataRoot, { recursive: true, force: true });
+    removeTestData();
     throw error;
   }
 
   return () => {
-    rmSync(testDataRoot, { recursive: true, force: true });
+    if (process.platform !== "win32") removeTestData();
   };
 }

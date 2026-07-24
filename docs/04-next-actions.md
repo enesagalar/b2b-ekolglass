@@ -2,6 +2,39 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## 2026-07-24 - Faz 7 UI remediation ve yayin kabul
+
+Tamamlananlar:
+
+- PDF kaynakli SVG marka hatti.
+- Commerce/admin/bayi glass navigasyon sistemi.
+- Exact admin active-route secimi.
+- Erisilebilir ortak mobil drawer.
+- 1024 px sidebar kirilimi ve yatay tasma kontrolu.
+- Guclendirilmis bayi dashboard girisi.
+- Optimize CMS hero medyasi.
+- Tek komutlu izole siparis-stok-sevkiyat-audit-e-posta release demosu.
+
+Tamamlanan yerel kabul kapilari:
+
+1. Lint, typecheck, 19 Node testi, 380 Vitest testi ve production build.
+2. 360, 390, 768, 1024 ve 1440 responsive yatay tasma kontrolleri.
+3. 44 adimli izole authenticated smoke.
+4. Siparis, stok, sevkiyat, audit ve sekiz e-posta olayini kanitlayan release demosu.
+5. Production dependency audit: 0 acik.
+
+Kalan repo ici UI borcu:
+
+1. Fiyat listeleri, kategori, bayi siparisleri ve urun detayindaki yogun legacy yuzeyleri ayni tasarim diliyle kademeli sadelestirmek.
+2. Gercek iOS Safari ve Android Chrome cihaz kabulunu kaydetmek.
+
+Canliya cikis icin disaridan gerekenler:
+
+1. Portal hostname ve hosting hedefi.
+2. Gercek SMTP credential, dogrulanmis gonderici domaini ve inbox testi.
+3. Kalici database/media volume veya S3/R2.
+4. Scheduler, offsite backup, alarm webhook ve merkezi log hedefi.
+
 ## 2026-07-22 - Sidebar ve algilanan performans iyilestirmesi
 
 - Admin ve bayi sidebar kaydirmasi korunurken Windows scrollbar izi tamamen kaldirildi.

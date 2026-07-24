@@ -13,13 +13,13 @@ import {
   Menu,
   PackageSearch,
   ShoppingBag,
-  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 
 import { logout } from "@/features/auth/actions";
 import { BrandLogo } from "@/components/brand-logo";
+import { NavigationDrawer } from "@/components/navigation-drawer";
 
 type DealerNavItem = {
   label: string;
@@ -43,19 +43,19 @@ function isItemActive(pathname: string, href: string) {
 
 function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (
-    <div className="material-dark flex h-full flex-col text-white lg:rounded-r-2xl">
-      <div className="border-b border-white/10 px-4 py-4">
+    <div className="flex h-full flex-col">
+      <div className="border-b border-black/7 px-4 py-4">
         <Link href="/" onClick={onNavigate} className="flex items-center gap-3">
-          <BrandLogo compact inverse />
+          <BrandLogo compact />
           <span>
-            <span className="block text-sm font-semibold">EkolGlass Bayi</span>
-            <span className="block text-xs text-white/50">Satış Portalı</span>
+            <span className="block text-sm font-semibold text-slate-950">EkolGlass Bayi</span>
+            <span className="block text-xs text-slate-500">Satış Portalı</span>
           </span>
         </Link>
       </div>
 
-      <nav className="sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 py-5" aria-label="Bayi portalı">
-        <p className="px-2 text-xs font-semibold uppercase text-white/35">Çalışma Alanı</p>
+      <nav className="sidebar-scroll portal-nav-scroll min-h-0 flex-1 overflow-y-auto px-3 py-5" aria-label="Bayi portalı">
+        <p className="px-2 text-[11px] font-semibold uppercase text-slate-400">Çalışma Alanı</p>
         <div className="mt-2 grid gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -66,14 +66,15 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
                 key={item.href}
                 href={item.href}
                 onClick={onNavigate}
-                className={`flex min-h-13 items-center gap-3 rounded-lg px-3 py-2 transition ${
-                  active ? "bg-white/11 text-white" : "text-white/68 hover:bg-white/7 hover:text-white"
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-13 items-center gap-3 rounded-xl px-3 py-2 transition ${
+                  active ? "portal-nav-item-active" : "portal-nav-item"
                 }`}
               >
                 <Icon size={18} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">{item.label}</span>
-                  <span className={`block truncate text-xs ${active ? "text-white/55" : "text-white/35"}`}>{item.description}</span>
+                  <span className={`portal-nav-description block truncate text-xs ${active ? "text-[#337da5]" : "text-slate-400"}`}>{item.description}</span>
                 </span>
                 <ChevronRight size={15} aria-hidden="true" />
               </Link>
@@ -82,11 +83,11 @@ function DealerSidebar({ pathname, onNavigate }: { pathname: string; onNavigate?
         </div>
       </nav>
 
-      <div className="border-t border-white/10 p-4">
+      <div className="border-t border-black/7 p-4">
         <Link
           href="/"
           onClick={onNavigate}
-          className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-white/65 transition hover:bg-white/8 hover:text-white"
+          className="portal-nav-item flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition"
         >
           <Home size={17} aria-hidden="true" />
           Ticaret ana sayfasına dön
@@ -114,42 +115,28 @@ export function DealerShell({
   const ActiveIcon = activeItem.icon;
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[244px] lg:block">
+    <div className="portal-shell min-h-screen text-[#1d1d1f]">
+      <aside className="portal-sidebar fixed inset-y-3 left-3 z-30 hidden w-[252px] overflow-hidden rounded-[20px] xl:block">
         <DealerSidebar pathname={pathname} />
       </aside>
 
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
-            aria-label="Menüyü kapat"
-            className="absolute inset-0 bg-slate-950/60"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="relative h-full w-[286px] max-w-[86vw] shadow-2xl">
-            <button
-              type="button"
-              aria-label="Menüyü kapat"
-              onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-white"
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-            <DealerSidebar pathname={pathname} onNavigate={() => setMobileOpen(false)} />
-          </aside>
-        </div>
-      ) : null}
+      <NavigationDrawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        ariaLabel="Bayi navigasyonu"
+      >
+        <DealerSidebar pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+      </NavigationDrawer>
 
-      <div className="min-w-0 lg:pl-[244px]">
-        <header className="sticky top-0 z-20 border-b border-black/8 bg-white/78 backdrop-blur-2xl">
+      <div className="min-w-0 xl:pl-[276px]">
+        <header className="portal-topbar sticky top-2 z-20 mx-2 rounded-2xl md:top-3 md:mx-3">
           <div className="flex min-h-[72px] items-center justify-between gap-4 px-4 py-3 md:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 aria-label="Menüyü aç"
                 onClick={() => setMobileOpen(true)}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 lg:hidden"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-black/8 bg-white/74 text-slate-700 shadow-sm xl:hidden"
               >
                 <Menu size={20} aria-hidden="true" />
               </button>
@@ -184,7 +171,7 @@ export function DealerShell({
           </div>
         </header>
 
-        <main className="portal-workspace mx-auto w-full max-w-[1520px] px-4 py-6 md:px-6 md:py-8">{children}</main>
+        <main className="portal-workspace mx-auto w-full max-w-[1520px] px-4 py-7 md:px-7 md:py-9">{children}</main>
       </div>
     </div>
   );

@@ -39,9 +39,17 @@ function getSetCookieHeaders(response) {
 }
 
 async function request(path, options = {}) {
+  const headers = new Headers(options.headers);
+  const method = options.method?.toUpperCase() ?? "GET";
+
+  if (!["GET", "HEAD"].includes(method) && !headers.has("Origin")) {
+    headers.set("Origin", new URL(baseUrl).origin);
+  }
+
   return fetch(new URL(path, baseUrl), {
     redirect: "manual",
     ...options,
+    headers,
   });
 }
 
@@ -717,7 +725,7 @@ try {
   );
   const dealerPortalHtml = await dealerPortalResponse.text();
   assert(
-    dealerPortalHtml.includes("Operasyon özeti"),
+    dealerPortalHtml.includes("Firma özeti"),
     "Dealer dashboard heading not rendered",
   );
   assert(

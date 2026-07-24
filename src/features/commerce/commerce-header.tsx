@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ExternalLink,
@@ -10,8 +12,10 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
+import { useState } from "react";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { NavigationDrawer } from "@/components/navigation-drawer";
 import { logout } from "@/features/auth/actions";
 
 export type CommerceIdentity =
@@ -93,9 +97,11 @@ function AccountActions({ identity }: { identity: CommerceIdentity }) {
 }
 
 export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-30 px-2 pt-2 sm:px-4 sm:pt-3">
-      <div className="material-nav mx-auto max-w-[1480px] rounded-2xl">
+      <div className="material-nav mx-auto max-w-[1480px] rounded-[20px]">
         <div className="flex min-h-[72px] items-center gap-3 px-3 sm:px-5">
           <Link href="/" aria-label="EkolGlass B2B ana sayfa" className="shrink-0">
             <BrandLogo />
@@ -135,41 +141,55 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
             <AccountActions identity={identity} />
           </div>
 
-          <details className="group relative ml-auto lg:hidden">
-            <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg text-[#303236] hover:bg-black/5" aria-label="Menüyü aç">
-              <Menu size={20} aria-hidden="true" />
-            </summary>
-            <div className="material-nav absolute right-0 top-14 w-[min(88vw,340px)] rounded-xl p-3 shadow-2xl">
-              <form action="/urunler" className="flex h-11 items-center rounded-lg border border-[#d9dadd] bg-white">
-                <Search size={17} className="ml-3 text-[#77777c]" aria-hidden="true" />
-                <input name="q" aria-label="Ürün ara" placeholder="Ürün, OEM veya araç ara" className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none" />
-              </form>
-              <nav className="mt-2 grid" aria-label="Mobil navigasyon">
-                <Link href="/" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Ana Sayfa</Link>
-                <Link href="/urunler" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Ürünler</Link>
-                {identity?.audience === "dealer" ? (
-                  <>
-                    <Link href="/bayi" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Bayi çalışma alanı</Link>
-                    <Link href="/bayi/siparisler" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Siparişlerim</Link>
-                    <Link href="/sepet" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Sipariş sepeti</Link>
-                    <form action={logout}><button type="submit" className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium hover:bg-black/5"><LogOut size={17} /> Çıkış yap</button></form>
-                  </>
-                ) : identity?.audience === "admin" ? (
-                  <>
-                    <Link href="/admin" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Yönetim paneli</Link>
-                    <form action={logout}><button type="submit" className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-medium hover:bg-black/5"><LogOut size={17} /> Çıkış yap</button></form>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/giris" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Bayi Girişi</Link>
-                    <Link href="/bayi-basvurusu" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-black/5">Bayi Başvurusu</Link>
-                  </>
-                )}
-              </nav>
-            </div>
-          </details>
+          <button
+            type="button"
+            aria-label="Menüyü aç"
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen(true)}
+            className="ml-auto flex h-11 w-11 items-center justify-center rounded-xl text-[#303236] hover:bg-black/5 lg:hidden"
+          >
+            <Menu size={20} aria-hidden="true" />
+          </button>
         </div>
       </div>
+
+      <NavigationDrawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        ariaLabel="Satış portalı navigasyonu"
+      >
+        <div className="flex h-full flex-col px-4 pb-5 pt-16">
+          <Link href="/" onClick={() => setMobileOpen(false)} className="border-b border-black/7 pb-4">
+            <BrandLogo />
+          </Link>
+          <form action="/urunler" className="mt-5 flex h-12 items-center rounded-xl border border-[#d9dadd] bg-white/86">
+            <Search size={17} className="ml-3 text-[#77777c]" aria-hidden="true" />
+            <input name="q" aria-label="Ürün ara" placeholder="Ürün, OEM veya araç ara" className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none" />
+          </form>
+          <nav className="mt-3 grid gap-1" aria-label="Mobil navigasyon">
+            <Link href="/" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Ana Sayfa</Link>
+            <Link href="/urunler" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Ürünler</Link>
+            {identity?.audience === "dealer" ? (
+              <>
+                <Link href="/bayi" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Bayi çalışma alanı</Link>
+                <Link href="/bayi/siparisler" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Siparişlerim</Link>
+                <Link href="/sepet" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Sipariş sepeti</Link>
+                <form action={logout}><button type="submit" className="flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-medium hover:bg-white/72"><LogOut size={17} /> Çıkış yap</button></form>
+              </>
+            ) : identity?.audience === "admin" ? (
+              <>
+                <Link href="/admin" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Yönetim paneli</Link>
+                <form action={logout}><button type="submit" className="flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-medium hover:bg-white/72"><LogOut size={17} /> Çıkış yap</button></form>
+              </>
+            ) : (
+              <>
+                <Link href="/giris" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Bayi Girişi</Link>
+                <Link href="/bayi-basvurusu" onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-white/72">Bayi Başvurusu</Link>
+              </>
+            )}
+          </nav>
+        </div>
+      </NavigationDrawer>
     </header>
   );
 }

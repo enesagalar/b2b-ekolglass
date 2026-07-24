@@ -1,6 +1,19 @@
 # Guncel Proje Durumu
 
-Son guncelleme: 2026-07-22
+## 2026-07-24 - Faz 7 UI ve yayin kabul durumu
+
+- Onayli PDF logodan keskin SVG logo ve marka isareti uretildi; kirpilmis JPEG ve dusuk cozunurluklu ICO sunumu kaldirildi.
+- Commerce, admin ve bayi navigasyonu ayni cam malzeme diline tasindi.
+- Mobil menuler backdrop, Escape, focus siniri, focus iadesi ve body scroll lock destekleyen ortak drawer davranisina baglandi.
+- Admin ic ice rotalarda birden fazla aktif menu gorunmesi engellendi.
+- 1024 px'te genis sidebar yerine drawer kullaniliyor; 1280 px ve uzerinde kompakt sabit sidebar aciliyor.
+- Bayi dashboardu ticari komuta bandi, KPI ve hesap ozetiyle guclendirildi.
+- CMS hero gorseli CSS background yerine optimize `next/image` hattindan sunuluyor.
+- `npm run demo:release` siparis, rezervasyon, sevkiyat stok dusumu, teslim, audit/history ve sekiz transactional e-posta outbox teslimini izole veritabaninda kanitliyor.
+- Yerel kabul kapilari: 19/19 Node, 380/380 Vitest, 44/44 authenticated smoke, lint, typecheck, production build ve 0 production dependency vulnerability.
+- Gercek SMTP inbox teslimi ve canli yayin; SMTP, hosting, DNS/TLS, kalici storage, scheduler ve monitoring bilgileri gelmeden tamamlanmis sayilmayacak.
+
+Son guncelleme: 2026-07-24
 
 ## Yerel Kabul Sunucusu
 
@@ -23,7 +36,7 @@ Son guncelleme: 2026-07-22
 - Public ticaret rotalari, bayi calisma alani, admin operasyon merkezi ve credential ekranlari ortak EkolGlass marka sistemi kullaniyor.
 - Admin dashboard CMS/banner yukunden ayrildi; banner dosya yukleme ve icerik ayarlari `/admin/icerik` altinda.
 - Responsive tarama 360, 390, 768, 1024 ve 1440 px genisliklerde yatay tasmasiz tamamlandi.
-- Son yerel kapilar: 19/19 Node, 377/377 Vitest, lint, typecheck ve production build basarili.
+- Son yerel kapilar: 19/19 Node, 380/380 Vitest, 44/44 authenticated smoke, lint, typecheck, production build ve production audit basarili.
 
 ## Git Durumu
 
@@ -206,11 +219,10 @@ Son guncelleme: 2026-07-22
 
 ## Bir Sonraki Dogru Adim
 
-UI yenilemesine gecmeden once production sertlestirmesinin kalan P1 paketleri tamamlanacak:
+Yerel UI ve release kabulunden sonra production kurulumu tamamlanacak:
 
-- Fiyat/CMS/medya audit atomikligi, medya telafisi ve firma ticari kosul CAS korumasi.
-- Degismez deployment artifact'i ve rollback manifesti; platform secimine baglidir.
-- Tam regresyon, build ve authenticated smoke kapilarinin son kosusu.
+- Kalan yogun ikincil admin/bayi ekranlari Faz 7 tasarim sistemiyle kademeli sadelestirilecek.
+- Degismez deployment artifact'i ve rollback manifesti secilen platformda uygulanacak.
 - Production credential, DNS/TLS, SMTP, scheduler ve merkezi log sink dis kabul listesi.
 - Gercek ortamda backup restore ve S3/R2 medya upload/read/reconciliation provasi.
 

@@ -67,7 +67,7 @@ export function PublicationSelectionForm({ rows }: { rows: PublicationProductRow
   }
 
   return (
-    <form action={action} aria-busy={pending} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <form action={action} aria-busy={pending} className="min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       {selectedIds.map((productId) => (
         <input key={productId} type="hidden" name="productIds" value={productId} />
       ))}
@@ -116,7 +116,7 @@ export function PublicationSelectionForm({ rows }: { rows: PublicationProductRow
         </div>
       ) : (
         <>
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden w-full max-w-full overflow-x-auto lg:block">
             <table className="w-full min-w-[860px] border-collapse text-left">
               <thead className="bg-white text-xs font-semibold text-slate-500">
                 <tr>
@@ -165,7 +165,7 @@ export function PublicationSelectionForm({ rows }: { rows: PublicationProductRow
             </table>
           </div>
 
-          <div className="divide-y divide-slate-200 md:hidden">
+          <div className="divide-y divide-slate-200 lg:hidden">
             {rows.map((row) => (
               <article key={row.id} className="p-4">
                 <div className="flex items-start gap-3">

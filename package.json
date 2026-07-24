@@ -13,6 +13,7 @@
     "start:ci": "next start",
     "lint": "eslint src prisma --ext .ts,.tsx --cache --no-error-on-unmatched-pattern",
     "test": "vitest run --maxWorkers=4",
+    "demo:release": "vitest run src/data/release-order-lifecycle.integration.test.ts --pool=threads --maxWorkers=1 --reporter=verbose",
     "test:node": "node --test scripts/*.test.mjs",
     "test:watch": "vitest",
     "test:db:prepare": "tsx scripts/prepare-test-database.ts",
@@ -53,7 +54,6 @@
     "lucide-react": "^1.23.0",
     "next": "16.2.11",
     "nodemailer": "^9.0.3",
-    "prisma": "^7.9.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tsx": "^4.22.4",
@@ -72,6 +72,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
     "jsdom": "^29.1.1",
+    "prisma": "^7.9.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.9"
@@ -80,6 +81,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "overrides": {
+    "find-my-way": "9.7.0",
     "sharp": "0.35.3",
     "postcss": "8.5.22"
   }

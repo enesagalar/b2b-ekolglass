@@ -1,6 +1,6 @@
 # Faz 6 - Premium Responsive UI System
 
-Status: Complete
+Status: Superseded by Faz 7 remediation
 Decision reference: `docs/decisions/2026-07-22-b2b-portal-ui-direction.md`
 System reference: `docs/ux/ekolglass-ui-system.md`
 
@@ -69,3 +69,7 @@ At the end of each package update:
 - Package 5: browser overflow checks passed at 360, 390, 768, 1024 and 1440 px. Mobile commerce menu and admin dense-route containment were verified.
 - Quality gates: lint, typecheck, 19 Node tests, 377 Vitest tests and the Next.js production build passed.
 - The database release integration test received a scenario-local 30 second timeout because backup verification took 9 seconds on Windows; assertions and behavior were not weakened.
+
+## Post-Acceptance Finding - 2026-07-24
+
+The original acceptance missed blurred raster branding, nested admin active-route ambiguity, incomplete drawer accessibility and weak glass material behavior. These findings are tracked and revalidated under `phase-07-ui-remediation-and-release-acceptance.md`; Faz 6 evidence must not be used as the current UI release decision.
