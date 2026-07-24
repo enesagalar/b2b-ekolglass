@@ -2,6 +2,34 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
+## Aktif Hedef - Faz 7.2
+
+Faz 7.1 fiyat operasyonu tamamlandi. Tek aktif repo ici hedef stok ve depo
+operasyonunun tamamlanmasidir.
+
+Tamamlanan:
+
+1. Firma/genel/grup fiyat onceliginin UI'da aciklanmasi.
+2. Firma bazli iskonto ve firma ozel fiyat istisnasi.
+3. Dolu Excel fiyat sablonu, staging onizleme, atomik uygulama ve geri alma.
+4. Liste bazli yuzde veya sabit tutar artis/azalis.
+5. Dolu fiyat listesinin kapsam/para birimi degisikligine kilitlenmesi.
+6. Ayrik `/admin/stok` operasyon ekrani ve coklu depo satiri duzeltmesi.
+7. 19 Node, 385 Vitest, 47 authenticated smoke, production build, release demo ve mobil/masaustu browser kabulu.
+
+Siradaki repo ici paket:
+
+1. Depo kodlarini serbest metinden yonetilen depo ana verisine tasimak.
+2. Depolar arasi transfer ve sayim/fark duzeltme komutlarini stok hareket defterine baglamak.
+3. Urun yonetimi ikincil ekranlarini sadeleştirmek.
+4. Tam regresyon, release demo ve masaustu/mobil browser kabulunu yenilemek.
+
+Ertelenen ve cekirdek kabulu bloke etmeyen:
+
+1. ERP entegrasyonu.
+2. City Lojistik canli adapteri.
+3. Urun fotograf otomasyonu.
+
 ## 2026-07-24 - Faz 7 UI remediation ve yayin kabul
 
 Tamamlananlar:

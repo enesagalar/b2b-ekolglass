@@ -310,13 +310,26 @@ export async function savePriceList(input: CatalogActionInput, maybeFormData?: F
     };
     const priceList = await prisma.$transaction(async (tx) => {
       const previous = parsed.data.id
-        ? await tx.priceList.findUnique({ where: { id: parsed.data.id } })
+        ? await tx.priceList.findUnique({
+            where: { id: parsed.data.id },
+            include: { _count: { select: { prices: true } } },
+          })
         : null;
       let saved;
       if (parsed.data.id) {
         const expectedUpdatedAt = new Date(parsed.data.expectedUpdatedAt!);
         if (!previous || previous.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
           throw new CatalogMutationConflictError("Fiyat listesi başka bir işlem tarafından değiştirildi. Sayfayı yenileyin.");
+        }
+        if (
+          previous._count.prices > 0 &&
+          (previous.currency !== scopedData.currency ||
+            previous.companyId !== scopedData.companyId ||
+            previous.customerGroupId !== scopedData.customerGroupId)
+        ) {
+          throw new CatalogMutationConflictError(
+            "Fiyat satırı bulunan listenin para birimi veya kapsamı değiştirilemez. Yeni bir fiyat listesi oluşturun.",
+          );
         }
         const updated = await tx.priceList.updateMany({
           where: { id: parsed.data.id, updatedAt: expectedUpdatedAt },

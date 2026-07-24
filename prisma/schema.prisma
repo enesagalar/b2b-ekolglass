@@ -384,6 +384,9 @@ model CatalogImportRow {
   product         Product?           @relation(fields: [productId], references: [id], onDelete: Restrict)
   productCode     String
   netPrice        Decimal?
+  previousPrice   Decimal?
+  minQuantity     Int?
+  expectedPriceUpdatedAt DateTime?
   warehouseCode   String?
   stockQuantity   Int?
   stockVisibility String?

@@ -994,13 +994,64 @@ assert(
   "Admin price lists screen not rendered",
 );
 assert(
-  priceListsHtml.includes("Fiyat listesi ekle"),
+  priceListsHtml.includes("Yeni fiyat listesi oluştur"),
   "Admin price list create form not rendered",
 );
 assert(
-  priceListsHtml.includes("standart bayi fiyatı") &&
-    priceListsHtml.includes("Müşteri iskontolarını firma kartlarından yönet"),
-  "Admin standard price and company discount guidance not rendered",
+  priceListsHtml.includes("Fiyat listeleri ve iskontolar") &&
+    priceListsHtml.includes("Firma iskontoları") &&
+    priceListsHtml.includes("Toplu fiyat artışı veya azalışı"),
+  "Admin price hierarchy, company discount, or bulk adjustment controls not rendered",
+);
+
+const priceImportResponse = await request("/admin/urunler/fiyat-aktarimi", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  priceImportResponse.status === 200,
+  `Authenticated Excel price import failed with ${priceImportResponse.status}`,
+);
+const priceImportHtml = await priceImportResponse.text();
+assert(
+  priceImportHtml.includes("Excel fiyat aktarımı") &&
+    priceImportHtml.includes('accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"'),
+  "Excel price import controls not rendered",
+);
+
+const priceTemplateDb = new Database(databasePath, { readonly: true });
+const smokePriceList = priceTemplateDb
+  .prepare("select id from PriceList where isActive = 1 order by priority desc limit 1")
+  .get();
+priceTemplateDb.close();
+assert(smokePriceList, "Smoke database has no active price list");
+const priceTemplateResponse = await request(
+  `/api/admin/price-template.xlsx?priceListId=${encodeURIComponent(smokePriceList.id)}`,
+  { headers: { Cookie: serializeCookies(cookieJar) } },
+);
+assert(
+  priceTemplateResponse.status === 200,
+  `Excel price template failed with ${priceTemplateResponse.status}`,
+);
+assert(
+  priceTemplateResponse.headers
+    .get("content-type")
+    ?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+  "Excel price template content type is invalid",
+);
+
+const stockOperationsResponse = await request("/admin/stok", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  stockOperationsResponse.status === 200,
+  `Authenticated /admin/stok failed with ${stockOperationsResponse.status}`,
+);
+const stockOperationsHtml = await stockOperationsResponse.text();
+assert(
+  stockOperationsHtml.includes("Stok ve depo raporu") &&
+    stockOperationsHtml.includes("Toplu stok aktar") &&
+    stockOperationsHtml.includes("Hareketleri izle"),
+  "Stock and warehouse operation controls not rendered",
 );
 
 const priceStockImportResponse = await request("/admin/urunler/fiyat-stok-aktarimi", {
@@ -1185,6 +1236,9 @@ console.log(
         "authenticated-product-publication-readiness",
         "authenticated-product-categories",
         "authenticated-price-lists",
+        "authenticated-excel-price-import",
+        "excel-price-template",
+        "authenticated-stock-operations",
         "authenticated-price-stock-import",
         "price-stock-import-template",
         "authenticated-product-compatibility-tab",

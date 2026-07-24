@@ -113,10 +113,10 @@ const navigationSections: AdminNavSection[] = [
     items: [
       {
         label: "Stok ve Depo",
-        href: "/admin/raporlar?view=stock",
+        href: "/admin/stok",
         icon: Boxes,
         description: "Stok riski ve hareketler",
-        anyPermissions: ["report.read", "stock.read.detailed"],
+        permission: "stock.read.detailed",
       },
       {
         label: "Sevkiyat",

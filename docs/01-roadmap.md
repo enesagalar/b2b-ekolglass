@@ -1,5 +1,24 @@
 # Faz Yol Haritasi
 
+## Kanonik Durum - 2026-07-24
+
+Asagidaki sira bu dosyadaki eski tarihsel alt faz notlarina gore onceliklidir:
+
+| Faz | Durum | Aciklama |
+| --- | --- | --- |
+| 1-4 | Kapali | Temel platform, auth, katalog, bayi ve siparis yasam dongusu |
+| 5A | Kapali | Guvenlik, gozlemlenebilirlik, raporlama ve production artifact hatti |
+| 6-7 | Kapali | Premium responsive UI ve yerel yayin kabul otomasyonu |
+| 7.1 | Tamamlandi | Anlasilir fiyat hiyerarsisi, firma iskontosu, Excel aktarimi, toplu fiyat degisimi ve geri alma |
+| 7.2 | Devam ediyor | Stok/depo operasyon ekrani ve coklu depo kaydi duzeltmesi; depo ana verisi ve transfer sonraki paket |
+| 7.3 | Sirada | Urun yonetimi ikincil ekranlarinin sadeleştirilmesi ve gercek cihaz mobil kabulu |
+| 8 | Dis girdiye bagli | Production hosting, SMTP, kalici storage, scheduler, alarm ve canli kabul |
+| 9 | Ertelendi | City Lojistik canli adapteri, ERP ve urun gorsel otomasyonu |
+
+ERP, City Lojistik ve urun fotograf otomasyonu bugunku cekirdek ticaret kabulunu
+bloke etmez. Bu moduller resmi veri/API ve operasyon karari geldiginde ayri kabul
+paketleri olarak uygulanacaktir.
+
 ## Faz 1 - Temel Platform
 
 Durum: Tamamlandi.

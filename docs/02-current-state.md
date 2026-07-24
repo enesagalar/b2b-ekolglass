@@ -1,5 +1,21 @@
 # Guncel Proje Durumu
 
+## 2026-07-24 - Faz 7.1 fiyat operasyonu ve Faz 7.2 stok operasyonu
+
+- Fiyat kavramlari `liste fiyati`, `firma iskontosu` ve `siparis fiyati` olarak ayrildi.
+- Fiyat onceligi firma listesi, musteri grubu listesi ve genel liste seklinde aciklandi.
+- Ticari kosullar kullaniciya degil firmaya atanir; ayni firmadaki bayi kullanicilari ayni kosullari gorur.
+- `.xlsx` fiyat sablonu urun kodu ve mevcut fiyatlarla indirilebilir.
+- Excel dosyasi canli veriye dokunmadan once satir bazinda onizlenir; hatali dosya uygulanmaz.
+- Fiyat aktarimi ve toplu artis/azalis tek transaction icinde calisir, audit partisi olusturur ve guvenli geri alma sunar.
+- Dolu fiyat listesinin para birimi veya kapsami degistirilemez.
+- `/admin/stok` ayri operasyon rotasi olarak acildi; risk, rezervasyon, mutabakat, toplu aktarim ve hareket defteri baglantilari bir aradadir.
+- Coklu depo kaydinda yanlis satirin surum bilgisinin gonderilmesi duzeltildi.
+- Yerel kabul: 19/19 Node, 385/385 Vitest, 47 authenticated HTTP smoke, lint, typecheck, production build, release yasam dongusu demosu ve 0 production dependency vulnerability.
+- 1440 px masaustu ile 390 px mobil fiyat/stok ekranlarinda yatay tasma ve browser console hatasi bulunmadi.
+- Depo ana verisi, depolar arasi transfer ve sayim oturumu Faz 7.2'nin kalan kapsamidir.
+- ERP, City Lojistik canli adapteri ve urun gorsel otomasyonu Faz 9'a ertelendi.
+
 ## 2026-07-24 - Faz 7 UI ve yayin kabul durumu
 
 - Onayli PDF logodan keskin SVG logo ve marka isareti uretildi; kirpilmis JPEG ve dusuk cozunurluklu ICO sunumu kaldirildi.

@@ -38,16 +38,40 @@ Admin urun detayinda `Yayin hazirligi` paneli genel bayi fiyatini ve kullanilabi
 
 Admin toplu yayin ekrani `/admin/urunler/yayin-hazirligi` altindadir. Taslaklar fiyat/stok eksigine gore filtrelenir; yalniz hazir urunler secilebilir. Sunucu secilen tum urunleri transaction icinde yeniden okur. Tek bir urun stale, fiyatsiz veya stoksuzsa hicbir urun yayinlanmaz. Tek komut 50 urunle sinirlidir ve her urun batch kimligiyle audit log'a yazilir.
 
-## Net Fiyat Cozumleme
+## Fiyat Cozumleme
 
 Ana ticari model:
 
-1. Urune standart genel bayi net fiyati tanimlanir.
+1. Urune standart genel bayi liste fiyati tanimlanir.
 2. Firma kartina `0-100` araliginda musteri iskonto yuzdesi tanimlanir.
-3. Etkin siparis fiyati `baz fiyat x (1 - iskonto / 100)` olarak iki ondaliga yuvarlanir.
+3. Etkin siparis fiyati `liste fiyati x (1 - iskonto / 100)` olarak iki ondaliga yuvarlanir.
 4. Ornek: 1.000 TRY baz fiyat ve yuzde 10 firma iskontosu, 900 TRY siparis fiyati uretir.
 
-Mevcut musteri grubu ve firma net fiyat listeleri geriye donuk uyumluluk icin gelismis istisna olarak korunur. Firma ozel net fiyat satiri secilirse musteri iskontosu ikinci kez uygulanmaz. Grup veya genel baz fiyat secilirse firma iskontosu uygulanir. Ayni kapsamda yuksek oncelik, gecerli tarih araligi ve siparis miktarina uyan en yuksek minimum adet kademesi secilir. `PriceList` ayni anda hem firma hem musteri grubu hedefleyemez.
+Musteri grubu ve firma fiyat listeleri kontrollu istisnadir. Firma ozel fiyat
+satiri secilirse firma iskontosu ikinci kez uygulanmaz. Grup veya genel liste
+secildiginde firma iskontosu uygulanir. Ayni kapsamda yuksek oncelik, gecerli
+tarih araligi ve siparis miktarina uyan en yuksek minimum adet kademesi secilir.
+`PriceList` ayni anda hem firma hem musteri grubu hedefleyemez.
+
+Ticari kosullar bireysel bayi kullanicisina degil firmaya tanimlanir. Bir firmadaki
+tum aktif bayi kullanicilari ayni fiyat listesini ve iskontoyu kullanir.
+
+## Excel ve Toplu Fiyat Operasyonu
+
+- `/admin/urunler/fiyat-aktarimi` yalniz `.xlsx` kabul eder.
+- Sistemden indirilen sablon urun kodu, urun adi, secili listedeki mevcut fiyat
+  ve minimum adet kolonlarini doldurur.
+- Yükleme once staging partisi olusturur; kullanici eski ve yeni fiyati satir
+  bazinda gorup onaylamadan canli fiyat degismez.
+- Hatali urun kodu, tekrar eden kademe, gecersiz veya pozitif olmayan fiyat
+  partinin uygulanmasini engeller.
+- Uygulama tek transaction icindedir. Eszamanli fiyat degisikligi algilanirsa
+  tum parti geri alinir.
+- Liste bazli toplu artis/azalis yuzde veya sabit tutar olarak uygulanabilir.
+- Excel ve toplu degisiklik partileri mevcut fiyat hala beklenen degerdeyse geri
+  alinabilir; boylece daha yeni manuel degisiklik ezilmez.
+- Fiyat satiri olan listenin kapsami ve para birimi degistirilemez. Yeni kapsam
+  veya para birimi icin yeni liste acilir.
 
 ## CMS Medya Sozlesmesi
 

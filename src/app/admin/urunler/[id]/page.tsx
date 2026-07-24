@@ -276,26 +276,26 @@ export default async function AdminProductDetailPage({
               Depo stok satiri ekle veya guncelle
             </div>
             <input type="hidden" name="productId" value={product.id} />
-            <input type="hidden" name="expectedUpdatedAt" value={product.stockItems[0]?.updatedAt.toISOString() ?? ""} />
+            <input type="hidden" name="expectedUpdatedAt" value="" />
             <input type="hidden" name="idempotencyKey" value={randomUUID()} />
             <div className="grid gap-3 lg:grid-cols-6">
               <label className={labelClass}>
                 Depo
-                <input name="warehouseCode" required defaultValue={product.stockItems[0]?.warehouseCode ?? "MERKEZ"} className={inputClass} />
+                <input name="warehouseCode" required defaultValue="MERKEZ" className={inputClass} />
               </label>
               <label className={labelClass}>
                 Stok
-                <input name="quantity" type="number" min={0} required defaultValue={product.stockItems[0]?.quantity ?? 0} className={inputClass} />
+                <input name="quantity" type="number" min={0} required defaultValue={0} className={inputClass} />
               </label>
               <label className={labelClass}>
                 Rezerve
                 <output className={`${inputClass} flex items-center bg-slate-50 text-slate-600`}>
-                  {product.stockItems[0]?.reservedQuantity ?? 0}
+                  0
                 </output>
               </label>
               <label className={labelClass}>
                 Gorunurluk
-                <select name="visibility" defaultValue={product.stockItems[0]?.visibility ?? "SIMPLIFIED"} className={inputClass}>
+                <select name="visibility" defaultValue="SIMPLIFIED" className={inputClass}>
                   {stockVisibilities.map((visibility) => (
                     <option key={visibility} value={visibility}>
                       {getStockVisibilityLabel(visibility)}
@@ -305,7 +305,7 @@ export default async function AdminProductDetailPage({
               </label>
               <label className={labelClass}>
                 Durum
-                <select name="status" defaultValue={product.stockItems[0]?.status ?? "ASK_FOR_AVAILABILITY"} className={inputClass}>
+                <select name="status" defaultValue="ASK_FOR_AVAILABILITY" className={inputClass}>
                   {stockStatuses.map((status) => (
                     <option key={status} value={status}>
                       {getStatusLabel(status)}
@@ -323,36 +323,56 @@ export default async function AdminProductDetailPage({
             </div>
           </CatalogActionForm>
 
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
             {product.stockItems.length > 0 ? (
-              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
-                  <tr>
-                    <th className="px-4 py-3">Depo</th>
-                    <th className="px-4 py-3">Stok</th>
-                    <th className="px-4 py-3">Rezerve</th>
-                    <th className="px-4 py-3">Uygun</th>
-                    <th className="px-4 py-3">Gorunurluk</th>
-                    <th className="px-4 py-3">Durum</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {product.stockItems.map((stock) => (
-                    <tr key={stock.id} className="border-t border-slate-200">
-                      <td className="px-4 py-4 font-semibold text-slate-950">{stock.warehouseCode}</td>
-                      <td className="px-4 py-4">{stock.quantity}</td>
-                      <td className="px-4 py-4">{stock.reservedQuantity}</td>
-                      <td className="px-4 py-4">{Math.max(0, stock.quantity - stock.reservedQuantity)}</td>
-                      <td className="px-4 py-4">{getStockVisibilityLabel(stock.visibility)}</td>
-                      <td className="px-4 py-4">
-                        <span className="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
-                          {getStatusLabel(stock.status)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="divide-y divide-slate-200">
+                {product.stockItems.map((stock) => (
+                  <CatalogActionForm
+                    key={stock.id}
+                    action={saveProductStock}
+                    className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[150px_120px_120px_160px_180px_minmax(220px,1fr)_auto] xl:items-end"
+                  >
+                    <input type="hidden" name="productId" value={product.id} />
+                    <input type="hidden" name="warehouseCode" value={stock.warehouseCode} />
+                    <input type="hidden" name="expectedUpdatedAt" value={stock.updatedAt.toISOString()} />
+                    <input type="hidden" name="idempotencyKey" value={randomUUID()} />
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">Depo</p>
+                      <p className="mt-2 font-semibold text-slate-950">{stock.warehouseCode}</p>
+                    </div>
+                    <label className={labelClass}>
+                      Fiziksel stok
+                      <input name="quantity" type="number" min={stock.reservedQuantity} required defaultValue={stock.quantity} className={inputClass} />
+                    </label>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">Rezerve</p>
+                      <p className="mt-2 font-semibold text-amber-700">{stock.reservedQuantity}</p>
+                      <p className="mt-1 text-xs text-slate-500">{Math.max(0, stock.quantity - stock.reservedQuantity)} uygun</p>
+                    </div>
+                    <label className={labelClass}>
+                      Görünürlük
+                      <select name="visibility" defaultValue={stock.visibility} className={inputClass}>
+                        {stockVisibilities.map((visibility) => (
+                          <option key={visibility} value={visibility}>{getStockVisibilityLabel(visibility)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className={labelClass}>
+                      Durum
+                      <select name="status" defaultValue={stock.status} className={inputClass}>
+                        {stockStatuses.map((status) => (
+                          <option key={status} value={status}>{getStatusLabel(status)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className={labelClass}>
+                      Düzeltme gerekçesi
+                      <input name="reason" required minLength={10} maxLength={500} placeholder="Sayım veya düzeltme nedeni" className={inputClass} />
+                    </label>
+                    <SubmitButton label="Güncelle" />
+                  </CatalogActionForm>
+                ))}
+              </div>
             ) : (
               <EmptyState title="Stok satiri yok" body="Bu urune depo bazli stok eklenince burada gorunecek." />
             )}
