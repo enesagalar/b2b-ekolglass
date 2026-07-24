@@ -44,7 +44,7 @@
     "check": "npm run lint && npm run typecheck && npm run test:node && npm run test && npm run build"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1086.0",
+    "@aws-sdk/client-s3": "^3.1092.0",
     "@prisma/adapter-better-sqlite3": "^7.9.0",
     "@prisma/client": "^7.9.0",
     "bcryptjs": "^3.0.3",
