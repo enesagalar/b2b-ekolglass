@@ -915,15 +915,15 @@ assert(
   "Admin category shortcut not rendered",
 );
 assert(
-  productsHtml.includes("Fiyat listelerine git"),
+  productsHtml.includes("Fiyat yönetimini aç"),
   "Admin price list shortcut not rendered",
 );
 assert(
-  productsHtml.includes("Toplu ürün aktarımı") && productsHtml.includes('type="file"'),
+  productsHtml.includes("Excel/CSV ile toplu ürün ekle") && productsHtml.includes('type="file"'),
   "Admin product CSV upload control not rendered",
 );
 assert(
-  productsHtml.includes("Toplu yayın hazırlığı") &&
+  productsHtml.includes("Ürünleri satışa aç") &&
     productsHtml.includes("/admin/urunler/yayin-hazirligi"),
   "Admin product publication readiness shortcut not rendered",
 );

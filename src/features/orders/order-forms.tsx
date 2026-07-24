@@ -9,7 +9,15 @@ import {
   submitOrderCartAction,
 } from "@/features/orders/actions";
 
-export function AddToOrderCartForm({ productId }: { productId: string }) {
+export function AddToOrderCartForm({
+  productId,
+  disabled = false,
+  unavailableReason,
+}: {
+  productId: string;
+  disabled?: boolean;
+  unavailableReason?: string;
+}) {
   const [state, action, pending] = useActionState(addOrderCartItemAction, {});
   return (
     <form action={action} className="grid gap-2">
@@ -23,11 +31,12 @@ export function AddToOrderCartForm({ productId }: { productId: string }) {
             min="1"
             max="999"
             defaultValue="1"
+            disabled={disabled}
             className="h-11 w-24 rounded-md border border-slate-300 px-3 text-sm"
           />
         </label>
         <button
-          disabled={pending}
+          disabled={pending || disabled}
           className="inline-flex h-11 flex-1 self-end items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white disabled:opacity-60"
         >
           {pending ? (
@@ -38,6 +47,11 @@ export function AddToOrderCartForm({ productId }: { productId: string }) {
           Sipariş sepetine ekle
         </button>
       </div>
+      {disabled && unavailableReason ? (
+        <p className="text-xs font-medium leading-5 text-amber-800">
+          {unavailableReason}
+        </p>
+      ) : null}
       {state.message ? (
         <p role="status" className="text-xs font-semibold text-red-700">
           {state.message}
@@ -183,9 +197,11 @@ export function SubmitOrderForm({
           className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm"
         >
           <option value="SALES_COORDINATION">Satış ekibiyle koordine</option>
-          <option value="CITY_LOJISTIK">City Lojistik</option>
           <option value="CUSTOMER_PICKUP">Müşteri teslim alacak</option>
         </select>
+        <span className="font-normal leading-5 text-slate-500">
+          City Lojistik seçeneği entegrasyon tamamlandığında burada açılacaktır.
+        </span>
       </label>
       <label className="grid gap-1 text-xs font-semibold text-slate-600">
         Sipariş notu

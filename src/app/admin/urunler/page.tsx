@@ -4,8 +4,8 @@ import {
   ArrowRight,
   Boxes,
   CircleDollarSign,
+  ChevronDown,
   Eye,
-  FileSpreadsheet,
   Filter,
   Layers3,
   PackagePlus,
@@ -405,10 +405,11 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
     <div className="grid gap-6">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
-            <p className="text-sm font-medium text-teal-800">Ticari veri yönetimi</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-950">Ürün, kategori, fiyat ve stok operasyonu</h1>
+            <p className="text-sm font-medium text-teal-800">Katalog yönetimi</p>
+            <h1 className="mt-2 text-3xl font-semibold text-slate-950">Ürün yönetimi</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-              Bu ekran public katalogun okuduğu gerçek veriyi yönetir. B2B ürünleri yalnız doğrudan sipariş akışına açılır.
+              Ürünleri bulun, bilgilerini düzenleyin veya yeni ürün ekleyin.
+              Fiyat, stok ve yayın işlemleri kendi operasyon ekranlarından yönetilir.
             </p>
           </div>
         </div>
@@ -434,13 +435,26 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_0.8fr]">
-          <section className={panelClass}>
-            <div className="flex items-center gap-3">
-              <PackagePlus size={20} className="text-teal-800" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-slate-950">Yeni ürün oluştur</h2>
-            </div>
+          <details className="group rounded-lg border border-slate-200 bg-white shadow-sm">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5">
+              <span className="flex items-center gap-3">
+                <PackagePlus size={20} className="text-teal-800" aria-hidden="true" />
+                <span>
+                  <span className="block text-lg font-semibold text-slate-950">
+                    Yeni ürün ekle
+                  </span>
+                  <span className="mt-1 block text-sm text-slate-500">
+                    Teknik bilgi, ilk stok ve ilk fiyatı birlikte oluşturun.
+                  </span>
+                </span>
+              </span>
+              <ChevronDown
+                size={18}
+                className="shrink-0 transition group-open:rotate-180"
+              />
+            </summary>
             {canCreateProduct ? (
-              <CatalogActionForm action={saveProductBundle} className="mt-5 grid gap-5">
+              <CatalogActionForm action={saveProductBundle} className="grid gap-5 border-t border-slate-200 p-5">
                 <input type="hidden" name="idempotencyKey" value={randomUUID()} />
                 <ProductCoreFields categories={categories} />
                 <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
@@ -460,32 +474,41 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 <SubmitButton label="Ürünü oluştur" />
               </CatalogActionForm>
             ) : (
-              <p className="mt-5 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p className="border-t border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
                 Ürün oluşturmak için en az bir kategori ve bir fiyat listesi gerekir.
               </p>
             )}
-          </section>
+          </details>
 
           <aside className="grid gap-4 self-start">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-semibold text-slate-950">Toplu ürün aktarımı</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Ekol ürün listesini Türkçe karakterleri koruyarak kod bazında ekleyin veya güncelleyin.
-              </p>
-              <div className="mt-4"><ProductImportForm /></div>
-            </section>
+            <details className="group rounded-lg border border-slate-200 bg-white shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5">
+                <span>
+                  <span className="block text-sm font-semibold text-slate-950">
+                    Excel/CSV ile toplu ürün ekle
+                  </span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-600">
+                    Ürün kodlarına göre yeni kayıt ekleyin veya teknik bilgileri güncelleyin.
+                  </span>
+                </span>
+                <ChevronDown size={17} className="shrink-0 transition group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-slate-200 p-5">
+                <ProductImportForm />
+              </div>
+            </details>
             <Link
-              href="/admin/urunler/fiyat-stok-aktarimi"
+              href="/admin/stok"
               className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
             >
               <div className="flex items-center gap-2">
-                <FileSpreadsheet size={18} className="text-teal-800" aria-hidden="true" />
-                <p className="text-sm font-semibold text-slate-950">Fiyat ve stok aktarımı</p>
+                <Warehouse size={18} className="text-teal-800" aria-hidden="true" />
+                <p className="text-sm font-semibold text-slate-950">Stok ve depo</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                CSV dosyasını önce doğrulayın, satır hatalarını inceleyin ve kontrollü biçimde uygulayın.
+                Fiziksel, rezerve ve kullanılabilir stokları izleyin; stok işlemlerine geçin.
               </p>
-              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Aktarım merkezini aç</span>
+              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Stok merkezini aç</span>
             </Link>
             <Link
               href="/admin/urunler/yayin-hazirligi"
@@ -493,7 +516,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             >
               <div className="flex items-center gap-2">
                 <PackageCheck size={18} className="text-teal-800" aria-hidden="true" />
-                <p className="text-sm font-semibold text-slate-950">Toplu yayın hazırlığı</p>
+                <p className="text-sm font-semibold text-slate-950">Ürünleri satışa aç</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Fiyat ve stok koşullarını kontrol edin, hazır taslakları güvenli biçimde topluca yayınlayın.
@@ -504,7 +527,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               href="/admin/urunler/kategoriler"
               className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
             >
-              <p className="text-sm font-semibold text-slate-950">Kategori yonetimi</p>
+              <p className="text-sm font-semibold text-slate-950">Kategorileri düzenle</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 {categories.length} kategori, urun listesi ekrani disinda daha rahat duzenlenir.
               </p>
@@ -514,11 +537,11 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               href="/admin/urunler/fiyat-listeleri"
               className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow-md"
             >
-              <p className="text-sm font-semibold text-slate-950">Fiyat listeleri</p>
+              <p className="text-sm font-semibold text-slate-950">Fiyat yönetimi</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                {priceLists.length} fiyat listesi, bayi gruplari ve ileride firma bazli fiyatlar icin temel veri.
+                Ana bayi fiyatlarını, firma iskontolarını ve toplu fiyat değişikliklerini yönetin.
               </p>
-              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Fiyat listelerine git</span>
+              <span className="mt-4 inline-flex text-sm font-semibold text-teal-800">Fiyat yönetimini aç</span>
             </Link> : null}
           </aside>
 

@@ -205,3 +205,8 @@ export async function logout() {
   await clearCurrentSession();
   redirect("/giris");
 }
+
+export async function logoutAdmin() {
+  await clearCurrentSession();
+  redirect("/yonetim/giris");
+}

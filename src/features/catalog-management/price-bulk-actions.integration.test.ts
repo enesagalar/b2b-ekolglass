@@ -13,6 +13,7 @@ vi.mock("@/lib/auth", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { bulkAdjustPrices } from "./price-bulk-actions";
+import { applyPriceImportBatch } from "./price-import-actions";
 
 const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const actorId = `bulk-price-actor-${suffix}`;
@@ -84,10 +85,25 @@ describe("bulk price adjustment", () => {
     await prisma.user.deleteMany({ where: { id: actorId } });
   });
 
-  it("increases and decreases every list row atomically", async () => {
+  it("previews changes before increasing and decreasing every list row atomically", async () => {
+    await expect(
+      bulkAdjustPrices(await adjustmentForm("INCREASE", "PERCENT", "10")),
+    ).rejects.toMatchObject({ digest: expect.stringContaining("NEXT_REDIRECT") });
     expect(
-      await bulkAdjustPrices(await adjustmentForm("INCREASE", "PERCENT", "10")),
-    ).toMatchObject({ ok: true });
+      (
+        await prisma.productPrice.findMany({
+          where: { priceListId },
+          orderBy: { amount: "asc" },
+        })
+      ).map((price) => price.amount.toString()),
+    ).toEqual(["100", "250"]);
+    const increaseBatch = await prisma.catalogImportBatch.findFirstOrThrow({
+      where: { createdById: actorId, kind: "PRICE_ADJUSTMENT", status: "PREVIEW" },
+      orderBy: { createdAt: "desc" },
+    });
+    await expect(applyPriceImportBatch(increaseBatch.id)).rejects.toMatchObject({
+      digest: expect.stringContaining("NEXT_REDIRECT"),
+    });
     expect(
       (
         await prisma.productPrice.findMany({
@@ -97,9 +113,16 @@ describe("bulk price adjustment", () => {
       ).map((price) => price.amount.toString()),
     ).toEqual(["110", "275"]);
 
-    expect(
-      await bulkAdjustPrices(await adjustmentForm("DECREASE", "FIXED", "10")),
-    ).toMatchObject({ ok: true });
+    await expect(
+      bulkAdjustPrices(await adjustmentForm("DECREASE", "FIXED", "10")),
+    ).rejects.toMatchObject({ digest: expect.stringContaining("NEXT_REDIRECT") });
+    const decreaseBatch = await prisma.catalogImportBatch.findFirstOrThrow({
+      where: { createdById: actorId, kind: "PRICE_ADJUSTMENT", status: "PREVIEW" },
+      orderBy: { createdAt: "desc" },
+    });
+    await expect(applyPriceImportBatch(decreaseBatch.id)).rejects.toMatchObject({
+      digest: expect.stringContaining("NEXT_REDIRECT"),
+    });
     expect(
       (
         await prisma.productPrice.findMany({

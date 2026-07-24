@@ -1,5 +1,16 @@
 # Guncel Proje Durumu
 
+## 2026-07-24 - Faz 7.3 gorev odakli UX paketi 1
+
+- `docs/ux/task-oriented-ux-contract.md` tum admin, bayi ve ticaret ekranlari icin ortak anlasilabilirlik sozlesmesi olarak eklendi.
+- Fiyat yonetiminde firma/grup liste teknigi ana akistan kaldirildi; istisna listeleri kapali gelismis gorevlere donusturuldu.
+- Toplu zam veya indirim artik fiyatlari dogrudan degistirmez. Once eski/yeni fiyatlari gosteren 24 saatlik onizleme olusturur, ikinci onaydan sonra atomik uygulanir ve geri alinabilir.
+- Urun yonetiminde yeni urun ve Excel aktarimi kapali ikincil gorevlere tasindi; fiyat, stok ve yayin islemleri kendi operasyon ekranlarina yonlendirildi.
+- Katalog kartlari ve urun detayi, fiyati veya kullanilabilir stogu olmayan urunu siparise uygun gostermiyor.
+- City Lojistik canli adapteri hazir olmadigi icin checkout seceneklerinden kaldirildi; entegrasyon durumu acikca belirtiliyor.
+- Admin cikisi admin girisine doner; public ana sayfadaki admin oturumu bayi girisi yerine yonetim paneline yonlenir.
+- Ana commerce logosu masaustu, tablet ve mobilde daha kompakt olculere cekildi.
+
 ## 2026-07-24 - Faz 7.1 fiyat operasyonu ve Faz 7.2 stok operasyonu
 
 - Fiyat yonetimi teknik fiyat listesi modelinden gorev odakli akisa sadeleştirildi.

@@ -1,7 +1,7 @@
 "use server";
 
 import { createHash } from "crypto";
-import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
@@ -23,15 +23,6 @@ const adjustmentSchema = z.object({
 
 function resolveFormData(input: CatalogActionInput, maybeFormData?: FormData) {
   return input instanceof FormData ? input : maybeFormData;
-}
-
-function formatValue(method: "PERCENT" | "FIXED", value: number) {
-  return method === "PERCENT"
-    ? `%${value.toLocaleString("tr-TR")}`
-    : value.toLocaleString("tr-TR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
 }
 
 function adjustedAmount(
@@ -126,14 +117,6 @@ export async function bulkAdjustPrices(
           return { price, nextAmount };
         });
 
-        for (const { price, nextAmount } of changes) {
-          const updated = await tx.productPrice.updateMany({
-            where: { id: price.id, updatedAt: price.updatedAt },
-            data: { amount: nextAmount },
-          });
-          if (updated.count !== 1) throw new Error("PRICE_ROW_STALE");
-        }
-
         const operationKey = [
           priceList.id,
           parsed.data.operation,
@@ -145,7 +128,7 @@ export async function bulkAdjustPrices(
         const batch = await tx.catalogImportBatch.create({
           data: {
             kind: "PRICE_ADJUSTMENT",
-            status: "APPLIED",
+            status: "PREVIEW",
             fileName: `${priceList.name} toplu fiyat güncellemesi`,
             fileHash: createHash("sha256").update(operationKey).digest("hex"),
             priceListId: priceList.id,
@@ -153,8 +136,7 @@ export async function bulkAdjustPrices(
             totalRows: changes.length,
             validRows: changes.length,
             invalidRows: 0,
-            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            appliedAt: new Date(),
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
             rows: {
               create: changes.map(({ price, nextAmount }, index) => ({
                 rowNumber: index + 1,
@@ -164,7 +146,7 @@ export async function bulkAdjustPrices(
                 previousPrice: price.amount,
                 minQuantity: price.minQuantity,
                 expectedPriceUpdatedAt: price.updatedAt,
-                status: "APPLIED",
+                status: "VALID",
               })),
             },
           },
@@ -173,7 +155,7 @@ export async function bulkAdjustPrices(
         await tx.auditLog.create({
           data: {
             actorUserId: actor.id,
-            action: "product_price.bulk_adjust",
+            action: "product_price.bulk_adjust.previewed",
             entityType: "PriceList",
             entityId: batch.id,
             metadata: JSON.stringify({
@@ -199,29 +181,14 @@ export async function bulkAdjustPrices(
             }),
           },
         });
-        return { count: changes.length, name: priceList.name };
+        return { id: batch.id };
       },
       { timeout: 60_000, maxWait: 10_000 },
     );
 
-    [
-      "/",
-      "/urunler",
-      "/sepet",
-      "/admin/urunler",
-      "/admin/urunler/fiyat-listeleri",
-    ].forEach((path) => revalidatePath(path));
-
-    const direction =
-      parsed.data.operation === "INCREASE" ? "artırıldı" : "azaltıldı";
-    return {
-      ok: true,
-      message: `${result.name}: ${result.count} fiyat satırı ${formatValue(
-        parsed.data.method,
-        parsed.data.value,
-      )} ${direction}.`,
-    };
+    redirect(`/admin/urunler/fiyat-aktarimi/${result.id}`);
   } catch (error) {
+    if (error && typeof error === "object" && "digest" in error) throw error;
     const message =
       error instanceof Error ? error.message : "UNKNOWN";
     const knownMessages: Record<string, string> = {

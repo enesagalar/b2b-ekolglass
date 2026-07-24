@@ -2,10 +2,11 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
-## Aktif Hedef - Faz 7.2
+## Aktif Hedef - Faz 7.3 gorev odakli UX
 
-Faz 7.1 fiyat operasyonu tamamlandi. Tek aktif repo ici hedef stok ve depo
-operasyonunun tamamlanmasidir.
+Faz 7.1 fiyat operasyonu tamamlandi. Kullanici talebiyle Faz 7.3 anlasilabilirlik
+calismasi stok/depo veri modelinin onune alinmistir. Faz 7.2 veri modeli korunur
+ve UX gecisinden sonra devam eder.
 
 Tamamlanan:
 
@@ -17,13 +18,18 @@ Tamamlanan:
 6. Dolu fiyat listesinin kapsam/para birimi degisikligine kilitlenmesi.
 7. Ayrik `/admin/stok` operasyon ekrani ve coklu depo satiri duzeltmesi.
 8. 19 Node, 385 Vitest, 47 authenticated smoke, production build, release demo ve mobil/masaustu browser kabulu.
+9. Ortak gorev odakli UX sozlesmesi ve fiyat/urun UX paketi 1.
+10. Toplu fiyat degisikliginde zorunlu onizleme ve ikinci onay.
+11. Admin/bayi yonlendirme ayrimi, urun siparis uygunlugu ve City secenegi tutarliligi.
 
 Siradaki repo ici paket:
 
-1. Depo kodlarini serbest metinden yonetilen depo ana verisine tasimak.
-2. Depolar arasi transfer ve sayim/fark duzeltme komutlarini stok hareket defterine baglamak.
-3. Urun yonetimi ikincil ekranlarini sadeleştirmek.
-4. Tam regresyon, release demo ve masaustu/mobil browser kabulunu yenilemek.
+1. Stok/depo ve yayin hazirligi ekranlarini gorev odakli sadeleştirmek.
+2. Firma detayi ve bayi basvuru incelemesinde etki ozeti ve guvenli birincil aksiyon kurmak.
+3. Siparis durumlarini sonuc diliyle aciklamak; teknik history ve snapshot alanlarini ikincil seviyeye tasimak.
+4. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
+5. Tum kritik rotalarda tam regresyon ve masaustu/mobil browser kabulunu yenilemek.
+6. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
 
 Ertelenen ve cekirdek kabulu bloke etmeyen:
 

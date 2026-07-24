@@ -23,7 +23,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 
-import { logout } from "@/features/auth/actions";
+import { logoutAdmin } from "@/features/auth/actions";
 import { BrandLogo } from "@/components/brand-logo";
 import { NavigationDrawer } from "@/components/navigation-drawer";
 import {
@@ -372,7 +372,7 @@ export function AdminShell({
                   {getRoleLabel(user.role)}
                 </p>
               </div>
-              <form action={logout}>
+              <form action={logoutAdmin}>
                 <button
                   type="submit"
                   aria-label="Çıkış yap"

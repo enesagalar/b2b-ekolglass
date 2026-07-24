@@ -104,7 +104,7 @@ export function CommerceHeader({ identity }: { identity: CommerceIdentity }) {
       <div className="material-nav mx-auto max-w-[1480px] rounded-[20px]">
         <div className="flex min-h-[72px] items-center gap-3 px-3 sm:px-5">
           <Link href="/" aria-label="EkolGlass B2B ana sayfa" className="shrink-0">
-            <BrandLogo />
+            <BrandLogo className="commerce-header-logo" />
           </Link>
 
           <nav className="ml-2 hidden items-center gap-1 lg:flex" aria-label="Ana navigasyon">

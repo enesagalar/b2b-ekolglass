@@ -159,7 +159,7 @@ export async function applyPriceImportBatch(batchId: string) {
         const batch = await tx.catalogImportBatch.findFirst({
           where: {
             id: batchId,
-            kind: "PRICE",
+            kind: { in: ["PRICE", "PRICE_ADJUSTMENT"] },
             createdById: actor.id,
             status: "PREVIEW",
             expiresAt: { gt: now },
@@ -287,7 +287,7 @@ export async function cancelPriceImportBatch(batchId: string) {
   const updated = await prisma.catalogImportBatch.updateMany({
     where: {
       id: batchId,
-      kind: "PRICE",
+      kind: { in: ["PRICE", "PRICE_ADJUSTMENT"] },
       createdById: actor.id,
       status: "PREVIEW",
     },

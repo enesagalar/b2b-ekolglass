@@ -78,6 +78,11 @@ button {
   object-fit: contain;
 }
 
+.commerce-header-logo {
+  width: 132px;
+  height: 48px;
+}
+
 .brand-mark {
   display: inline-flex;
   width: 42px;
@@ -285,10 +290,22 @@ button {
   --tw-ring-color: #d9edf7;
 }
 
+@media (min-width: 640px) and (max-width: 1023px) {
+  .commerce-header-logo {
+    width: 124px;
+    height: 45px;
+  }
+}
+
 @media (max-width: 639px) {
   .brand-logo {
     width: 148px;
     height: 54px;
+  }
+
+  .commerce-header-logo {
+    width: 112px;
+    height: 41px;
   }
 }
 

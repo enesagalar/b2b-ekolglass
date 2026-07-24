@@ -59,7 +59,7 @@ export const statusLabels: Record<string, string> = {
   CONVERTED_TO_ORDER: "Siparişe Dönüştü",
   CANCELLED: "İptal Edildi",
   DRAFT: "Taslak",
-  SUBMITTED: "Gönderildi",
+  SUBMITTED: "Sipariş alındı",
   WAITING_FOR_APPROVAL: "Onay Bekliyor",
   CONFIRMED: "Onaylandı",
   PREPARING: "Hazırlanıyor",

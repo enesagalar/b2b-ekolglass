@@ -348,8 +348,8 @@ export default async function AdminPriceListsPage() {
                         required
                         className="mt-0.5 h-4 w-4 rounded border-slate-300"
                       />
-                      {priceList._count.prices} ürün fiyatının değişeceğini
-                      onaylıyorum.
+                      {priceList._count.prices} ürün için değişiklik
+                      önizlemesi hazırlanacağını onaylıyorum.
                     </label>
                     <button
                       type="submit"
@@ -357,7 +357,7 @@ export default async function AdminPriceListsPage() {
                       className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Calculator size={16} />
-                      Değişikliği uygula
+                      Önizlemeyi hazırla
                     </button>
                   </CatalogActionForm>
                 </details>
@@ -503,123 +503,166 @@ export default async function AdminPriceListsPage() {
               veya grup farklı ürün fiyatları görecekse diğer seçenekleri
               kullanın.
             </p>
-            <div className="mt-4 grid gap-4 xl:grid-cols-3">
-              <CatalogActionForm
-                action={savePriceList}
-                className="grid content-start gap-4 rounded-lg border border-slate-200 p-4"
-              >
-                <div>
-                  <h4 className="font-semibold text-slate-950">
-                    Tüm bayiler için
-                  </h4>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Standart ve önerilen kullanım.
-                  </p>
-                </div>
-                <input type="hidden" name="scope" value="PUBLIC" />
-                <input type="hidden" name="priority" value="0" />
-                <input type="hidden" name="isActive" value="on" />
-                <label className={labelClass}>
-                  Liste adı
-                  <input
-                    name="name"
-                    required
-                    className={inputClass}
-                    placeholder="Ana Bayi Fiyatları"
+            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+              Mevcut ana bayi fiyatı ve firma iskontosu ihtiyacınızı
+              karşılıyorsa yeni liste oluşturmayın. Aşağıdaki seçenekler yalnız
+              farklı ürün fiyatı verilmesi gereken istisnalar içindir.
+            </div>
+            <div className="mt-4 grid gap-3">
+              <details className="group rounded-lg border border-slate-200">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4">
+                  <span>
+                    <span className="block font-semibold text-slate-950">
+                      Yeni ana bayi fiyatı oluştur
+                    </span>
+                    <span className="mt-1 block text-sm text-slate-500">
+                      Yeni dönem veya farklı para birimi için.
+                    </span>
+                  </span>
+                  <ChevronDown
+                    size={18}
+                    className="shrink-0 transition group-open:rotate-180"
                   />
-                </label>
-                <label className={labelClass}>
-                  Para birimi
-                  <select name="currency" defaultValue="TRY" className={inputClass}>
-                    {currencies.map((currency) => (
-                      <option key={currency}>{currency}</option>
-                    ))}
-                  </select>
-                </label>
-                <SubmitButton label="Ana listeyi oluştur" />
-              </CatalogActionForm>
+                </summary>
+                <CatalogActionForm
+                  action={savePriceList}
+                  className="grid gap-4 border-t border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:items-end"
+                >
+                  <input type="hidden" name="scope" value="PUBLIC" />
+                  <input type="hidden" name="priority" value="0" />
+                  <input type="hidden" name="isActive" value="on" />
+                  <label className={labelClass}>
+                    Liste adı
+                    <input
+                      name="name"
+                      required
+                      className={inputClass}
+                      placeholder="2027 Ana Bayi Fiyatları"
+                    />
+                  </label>
+                  <label className={labelClass}>
+                    Para birimi
+                    <select
+                      name="currency"
+                      defaultValue="TRY"
+                      className={inputClass}
+                    >
+                      {currencies.map((currency) => (
+                        <option key={currency}>{currency}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="sm:col-span-2">
+                    <SubmitButton label="Ana listeyi oluştur" />
+                  </div>
+                </CatalogActionForm>
+              </details>
 
-              <CatalogActionForm
-                action={savePriceList}
-                className="grid content-start gap-4 rounded-lg border border-slate-200 p-4"
-              >
-                <div>
-                  <h4 className="font-semibold text-slate-950">
-                    Belirli bir firma için
-                  </h4>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    İskonto yetmiyorsa nihai özel ürün fiyatı.
-                  </p>
-                </div>
-                <input type="hidden" name="scope" value="COMPANY" />
-                <input type="hidden" name="priority" value="0" />
-                <input type="hidden" name="isActive" value="on" />
-                <label className={labelClass}>
-                  Liste adı
-                  <input
-                    name="name"
-                    required
-                    className={inputClass}
-                    placeholder="Firma Özel Fiyatları"
+              <details className="group rounded-lg border border-slate-200">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4">
+                  <span>
+                    <span className="block font-semibold text-slate-950">
+                      Firmaya özel ürün fiyatı oluştur
+                    </span>
+                    <span className="mt-1 block text-sm text-slate-500">
+                      Yüzde iskonto yeterli değilse kullanın.
+                    </span>
+                  </span>
+                  <ChevronDown
+                    size={18}
+                    className="shrink-0 transition group-open:rotate-180"
                   />
-                </label>
-                <label className={labelClass}>
-                  Firma
-                  <select name="companyId" required className={inputClass}>
-                    <option value="">Firma seçin</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <input type="hidden" name="currency" value="TRY" />
-                <SubmitButton label="Firma listesini oluştur" />
-              </CatalogActionForm>
+                </summary>
+                <CatalogActionForm
+                  action={savePriceList}
+                  className="grid gap-4 border-t border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:items-end"
+                >
+                  <input type="hidden" name="scope" value="COMPANY" />
+                  <input type="hidden" name="priority" value="0" />
+                  <input type="hidden" name="isActive" value="on" />
+                  <input type="hidden" name="currency" value="TRY" />
+                  <label className={labelClass}>
+                    Firma
+                    <select name="companyId" required className={inputClass}>
+                      <option value="">Firma seçin</option>
+                      {companies.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.displayName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={labelClass}>
+                    Liste adı
+                    <input
+                      name="name"
+                      required
+                      className={inputClass}
+                      placeholder="Firma Özel Fiyatları"
+                    />
+                  </label>
+                  <div className="sm:col-span-2">
+                    <SubmitButton label="Firma listesini oluştur" />
+                  </div>
+                </CatalogActionForm>
+              </details>
 
-              <CatalogActionForm
-                action={savePriceList}
-                className="grid content-start gap-4 rounded-lg border border-slate-200 p-4"
-              >
-                <div>
-                  <h4 className="font-semibold text-slate-950">
-                    Bir bayi grubu için
-                  </h4>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Aynı ürün fiyatlarını paylaşan firma grubu.
-                  </p>
-                </div>
-                <input type="hidden" name="scope" value="CUSTOMER_GROUP" />
-                <input type="hidden" name="priority" value="0" />
-                <input type="hidden" name="isActive" value="on" />
-                <label className={labelClass}>
-                  Liste adı
-                  <input
-                    name="name"
-                    required
-                    className={inputClass}
-                    placeholder="Grup Fiyatları"
+              <details className="group rounded-lg border border-slate-200">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4">
+                  <span>
+                    <span className="block font-semibold text-slate-950">
+                      Bayi grubuna özel ürün fiyatı oluştur
+                    </span>
+                    <span className="mt-1 block text-sm text-slate-500">
+                      Birden fazla firma aynı özel fiyatları paylaşacaksa.
+                    </span>
+                  </span>
+                  <ChevronDown
+                    size={18}
+                    className="shrink-0 transition group-open:rotate-180"
                   />
-                </label>
-                <label className={labelClass}>
-                  Bayi grubu
-                  <select
-                    name="customerGroupId"
-                    required
-                    className={inputClass}
-                  >
-                    <option value="">Grup seçin</option>
-                    {customerGroups.map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <input type="hidden" name="currency" value="TRY" />
-                <SubmitButton label="Grup listesini oluştur" />
-              </CatalogActionForm>
+                </summary>
+                <CatalogActionForm
+                  action={savePriceList}
+                  className="grid gap-4 border-t border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:items-end"
+                >
+                  <input
+                    type="hidden"
+                    name="scope"
+                    value="CUSTOMER_GROUP"
+                  />
+                  <input type="hidden" name="priority" value="0" />
+                  <input type="hidden" name="isActive" value="on" />
+                  <input type="hidden" name="currency" value="TRY" />
+                  <label className={labelClass}>
+                    Bayi grubu
+                    <select
+                      name="customerGroupId"
+                      required
+                      className={inputClass}
+                    >
+                      <option value="">Grup seçin</option>
+                      {customerGroups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={labelClass}>
+                    Liste adı
+                    <input
+                      name="name"
+                      required
+                      className={inputClass}
+                      placeholder="Grup Özel Fiyatları"
+                    />
+                  </label>
+                  <div className="sm:col-span-2">
+                    <SubmitButton label="Grup listesini oluştur" />
+                  </div>
+                </CatalogActionForm>
+              </details>
             </div>
           </section>
 
@@ -731,7 +774,8 @@ export default async function AdminPriceListsPage() {
                                 className="mt-0.5 h-4 w-4 rounded border-slate-300"
                               />
                               {priceList._count.prices} ürün fiyatının
-                              değişeceğini onaylıyorum.
+                              için değişiklik önizlemesi hazırlanacağını
+                              onaylıyorum.
                             </label>
                             <button
                               type="submit"
@@ -739,7 +783,7 @@ export default async function AdminPriceListsPage() {
                               className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white disabled:opacity-40 sm:col-span-2"
                             >
                               <Calculator size={16} />
-                              Değişikliği uygula
+                              Önizlemeyi hazırla
                             </button>
                           </CatalogActionForm>
                         </section>

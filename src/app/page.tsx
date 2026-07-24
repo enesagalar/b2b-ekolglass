@@ -113,6 +113,10 @@ export default async function Home() {
                 <Link href="/bayi" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/25 bg-black/15 px-5 text-sm font-semibold text-white hover:text-white/75 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0">
                   Bayi çalışma alanına git <ArrowRight size={16} aria-hidden="true" />
                 </Link>
+              ) : data.identity?.audience === "admin" ? (
+                <Link href="/admin" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/25 bg-black/15 px-5 text-sm font-semibold text-white hover:text-white/75 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0">
+                  Yönetim paneline git <ArrowRight size={16} aria-hidden="true" />
+                </Link>
               ) : (
                 <Link href="/giris" className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-white/25 bg-black/15 px-5 text-sm font-semibold text-white hover:text-white/75 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0">
                   Bayi hesabına giriş <ArrowRight size={16} aria-hidden="true" />

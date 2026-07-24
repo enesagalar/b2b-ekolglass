@@ -91,6 +91,16 @@ export function ProductDetail({
   const stock = resolveCatalogStockSummary(product.stockItems, viewer);
   const price = selectCatalogPrice(product.prices, viewer);
   const canSeePrices = canViewCatalogPrices(viewer);
+  const availableStock = product.stockItems.reduce(
+    (sum, item) => sum + Math.max(0, item.quantity - item.reservedQuantity),
+    0,
+  );
+  const canOrder = Boolean(price) && availableStock > 0;
+  const unavailableReason = !price
+    ? "Bu ürün için geçerli bayi fiyatı tanımlanmadan sipariş oluşturulamaz."
+    : availableStock <= 0
+      ? "Kullanılabilir stok bulunmuyor. Satış ekibinden stok teyidi alın."
+      : undefined;
   const safeMedia = product.mediaAssets.flatMap((media) => {
     const url = safeMediaUrl(media.url);
     return url ? [{ ...media, url }] : [];
@@ -283,7 +293,11 @@ export function ProductDetail({
                       </p>
                     </div>
                   </div>
-                  <AddToOrderCartForm productId={product.id} />
+                  <AddToOrderCartForm
+                    productId={product.id}
+                    disabled={!canOrder}
+                    unavailableReason={unavailableReason}
+                  />
                 </div>
               )}
             </div>

@@ -42,10 +42,7 @@ export default async function PriceImportDetailPage({
   const applyAction = applyPriceImportBatch.bind(null, batch.id);
   const cancelAction = cancelPriceImportBatch.bind(null, batch.id);
   const revertAction = revertPriceBatch.bind(null, batch.id);
-  const canApply =
-    batch.kind === "PRICE" &&
-    batch.status === "PREVIEW" &&
-    batch.invalidRows === 0;
+  const canApply = batch.status === "PREVIEW" && batch.invalidRows === 0;
 
   return (
     <div className="grid gap-6">
