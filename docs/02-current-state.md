@@ -2,6 +2,10 @@
 
 ## 2026-07-24 - Faz 7.1 fiyat operasyonu ve Faz 7.2 stok operasyonu
 
+- Fiyat yonetimi teknik fiyat listesi modelinden gorev odakli akisa sadeleştirildi.
+- Ana ekranda yalniz Excel ile urun fiyati guncelleme, firma iskontosu ve toplu zam/indirim islemleri one cikarildi.
+- Firma/grup ozel listeleri ve teknik liste ayarlari kapali `Gelismis fiyat ayarlari` alanina tasindi; islevler kaldirilmadi.
+- Kullaniciya gosterilen hesaplama dili `ana bayi fiyati - firma iskontosu = siparis fiyati` olarak sabitlendi.
 - Fiyat kavramlari `liste fiyati`, `firma iskontosu` ve `siparis fiyati` olarak ayrildi.
 - Fiyat onceligi firma listesi, musteri grubu listesi ve genel liste seklinde aciklandi.
 - Ticari kosullar kullaniciya degil firmaya atanir; ayni firmadaki bayi kullanicilari ayni kosullari gorur.

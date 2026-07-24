@@ -9,13 +9,14 @@ operasyonunun tamamlanmasidir.
 
 Tamamlanan:
 
-1. Firma/genel/grup fiyat onceliginin UI'da aciklanmasi.
-2. Firma bazli iskonto ve firma ozel fiyat istisnasi.
-3. Dolu Excel fiyat sablonu, staging onizleme, atomik uygulama ve geri alma.
-4. Liste bazli yuzde veya sabit tutar artis/azalis.
-5. Dolu fiyat listesinin kapsam/para birimi degisikligine kilitlenmesi.
-6. Ayrik `/admin/stok` operasyon ekrani ve coklu depo satiri duzeltmesi.
-7. 19 Node, 385 Vitest, 47 authenticated smoke, production build, release demo ve mobil/masaustu browser kabulu.
+1. Fiyat yonetiminin teknik liste/kapsam ekranindan gorev odakli sade akisa tasinmasi.
+2. Firma/genel/grup fiyat onceliginin UI'da aciklanmasi.
+3. Firma bazli iskonto ve firma ozel fiyat istisnasi.
+4. Dolu Excel fiyat sablonu, staging onizleme, atomik uygulama ve geri alma.
+5. Liste bazli yuzde veya sabit tutar artis/azalis.
+6. Dolu fiyat listesinin kapsam/para birimi degisikligine kilitlenmesi.
+7. Ayrik `/admin/stok` operasyon ekrani ve coklu depo satiri duzeltmesi.
+8. 19 Node, 385 Vitest, 47 authenticated smoke, production build, release demo ve mobil/masaustu browser kabulu.
 
 Siradaki repo ici paket:
 

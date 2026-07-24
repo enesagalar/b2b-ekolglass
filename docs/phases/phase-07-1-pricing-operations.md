@@ -20,6 +20,7 @@ Durum: Tamamlandi.
 - Staging, satir onizleme, atomik uygulama, iptal ve geri alma.
 - Yuzde veya sabit tutar toplu artis/azalis.
 - Eszamanlilik, yetki, audit ve rollback testleri.
+- Gorev odakli sade fiyat merkezi; teknik ve istisnai ayarlar kapali gelismis alanda.
 
 ## Kabul
 

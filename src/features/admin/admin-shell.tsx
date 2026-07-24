@@ -93,10 +93,10 @@ const navigationSections: AdminNavSection[] = [
         permission: "product.read",
       },
       {
-        label: "Fiyat Listeleri",
+        label: "Fiyat Yönetimi",
         href: "/admin/urunler/fiyat-listeleri",
         icon: FileText,
-        description: "Bayi fiyatları",
+        description: "Fiyat ve iskonto",
         permission: "price.read",
       },
       {

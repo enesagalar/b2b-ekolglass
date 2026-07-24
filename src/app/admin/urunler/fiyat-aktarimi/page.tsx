@@ -20,11 +20,11 @@ function scopeLabel(priceList: {
   company: { displayName: string } | null;
   customerGroup: { name: string } | null;
 }) {
-  return (
-    priceList.company?.displayName ??
-    priceList.customerGroup?.name ??
-    "Tüm bayiler"
-  );
+  if (priceList.company) return `Yalnız ${priceList.company.displayName}`;
+  if (priceList.customerGroup) {
+    return `${priceList.customerGroup.name} grubundaki firmalar`;
+  }
+  return "Tüm bayiler";
 }
 const inputClass =
   "h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#00639a]";
@@ -64,21 +64,21 @@ export default async function PriceImportPage({
     <div className="grid gap-7">
       <header className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 lg:flex-row lg:items-end">
         <div>
-          <p className="text-sm font-semibold text-[#00639a]">Fiyat operasyonu</p>
+          <p className="text-sm font-semibold text-[#00639a]">Ürün fiyatları</p>
           <h2 className="mt-2 text-3xl font-semibold text-slate-950">
-            Excel fiyat aktarımı
+            Excel ile fiyat güncelle
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            Seçtiğiniz listeyi ürün kodları ve mevcut fiyatlarla Excel olarak
-            indirin. Düzenlenen dosya önce önizlenir; siz onaylamadan canlı bayi
-            fiyatları değişmez.
+            Önce mevcut fiyatlarla dolu Excel dosyasını indirin. Fiyatları
+            düzenleyip geri yükleyin. Sistem değişiklikleri size göstermeden ve
+            siz onaylamadan bayi fiyatları değişmez.
           </p>
         </div>
         <Link
           href="/admin/urunler/fiyat-listeleri"
           className="text-sm font-semibold text-[#00639a]"
         >
-          Fiyat merkezine dön
+          Fiyat yönetimine dön
         </Link>
       </header>
 
@@ -103,7 +103,7 @@ export default async function PriceImportPage({
             </span>
             <div>
               <h3 className="font-semibold text-slate-950">
-                Düzenlenmiş Excel dosyasını yükle
+                2. Düzenlediğiniz dosyayı yükleyin
               </h3>
               <p className="mt-1 text-sm text-slate-500">
                 `.xlsx`, en fazla 5 MB ve 5.000 fiyat satırı
@@ -111,7 +111,7 @@ export default async function PriceImportPage({
             </div>
           </div>
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Hedef fiyat listesi
+            Hangi fiyatlar güncellenecek?
             <select
               name="priceListId"
               required
@@ -119,7 +119,7 @@ export default async function PriceImportPage({
               defaultValue=""
             >
               <option value="" disabled>
-                Fiyat listesi seçin
+                Güncellenecek fiyatları seçin
               </option>
               {priceLists.map((priceList) => (
                 <option key={priceList.id} value={priceList.id}>
@@ -130,7 +130,7 @@ export default async function PriceImportPage({
             </select>
           </label>
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Excel dosyası
+            Düzenlenmiş Excel dosyası
             <input
               type="file"
               name="file"
@@ -141,17 +141,17 @@ export default async function PriceImportPage({
           </label>
           <button className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 text-sm font-semibold text-white">
             <FileSpreadsheet size={17} />
-            Dosyayı kontrol et
+            Değişiklikleri kontrol et
           </button>
         </form>
 
         <aside className="border-t border-slate-200 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
           <h3 className="font-semibold text-slate-950">
-            Doldurulmuş şablonu indir
+            1. Mevcut fiyatları indirin
           </h3>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Her liste için ürün kodları ve varsa mevcut fiyatlar hazırlanır.
-            Ürün adını değiştirmek katalog bilgisini değiştirmez.
+            Güncellemek istediğiniz fiyat grubunu seçin. Dosyada ürün kodları,
+            adları ve mevcut fiyatlar hazır gelir.
           </p>
           <div className="mt-4 grid max-h-64 gap-2 overflow-y-auto pr-1">
             {priceLists.map((priceList) => (
@@ -177,7 +177,7 @@ export default async function PriceImportPage({
         <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
           <History size={18} className="text-[#00639a]" />
           <div>
-            <h3 className="font-semibold text-slate-950">Fiyat işlem geçmişi</h3>
+            <h3 className="font-semibold text-slate-950">Son fiyat işlemleri</h3>
             <p className="mt-1 text-xs text-slate-500">
               Excel aktarımları ve toplu artış/azalış işlemleri
             </p>

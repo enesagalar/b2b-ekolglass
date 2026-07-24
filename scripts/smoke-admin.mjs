@@ -990,17 +990,18 @@ assert(
 );
 const priceListsHtml = await priceListsResponse.text();
 assert(
-  priceListsHtml.includes("Fiyat listeleri"),
+  priceListsHtml.includes("Ne yapmak istiyorsunuz?"),
   "Admin price lists screen not rendered",
 );
 assert(
-  priceListsHtml.includes("Yeni fiyat listesi oluştur"),
+  priceListsHtml.includes("Gelişmiş fiyat ayarları"),
   "Admin price list create form not rendered",
 );
 assert(
-  priceListsHtml.includes("Fiyat listeleri ve iskontolar") &&
-    priceListsHtml.includes("Firma iskontoları") &&
-    priceListsHtml.includes("Toplu fiyat artışı veya azalışı"),
+  priceListsHtml.includes("Fiyat yönetimi") &&
+    priceListsHtml.includes("Ürün fiyatlarını Excel ile güncelle") &&
+    priceListsHtml.includes("Bir firmaya iskonto tanımla") &&
+    priceListsHtml.includes("Toplu zam veya indirim"),
   "Admin price hierarchy, company discount, or bulk adjustment controls not rendered",
 );
 
@@ -1013,7 +1014,7 @@ assert(
 );
 const priceImportHtml = await priceImportResponse.text();
 assert(
-  priceImportHtml.includes("Excel fiyat aktarımı") &&
+  priceImportHtml.includes("Excel ile fiyat güncelle") &&
     priceImportHtml.includes('accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"'),
   "Excel price import controls not rendered",
 );
