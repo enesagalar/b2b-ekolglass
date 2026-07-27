@@ -71,8 +71,9 @@ export function PublicationSelectionForm({ rows }: { rows: PublicationProductRow
       {selectedIds.map((productId) => (
         <input key={productId} type="hidden" name="productIds" value={productId} />
       ))}
-      <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-800">
+      <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+        <label className="inline-flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-800">
           <input
             type="checkbox"
             checked={allReadySelected}
@@ -80,14 +81,16 @@ export function PublicationSelectionForm({ rows }: { rows: PublicationProductRow
             onChange={toggleAllReady}
             className="h-4 w-4 rounded border-slate-300 accent-teal-700"
           />
-          Bu sayfadaki hazır ürünleri seç
+          Bu sayfadaki yayına hazır ürünleri seç
         </label>
+        <p className="mt-1 text-xs leading-5 text-slate-500">Eksikleri olan ürünler seçilemez. Yayınlanan ürünler bayi kataloğunda satışa açılır.</p>
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm font-medium text-slate-600">{selectedIds.length} ürün seçildi</span>
           <button
             type="submit"
             disabled={selectedIds.length === 0 || pending}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-4 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {pending ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <PackageCheck size={16} aria-hidden="true" />}
             {pending ? "Yayınlanıyor" : "Seçilenleri yayınla"}
@@ -151,7 +154,7 @@ export function PublicationSelectionForm({ rows }: { rows: PublicationProductRow
                     <td className="px-3 py-4"><ReadinessMark ready={row.availableStock > 0} label={row.availableStock > 0 ? `${row.availableStock} adet` : "Stok yok"} /></td>
                     <td className="px-3 py-4">
                       <span className={row.isReady ? "inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800" : "inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800"}>
-                        {row.isReady ? "Yayına hazır" : "Eksikleri var"}
+                        {row.isReady ? "Yayına hazır" : !row.hasGeneralPrice && row.availableStock <= 0 ? "Fiyat ve stok eksik" : !row.hasGeneralPrice ? "Fiyat eksik" : "Stok eksik"}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-right">
@@ -192,6 +195,7 @@ export function PublicationSelectionForm({ rows }: { rows: PublicationProductRow
                       <ReadinessMark ready={row.hasGeneralPrice} label={row.hasGeneralPrice ? "Genel fiyat tanımlı" : "Genel fiyat eksik"} />
                       <ReadinessMark ready={row.availableStock > 0} label={row.availableStock > 0 ? `${row.availableStock} adet kullanılabilir` : "Kullanılabilir stok yok"} />
                     </div>
+                    {!row.isReady ? <Link href={`/admin/urunler/${row.id}?tab=${!row.hasGeneralPrice ? "fiyat" : "stok"}`} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-300 text-sm font-semibold text-slate-700"><SquarePen size={16} aria-hidden="true" /> Eksikliği düzelt</Link> : null}
                   </div>
                 </div>
               </article>

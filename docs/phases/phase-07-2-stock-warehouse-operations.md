@@ -10,6 +10,10 @@ Durum: Devam ediyor.
 - Ayrik `/admin/stok` operasyon rotasi.
 - Her depo satirinin kendi optimistic concurrency surumuyle guncellenmesi.
 - Urun detayindaki stok satirlarina dogrudan operasyon baglantisi.
+- Risk, temel stok kavramlari ve onerilen ilk aksiyonu aciklayan gorev odakli
+  stok operasyon ekrani.
+- Tablet ve mobilde yatay teknik tablo yerine amaca ozel stok kayitlari.
+- Stok sayfalamasinin aktif operasyon rotasini koruyan regresyon testi.
 
 ## Kalan Kapsam
 

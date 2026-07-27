@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ArrowRight,
+  CheckCircle2,
   CircleDollarSign,
   Filter,
   PackageCheck,
@@ -133,6 +134,8 @@ export default async function ProductPublicationReadinessPage({
   if (categoryId) listParams.set("categoryId", categoryId);
   if (readinessFilter) listParams.set("hazirlik", readinessFilter);
   const hasFilters = Boolean(query || categoryId || readinessFilter);
+  const firstMissingPrice = rows.find((row) => !row.hasGeneralPrice);
+  const firstMissingStock = rows.find((row) => row.availableStock <= 0);
 
   return (
     <div className="grid gap-6">
@@ -147,18 +150,20 @@ export default async function ProductPublicationReadinessPage({
           </Link>
           <p className="mt-5 text-sm font-medium text-teal-800">Katalog operasyonu</p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-950">
-            Toplu yayın hazırlığı
+            Ürünleri yayına hazırlayın
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            Taslak ürünlerin standart bayi fiyatını ve kullanılabilir stokunu birlikte kontrol edin. Yalnız iki koşulu da sağlayan ürünler seçilebilir.
+            Bir ürünün satışa açılması için standart bayi fiyatı ve kullanılabilir stoku birlikte tanımlı olmalıdır. Önce eksikleri giderin, ardından hazır ürünleri topluca yayınlayın.
           </p>
         </div>
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-900 lg:max-w-md">
-          Yayınlama işlemi ürünleri ana sayfaya ve bayi kataloğuna açar. İşlem öncesinde fiyat ve stok koşulları sunucuda tekrar doğrulanır.
+          <strong className="block font-semibold">İşlemin etkisi</strong>
+          <span className="mt-1 block">Yayınlanan ürünler ana sayfada ve bayi kataloğunda satışa açılır. Fiyat ve stok son kez sunucuda doğrulanır.</span>
         </div>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Yayın hazırlığı özeti">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" aria-label="Yayın hazırlığı özeti">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: "Taslak ürün", value: rows.length, icon: PackageCheck, tone: "text-slate-700 bg-slate-100" },
           { label: "Yayına hazır", value: readyCount, icon: PackageCheck, tone: "text-emerald-700 bg-emerald-100" },
@@ -167,7 +172,7 @@ export default async function ProductPublicationReadinessPage({
         ].map((metric) => {
           const Icon = metric.icon;
           return (
-            <article key={metric.label} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <article key={metric.label} className="flex items-center gap-4 border-b border-slate-200 p-4 last:border-b-0 sm:border-r xl:border-b-0 xl:last:border-r-0">
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${metric.tone}`}>
                 <Icon size={19} aria-hidden="true" />
               </span>
@@ -178,9 +183,50 @@ export default async function ProductPublicationReadinessPage({
             </article>
           );
         })}
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.42fr)]">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-slate-500">Önerilen sıra</p>
+          <ol className="mt-4 grid gap-4 sm:grid-cols-3">
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-semibold text-white">1</span>
+              <div><p className="text-sm font-semibold text-slate-950">Fiyatı tamamlayın</p><p className="mt-1 text-xs leading-5 text-slate-500">{missingPriceCount.toLocaleString("tr-TR")} ürün bekliyor.</p></div>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-semibold text-white">2</span>
+              <div><p className="text-sm font-semibold text-slate-950">Stoku tamamlayın</p><p className="mt-1 text-xs leading-5 text-slate-500">{missingStockCount.toLocaleString("tr-TR")} ürün bekliyor.</p></div>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-800 text-xs font-semibold text-white">3</span>
+              <div><p className="text-sm font-semibold text-slate-950">Hazırları yayınlayın</p><p className="mt-1 text-xs leading-5 text-slate-500">{readyCount.toLocaleString("tr-TR")} ürün yayınlanabilir.</p></div>
+            </li>
+          </ol>
+        </div>
+        <div className={`rounded-lg border p-5 ${readyCount > 0 ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+          <div className="flex gap-3">
+            {readyCount > 0 ? <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-700" /> : <PackageCheck size={20} className="mt-0.5 shrink-0 text-amber-700" />}
+            <div>
+              <p className="font-semibold text-slate-950">{readyCount > 0 ? `${readyCount.toLocaleString("tr-TR")} ürün yayına hazır` : "Önce ürün eksiklerini giderin"}</p>
+              <p className="mt-1 text-sm leading-5 text-slate-600">{readyCount > 0 ? "Hazır ürünleri filtreleyip kontrol ederek topluca yayınlayabilirsiniz." : "Fiyatı veya kullanılabilir stoku olmayan ürünler yayınlanamaz."}</p>
+              {readyCount > 0 ? (
+                <Link href="/admin/urunler/yayin-hazirligi?hazirlik=READY" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-800">Hazır ürünleri göster <ArrowRight size={15} /></Link>
+              ) : firstMissingPrice ? (
+                <Link href={`/admin/urunler/${firstMissingPrice.id}?tab=fiyat`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-800">İlk fiyat eksiğini düzelt <ArrowRight size={15} /></Link>
+              ) : firstMissingStock ? (
+                <Link href={`/admin/urunler/${firstMissingStock.id}?tab=stok`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-800">İlk stok eksiğini düzelt <ArrowRight size={15} /></Link>
+              ) : null}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 border-b border-slate-100 pb-4">
+          <h2 className="text-sm font-semibold text-slate-950">Kontrol listesini daraltın</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-500">Eksik fiyat veya stok filtresini seçerek düzeltilmesi gereken ürünleri bulun. Yayınlama için “Yayına hazır” filtresini kullanın.</p>
+        </div>
         <form className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_220px_220px_auto] lg:items-end">
           <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
             Ürün ara
@@ -219,7 +265,7 @@ export default async function ProductPublicationReadinessPage({
         <p className="text-sm text-slate-600">
           <strong className="font-semibold text-slate-950">{filteredRows.length.toLocaleString("tr-TR")}</strong> taslak ürün gösteriliyor
         </p>
-        <p className="text-xs font-medium text-slate-500">Tek işlem sınırı: 50 ürün</p>
+        <p className="text-xs font-medium text-slate-500">Güvenli toplu işlem sınırı: 50 ürün</p>
       </div>
 
       <PublicationSelectionForm

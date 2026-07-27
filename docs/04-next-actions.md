@@ -26,14 +26,41 @@ Tamamlanan:
 14. Stok/vade dili ile admin-bayi navigation geri bildirimi.
 15. Gercek browserda limitli/limitsiz kredi ve ayni sayfada sepet bildirimi
     kabulu; gecici QA verilerinin test sonunda temizlenmesi.
+16. Stok/depo ve yayin hazirligi ekranlarinin gorev, etki, onerilen ilk adim
+    ve kapali ileri seviye operasyon mantigiyla sadelestirilmesi.
+17. Stok sayfalamasinin aktif `/admin/stok` calisma alaninda kalmasi ve mobil
+    stok tablosunun amaca ozel kayit listesine donusturulmesi.
+18. Yonetim panelindeki devre disi ana butonlarin aktif gorunmesine neden olan
+    ortak marka rengi cakismasinin giderilmesi.
 
 Siradaki repo ici paket:
 
-1. Stok/depo ve yayin hazirligi ekranlarini gorev odakli sadeleştirmek.
-2. Firma detayi ve bayi basvuru incelemesinde etki ozeti ve guvenli birincil aksiyon kurmak.
-3. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
-4. Gercek cihaz mobil kabulunu kaydetmek.
-5. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+1. Firma detayi ve bayi basvuru incelemesinde etki ozeti ve guvenli birincil aksiyon kurmak.
+2. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
+3. Gercek cihaz mobil kabulunu kaydetmek.
+4. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+
+## 2026-07-27 - Faz 7.3 gorev odakli UX paketi 3
+
+- `/admin/stok` ekrani riskli kaydi bulma, filtreleme ve stok duzeltme sirasina
+  gore yeniden duzenlendi.
+- Fiziksel, rezerve ve kullanilabilir stok kavramlari ana ozet bandinda
+  aciklandi; hareket defteri teknik incelemesi kapali ileri seviye alana alindi.
+- Masaustu teknik tablosu korunurken tablet ve mobilde yatay tablo yerine
+  fiziksel/rezerve/kullanilabilir miktarlari gosteren stok kayitlari kullanildi.
+- Stok sayfalamasinin `/admin/stok` yerine `/admin/raporlar` rotasina gecmesi
+  engellendi ve saf domain testi eklendi.
+- `/admin/urunler/yayin-hazirligi` ekrani fiyat, stok ve yayin olmak uzere uc
+  adimli gorev sirasina tasindi.
+- Yayinin ana sayfa ve bayi kataloguna etkisi, hazir urun sayisi ve ilk
+  duzeltme aksiyonu acikca gosterildi.
+- Eksigi olan mobil urun kayitlarina dogrudan fiyat veya stok sekmesine giden
+  `Eksikligi duzelt` aksiyonu eklendi.
+- Ortak admin marka stili nedeniyle aktif gorunen devre disi ana butonlar
+  tutarli pasif duruma getirildi.
+- Yerel kabul: 19 Node, 387 Vitest, 47 authenticated smoke, lint, typecheck,
+  production build; 390 ve 1440 px browser kontrolunde yatay tasma ve console
+  hatasi yok.
 
 Ertelenen ve cekirdek kabulu bloke etmeyen:
 

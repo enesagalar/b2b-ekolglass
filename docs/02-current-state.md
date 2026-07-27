@@ -1,5 +1,26 @@
 # Guncel Proje Durumu
 
+## 2026-07-27 - Faz 7.3 gorev odakli UX paketi 3
+
+- Stok ve depo ekrani teknik rapor girisi yerine riskli stogu bulma ve
+  duzeltme gorevine odaklandi.
+- Fiziksel, rezerve ve kullanilabilir stok kavramlari ile islemin onerilen ilk
+  adimi ayni ekranda aciklandi.
+- Stok hareket defteri ana akistan kaldirilmadan kapali ileri seviye kontrole
+  tasindi.
+- Mobil stok gorunumu yatay teknik tablo yerine her urunun depo ve miktar
+  ozetini veren dokunmatik kayitlara donusturuldu.
+- Stok sayfalamasinin raporlar rotasina gecmesi duzeltildi ve regresyon testi
+  eklendi.
+- Yayin hazirligi fiyat, stok ve yayin adimlariyla yeniden siralandi; islemin
+  ana sayfa ve bayi kataloguna etkisi gorunur hale getirildi.
+- Eksik urunler fiyat veya stok sekmesine dogrudan duzeltme aksiyonu sunar;
+  hazir urunler ayri filtreyle toplu yayina alinabilir.
+- Admin genelinde devre disi ana butonlar artik aktif marka renginde gorunmez.
+- Yerel kabul: 19/19 Node, 387/387 Vitest, 47/47 authenticated smoke, lint,
+  typecheck, production build, 390 ve 1440 px browser QA; yatay tasma ve
+  console hatasi yok.
+
 ## 2026-07-24 - Faz 7.3 gorev odakli UX paketi 2
 
 - Limitli kredi politikasinda acik siparis riski ve yeni sepet toplami ayni TRY

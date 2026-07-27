@@ -272,7 +272,8 @@ assert(
 );
 const adminStockReportHtml = await adminStockReportResponse.text();
 assert(
-  adminStockReportHtml.includes("Stok ve depo raporu") &&
+  adminStockReportHtml.includes("Stok ve depo") &&
+    adminStockReportHtml.includes("Listeyi daraltın") &&
     adminStockReportHtml.includes("Fiziksel stok") &&
     adminStockReportHtml.includes("Kullanılabilir"),
   "Admin stock report content not rendered",
@@ -938,7 +939,9 @@ assert(
 );
 const publicationReadinessHtml = await publicationReadinessResponse.text();
 const publicationReadinessMarkers = [
-  "Toplu yayın hazırlığı",
+  "Ürünleri yayına hazırlayın",
+  "Önerilen sıra",
+  "İşlemin etkisi",
   "Seçilenleri yayınla",
   "Genel fiyatı eksik",
 ];
@@ -1049,9 +1052,10 @@ assert(
 );
 const stockOperationsHtml = await stockOperationsResponse.text();
 assert(
-  stockOperationsHtml.includes("Stok ve depo raporu") &&
+  stockOperationsHtml.includes("Stok ve depo") &&
     stockOperationsHtml.includes("Toplu stok aktar") &&
-    stockOperationsHtml.includes("Hareketleri izle"),
+    stockOperationsHtml.includes("Riskli stokları incele") &&
+    stockOperationsHtml.includes("Stok hareketlerini aç"),
   "Stock and warehouse operation controls not rendered",
 );
 

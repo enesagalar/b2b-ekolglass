@@ -292,6 +292,12 @@ button {
   background-color: var(--brand);
 }
 
+.portal-workspace button.bg-teal-800:disabled {
+  cursor: not-allowed;
+  background-color: #cbd5e1;
+  color: #64748b;
+}
+
 .portal-workspace .bg-teal-50 {
   background-color: var(--brand-soft);
 }

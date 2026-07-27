@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildStockReportPageHref,
   buildStockReportCsv,
   resolveStockReportFilters,
 } from "@/domain/stock-reporting";
@@ -22,6 +23,22 @@ describe("stock reporting", () => {
     expect(() => resolveStockReportFilters({ status: "UNKNOWN" })).toThrow("geçersizdir");
     expect(() => resolveStockReportFilters({ warehouse: "A/B" })).toThrow("geçersizdir");
     expect(() => resolveStockReportFilters({ page: "0" })).toThrow("geçersizdir");
+  });
+
+  it("keeps pagination inside the active stock workspace", () => {
+    const filters = resolveStockReportFilters({
+      q: "sprinter",
+      warehouse: "merkez",
+      availability: "LOW_AVAILABLE",
+      page: "2",
+    });
+
+    expect(buildStockReportPageHref(filters, 3, "/admin/stok")).toBe(
+      "/admin/stok?page=3&sort=AVAILABLE_ASC&productStatus=ACTIVE&q=sprinter&warehouse=MERKEZ&availability=LOW_AVAILABLE",
+    );
+    expect(buildStockReportPageHref(filters, 3, "/admin/raporlar")).toBe(
+      "/admin/raporlar?page=3&sort=AVAILABLE_ASC&productStatus=ACTIVE&view=stock&q=sprinter&warehouse=MERKEZ&availability=LOW_AVAILABLE",
+    );
   });
 
   it("creates BOM-prefixed RFC 4180 CSV and neutralizes spreadsheet formulas", () => {

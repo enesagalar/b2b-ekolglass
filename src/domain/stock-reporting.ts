@@ -39,6 +39,26 @@ export type StockReportFilters = z.infer<typeof filterSchema>;
 export class InvalidStockReportFiltersError extends Error {}
 export class StockReportLimitError extends Error {}
 
+export function buildStockReportPageHref(
+  filters: StockReportFilters,
+  page: number,
+  basePath: "/admin/stok" | "/admin/raporlar",
+) {
+  const query = new URLSearchParams({
+    page: String(page),
+    sort: filters.sort,
+    productStatus: filters.productStatus,
+  });
+  if (basePath === "/admin/raporlar") query.set("view", "stock");
+  if (filters.q) query.set("q", filters.q);
+  if (filters.warehouse) query.set("warehouse", filters.warehouse);
+  if (filters.status !== "ALL") query.set("status", filters.status);
+  if (filters.availability !== "ALL") {
+    query.set("availability", filters.availability);
+  }
+  return `${basePath}?${query}`;
+}
+
 export function resolveStockReportFilters(input: Record<string, string | undefined>) {
   const parsed = filterSchema.safeParse({
     q: input.q,
