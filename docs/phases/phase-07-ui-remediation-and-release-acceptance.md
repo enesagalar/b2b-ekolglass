@@ -3,6 +3,20 @@
 Status: Local acceptance complete; production acceptance blocked by external inputs
 Started: 2026-07-24
 
+## 2026-07-27 - Firma ve bayi basvurusu gorev odakli UX
+
+- Firma detayinda erisim, kullanici ve ticari politika ozetleri ile kayit
+  durumuna gore tek onerilen aksiyon bulunur.
+- Bayi basvuru karar formu server state machine ile ayni gecis sozlesmesini
+  kullanir ve secilen kararin etkisini kaydetmeden once aciklar.
+- Onaylanmis basvuru karar formu kilitlenir; sonraki aktivasyon/ticari kosul
+  gorevi firma hesabina tasinir.
+- Davetli kullanici durum islemi hedef durumla uyumlu tek aksiyon, etki onayi,
+  pending ve sonuc geri bildirimi kullanir.
+- Mobil gorev sirasi `bilgi -> karar -> gecmis` olarak sabitlenmistir.
+- Kabul: lint, typecheck, 19 Node, 393 Vitest, production build, 47 authenticated
+  smoke ve 390/1440 px browser QA basarili.
+
 ## Objective
 
 Close the visual, navigation, perceived-performance and end-to-end release gaps discovered after Faz 6. Business rules, authorization, tenant isolation, pricing and stock semantics remain unchanged.

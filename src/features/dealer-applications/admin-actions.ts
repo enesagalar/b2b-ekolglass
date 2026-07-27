@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { canTransitionDealerApplication } from "@/domain/dealer-application-workflow";
 import { getStatusLabel } from "@/domain/statuses";
 import { dealerApplicationReviewSchema } from "@/domain/validation";
 import { Prisma } from "@/generated/prisma/client";
@@ -41,14 +42,6 @@ function getReviewInput(formData: FormData) {
     creditLimit: formData.get("creditLimit") || undefined,
   };
 }
-
-const allowedStatusTransitions: Record<string, string[]> = {
-  NEW: ["NEW", "IN_REVIEW", "NEEDS_INFO", "APPROVED", "REJECTED"],
-  IN_REVIEW: ["IN_REVIEW", "NEEDS_INFO", "APPROVED", "REJECTED"],
-  NEEDS_INFO: ["NEEDS_INFO", "IN_REVIEW", "APPROVED", "REJECTED"],
-  REJECTED: ["REJECTED", "IN_REVIEW"],
-  APPROVED: ["APPROVED"],
-};
 
 function mapMutationError(error: unknown) {
   if (error instanceof DealerApplicationReviewError) {
@@ -101,7 +94,7 @@ export async function reviewDealerApplication(
         );
       }
 
-      if (!allowedStatusTransitions[application.status]?.includes(parsed.data.status)) {
+      if (!canTransitionDealerApplication(application.status, parsed.data.status)) {
         throw new DealerApplicationReviewError(
           `${getStatusLabel(application.status)} durumundan ${getStatusLabel(parsed.data.status)} durumuna doğrudan geçilemez.`,
         );

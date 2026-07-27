@@ -5,7 +5,7 @@ import { KeyRound, PauseCircle, PlayCircle, UserPlus, UserX } from "lucide-react
 import { useActionState } from "react";
 
 import {
-  changeDealerUserStatus,
+  changeDealerUserStatusForm,
   createDealerUser,
   createPasswordResetInvitation,
   type CompanyUserActionState,
@@ -26,12 +26,52 @@ export function NewDealerUserForm({ companyId }: { companyId: string }) {
 }
 
 export function DealerUserStatusActions({ companyId, userId, status }: { companyId: string; userId: string; status: string }) {
+  const [state, action, pending] = useActionState(changeDealerUserStatusForm, initialState);
   const target = status === "ACTIVE" ? "SUSPENDED" : status === "SUSPENDED" ? "ACTIVE" : "DISABLED";
   if (status === "DISABLED") return null;
-  return <div className="flex flex-wrap gap-2">
-    <form action={changeDealerUserStatus}><input type="hidden" name="companyId" value={companyId} /><input type="hidden" name="userId" value={userId} /><input type="hidden" name="targetStatus" value={target} /><button className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">{target === "ACTIVE" ? <PlayCircle size={14} /> : <PauseCircle size={14} />}{target === "ACTIVE" ? "Etkinleştir" : "Askıya al"}</button></form>
-    {status !== "ACTIVE" ? <form action={changeDealerUserStatus}><input type="hidden" name="companyId" value={companyId} /><input type="hidden" name="userId" value={userId} /><input type="hidden" name="targetStatus" value="DISABLED" /><button className="inline-flex h-8 items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 text-xs font-semibold text-red-800 hover:bg-red-100"><UserX size={14} />Devre dışı bırak</button></form> : null}
-  </div>;
+  const actionLabel =
+    target === "ACTIVE" ? "Etkinleştir" : target === "SUSPENDED" ? "Askıya al" : "Devre dışı bırak";
+  const description =
+    target === "ACTIVE"
+      ? "Kullanıcının bayi portalı erişimi yeniden açılır."
+      : target === "SUSPENDED"
+        ? "Açık oturumlar ve kullanılmamış erişim bağlantıları iptal edilir."
+        : "Hesap kalıcı olarak erişime kapatılır; bu ekrandan yeniden etkinleştirilemez.";
+  const Icon = target === "ACTIVE" ? PlayCircle : target === "SUSPENDED" ? PauseCircle : UserX;
+
+  return (
+    <form
+      action={action}
+      className="grid max-w-72 gap-2"
+      aria-busy={pending}
+      onSubmit={(event) => {
+        if (target !== "ACTIVE" && !window.confirm(`${actionLabel}: ${description} Devam edilsin mi?`)) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="companyId" value={companyId} />
+      <input type="hidden" name="userId" value={userId} />
+      <input type="hidden" name="targetStatus" value={target} />
+      <p className="text-[11px] leading-4 text-slate-500">{description}</p>
+      <button
+        disabled={pending}
+        className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-md border px-2.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-60 ${
+          target === "DISABLED"
+            ? "border-red-200 bg-red-50 text-red-800 hover:bg-red-100"
+            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+        }`}
+      >
+        <Icon size={14} aria-hidden="true" />
+        {pending ? "İşleniyor" : actionLabel}
+      </button>
+      {state.message ? (
+        <p role="status" className={`text-xs font-semibold ${state.ok ? "text-teal-800" : "text-red-700"}`}>
+          {state.message}
+        </p>
+      ) : null}
+    </form>
+  );
 }
 
 export function PasswordResetInvitationForm({ userId }: { userId: string }) {

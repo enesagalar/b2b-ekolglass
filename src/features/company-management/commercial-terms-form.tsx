@@ -41,7 +41,7 @@ export function CompanyDiscountForm({
             Ticari koşulları düzenle
           </label>
           <p className="mt-1 text-xs leading-5 text-slate-600">
-            Fiyat iskontosu, vade ve kredi politikası yeni sipariş değerlendirmelerinde kullanılır.
+            Ana bayi fiyatına iskonto uygulanır; vade ve kredi politikası yeni siparişlerin ticari onayını belirler.
           </p>
         </div>
       </div>
@@ -71,6 +71,13 @@ export function CompanyDiscountForm({
             <option value="LIMITED">Limitli</option>
             <option value="UNLIMITED">Limitsiz</option>
           </select>
+          <span className="font-normal leading-4 text-slate-500">
+            {policy === "LIMITED"
+              ? "Açık sipariş riski limiti aşarsa sipariş ticari onaya düşer."
+              : policy === "UNLIMITED"
+                ? "Siparişlerde kredi limiti kontrolü uygulanmaz."
+                : "Her yeni sipariş ticari ekip onayına düşer."}
+          </span>
         </label>
         <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
           Kredi limiti (TRY)

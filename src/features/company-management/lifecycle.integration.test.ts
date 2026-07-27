@@ -15,6 +15,7 @@ import { resetDealerPassword } from "@/features/auth/password-reset-actions";
 import {
   changeCompanyStatus,
   changeDealerUserStatus,
+  changeDealerUserStatusForm,
   createDealerUser,
   createPasswordResetInvitation,
 } from "@/features/company-management/actions";
@@ -182,6 +183,29 @@ describe("dealer-user lifecycle with SQLite", () => {
     expect(await prisma.user.findUniqueOrThrow({ where: { id: userIds.scoped } })).toEqual(
       expect.objectContaining({ companyId: approvedCompanyId, status: "ACTIVE" }),
     );
+  });
+
+  it("returns an explicit result when an invited user is disabled from the admin form", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: `${prefix}-disable-invited@example.com`,
+        name: "Disable Invited User",
+        role: "DEALER_STAFF",
+        status: "INVITED",
+        companyId: approvedCompanyId,
+      },
+    });
+
+    const state = await changeDealerUserStatusForm(
+      { ok: false, message: "" },
+      statusForm(approvedCompanyId, user.id, "DISABLED"),
+    );
+
+    expect(state).toEqual({
+      ok: true,
+      message: "Kullanıcı devre dışı bırakıldı ve erişim bağlantıları iptal edildi.",
+    });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).status).toBe("DISABLED");
   });
 
   it("revokes sessions and outstanding credential tokens when suspending a user", async () => {

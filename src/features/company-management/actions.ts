@@ -477,6 +477,27 @@ export async function changeDealerUserStatus(formData: FormData): Promise<void> 
   revalidatePath(`/admin/firmalar/${parsed.data.companyId}`);
 }
 
+export async function changeDealerUserStatusForm(
+  _previousState: CompanyUserActionState,
+  formData: FormData,
+): Promise<CompanyUserActionState> {
+  try {
+    await changeDealerUserStatus(formData);
+    const targetStatus = formData.get("targetStatus");
+    return {
+      ok: true,
+      message:
+        targetStatus === "ACTIVE"
+          ? "Kullanıcı yeniden etkinleştirildi."
+          : targetStatus === "SUSPENDED"
+            ? "Kullanıcı askıya alındı ve açık oturumları kapatıldı."
+            : "Kullanıcı devre dışı bırakıldı ve erişim bağlantıları iptal edildi.",
+    };
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Kullanıcı durumu değiştirilemedi.");
+  }
+}
+
 export async function createPasswordResetInvitation(
   _previousState: CompanyUserActionState,
   formData: FormData,

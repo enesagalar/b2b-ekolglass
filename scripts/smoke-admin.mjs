@@ -886,11 +886,11 @@ try {
     "Dealer application detail did not render company",
   );
   assert(
-    dealerApplicationDetailHtml.includes("Durum ve ticari koşullar"),
+    dealerApplicationDetailHtml.includes("Güvenli sonraki işlem"),
     "Dealer review panel not rendered",
   );
   assert(
-    dealerApplicationDetailHtml.includes("Kararı kaydet"),
+    dealerApplicationDetailHtml.includes("İncelemeye al"),
     "Dealer review submit action not rendered",
   );
 } finally {

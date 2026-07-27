@@ -1,5 +1,26 @@
 # Guncel Proje Durumu
 
+## 2026-07-27 - Faz 7.3 firma ve bayi basvurusu UX
+
+- Firma detayinda portal erisimi, bayi kullanicilari ve ticari politika tek
+  operasyon ozetinde gorunur; sistem kayit durumuna gore tek sonraki gorev
+  onerir.
+- Ticari kosul ve kullanici ekleme formlari varsayilan olarak kapali gorev
+  alanlarina alindi; yogun mobil sayfa sadelestirildi.
+- Bayi basvuru UI'i yalniz server state machine'in izin verdigi durumlari
+  sunar. Durum gecis kurali tek domain modulunden okunur.
+- Onay, red, bilgi bekleme ve inceleme secimleri kaydetmeden once gercek
+  etkilerini ve birincil aksiyonu gosterir.
+- Onaylanmis basvurular tekrar karara acilmaz; firma kullanicisi aktivasyonu
+  icin dogrudan firma detayina yonlenir.
+- Davet bekleyen kullaniciyi devre disi birakan fakat `Askiya al` yazan hatali
+  cift aksiyon kaldirildi; hedef durum, onay ve sonuc geri bildirimi
+  birlestirildi.
+- Mobilde karar alani islem gecmisinden once gelir. Ham rol, durum ve audit
+  kodlari yerine Turkce operasyon etiketleri kullanilir.
+- Yerel kabul: 19/19 Node, 393/393 Vitest, 47/47 authenticated smoke, lint,
+  typecheck, production build ve 390/1440 px browser QA basarili.
+
 ## 2026-07-27 - Faz 7.3 otomatik stok durumu
 
 - Stok seviyesi manuel secim olmaktan cikarildi ve fiziksel/rezerve sayaclarin

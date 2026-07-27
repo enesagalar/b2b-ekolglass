@@ -1,6 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Building2, CreditCard, FileText, ShieldCheck, UserRound, UsersRound } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CircleAlert,
+  CircleCheckBig,
+  CreditCard,
+  FileText,
+  ShieldCheck,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 
 import { getStatusLabel } from "@/domain/statuses";
 import { getRoleLabel, hasPermission, isKnownRole } from "@/domain/roles";
@@ -39,6 +50,24 @@ function companyStatusClass(status: string) {
   if (status === "APPROVED") return "bg-teal-50 text-teal-800 ring-teal-100";
   if (status === "SUSPENDED") return "bg-amber-50 text-amber-800 ring-amber-100";
   return "bg-slate-100 text-slate-700 ring-slate-200";
+}
+
+function getAuditActionLabel(action: string) {
+  const labels: Record<string, string> = {
+    "company.suspended": "Firma erişimi askıya alındı",
+    "company.reactivated": "Firma erişimi yeniden açıldı",
+    "company.discount.updated": "Ticari koşullar güncellendi",
+    "company.user.created": "Bayi kullanıcısı eklendi",
+    "company.user.active": "Kullanıcı etkinleştirildi",
+    "company.user.suspended": "Kullanıcı askıya alındı",
+    "company.user.disabled": "Kullanıcı devre dışı bırakıldı",
+    "user.activation.invitation.created": "Aktivasyon bağlantısı oluşturuldu",
+    "user.password_reset.invitation.created": "Parola yenileme bağlantısı oluşturuldu",
+    "dealer_application.approve": "Bayi başvurusu onaylandı",
+    "dealer_application.review": "Bayi başvurusu incelendi",
+  };
+
+  return labels[action] ?? "Sistem kaydı güncellendi";
 }
 
 export default async function CompanyDetailPage({ params }: PageProps<"/admin/firmalar/[id]">) {
@@ -80,6 +109,55 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
     orderBy: { createdAt: "desc" },
     take: 25,
   });
+  const activeUserCount = company.users.filter((user) => user.status === "ACTIVE").length;
+  const invitedUserCount = company.users.filter((user) => user.status === "INVITED").length;
+  const suspendedUserCount = company.users.filter((user) => user.status === "SUSPENDED").length;
+  const isCompanyActive = company.status === "APPROVED";
+  const commercialPolicyLabel =
+    company.creditPolicy === "UNLIMITED"
+      ? "Limitsiz hesap"
+      : company.creditPolicy === "LIMITED"
+        ? `${Number(company.creditLimit ?? 0).toLocaleString("tr-TR")} TRY limit`
+        : "Her siparişte ticari onay";
+  const primaryTask = !isCompanyActive
+    ? {
+        eyebrow: "Erişim kapalı",
+        title: "Firma erişimini değerlendirin",
+        description: "Bayi kullanıcıları portala giriş yapamaz. Yeniden açmadan önce firma durumunu ve kullanıcı hesaplarını kontrol edin.",
+        href: "#firma-erisimi",
+        action: "Erişim işlemine git",
+      }
+    : company.users.length === 0
+      ? {
+          eyebrow: "Kullanıcı eksik",
+          title: "İlk bayi kullanıcısını ekleyin",
+          description: "Firma onaylı ancak portala girebilecek bir bayi hesabı bulunmuyor.",
+          href: "#firma-kullanicilari",
+          action: "Kullanıcı ekle",
+        }
+      : invitedUserCount > 0
+        ? {
+            eyebrow: "Aktivasyon bekleniyor",
+            title: `${invitedUserCount} kullanıcı için aktivasyon bağlantısı üretin`,
+            description: "Davet bekleyen kullanıcılar aktivasyon tamamlanana kadar portala giriş yapamaz.",
+            href: "#firma-kullanicilari",
+            action: "Kullanıcılara git",
+          }
+        : activeUserCount === 0
+          ? {
+              eyebrow: "Aktif kullanıcı yok",
+              title: "Kullanıcı durumlarını gözden geçirin",
+              description: `${suspendedUserCount} kullanıcı askıda. Firma açık olsa da hiçbir bayi kullanıcısı portala erişemiyor.`,
+              href: "#firma-kullanicilari",
+              action: "Kullanıcıları yönet",
+            }
+          : {
+              eyebrow: "Hesap kullanıma hazır",
+              title: "Firma satış ve sipariş akışına açık",
+              description: "Portal erişimi ve en az bir bayi kullanıcısı aktif. Ticari koşulları gerektiğinde aşağıdan güncelleyebilirsiniz.",
+              href: "#ticari-kosullar",
+              action: "Ticari koşulları gözden geçir",
+            };
 
   return (
     <div className="grid gap-6">
@@ -107,9 +185,58 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
         </div>
       </section>
 
+      <section className="border-y border-slate-200 bg-white">
+        <div className="grid divide-y divide-slate-200 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+          <div className="px-5 py-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Portal erişimi</p>
+            <p className={`mt-2 text-sm font-semibold ${isCompanyActive ? "text-teal-800" : "text-amber-800"}`}>
+              {isCompanyActive ? "Açık" : "Kapalı"}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">{getStatusLabel(company.status)}</p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Bayi kullanıcıları</p>
+            <p className="mt-2 text-sm font-semibold text-slate-950">{activeUserCount} aktif</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {invitedUserCount} aktivasyon bekliyor · {suspendedUserCount} askıda
+            </p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Ticari politika</p>
+            <p className="mt-2 text-sm font-semibold text-slate-950">{commercialPolicyLabel}</p>
+            <p className="mt-1 text-xs text-slate-500">
+              %{company.discountRate.toString()} iskonto · {company.paymentTerms || "Vade tanımlı değil"}
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 border-t border-slate-200 bg-slate-50 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="flex items-start gap-3">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${isCompanyActive && activeUserCount > 0 ? "bg-teal-50 text-teal-800" : "bg-amber-50 text-amber-800"}`}>
+              {isCompanyActive && activeUserCount > 0 ? (
+                <CircleCheckBig size={20} aria-hidden="true" />
+              ) : (
+                <CircleAlert size={20} aria-hidden="true" />
+              )}
+            </span>
+            <div>
+              <p className="text-xs font-semibold uppercase text-teal-800">{primaryTask.eyebrow}</p>
+              <h3 className="mt-1 text-base font-semibold text-slate-950">{primaryTask.title}</h3>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">{primaryTask.description}</p>
+            </div>
+          </div>
+          <a
+            href={primaryTask.href}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            {primaryTask.action}
+            <ArrowRight size={16} aria-hidden="true" />
+          </a>
+        </div>
+      </section>
+
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="grid content-start gap-6">
-          <section className={panelClass}>
+          <section id="firma-erisimi" className={`${panelClass} scroll-mt-28`}>
             <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
               <Building2 size={19} className="text-teal-800" aria-hidden="true" />
               <h3 className="font-semibold text-slate-950">Firma bilgileri</h3>
@@ -132,7 +259,7 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
             ) : null}
           </section>
 
-          <section className={panelClass}>
+          <section id="ticari-kosullar" className={`${panelClass} scroll-mt-28`}>
             <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
               <CreditCard size={19} className="text-teal-800" aria-hidden="true" />
               <h3 className="font-semibold text-slate-950">Ticari koşullar</h3>
@@ -150,14 +277,21 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
               />
               <InfoRow label="Müşteri iskontosu" value={`%${company.discountRate.toString()}`} />
             </dl>
-            <CompanyDiscountForm
-              companyId={company.id}
-              updatedAt={company.updatedAt.toISOString()}
-              discountRate={company.discountRate.toString()}
-              paymentTerms={company.paymentTerms ?? ""}
-              creditPolicy={company.creditPolicy}
-              creditLimit={company.creditLimit?.toString() ?? ""}
-            />
+            <details className="group border-t border-slate-200">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                Ticari koşulları değiştir
+                <span className="text-xs font-medium text-slate-500 group-open:hidden">Formu aç</span>
+                <span className="hidden text-xs font-medium text-slate-500 group-open:inline">Formu kapat</span>
+              </summary>
+              <CompanyDiscountForm
+                companyId={company.id}
+                updatedAt={company.updatedAt.toISOString()}
+                discountRate={company.discountRate.toString()}
+                paymentTerms={company.paymentTerms ?? ""}
+                creditPolicy={company.creditPolicy}
+                creditLimit={company.creditLimit?.toString() ?? ""}
+              />
+            </details>
             {company.priceLists.length > 0 ? (
               <div className="border-t border-slate-200 px-5 py-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">Firma fiyat listeleri</p>
@@ -172,7 +306,7 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
             ) : null}
           </section>
 
-          <section className={panelClass}>
+          <section id="firma-kullanicilari" className={`${panelClass} scroll-mt-28`}>
             <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
               <FileText size={19} className="text-teal-800" aria-hidden="true" />
               <h3 className="font-semibold text-slate-950">Kaynak başvurular</h3>
@@ -206,7 +340,16 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
               </div>
               <span className="text-xs font-semibold text-slate-500">{company.users.length} hesap</span>
             </div>
-            {canManageUsers ? <NewDealerUserForm companyId={company.id} /> : null}
+            {canManageUsers ? (
+              <details className="group border-b border-slate-200 bg-slate-50">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-slate-800 hover:bg-slate-100">
+                  Yeni bayi kullanıcısı ekle
+                  <span className="text-xs font-medium text-slate-500 group-open:hidden">Formu aç</span>
+                  <span className="hidden text-xs font-medium text-slate-500 group-open:inline">Formu kapat</span>
+                </summary>
+                <NewDealerUserForm companyId={company.id} />
+              </details>
+            ) : null}
             {company.users.length > 0 ? (
               company.users.map((user) => {
                 const latestToken = user.activationTokens[0];
@@ -254,20 +397,20 @@ export default async function CompanyDetailPage({ params }: PageProps<"/admin/fi
           <section className={panelClass}>
             <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
               <ShieldCheck size={19} className="text-teal-800" aria-hidden="true" />
-              <h3 className="font-semibold text-slate-950">Audit geçmişi</h3>
+              <h3 className="font-semibold text-slate-950">İşlem geçmişi</h3>
             </div>
             {auditLogs.length > 0 ? (
               auditLogs.map((log) => (
                 <div key={log.id} className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 last:border-0">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{log.action}</p>
+                    <p className="text-sm font-semibold text-slate-900">{getAuditActionLabel(log.action)}</p>
                     <p className="mt-1 text-xs text-slate-500">{log.actor?.name ?? "Sistem"}</p>
                   </div>
                   <time className="shrink-0 text-xs text-slate-500">{formatDate(log.createdAt)}</time>
                 </div>
               ))
             ) : (
-              <p className="px-5 py-8 text-sm text-slate-500">Audit kaydı yok.</p>
+              <p className="px-5 py-8 text-sm text-slate-500">Henüz işlem kaydı yok.</p>
             )}
           </section>
         </div>

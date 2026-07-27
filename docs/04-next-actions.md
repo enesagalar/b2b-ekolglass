@@ -36,13 +36,45 @@ Tamamlanan:
     ve stok formlarindaki manuel durum seciminin kaldirilmasi.
 20. Mevcut stok durumlarinin geriye donuk duzeltilmesi ve uygulama disi yanlis
     yazimlari da onleyen SQLite tetikleyicileri.
+21. Firma detayinda portal erisimi, kullanici durumu, ticari politika ve
+    onerilen ilk islemi tek operasyon ozetinde birlestiren gorev akisi.
+22. Bayi basvurusunda yalniz izinli durum gecisleri, secime gore etki ozeti ve
+    onaylanan basvuruda kilitli tamamlanmis durum.
+23. Davet bekleyen kullanicida yanlis `Askiya al` etiketinin kaldirilmasi;
+    hedef durumla uyumlu tek aksiyon, etki onayi ve sonuc geri bildirimi.
+24. Mobil basvuru detayinda karar alaninin islem gecmisinden once gelmesi ve
+    ham rol/durum/audit kodlarinin Turkce operasyon diline cevrilmesi.
 
 Siradaki repo ici paket:
 
-1. Firma detayi ve bayi basvuru incelemesinde etki ozeti ve guvenli birincil aksiyon kurmak.
-2. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
-3. Gercek cihaz mobil kabulunu kaydetmek.
-4. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+1. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
+2. Gercek cihaz mobil kabulunu kaydetmek.
+3. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+
+## 2026-07-27 - Faz 7.3 firma ve bayi basvurusu UX paketi
+
+- Firma detayinin ustune portal erisimi, aktif/davet/aski kullanici sayilari,
+  ticari politika ve mevcut riske gore tek onerilen islem eklendi.
+- Ticari kosul ve yeni kullanici formlari, veri ozetini bozmadan istege bagli
+  acilan gorevlere tasindi.
+- Bayi basvuru durum gecisleri UI ve server tarafinda ayni saf domain
+  sozlesmesini kullanir; gecersiz durumlar artik secilemez.
+- Yeni ve bilgi bekleyen basvurularda sistem onay karari vermeden once
+  `Incelemeye al` adimini onerir.
+- Secilen basvuru karari firma/kullanici olusturma, bilgi bekleme ve red
+  etkisini kaydetmeden once aciklar.
+- Onay karari musteri grubunu zorunlu tutar; kredi limiti bos birakildiginda
+  her siparisin ticari incelemeye dusecegi belirtilir.
+- Onaylanmis basvuruda karar formu tekrar gosterilmez; aktivasyon ve ticari
+  kosul islemleri firma hesabina yonlendirilir.
+- Davet bekleyen kullanici icin gercekte `DISABLED` yapan yanlis `Askiya al`
+  aksiyonu kaldirildi. Tek aksiyon hedef durumu, etkisini, onayi, bekleme ve
+  sonuc mesajini birlikte gosterir.
+- Mobil DOM sirasi basvuru bilgileri, karar ve islem gecmisi olarak
+  duzeltildi; ham teknik rol/durum kodlari Turkce etiketlere cevrildi.
+- Yerel kabul: 19 Node, 393 Vitest, 47 authenticated smoke, lint, typecheck ve
+  production build basarili. 390/1440 px browser QA'da yatay tasma ve console
+  hatasi yok.
 
 ## 2026-07-27 - Faz 7.3 otomatik stok durumu paketi
 
