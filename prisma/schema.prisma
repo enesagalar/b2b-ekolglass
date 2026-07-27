@@ -37,6 +37,7 @@ model User {
   quoteOfferRevisions       QuoteOfferRevision[]       @relation("QuoteOfferRevisionCreatedBy")
   integrationReplayCommands IntegrationReplayCommand[]
   catalogImportBatches      CatalogImportBatch[]
+  stockTransfers            StockTransfer[]            @relation("StockTransferActor")
 
   @@index([companyId, role, status])
 }
@@ -250,6 +251,7 @@ model Product {
   orderItems         OrderItem[]
   mediaAssets        MediaAsset[]
   catalogImportRows  CatalogImportRow[]
+  stockTransfers     StockTransfer[]
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 
@@ -305,34 +307,38 @@ model ProductPrice {
 }
 
 model Warehouse {
-  id          String      @id @default(cuid())
-  code        String      @unique
-  name        String
-  isActive    Boolean     @default(true)
-  addressLine String?
-  district    String?
-  city        String?
-  postalCode  String?
-  countryCode String      @default("TR")
-  stockItems  StockItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                String          @id @default(cuid())
+  code              String          @unique
+  name              String
+  isActive          Boolean         @default(true)
+  addressLine       String?
+  district          String?
+  city              String?
+  postalCode        String?
+  countryCode       String          @default("TR")
+  stockItems        StockItem[]
+  outgoingTransfers StockTransfer[] @relation("StockTransferSource")
+  incomingTransfers StockTransfer[] @relation("StockTransferDestination")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([isActive, name])
 }
 
 model StockItem {
-  id               String             @id @default(cuid())
-  productId        String
-  product          Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  warehouseCode    String
-  warehouse        Warehouse          @relation(fields: [warehouseCode], references: [code], onDelete: Restrict, onUpdate: Cascade)
-  quantity         Int                @default(0)
-  reservedQuantity Int                @default(0)
-  visibility       String             @default("SIMPLIFIED")
-  status           String             @default("OUT_OF_STOCK")
-  reservations     StockReservation[]
-  updatedAt        DateTime           @updatedAt
+  id                String             @id @default(cuid())
+  productId         String
+  product           Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseCode     String
+  warehouse         Warehouse          @relation(fields: [warehouseCode], references: [code], onDelete: Restrict, onUpdate: Cascade)
+  quantity          Int                @default(0)
+  reservedQuantity  Int                @default(0)
+  visibility        String             @default("SIMPLIFIED")
+  status            String             @default("OUT_OF_STOCK")
+  reservations      StockReservation[]
+  outgoingTransfers StockTransfer[]    @relation("StockTransferSourceStock")
+  incomingTransfers StockTransfer[]    @relation("StockTransferDestinationStock")
+  updatedAt         DateTime           @updatedAt
 
   @@unique([productId, warehouseCode])
   @@index([warehouseCode, status, updatedAt])
@@ -340,7 +346,7 @@ model StockItem {
 }
 
 model StockMovement {
-  id                     String   @id @default(cuid())
+  id                     String         @id @default(cuid())
   stockItemId            String
   productId              String
   productCode            String
@@ -357,16 +363,52 @@ model StockMovement {
   reason                 String
   sourceType             String
   sourceId               String
-  idempotencyKey         String   @unique
+  idempotencyKey         String         @unique
   payloadHash            String
   metadata               String?
-  createdAt              DateTime @default(now())
+  createdAt              DateTime       @default(now())
+  transferAsSource       StockTransfer? @relation("StockTransferSourceMovement")
+  transferAsDestination  StockTransfer? @relation("StockTransferDestinationMovement")
 
   @@unique([stockItemId, sequence])
   @@index([productId, warehouseCode, createdAt])
   @@index([movementType, createdAt])
   @@index([sourceType, sourceId, createdAt])
   @@index([stockItemId, createdAt])
+}
+
+model StockTransfer {
+  id                       String        @id @default(cuid())
+  transferNumber           String        @unique
+  productId                String
+  product                  Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productCode              String
+  sourceWarehouseCode      String
+  sourceWarehouse          Warehouse     @relation("StockTransferSource", fields: [sourceWarehouseCode], references: [code], onDelete: Restrict, onUpdate: Cascade)
+  destinationWarehouseCode String
+  destinationWarehouse     Warehouse     @relation("StockTransferDestination", fields: [destinationWarehouseCode], references: [code], onDelete: Restrict, onUpdate: Cascade)
+  sourceStockItemId        String
+  sourceStockItem          StockItem     @relation("StockTransferSourceStock", fields: [sourceStockItemId], references: [id], onDelete: Restrict)
+  destinationStockItemId   String
+  destinationStockItem     StockItem     @relation("StockTransferDestinationStock", fields: [destinationStockItemId], references: [id], onDelete: Restrict)
+  sourceMovementId         String        @unique
+  sourceMovement           StockMovement @relation("StockTransferSourceMovement", fields: [sourceMovementId], references: [id], onDelete: Restrict)
+  destinationMovementId    String        @unique
+  destinationMovement      StockMovement @relation("StockTransferDestinationMovement", fields: [destinationMovementId], references: [id], onDelete: Restrict)
+  quantity                 Int
+  reason                   String
+  actorUserId              String
+  actor                    User          @relation("StockTransferActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  idempotencyKey           String        @unique
+  payloadHash              String
+  createdAt                DateTime      @default(now())
+
+  @@index([productId, createdAt])
+  @@index([sourceWarehouseCode, createdAt])
+  @@index([destinationWarehouseCode, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([sourceStockItemId, createdAt])
+  @@index([destinationStockItemId, createdAt])
 }
 
 model CatalogImportBatch {

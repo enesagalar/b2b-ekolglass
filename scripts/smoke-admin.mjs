@@ -1066,6 +1066,7 @@ assert(
 const stockOperationsHtml = await stockOperationsResponse.text();
 assert(
   stockOperationsHtml.includes("Stok ve depo") &&
+    stockOperationsHtml.includes("Depolar arası transfer") &&
     stockOperationsHtml.includes("Depoları yönet") &&
     stockOperationsHtml.includes("Toplu stok aktar") &&
     stockOperationsHtml.includes("Riskli stokları incele") &&
@@ -1087,6 +1088,22 @@ assert(
     warehousesHtml.includes("Tanımlı depolar") &&
     warehousesHtml.includes("MERKEZ"),
   "Warehouse master data controls not rendered",
+);
+
+const stockTransfersResponse = await request("/admin/stok/transferler", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  stockTransfersResponse.status === 200,
+  `Authenticated /admin/stok/transferler failed with ${stockTransfersResponse.status}`,
+);
+const stockTransfersHtml = await stockTransfersResponse.text();
+assert(
+  stockTransfersHtml.includes("Depolar arası transfer") &&
+    stockTransfersHtml.includes("Yeni transfer") &&
+    stockTransfersHtml.includes("Yalnız kullanılabilir stok") &&
+    stockTransfersHtml.includes("Son tamamlanan transferler"),
+  "Atomic warehouse transfer controls not rendered",
 );
 
 const priceStockImportResponse = await request("/admin/urunler/fiyat-stok-aktarimi", {
@@ -1276,6 +1293,7 @@ console.log(
         "excel-price-template",
         "authenticated-stock-operations",
         "authenticated-warehouse-master-data",
+        "authenticated-warehouse-transfers",
         "authenticated-price-stock-import",
         "price-stock-import-template",
         "authenticated-product-compatibility-tab",

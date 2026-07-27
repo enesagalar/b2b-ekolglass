@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { Prisma } from "@/generated/prisma/client";
+import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import { deriveStockStatus } from "@/domain/catalog";
 import {
   orderExposureStatuses,
@@ -280,6 +281,7 @@ export async function transitionOrderStatus(
   }
 
   return prisma.$transaction(async (tx) => {
+    await acquireStockMutationLock(tx);
     await tx.checkoutLock.upsert({
       where: { id: "order-checkout" },
       create: { id: "order-checkout", version: 1 },

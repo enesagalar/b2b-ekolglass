@@ -1,5 +1,28 @@
 # Guncel Proje Durumu
 
+## 2026-07-27 - Faz 7.2B atomik depo transferi
+
+- Depolar arasi transfer ayrik `StockTransfer` ana kaydi ve
+  `/admin/stok/transferler` operasyon ekraniyla tamamlandi.
+- Transfer yalniz fiziksel stoktan rezerve miktar dusuldukten sonra kalan
+  kullanilabilir bakiyeden yapilir; siparise ayrilmis stok kaynak depoda kalir.
+- Kaynak azalis, hedef artis, iki append-only hareket kaydi, transfer kaydi ve
+  audit tek transaction icinde tamamlanir veya birlikte geri alinir.
+- Tamamlanmis transfer kaynak/hedef stok satirlari ile `TRANSFER_OUT` ve
+  `TRANSFER_IN` hareketlerine foreign key ile baglidir.
+- Ayni islem anahtari ve ayni aktor/payload guvenli replay uretir; farkli
+  payload veya aktor catisma olarak reddedilir.
+- Siparis rezervasyonu, siparis durum islemleri, teklif donusumu, manuel/toplu
+  stok, urun aktarimi ve depo yonetimi ortak `stock-mutations` kilit sirasina
+  baglandi.
+- Eslestirilmis transferler append-only SQLite tetikleyicileriyle
+  degistirilemez ve silinemez.
+- Tek aktif depo durumunda bos hedef secimi yerine ikinci aktif depoyu
+  olusturma gorevi gosterilir.
+- Yerel kabul: 19/19 Node, 418/418 Vitest, 51 authenticated smoke, lint,
+  typecheck, 40 migration integrity, production build ve 390/1280 px browser
+  QA basarili.
+
 ## 2026-07-27 - Faz 7.2A depo ana verisi
 
 - Depo kodu, adi, aktiflik ve adres bilgileri veritabaninda `Warehouse` ana

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { deriveStockStatus } from "@/domain/catalog";
+import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import { recordStockMovement } from "@/domain/stock-movement";
 import { parsePriceStockCsv } from "@/domain/price-stock-import";
 import { requirePermissionUser } from "@/lib/auth";
@@ -119,6 +120,7 @@ export async function applyPriceStockImportBatch(batchId: string) {
   const now = new Date();
   try {
     const result = await prisma.$transaction(async (tx) => {
+      await acquireStockMutationLock(tx);
       const batch = await tx.catalogImportBatch.findFirst({
         where: { id: batchId, createdById: actor.id, status: "PREVIEW", expiresAt: { gt: now } },
         include: { priceList: true, rows: { where: { status: "VALID" }, orderBy: { rowNumber: "asc" } } },

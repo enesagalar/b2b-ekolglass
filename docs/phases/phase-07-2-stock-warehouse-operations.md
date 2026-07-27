@@ -27,6 +27,15 @@ Durum: Devam ediyor.
 - `warehouse.manage` yetkisi, optimistic concurrency ve audit kaydi.
 - Bakiyesi bulunan deponun ve sistemdeki son aktif deponun kapatilmasini
   engelleyen server kurallari.
+- `StockTransfer` ana kaydi ve ayrik `/admin/stok/transferler` calisma alani.
+- Kullanilabilir stoktan kaynak azalis ve hedef artis yapan atomik transfer.
+- Transferi kaynak/hedef stok satirlari ve iki hareket bacagina baglayan
+  foreign key sozlesmesi.
+- `TRANSFER_OUT` ve `TRANSFER_IN` append-only hareketleri.
+- Aktor/payload bagimli idempotency, optimistic CAS, audit ve tam rollback.
+- Tamamlanmis transfer kayitlarini degisiklik ve silmeye kapatan SQLite
+  tetikleyicileri.
+- Tum stok yazicilarinin ortak `stock-mutations` kilit sirasina alinmasi.
 
 ## Otomatik Stok Durumu Sozlesmesi
 
@@ -40,11 +49,8 @@ degistiginde server/domain ve veritabani ayni kuralla yeniden hesaplar.
 
 ## Kalan Kapsam
 
-1. Faz 7.2B: depolar arasi atomik transfer.
-2. Faz 7.2B: iki bacakli hareket defteri, yetki, audit, idempotency ve rollback
-   testleri.
-3. Faz 7.2C: sayim oturumu ve gerekceli fark duzeltme hareketi.
-4. Faz 7.2C: sayim yetki, audit, concurrency ve rollback testleri.
+1. Faz 7.2C: sayim oturumu ve gerekceli fark duzeltme hareketi.
+2. Faz 7.2C: sayim yetki, audit, concurrency, idempotency ve rollback testleri.
 
 ERP stok senkronizasyonu bu fazin parcasi degildir. Once portal icindeki stok
 operasyonu deterministik hale getirilecek, ERP sonraki entegrasyon katmani
@@ -56,6 +62,18 @@ olacaktir.
   baglantisi ve temiz `foreign_key_check`.
 - 19/19 Node testi ve 407/407 Vitest testi.
 - 50 authenticated admin smoke kontrolu.
+- Lint, typecheck ve production build basarili.
+- 390 px mobil ve 1280 px masaustu browser kontrolunde yatay tasma veya console
+  hatasi yok.
+
+## Faz 7.2B Kabul Kaniti
+
+- Yerel veritabaninda 40 migration ve temiz migration integrity kontrolu.
+- Gercek SQLite testlerinde basarili transfer, guvenli replay, farkli payload
+  catisma, yetersiz kullanilabilir stok, ikinci hareket bacaginda tam rollback,
+  append-only koruma ve eszamanli transfer yarisi dogrulandi.
+- 19/19 Node testi ve 418/418 Vitest testi.
+- 51 authenticated admin smoke kontrolu.
 - Lint, typecheck ve production build basarili.
 - 390 px mobil ve 1280 px masaustu browser kontrolunde yatay tasma veya console
   hatasi yok.

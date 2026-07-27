@@ -10,6 +10,8 @@ export const stockMovementTypes = [
   "ORDER_RESERVATION",
   "ORDER_RELEASE",
   "ORDER_CONSUME",
+  "TRANSFER_OUT",
+  "TRANSFER_IN",
 ] as const;
 
 export type StockMovementType = (typeof stockMovementTypes)[number];

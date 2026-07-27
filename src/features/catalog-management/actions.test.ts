@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   stockMovementFindUnique: vi.fn(),
   stockItemUpsert: vi.fn(),
   warehouseFindUnique: vi.fn(),
+  checkoutLockUpsert: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -125,7 +126,12 @@ describe("catalog management actions", () => {
     mocks.stockMovementFindUnique.mockResolvedValue(null);
     mocks.stockMovementCreate.mockResolvedValue({ id: "movement-1" });
     mocks.warehouseFindUnique.mockResolvedValue({ isActive: true });
+    mocks.checkoutLockUpsert.mockResolvedValue({
+      id: "stock-mutations",
+      version: 1,
+    });
     mocks.transaction.mockImplementation(async (callback) => callback({
+      checkoutLock: { upsert: mocks.checkoutLockUpsert },
       auditLog: { create: mocks.auditLogCreate },
       product: { findUnique: mocks.productFindUnique },
       stockItem: {

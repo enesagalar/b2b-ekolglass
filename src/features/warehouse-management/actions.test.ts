@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   warehouseCount: vi.fn(),
   stockAggregate: vi.fn(),
   auditCreate: vi.fn(),
+  checkoutLockUpsert: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -46,8 +47,13 @@ describe("warehouse management actions", () => {
       _sum: { quantity: 0, reservedQuantity: 0 },
     });
     mocks.auditCreate.mockResolvedValue({});
+    mocks.checkoutLockUpsert.mockResolvedValue({
+      id: "stock-mutations",
+      version: 1,
+    });
     mocks.transaction.mockImplementation(async (callback) =>
       callback({
+        checkoutLock: { upsert: mocks.checkoutLockUpsert },
         warehouse: {
           create: mocks.warehouseCreate,
           findUnique: mocks.warehouseFindUnique,

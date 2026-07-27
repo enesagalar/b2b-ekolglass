@@ -20,6 +20,7 @@ import {
   getProductPublicationReadiness,
 } from "@/domain/catalog";
 import { recordStockMovement } from "@/domain/stock-movement";
+import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import { Prisma } from "@/generated/prisma/client";
 import { requirePermissionUser } from "@/lib/auth";
 import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
@@ -457,6 +458,7 @@ export async function saveProductBundle(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      await acquireStockMutationLock(tx);
       const warehouse = await tx.warehouse.findUnique({
         where: { code: stockParsed.data.warehouseCode },
         select: { isActive: true },
@@ -621,6 +623,7 @@ export async function saveProductStock(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      await acquireStockMutationLock(tx);
       const replay = await tx.stockMovement.findUnique({
         where: { idempotencyKey: `manual:${parsed.data.idempotencyKey}` },
         select: { id: true },

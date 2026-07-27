@@ -98,6 +98,57 @@ describe("SQLite migration chain", () => {
           'unknown-warehouse-stock', 'migration-product', 'BILINMEYEN', 1, CURRENT_TIMESTAMP
         )`).run(),
       ).toThrow("FOREIGN KEY constraint failed");
+      expect(
+        db
+          .prepare(
+            `SELECT COUNT(*) AS "count" FROM pragma_table_info('StockTransfer')
+             WHERE "name" IN (
+               'sourceStockItemId',
+               'destinationStockItemId',
+               'sourceMovementId',
+               'destinationMovementId',
+               'idempotencyKey',
+               'payloadHash'
+             )`,
+          )
+          .get(),
+      ).toEqual({ count: 6 });
+      expect(
+        db
+          .prepare(
+            `SELECT COUNT(*) AS "count" FROM sqlite_master
+             WHERE "type" = 'trigger'
+               AND "name" IN (
+                 'StockTransfer_append_only_update',
+                 'StockTransfer_append_only_delete'
+               )`,
+          )
+          .get(),
+      ).toEqual({ count: 2 });
+      expect(
+        String(
+          db
+            .prepare(
+              `SELECT "sql" FROM sqlite_master
+               WHERE "type" = 'trigger'
+                 AND "name" = 'StockMovement_required_fields_insert'`,
+            )
+            .pluck()
+            .get(),
+        ),
+      ).toContain("TRANSFER_OUT");
+      expect(
+        String(
+          db
+            .prepare(
+              `SELECT "sql" FROM sqlite_master
+               WHERE "type" = 'trigger'
+                 AND "name" = 'StockMovement_required_fields_insert'`,
+            )
+            .pluck()
+            .get(),
+        ),
+      ).toContain("TRANSFER_IN");
       db.prepare(`INSERT INTO "CustomerGroup" ("id", "code", "name", "updatedAt") VALUES ('migration-group', 'MIGRATION', 'Migration Group', CURRENT_TIMESTAMP)`).run();
       expect(() =>
         db.prepare(`INSERT INTO "PriceList" (

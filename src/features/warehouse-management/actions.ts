@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import { warehouseFormSchema } from "@/domain/warehouse";
 import { requirePermissionUser } from "@/lib/auth";
 import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
@@ -58,6 +59,7 @@ export async function saveWarehouse(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      await acquireStockMutationLock(tx);
       if (!parsed.data.id) {
         const warehouse = await tx.warehouse.create({
           data: {

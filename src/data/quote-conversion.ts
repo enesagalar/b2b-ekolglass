@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 
 import { QuoteOperationError } from "@/data/quote-operations";
+import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import { deriveStockStatus } from "@/domain/catalog";
 import { recordStockMovement } from "@/domain/stock-movement";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
@@ -46,6 +47,7 @@ export async function convertApprovedQuoteToOrder(
   const notes = canonicalText(input.notes);
 
   return prisma.$transaction(async (tx) => {
+    await acquireStockMutationLock(tx);
     await tx.checkoutLock.upsert({
       where: { id: "quote-operations" },
       create: { id: "quote-operations", version: 1 },

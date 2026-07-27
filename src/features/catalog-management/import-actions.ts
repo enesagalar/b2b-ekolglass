@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 
 import { parseEkolProductCsv } from "@/domain/product-import";
+import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import { requirePermissionUser } from "@/lib/auth";
 import { revalidatePathsBestEffort } from "@/lib/cache-revalidation";
 import { prisma } from "@/lib/prisma";
@@ -47,6 +48,7 @@ export async function importProductsCsvAction(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      await acquireStockMutationLock(tx);
       const categoryIds = new Map<string, string>();
       for (const category of parsed.categories) {
         const saved = await tx.productCategory.upsert({

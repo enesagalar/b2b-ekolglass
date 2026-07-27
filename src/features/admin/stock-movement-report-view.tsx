@@ -12,6 +12,8 @@ const movementLabels: Record<string, string> = {
   ORDER_RESERVATION: "Sipariş rezervasyonu",
   ORDER_RELEASE: "Rezervasyon bırakma",
   ORDER_CONSUME: "Sevk tüketimi",
+  TRANSFER_OUT: "Depo transfer çıkışı",
+  TRANSFER_IN: "Depo transfer girişi",
 };
 const sourceLabels: Record<string, string> = {
   CATALOG_IMPORT_BATCH: "Fiyat / stok CSV aktarımı",
@@ -22,6 +24,7 @@ const sourceLabels: Record<string, string> = {
   ORDER_TRANSITION: "Sipariş durum geçişi",
   PRODUCT_BUNDLE: "Ürün kaydı",
   QUOTE_CONVERSION_ORDER: "Tekliften sipariş dönüşümü",
+  WAREHOUSE_TRANSFER: "Depolar arası transfer",
 };
 
 function first(value: string | string[] | undefined) {

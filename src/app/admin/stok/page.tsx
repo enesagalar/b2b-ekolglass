@@ -22,6 +22,7 @@ export default async function AdminStockPage({
         canExport={hasPermission(actor.role, "stock.export")}
         basePath="/admin/stok"
         showOperations={canManageStock}
+        canTransfer={hasPermission(actor.role, "stock.transfer")}
         canManageWarehouses={hasPermission(actor.role, "warehouse.manage")}
       />
     </div>

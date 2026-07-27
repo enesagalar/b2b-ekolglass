@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 
 import { buildCatalogPriceWhere } from "@/data/catalog-access";
+import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import {
   deriveStockStatus,
   selectCatalogPriceForQuantity,
@@ -268,6 +269,7 @@ export async function submitOrderCart(
     )
     .digest("hex");
   return prisma.$transaction(async (tx) => {
+    await acquireStockMutationLock(tx);
     await tx.checkoutLock.upsert({
       where: { id: "order-checkout" },
       update: { version: { increment: 1 } },

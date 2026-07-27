@@ -6,8 +6,8 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 
 Faz 7.1 fiyat operasyonu ve Faz 7.3 gorev odakli UX paketleri tamamlandi.
 Faz 7.2 tekrar aktif hale getirildi. Depo ana verisi 7.2A paketiyle
-tamamlandi; transfer ve sayim birbirinden bagimsiz kabul kapilariyla
-ilerleyecek.
+tamamlandi. Atomik depo transferi 7.2B paketiyle tamamlandi; siradaki repo ici
+paket sayim oturumudur.
 
 Tamamlanan:
 
@@ -65,14 +65,45 @@ Tamamlanan:
     bulunan ya da son aktif olan depoyu kapatma korumalari.
 34. 19 Node, 407 Vitest, 50 authenticated smoke, lint, typecheck, production
     build, migration integrity ve 390/1280 px browser kabulu.
+35. Kullanilabilir stoktan calisan ve kaynak/hedef bakiyeyi tek transaction
+    icinde degistiren depolar arasi transfer.
+36. Transfer kaydini kaynak/hedef stok ve iki append-only hareket bacagina
+    foreign key ile baglayan veri modeli.
+37. Aktor ve payload bagimli idempotency, tam rollback, audit ve tamamlanmis
+    transfer kaydini degisiklik/silmeye kapatan SQLite tetikleyicileri.
+38. Siparis, teklif, manuel/toplu stok, urun aktarimi ve depo yonetimini ortak
+    `stock-mutations` kilit sirasinda birlestiren yaris korumasi.
+39. `/admin/stok/transferler` gorev akisi, son 20 transfer gorunumu ve tek
+    aktif depo durumunda acik kurulum yonlendirmesi.
+40. 19 Node, 418 Vitest, 51 authenticated smoke, lint, typecheck, 40 migration
+    integrity, production build ve 390/1280 px browser kabulu.
 
 Siradaki repo ici paket:
 
-1. Faz 7.2B: iki depoyu tek transaction icinde etkileyen atomik transfer,
-   iki bacakli stok hareketi, idempotency ve rollback testleri.
-2. Faz 7.2C: sayim oturumu, beklenen/sayilan miktar, gerekce ve fark hareketi.
+1. Faz 7.2C: sayim oturumu, beklenen/sayilan miktar, gerekce ve fark hareketi.
+2. Faz 7.2C: sayim yetkisi, optimistic concurrency, idempotency, audit ve
+   rollback testleri.
 3. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
+
+## 2026-07-27 - Faz 7.2B atomik depo transferi paketi
+
+- Transfer yalniz `fiziksel - rezerve` kullanilabilir miktardan yapilir.
+- Kaynak ve hedef aktif ve farkli depolar olmak zorundadir; hedefte stok satiri
+  yoksa kaynak gorunurluguyle otomatik olusturulur.
+- Kaynak azalis ve hedef artis CAS kontroluyle uygulanir. Herhangi bir bakiye
+  veya hareket zinciri catisirsa transaction tamamen geri alinir.
+- `TRANSFER_OUT` ve `TRANSFER_IN` hareketleri ayni transfer kimligine baglidir;
+  tamamlanmis transfer de iki hareketin ve iki stok satirinin kimligini tutar.
+- Transfer payload hash'i sozlesme surumu, aktor, urun, normalize depo kodlari,
+  miktar ve gerekceyi kapsar.
+- Ortak stok kilidi siparis rezervasyonu, siparis durumlari, teklif donusumu,
+  manuel/toplu stok, urun aktarimi ve depo yonetimine eklendi.
+- `/admin/stok/transferler` islem etkisini, kaynak bakiyeyi, rezerve korumasini
+  ve son transferleri operasyon dilinde gosterir.
+- Yerel kabul: 19/19 Node, 418/418 Vitest, 51 authenticated smoke, lint,
+  typecheck, 40 migration integrity, production build ve 390/1280 px browser
+  QA basarili.
 
 ## 2026-07-27 - Faz 7.2A depo ana verisi paketi
 

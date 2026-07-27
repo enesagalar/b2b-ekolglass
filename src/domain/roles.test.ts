@@ -43,6 +43,14 @@ describe("role permissions", () => {
     expect(hasPermission("SALES_STAFF", "warehouse.manage")).toBe(false);
   });
 
+  it("limits warehouse transfers to inventory operators", () => {
+    expect(hasPermission("SUPER_ADMIN", "stock.transfer")).toBe(true);
+    expect(hasPermission("ADMIN", "stock.transfer")).toBe(true);
+    expect(hasPermission("WAREHOUSE_STAFF", "stock.transfer")).toBe(true);
+    expect(hasPermission("SALES_MANAGER", "stock.transfer")).toBe(false);
+    expect(hasPermission("SALES_STAFF", "stock.transfer")).toBe(false);
+  });
+
   it("keeps company-wide access revocation out of sales roles", () => {
     expect(hasPermission("ADMIN", "company.lifecycle.manage")).toBe(true);
     expect(hasPermission("SALES_MANAGER", "company.lifecycle.manage")).toBe(false);
