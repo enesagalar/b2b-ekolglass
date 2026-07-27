@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export type AdminOrderFilters = {
   query?: string;
   status?: string;
+  manualCityOnly?: boolean;
   page: number;
   pageSize: number;
 };
@@ -12,6 +13,14 @@ export async function getAdminOrders(filters: AdminOrderFilters) {
   const where: Prisma.OrderWhereInput = {};
 
   if (filters.status) where.status = filters.status;
+  if (filters.manualCityOnly) {
+    where.shipment = {
+      is: {
+        carrier: "CITY_LOJISTIK",
+        status: "AWAITING_MANUAL_DISPATCH",
+      },
+    };
+  }
   if (filters.query) {
     where.OR = [
       { orderNumber: { contains: filters.query } },

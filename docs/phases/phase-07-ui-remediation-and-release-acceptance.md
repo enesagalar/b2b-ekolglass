@@ -3,6 +3,22 @@
 Status: Local acceptance complete; production acceptance blocked by external inputs
 Started: 2026-07-24
 
+## 2026-07-27 - Entegrasyon ve CMS operasyon UX
+
+- Entegrasyon sayfasi teknik metriklerden once tek birincil kullanici
+  gorevini ve operasyon etkisini gosterir.
+- Manuel City Lojistik isi ilgili siparislere filtreli erisim saglar.
+- Entegrasyon olaylari mobil kartlar, masaustunde tablo kullanir; ham kimlikler
+  kapali teknik ayrintida kalir.
+- Tekrar deneme formu neden, yetki ve mukerrer teslimat riskini aciklar.
+- CMS ana sayfa banneri kayitli canli onizleme, ayri metin kayitlari ve
+  bilgisayardan gorsel secme/yayinlama akisi kullanir.
+- Secilen gorsel dosya adi, boyutu ve merkez kirpma onizlemesiyle yayin oncesi
+  kontrol edilir; ag hatasi bekleme durumunu kilitlemez.
+- Teknik CMS kayitlari varsayilan olarak kapali salt okunur envanterdir.
+- Kabul: lint, typecheck, 19 Node, 397 Vitest, production build, 49
+  authenticated smoke ve 390/1440 px browser QA basarili.
+
 ## 2026-07-27 - Firma ve bayi basvurusu gorev odakli UX
 
 - Firma detayinda erisim, kullanici ve ticari politika ozetleri ile kayit

@@ -44,12 +44,42 @@ Tamamlanan:
     hedef durumla uyumlu tek aksiyon, etki onayi ve sonuc geri bildirimi.
 24. Mobil basvuru detayinda karar alaninin islem gecmisinden once gelmesi ve
     ham rol/durum/audit kodlarinin Turkce operasyon diline cevrilmesi.
+25. Entegrasyon durumlarinin tek birincil kullanici gorevi ve operasyon
+    etkisine donusturulmesi; teknik saglik ayrintilarinin ikincil alana
+    alinmasi.
+26. Manuel City Lojistik sayacinin filtreli siparis calisma alanina
+    baglanmasi.
+27. Entegrasyon olaylarinin mobil kartlara donusturulmesi ve tekrar deneme
+    risk/yetki anlatiminin sadelestirilmesi.
+28. Banner metni ve gorselinin iki adimli gorev akisinda yonetilmesi; canli
+    kayitli onizleme ve yerel dosya onizlemesi.
+29. Teknik CMS sayfa kayitlarinin kapali, salt okunur envantere tasinmasi.
 
 Siradaki repo ici paket:
 
-1. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
-2. Gercek cihaz mobil kabulunu kaydetmek.
-3. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+1. Gercek iOS Safari ve Android Chrome cihaz kabulunu kaydetmek.
+2. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+
+## 2026-07-27 - Faz 7.3 entegrasyon ve CMS operasyon UX paketi
+
+- Entegrasyon sagligi; basarisiz olay, geciken tekrar deneme, scheduler riski ve
+  manuel City Lojistik isi arasindan tek birincil gorev secer.
+- Manuel City Lojistik aksiyonu `/admin/siparisler?cityManual=1` filtreli
+  calisma alanina gider ve yalniz ilgili sevkiyatlari listeler.
+- Teknik scheduler, alarm ve readiness bilgileri ana gorevi bozmayan kapali
+  ayrintilarda tutulur.
+- Entegrasyon olaylari mobilde tablo yerine dokunmatik kayitlar kullanir; konu
+  ve aggregate kimligi yalniz teknik ayrintida gorunur.
+- Tekrar deneme formu neden, etki, yetki ve olasi mukerrer teslimat riskini
+  islemden once aciklar.
+- Icerik yonetimi, kayitli bannerin canli kompozisyon onizlemesini gosterir.
+  Metin alanlari ayri kaydedilir ve degisiklik yoksa aksiyon pasiftir.
+- Gorsel yukleme bilgisayardan dosya secimi, dosya adi/boyutu, yerel kirpma
+  onizlemesi ve erisilebilir gorsel aciklamasi ile tamamlanir.
+- Ag hatasinda yukleme bekleme durumu temizlenir; teknik CMS kayitlari salt
+  okunur ileri seviye envanterdir.
+- Yerel kabul: 19 Node, 397 Vitest, 49 authenticated smoke, lint, typecheck,
+  production build; 390 ve 1440 px browser kontrolunde yatay tasma yok.
 
 ## 2026-07-27 - Faz 7.3 firma ve bayi basvurusu UX paketi
 

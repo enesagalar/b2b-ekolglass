@@ -1,5 +1,27 @@
 # Guncel Proje Durumu
 
+## 2026-07-27 - Faz 7.3 entegrasyon ve CMS operasyon UX
+
+- Entegrasyon ekrani teknik telemetri listesi yerine kullanicinin tamamlamasi
+  gereken tek birincil gorevi ve operasyon etkisini gosterir.
+- Basarisiz olaylar, geciken tekrar denemeler, scheduler sagligi ve manuel City
+  Lojistik sevkiyatlari ayni oncelik kuraliyla siniflandirilir.
+- Manuel City Lojistik sayaci tum siparislere degil, dogrudan ilgili
+  siparislere filtreli bir calisma alanina gider.
+- Entegrasyon olaylari mobilde yatay tablo yerine okunabilir kayit kartlarina
+  donusturuldu; ham olay kimlikleri kapali teknik ayrintida tutuldu.
+- Tekrar deneme islemi neden, etki, yetki ve olasi mukerrer teslimat riskini
+  kaydetmeden once aciklar.
+- Icerik yonetimi banner metni, gorsel ve canli kayitli onizleme olmak uzere
+  iki adimli yayin gorevine donusturuldu.
+- Banner gorseli bilgisayardan secilir; dosya adi, boyutu ve merkez kirpma
+  onizlemesi yayinlamadan once gorulur. Ag hatasinda yukleme ekrani beklemede
+  kalmaz.
+- Teknik CMS sayfa kayitlari varsayilan olarak kapali ve salt okunur envanter
+  olarak ayrildi.
+- Yerel kabul: 19/19 Node, 397/397 Vitest, 49 authenticated smoke, lint,
+  typecheck, production build ve 390/1440 px browser QA basarili.
+
 ## 2026-07-27 - Faz 7.3 firma ve bayi basvurusu UX
 
 - Firma detayinda portal erisimi, bayi kullanicilari ve ticari politika tek

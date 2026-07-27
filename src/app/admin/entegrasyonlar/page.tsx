@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import {
   Activity,
   AlertTriangle,
+  ArrowRight,
   BellRing,
+  ChevronDown,
   CircleCheck,
   Clock3,
   Filter,
@@ -22,6 +24,7 @@ import {
   isActiveOutboxTopic,
   isReplayableOutboxTopic,
 } from "@/domain/integration-topics";
+import { getIntegrationPrimaryTask } from "@/domain/integration-operations";
 import { hasPermission, isKnownRole } from "@/domain/roles";
 import { OutboxReplayForm } from "@/features/integrations/outbox-replay-form";
 import { requirePermissionUser } from "@/lib/auth";
@@ -120,6 +123,20 @@ export default async function AdminIntegrationsPage({
   const totalPages = Math.max(1, Math.ceil(data.total / pageSize));
   const canReplay =
     isKnownRole(actor.role) && hasPermission(actor.role, "integration.replay");
+  const primaryTask = getIntegrationPrimaryTask({
+    dead: data.health.dead,
+    retry: data.health.retry,
+    overdue: data.health.overdue,
+    unsupportedReady: data.health.unsupportedReady,
+    manualCityShipmentCount: data.manualCityShipmentCount,
+    systemJobsAlertLevel: data.systemJobs.alertLevel,
+  });
+  const taskTone =
+    primaryTask.tone === "danger"
+      ? "border-red-200 bg-red-50 text-red-900"
+      : primaryTask.tone === "warning"
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : "border-emerald-200 bg-emerald-50 text-emerald-900";
   const metrics = [
     { label: "Hazır kuyruk", value: data.health.ready, icon: Activity, tone: "bg-blue-50 text-blue-800" },
     { label: "İşleniyor", value: data.health.processing, icon: LoaderCircle, tone: "bg-violet-50 text-violet-800" },
@@ -132,10 +149,10 @@ export default async function AdminIntegrationsPage({
     <div className="grid gap-6">
       <section className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold text-teal-800">Sistem operasyonu</p>
-          <h2 className="mt-1 text-2xl font-semibold">Entegrasyon kuyruğu</h2>
+          <p className="text-sm font-semibold text-teal-800">Otomatik teslimatlar</p>
+          <h2 className="mt-1 text-2xl font-semibold">Entegrasyon işlemleri</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            E-posta ve kargo olaylarını teslim durumuna göre izleyin; kalıcı hataları audit kayıtlı ve kontrollü biçimde yeniden kuyruğa alın.
+            Aktivasyon, parola ve sipariş e-postaları ile kargo işlemlerinin ulaşıp ulaşmadığını takip edin. Yalnız müdahale gereken kayıtları yeniden işleyin.
           </p>
         </div>
         <div className={`inline-flex min-h-10 items-center gap-2 self-start rounded-md px-3 py-2 text-sm font-semibold ring-1 ${data.health.status === "ok" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : data.health.status === "empty" ? "bg-slate-100 text-slate-700 ring-slate-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
@@ -144,6 +161,41 @@ export default async function AdminIntegrationsPage({
         </div>
       </section>
 
+      <section className={`grid gap-4 rounded-lg border p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center ${taskTone}`}>
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/70">
+            {primaryTask.tone === "success" ? (
+              <CircleCheck size={20} aria-hidden="true" />
+            ) : (
+              <AlertTriangle size={20} aria-hidden="true" />
+            )}
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase">{primaryTask.eyebrow}</p>
+            <h3 className="mt-1 text-base font-semibold">{primaryTask.title}</h3>
+            <p className="mt-1 max-w-3xl text-sm leading-6 opacity-80">{primaryTask.description}</p>
+          </div>
+        </div>
+        <a
+          href={primaryTask.href}
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          {primaryTask.action}
+          <ArrowRight size={16} aria-hidden="true" />
+        </a>
+      </section>
+
+      <details id="teknik-saglik" className="group scroll-mt-28 border-y border-slate-200">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold text-slate-800">
+          <span>
+            Teknik sağlık ve zamanlanmış işler
+            <span className="mt-1 block text-xs font-normal text-slate-500">
+              Scheduler, alarm kanalı ve çalışma süreleri
+            </span>
+          </span>
+          <ChevronDown size={18} className="shrink-0 transition group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="grid gap-4 border-t border-slate-200 py-4">
       <section className={`${panelClass} overflow-hidden`} data-testid="system-jobs-health">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -156,7 +208,7 @@ export default async function AdminIntegrationsPage({
         </div>
         <div className="divide-y divide-slate-200">
           {data.systemJobs.jobs.map((job) => (
-            <div key={job.jobKey} className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_150px_180px_180px] md:items-center">
+            <div key={job.jobKey} className="grid gap-3 px-5 py-4 xl:grid-cols-[minmax(0,1fr)_130px_160px_170px_170px] xl:items-center">
               <div>
                 <p className="text-sm font-semibold text-slate-950">{job.label}</p>
                 <p className="mt-1 font-mono text-[11px] text-slate-500">{job.jobKey}</p>
@@ -229,8 +281,10 @@ export default async function AdminIntegrationsPage({
           <p className="px-5 py-8 text-sm text-slate-500">Henüz kalıcı sistem alarm olayı oluşmadı.</p>
         )}
       </section>
+        </div>
+      </details>
 
-      <section className={`${panelClass} overflow-hidden`} data-testid="city-logistics-readiness">
+      <section id="city-lojistik" className={`${panelClass} scroll-mt-28 overflow-hidden`} data-testid="city-logistics-readiness">
         <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-800">
@@ -248,17 +302,6 @@ export default async function AdminIntegrationsPage({
             <AlertTriangle size={16} /> Canlı aktarım kilitli · {data.manualCityShipmentCount} manuel sevk
           </span>
         </div>
-        <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-3">
-          {data.cityLogistics.checks.map((check) => (
-            <div key={check.key} className="bg-white p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-900">{check.label}</p>
-                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${check.status === "ready" ? "bg-emerald-500" : check.status === "blocked" ? "bg-amber-500" : "bg-slate-300"}`} />
-              </div>
-              <p className="mt-2 text-xs leading-5 text-slate-500">{check.detail}</p>
-            </div>
-          ))}
-        </div>
         {data.manualCityShipments.length ? (
           <div className="border-t border-slate-200 px-5 py-4">
             <p className="text-xs font-semibold uppercase text-slate-500">Manuel işlem bekleyen siparişler</p>
@@ -275,17 +318,34 @@ export default async function AdminIntegrationsPage({
             </div>
           </div>
         ) : null}
+        <details className="group border-t border-slate-200">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            City bağlantı hazırlığını görüntüle
+            <ChevronDown size={17} className="transition group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="grid gap-px border-t border-slate-200 bg-slate-200 sm:grid-cols-2 xl:grid-cols-3">
+            {data.cityLogistics.checks.map((check) => (
+              <div key={check.key} className="bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-900">{check.label}</p>
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${check.status === "ready" ? "bg-emerald-500" : check.status === "blocked" ? "bg-amber-500" : "bg-slate-300"}`} />
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-500">{check.detail}</p>
+              </div>
+            ))}
+          </div>
+        </details>
         <div className="flex flex-col gap-2 bg-slate-50 px-5 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
           <p>Resmi iletişim: <a className="font-semibold text-teal-800 underline-offset-4 hover:underline" href="mailto:info@citylojistik.com">info@citylojistik.com</a> · 0850 259 24 89</p>
           <p className="text-xs font-semibold text-slate-500">Teknik sözleşme bekleniyor</p>
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid overflow-hidden rounded-lg border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-5">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <article key={metric.label} className={`${panelClass} p-4`}>
+            <article key={metric.label} className="border-b border-slate-200 p-4 last:border-b-0 sm:border-r xl:border-b-0">
               <div className="flex items-center justify-between">
                 <span className={`flex h-10 w-10 items-center justify-center rounded-md ${metric.tone}`}><Icon size={19} /></span>
                 <strong className="text-2xl">{metric.value}</strong>
@@ -296,12 +356,19 @@ export default async function AdminIntegrationsPage({
         })}
       </section>
 
-      <section className={`${panelClass} min-w-0 overflow-hidden`}>
+      <section id="teslimat-islemleri" className={`${panelClass} min-w-0 scroll-mt-28 overflow-hidden`}>
+        <div className="border-b border-slate-200 px-5 py-4">
+          <p className="text-xs font-semibold uppercase text-teal-800">Teslimat geçmişi</p>
+          <h3 className="mt-1 text-lg font-semibold text-slate-950">E-posta ve entegrasyon işlemleri</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Önce müdahale gereken kayıtları filtreleyin. Başarılı kayıtlar yalnızca geçmiş kanıtıdır.
+          </p>
+        </div>
         <form className="grid gap-3 border-b border-slate-200 p-4 lg:grid-cols-[minmax(0,1fr)_180px_260px_auto]">
           <label className="relative">
-            <span className="sr-only">Outbox kayıtlarında ara</span>
+            <span className="sr-only">Teslimat işlemlerinde ara</span>
             <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={17} />
-            <input name="q" defaultValue={query} className={`${inputClass} pl-10`} placeholder="Olay, aggregate veya idempotency anahtarı" />
+            <input name="q" defaultValue={query} className={`${inputClass} pl-10`} placeholder="İşlem veya ilişkili kayıt kimliği" />
           </label>
           <label>
             <span className="sr-only">Teslim durumu</span>
@@ -323,7 +390,71 @@ export default async function AdminIntegrationsPage({
         </form>
 
         {data.events.length ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-slate-200 xl:hidden">
+            {data.events.map((event) => {
+              const replayable = canReplay && isActiveOutboxTopic(event.topic) && ["DEAD", "RETRY"].includes(event.status) && isReplayableOutboxTopic(event.topic);
+              return (
+                <article key={event.id} className="grid gap-4 px-4 py-5 sm:px-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{integrationTopicLabels[event.topic] ?? event.eventType}</p>
+                      <p className="mt-1 text-xs text-slate-500">{formatIntegrationDate(event.createdAt)}</p>
+                    </div>
+                    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ring-1 ${statusClass(event.status)}`}>
+                      {outboxStatusLabels[event.status] ?? event.status}
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-500">Deneme</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-800">{event.attempts} / {event.maxAttempts}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-500">Sonuç</p>
+                      {event.lastError ? (
+                        <p className="mt-1 text-sm leading-5 text-red-700">{event.lastError}</p>
+                      ) : (
+                        <p className="mt-1 text-sm text-slate-600">
+                          {event.logs[0]
+                            ? `${outboxStatusLabels[event.logs[0].status] ?? event.logs[0].status} · ${formatIntegrationDate(event.logs[0].createdAt)}`
+                            : "Henüz sonuç yok"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <details className="group">
+                    <summary className="cursor-pointer list-none text-xs font-semibold text-slate-500">
+                      Teknik kimlikleri görüntüle
+                    </summary>
+                    <div className="mt-2 grid gap-1 rounded-md bg-slate-50 p-3 font-mono text-[11px] text-slate-500">
+                      <p className="break-all">{event.topic}</p>
+                      <p className="break-all">{event.aggregateType}: {event.aggregateId}</p>
+                      {event.providerCode ? <p className="break-all">Sağlayıcı: {event.providerCode}</p> : null}
+                    </div>
+                  </details>
+                  {replayable ? (
+                    <OutboxReplayForm
+                      eventId={event.id}
+                      requestId={randomUUID()}
+                      status={event.status as "DEAD" | "RETRY"}
+                      attempts={event.attempts}
+                      updatedAt={event.updatedAt.toISOString()}
+                    />
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      {!canReplay
+                        ? "Yeniden deneme yetkiniz yok."
+                        : !isReplayableOutboxTopic(event.topic) || !isActiveOutboxTopic(event.topic)
+                          ? "Bu teslimat bağlantısı şu anda kapalı."
+                          : "Bu kayıt için manuel işlem gerekmiyor."}
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto xl:block">
             <table className="w-full min-w-[1180px] text-left">
               <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                 <tr>
@@ -342,12 +473,18 @@ export default async function AdminIntegrationsPage({
                     <tr key={event.id} className="align-top hover:bg-slate-50">
                       <td className="px-5 py-4">
                         <p className="text-sm font-semibold text-slate-950">{integrationTopicLabels[event.topic] ?? event.eventType}</p>
-                        <p className="mt-1 max-w-72 break-all font-mono text-[11px] text-slate-500">{event.topic}</p>
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-[11px] font-semibold text-slate-500">Teknik konu</summary>
+                          <p className="mt-1 max-w-72 break-all font-mono text-[11px] text-slate-500">{event.topic}</p>
+                        </details>
                       </td>
                       <td className="px-5 py-4">
-                        <p className="text-sm font-semibold">{event.aggregateType}</p>
-                        <p className="mt-1 max-w-56 break-all font-mono text-xs text-slate-500">{event.aggregateId}</p>
                         <p className="mt-1 text-xs text-slate-500">{formatIntegrationDate(event.createdAt)}</p>
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-[11px] font-semibold text-slate-500">Kayıt kimliği</summary>
+                          <p className="mt-1 text-sm font-semibold">{event.aggregateType}</p>
+                          <p className="mt-1 max-w-56 break-all font-mono text-xs text-slate-500">{event.aggregateId}</p>
+                        </details>
                       </td>
                       <td className="px-5 py-4">
                         <span className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ring-1 ${statusClass(event.status)}`}>{outboxStatusLabels[event.status] ?? event.status}</span>
@@ -358,7 +495,7 @@ export default async function AdminIntegrationsPage({
                         <p className="mt-1 text-xs text-slate-500">Uygun: {formatIntegrationDate(event.availableAt)}</p>
                       </td>
                       <td className="px-5 py-4">
-                        {event.lastError ? <p className="max-w-80 text-sm leading-5 text-red-700">{event.lastError}</p> : <p className="text-sm text-slate-500">{event.logs[0] ? `${event.logs[0].status} · ${formatIntegrationDate(event.logs[0].createdAt)}` : "Henüz sonuç yok"}</p>}
+                        {event.lastError ? <p className="max-w-80 text-sm leading-5 text-red-700">{event.lastError}</p> : <p className="text-sm text-slate-500">{event.logs[0] ? `${outboxStatusLabels[event.logs[0].status] ?? event.logs[0].status} · ${formatIntegrationDate(event.logs[0].createdAt)}` : "Henüz sonuç yok"}</p>}
                       </td>
                       <td className="px-5 py-4 text-right">
                         {replayable ? (
@@ -371,9 +508,11 @@ export default async function AdminIntegrationsPage({
                           />
                         ) : (
                           <span className="text-xs text-slate-400">
-                            {!isReplayableOutboxTopic(event.topic) || !isActiveOutboxTopic(event.topic)
-                              ? "İşleyici yok"
-                              : "İşlem yok"}
+                            {!canReplay
+                              ? "Yetkiniz yok"
+                              : !isReplayableOutboxTopic(event.topic) || !isActiveOutboxTopic(event.topic)
+                                ? "Bağlantı kapalı"
+                                : "İşlem gerekmiyor"}
                           </span>
                         )}
                       </td>
@@ -383,6 +522,7 @@ export default async function AdminIntegrationsPage({
               </tbody>
             </table>
           </div>
+          </>
         ) : (
           <p className="px-5 py-12 text-center text-sm text-slate-500">Filtrelerle eşleşen entegrasyon olayı bulunamadı.</p>
         )}

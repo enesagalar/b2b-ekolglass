@@ -231,9 +231,11 @@ assert(
 );
 const adminIntegrationsHtml = await adminIntegrationsResponse.text();
 assert(
-  adminIntegrationsHtml.includes("Entegrasyon kuyruğu") &&
+  adminIntegrationsHtml.includes("Entegrasyon işlemleri") &&
     adminIntegrationsHtml.includes('href="/admin/entegrasyonlar"') &&
     adminIntegrationsHtml.includes('data-testid="system-alert-delivery"') &&
+    adminIntegrationsHtml.includes("Teknik sağlık ve zamanlanmış işler") &&
+    adminIntegrationsHtml.includes("E-posta ve entegrasyon işlemleri") &&
     adminIntegrationsHtml.includes("City Lojistik aktivasyon hazırlığı") &&
     adminIntegrationsHtml.includes("Canlı aktarım kilitli"),
   "Admin integrations page or navigation not rendered",
@@ -248,6 +250,14 @@ assert(
 assert(
   (await adminOrdersResponse.text()).includes("/admin/siparisler"),
   "Admin orders navigation not rendered",
+);
+const adminManualCityOrdersResponse = await request("/admin/siparisler?cityManual=1", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  adminManualCityOrdersResponse.status === 200 &&
+    (await adminManualCityOrdersResponse.text()).includes("City Lojistik manuel sevkiyat filtresi açık"),
+  "Manual City shipment order filter not rendered",
 );
 
 const adminReportsResponse = await request("/admin/raporlar", {
@@ -959,7 +969,10 @@ const contentResponse = await request("/admin/icerik", {
 assert(contentResponse.status === 200, `Authenticated /admin/icerik failed with ${contentResponse.status}`);
 const contentHtml = await contentResponse.text();
 assert(
-  contentHtml.includes("Bilgisayardan görsel seç") && contentHtml.includes('accept="image/jpeg,image/png,image/webp"'),
+  contentHtml.includes("Canlı banner önizlemesi") &&
+    contentHtml.includes("Banner metinlerini düzenle") &&
+    contentHtml.includes("Bilgisayardan görsel seç") &&
+    contentHtml.includes('accept="image/jpeg,image/png,image/webp"'),
   "Admin CMS file upload control not rendered",
 );
 
@@ -1212,6 +1225,7 @@ console.log(
         "authenticated-admin-dashboard",
         "authenticated-admin-integrations",
         "authenticated-admin-orders",
+        "authenticated-admin-manual-city-orders",
         "authenticated-admin-reports",
         "authenticated-admin-stock-report",
         "authenticated-admin-stock-movements",
@@ -1249,6 +1263,7 @@ console.log(
         "authenticated-product-compatibility-tab",
         "public-catalog-compatibility-search",
         "authenticated-product-media-tab",
+        "authenticated-admin-content",
       ],
     },
     null,

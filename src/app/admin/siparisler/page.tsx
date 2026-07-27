@@ -29,10 +29,11 @@ function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function pageHref(query: string, status: string, page: number) {
+function pageHref(query: string, status: string, page: number, manualCityOnly = false) {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (status) params.set("status", status);
+  if (manualCityOnly) params.set("cityManual", "1");
   params.set("page", String(page));
   return `/admin/siparisler?${params.toString()}`;
 }
@@ -46,10 +47,11 @@ export default async function AdminOrdersPage({
   const params = await searchParams;
   const query = first(params.q)?.trim() ?? "";
   const status = first(params.status)?.trim() ?? "";
+  const manualCityOnly = first(params.cityManual) === "1";
   const requestedPage = Number.parseInt(first(params.page) ?? "1", 10);
   const page =
     Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-  const data = await getAdminOrders({ query, status, page, pageSize });
+  const data = await getAdminOrders({ query, status, manualCityOnly, page, pageSize });
   const totalPages = Math.max(1, Math.ceil(data.total / pageSize));
 
   const metrics = [
@@ -105,7 +107,17 @@ export default async function AdminOrdersPage({
       </section>
 
       <section className={`${panelClass} min-w-0 overflow-hidden`}>
+        {manualCityOnly ? (
+          <div className="flex flex-col gap-3 border-b border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">City Lojistik manuel sevkiyat filtresi açık</p>
+              <p className="mt-1 text-xs">Canlı API bağlantısı açılana kadar sevkiyatı sipariş detayından yönetin.</p>
+            </div>
+            <Link href="/admin/siparisler" className="font-semibold underline underline-offset-4">Filtreyi temizle</Link>
+          </div>
+        ) : null}
         <form className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-[minmax(0,1fr)_220px_auto]">
+          {manualCityOnly ? <input type="hidden" name="cityManual" value="1" /> : null}
           <label className="relative">
             <span className="sr-only">Siparişlerde ara</span>
             <Search
@@ -222,7 +234,7 @@ export default async function AdminOrdersPage({
           <div className="flex gap-2">
             {page > 1 ? (
               <Link
-                href={pageHref(query, status, page - 1)}
+                href={pageHref(query, status, page - 1, manualCityOnly)}
                 className="rounded-md border border-slate-300 px-3 py-2 font-semibold"
               >
                 Önceki
@@ -230,7 +242,7 @@ export default async function AdminOrdersPage({
             ) : null}
             {page < totalPages ? (
               <Link
-                href={pageHref(query, status, page + 1)}
+                href={pageHref(query, status, page + 1, manualCityOnly)}
                 className="rounded-md border border-slate-300 px-3 py-2 font-semibold"
               >
                 Sonraki
