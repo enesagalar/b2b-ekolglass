@@ -118,7 +118,7 @@ export async function importProductsCsvAction(
             quantity: 0,
             reservedQuantity: 0,
             visibility: "SIMPLIFIED",
-            status: "ASK_FOR_AVAILABILITY",
+            status: "OUT_OF_STOCK",
           })),
         });
       }

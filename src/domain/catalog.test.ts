@@ -47,6 +47,8 @@ describe("catalog helpers", () => {
     expect(deriveStockStatus(0, 0)).toBe("OUT_OF_STOCK");
     expect(deriveStockStatus(8, 8)).toBe("RESERVED");
     expect(deriveStockStatus(5, 3)).toBe("LOW_STOCK");
+    expect(deriveStockStatus(3, 0)).toBe("LOW_STOCK");
+    expect(deriveStockStatus(4, 0)).toBe("IN_STOCK");
     expect(deriveStockStatus(10, 1)).toBe("IN_STOCK");
   });
 
@@ -199,7 +201,7 @@ describe("catalog helpers", () => {
     );
 
     expect(stock.isDetailed).toBe(false);
-    expect(stock.label).toBe("Az Stok");
+    expect(stock.label).toBe("Stokta");
   });
 
   it("shows detailed stock totals to internal stock readers", () => {
@@ -360,12 +362,13 @@ describe("catalog validation schemas", () => {
       quantity: "10",
       reservedQuantity: "2",
       visibility: "SIMPLIFIED",
-      status: "IN_STOCK",
+      status: "OUT_OF_STOCK",
     });
 
     expect(parsed.success).toBe(true);
     if (parsed.success) {
       expect(parsed.data.warehouseCode).toBe("MERKEZ");
+      expect(parsed.data).not.toHaveProperty("status");
     }
   });
 
@@ -376,7 +379,6 @@ describe("catalog validation schemas", () => {
       quantity: "3",
       reservedQuantity: "4",
       visibility: "SIMPLIFIED",
-      status: "IN_STOCK",
     });
 
     expect(parsed.success).toBe(false);

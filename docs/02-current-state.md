@@ -1,5 +1,24 @@
 # Guncel Proje Durumu
 
+## 2026-07-27 - Faz 7.3 otomatik stok durumu
+
+- Stok seviyesi manuel secim olmaktan cikarildi ve fiziksel/rezerve sayaclarin
+  otomatik sonucu haline getirildi.
+- Kullanilabilir miktar 0 ise `Rezerve`, 1-3 ise `Az stok`, 4 ve uzeri ise
+  `Stokta`; fiziksel miktar 0 ise `Stok yok` olarak hesaplanir.
+- Urun olusturma ve stok duzeltme formlari sayi girildikce sonucu canli
+  gosterir; server istemciden stok durumu kabul etmez.
+- Toplu fiyat/stok aktarimi, siparis rezervasyonu, iptal, sevkiyat, ana sayfa,
+  katalog ve stok raporu ayni domain fonksiyonunu kullanir.
+- `20260727090000_derive_stock_status` migration'i mevcut veriyi duzeltti ve
+  dogrudan veritabani yazimlarinda da durumu otomatik tureten tetikleyicileri
+  ekledi.
+- Yerel veritabaninda 1.384 stok satirinda algoritma uyumsuzlugu `0`.
+- Urun stok ekrani Turkce metinleri ve hesaplanan durum anlatimi sadeleştirildi.
+- Yerel kabul: 19/19 Node, 389/389 Vitest, 47/47 authenticated smoke, lint,
+  typecheck, migration integrity, production build ve 390/1265 px browser QA
+  basarili.
+
 ## 2026-07-27 - Faz 7.3 gorev odakli UX paketi 3
 
 - Stok ve depo ekrani teknik rapor girisi yerine riskli stogu bulma ve

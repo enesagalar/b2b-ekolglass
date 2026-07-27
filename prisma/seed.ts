@@ -4,6 +4,7 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { hash } from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { recordStockMovement } from "../src/domain/stock-movement";
+import { deriveStockStatus } from "../src/domain/stock-status";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",
@@ -135,13 +136,13 @@ async function main() {
         },
         update: {
           quantity: targetQuantity,
-          status: product.orderMode === "QUOTE_ONLY" ? "MADE_TO_ORDER" : "IN_STOCK",
+          status: deriveStockStatus(targetQuantity, 0),
         },
         create: {
           productId: savedProduct.id,
           warehouseCode: "MERKEZ",
           quantity: targetQuantity,
-          status: product.orderMode === "QUOTE_ONLY" ? "MADE_TO_ORDER" : "IN_STOCK",
+          status: deriveStockStatus(targetQuantity, 0),
         },
       });
       await recordStockMovement(tx, {

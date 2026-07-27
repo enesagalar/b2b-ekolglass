@@ -14,6 +14,21 @@ Durum: Devam ediyor.
   stok operasyon ekrani.
 - Tablet ve mobilde yatay teknik tablo yerine amaca ozel stok kayitlari.
 - Stok sayfalamasinin aktif operasyon rotasini koruyan regresyon testi.
+- Fiziksel ve rezerve sayaclardan otomatik stok durumu turetimi.
+- Urun ve stok formlarinda canli kullanilabilir miktar/durum geri bildirimi.
+- Manuel stok durumu seciminin ve server tarafinda durum kabulunun kaldirilmasi.
+- Mevcut kayitlari duzelten ve dogrudan DB yazimlarini koruyan SQLite
+  tetikleyicileri.
+
+## Otomatik Stok Durumu Sozlesmesi
+
+1. `quantity <= 0`: `OUT_OF_STOCK`
+2. `quantity - reservedQuantity <= 0`: `RESERVED`
+3. Kullanilabilir miktar `1-3`: `LOW_STOCK`
+4. Kullanilabilir miktar `4+`: `IN_STOCK`
+
+Durum bir kullanici tercihi degildir. Fiziksel ve rezerve sayaclar
+degistiginde server/domain ve veritabani ayni kuralla yeniden hesaplar.
 
 ## Kalan Kapsam
 

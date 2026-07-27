@@ -286,7 +286,7 @@ describe("catalog management actions", () => {
     formData.set("quantity", "12");
     formData.set("reservedQuantity", "999");
     formData.set("visibility", "SIMPLIFIED");
-    formData.set("status", "IN_STOCK");
+    formData.set("status", "OUT_OF_STOCK");
     formData.set("idempotencyKey", "12345678-1234-1234-1234-123456789012");
     formData.set("reason", "Yeni teslimat sonrasi fiziksel stok sayimi.");
 
@@ -311,5 +311,27 @@ describe("catalog management actions", () => {
         afterReservedQuantity: 0,
       }),
     }));
+  });
+
+  it("derives low stock and ignores a forged form status", async () => {
+    const formData = new FormData();
+    formData.set("productId", "product-1");
+    formData.set("warehouseCode", "MERKEZ");
+    formData.set("quantity", "2");
+    formData.set("visibility", "SIMPLIFIED");
+    formData.set("status", "IN_STOCK");
+    formData.set("idempotencyKey", "22345678-1234-1234-1234-123456789012");
+    formData.set("reason", "Düşük stok algoritması için fiziksel sayım.");
+
+    const state = await saveProductStock(formData);
+
+    expect(state.ok).toBe(true);
+    expect(mocks.stockItemCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        quantity: 2,
+        reservedQuantity: 0,
+        status: "LOW_STOCK",
+      }),
+    });
   });
 });

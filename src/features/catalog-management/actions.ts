@@ -15,7 +15,10 @@ import {
   stockFormSchema,
   stockAdjustmentFormSchema,
 } from "@/domain/validation";
-import { getProductPublicationReadiness } from "@/domain/catalog";
+import {
+  deriveStockStatus,
+  getProductPublicationReadiness,
+} from "@/domain/catalog";
 import { recordStockMovement } from "@/domain/stock-movement";
 import { Prisma } from "@/generated/prisma/client";
 import { requirePermissionUser } from "@/lib/auth";
@@ -432,7 +435,6 @@ export async function saveProductBundle(
     quantity: formData.get("quantity") || 0,
     reservedQuantity: 0,
     visibility: formData.get("visibility"),
-    status: formData.get("stockStatus"),
   });
 
   const priceParsed = productPriceFormSchema.safeParse({
@@ -489,6 +491,14 @@ export async function saveProductBundle(
           },
         },
       });
+      const reservedQuantity = currentStock?.reservedQuantity ?? 0;
+      if (stockParsed.data.quantity < reservedQuantity) {
+        throw new Error("STOCK_BELOW_RESERVED");
+      }
+      const stockStatus = deriveStockStatus(
+        stockParsed.data.quantity,
+        reservedQuantity,
+      );
       const stock = await tx.stockItem.upsert({
         where: {
           productId_warehouseCode: {
@@ -499,7 +509,7 @@ export async function saveProductBundle(
         update: {
           quantity: stockParsed.data.quantity,
           visibility: stockParsed.data.visibility,
-          status: stockParsed.data.status,
+          status: stockStatus,
         },
         create: {
           productId: product.id,
@@ -507,7 +517,7 @@ export async function saveProductBundle(
           quantity: stockParsed.data.quantity,
           reservedQuantity: 0,
           visibility: stockParsed.data.visibility,
-          status: stockParsed.data.status,
+          status: stockStatus,
         },
       });
       await recordStockMovement(tx, {
@@ -563,6 +573,9 @@ export async function saveProductBundle(
 
     return success(productParsed.data.id ? "Ürün güncellendi." : "Ürün, stok ve fiyat kaydı oluşturuldu.");
   } catch (error) {
+    if (error instanceof Error && error.message === "STOCK_BELOW_RESERVED") {
+      return failure("Fiziksel stok rezerve miktarın altına indirilemez.");
+    }
     return failure(mapCatalogMutationError(error));
   }
 }
@@ -584,7 +597,6 @@ export async function saveProductStock(
     quantity: formData.get("quantity") || 0,
     reservedQuantity: 0,
     visibility: formData.get("visibility"),
-    status: formData.get("status"),
     expectedUpdatedAt: formData.get("expectedUpdatedAt") || undefined,
     idempotencyKey: formData.get("idempotencyKey"),
     reason: formData.get("reason"),
@@ -625,13 +637,17 @@ export async function saveProductStock(
         reservedQuantity: current?.reservedQuantity ?? 0,
       };
       if (parsed.data.quantity < before.reservedQuantity) throw new Error("STOCK_BELOW_RESERVED");
+      const stockStatus = deriveStockStatus(
+        parsed.data.quantity,
+        before.reservedQuantity,
+      );
       const stock = current
         ? await tx.stockItem.update({
             where: { id: current.id },
             data: {
               quantity: parsed.data.quantity,
               visibility: parsed.data.visibility,
-              status: parsed.data.status,
+              status: stockStatus,
             },
           })
         : await tx.stockItem.create({
@@ -641,7 +657,7 @@ export async function saveProductStock(
               quantity: parsed.data.quantity,
               reservedQuantity: 0,
               visibility: parsed.data.visibility,
-              status: parsed.data.status,
+              status: stockStatus,
             },
           });
       await recordStockMovement(tx, {

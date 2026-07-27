@@ -15,7 +15,6 @@ import {
   dealerApplicationStatuses,
   orderStatuses,
   quoteStatuses,
-  stockStatuses,
 } from "./statuses";
 
 const optionalText = (max: number) =>
@@ -434,7 +433,6 @@ export const stockFormSchema = z
       .min(0, "Rezerve stok negatif olamaz.")
       .default(0),
     visibility: z.enum(stockVisibilities),
-    status: z.enum(stockStatuses),
   })
   .superRefine((data, context) => {
     if (data.reservedQuantity > data.quantity) {

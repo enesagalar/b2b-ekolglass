@@ -11,6 +11,8 @@ import {
 
 import { getCommerceIdentity } from "@/data/commerce";
 import { getDealerDashboardData } from "@/data/dealer-portal";
+import { deriveStockStatus } from "@/domain/stock-status";
+import { getStatusLabel } from "@/domain/statuses";
 import { CommerceFooter, CommerceHeader } from "@/features/commerce/commerce-header";
 import { prisma } from "@/lib/prisma";
 
@@ -44,7 +46,7 @@ async function getHomepageData() {
         vehicleBrand: true,
         vehicleModel: true,
         category: { select: { name: true } },
-        stockItems: { select: { status: true } },
+        stockItems: { select: { quantity: true, reservedQuantity: true } },
         mediaAssets: {
           where: { isActive: true },
           orderBy: { title: "asc" },
@@ -193,7 +195,10 @@ export default async function Home() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {data.products.map((product) => {
               const image = productImage(product.mediaAssets);
-              const inStock = product.stockItems.some((item) => item.status === "IN_STOCK");
+              const totalQuantity = product.stockItems.reduce((sum, item) => sum + item.quantity, 0);
+              const totalReserved = product.stockItems.reduce((sum, item) => sum + item.reservedQuantity, 0);
+              const stockStatus = deriveStockStatus(totalQuantity, totalReserved);
+              const inStock = stockStatus === "IN_STOCK" || stockStatus === "LOW_STOCK";
               return (
                 <Link key={product.id} href={`/urunler/${product.id}`} className="interactive-lift group overflow-hidden rounded-lg border border-[#d9dadd] bg-white">
                   <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#f5f5f7]">
@@ -204,7 +209,7 @@ export default async function Home() {
                     <h3 className="mt-2 min-h-12 text-sm font-semibold leading-6">{product.name}</h3>
                     <p className="mt-2 text-xs text-[#68686d]">{product.category.name} · {product.glassType}</p>
                     <div className="mt-4 flex items-center justify-between border-t border-[#ececef] pt-3">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${inStock ? "text-emerald-700" : "text-amber-700"}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{inStock ? "Stokta" : "Stok teyidi gerekli"}</span>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${inStock ? "text-emerald-700" : "text-amber-700"}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{getStatusLabel(stockStatus)}</span>
                       <ArrowRight size={16} className="text-[#00639a] transition group-hover:translate-x-0.5" aria-hidden="true" />
                     </div>
                   </div>

@@ -177,7 +177,6 @@ export async function getAdminStockReport(filters: StockReportFilters) {
       physicalOutCount: snapshot.rows.filter((row) => row.operationalClass === "PHYSICAL_OUT").length,
       fullyReservedCount: snapshot.rows.filter((row) => row.operationalClass === "FULLY_RESERVED").length,
       lowAvailableCount: snapshot.rows.filter((row) => row.operationalClass === "LOW_AVAILABLE").length,
-      askForAvailabilityCount: snapshot.rows.filter((row) => row.status === "ASK_FOR_AVAILABILITY").length,
       ledgerMismatchCount: snapshot.rows.filter((row) => row.hasLedgerMismatch).length,
     },
     rows,

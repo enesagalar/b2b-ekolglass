@@ -19,13 +19,15 @@ import Link from "next/link";
 
 import {
   currencies,
+  deriveStockStatus,
   getProductStatusLabel,
   getStockVisibilityLabel,
   productGlassTypes,
   productStatuses,
   stockVisibilities,
 } from "@/domain/catalog";
-import { getStatusLabel, stockStatuses } from "@/domain/statuses";
+import { automaticStockStatuses } from "@/domain/stock-status";
+import { getStatusLabel } from "@/domain/statuses";
 import { hasPermission, isKnownRole } from "@/domain/roles";
 import {
   saveCategory,
@@ -34,6 +36,7 @@ import {
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
 import { ProductImportForm } from "@/features/catalog-management/product-import-form";
+import { StockQuantityField } from "@/features/catalog-management/stock-quantity-field";
 import { Prisma } from "@/generated/prisma/client";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -253,31 +256,27 @@ function ProductCoreFields({
 function StockFields({
   productId,
   stock,
-  prefix,
 }: {
   productId?: string;
-  prefix?: string;
   stock?: {
     warehouseCode: string;
     quantity: number;
     reservedQuantity: number;
     visibility: string;
-    status: string;
   };
 }) {
-  const stockStatusName = prefix ? `${prefix}Status` : "status";
-
   return (
-    <div className="grid gap-3 md:grid-cols-5">
+    <div className="grid gap-3 md:grid-cols-4">
       {productId ? <input type="hidden" name="productId" value={productId} /> : null}
       <label className={labelClass}>
         Depo
         <input name="warehouseCode" required defaultValue={stock?.warehouseCode ?? "MERKEZ"} className={inputClass} />
       </label>
-      <label className={labelClass}>
-        Stok
-        <input name="quantity" type="number" min={0} required defaultValue={stock?.quantity ?? 0} className={inputClass} />
-      </label>
+      <StockQuantityField
+        defaultQuantity={stock?.quantity ?? 0}
+        reservedQuantity={stock?.reservedQuantity ?? 0}
+        inputClassName={inputClass}
+      />
       <label className={labelClass}>
         Rezerve
         <output className={`${inputClass} flex items-center bg-slate-50 text-slate-600`}>
@@ -290,16 +289,6 @@ function StockFields({
           {stockVisibilities.map((visibility) => (
             <option key={visibility} value={visibility}>
               {getStockVisibilityLabel(visibility)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className={labelClass}>
-        Stok durumu
-        <select name={stockStatusName} defaultValue={stock?.status ?? "ASK_FOR_AVAILABILITY"} className={inputClass}>
-          {stockStatuses.map((status) => (
-            <option key={status} value={status}>
-              {getStatusLabel(status)}
             </option>
           ))}
         </select>
@@ -462,7 +451,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                     <Warehouse size={16} aria-hidden="true" />
                     İlk stok satırı
                   </div>
-                  <StockFields prefix="stock" />
+                  <StockFields />
                 </div>
                 <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
                   <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -695,10 +684,10 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 </select>
               </label>
               <label className={labelClass}>
-                Stok
+                Hesaplanan stok
                 <select name="stockStatus" defaultValue={stockStatus} className={inputClass}>
-                  <option value="">Tum stoklar</option>
-                  {stockStatuses.map((currentStockStatus) => (
+                  <option value="">Tüm stok seviyeleri</option>
+                  {automaticStockStatuses.map((currentStockStatus) => (
                     <option key={currentStockStatus} value={currentStockStatus}>
                       {getStatusLabel(currentStockStatus)}
                     </option>
@@ -747,7 +736,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                       </td>
                       <td className="px-4 py-4">
                         <p className="font-semibold text-slate-900">{stock ? `${stock.quantity} adet` : "Stok yok"}</p>
-                        <p className="mt-1 text-xs text-slate-500">{stock ? getStatusLabel(stock.status) : "Depo satırı ekleyin"}</p>
+                        <p className="mt-1 text-xs text-slate-500">{stock ? getStatusLabel(deriveStockStatus(stock.quantity, stock.reservedQuantity)) : "Depo satırı ekleyin"}</p>
                       </td>
                       {canReadPrice ? <td className="px-4 py-4">
                         <p className="font-semibold text-slate-900">

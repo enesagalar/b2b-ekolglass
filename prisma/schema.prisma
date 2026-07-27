@@ -312,7 +312,7 @@ model StockItem {
   quantity         Int                @default(0)
   reservedQuantity Int                @default(0)
   visibility       String             @default("SIMPLIFIED")
-  status           String             @default("ASK_FOR_AVAILABILITY")
+  status           String             @default("OUT_OF_STOCK")
   reservations     StockReservation[]
   updatedAt        DateTime           @updatedAt
 

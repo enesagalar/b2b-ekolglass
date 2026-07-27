@@ -1,5 +1,8 @@
 import { hasPermission, isAdminRole, type Role } from "./roles";
+import { deriveStockStatus } from "./stock-status";
 import { getStatusLabel } from "./statuses";
+
+export { deriveStockStatus } from "./stock-status";
 
 export const productStatuses = ["ACTIVE", "DRAFT", "DISCONTINUED"] as const;
 export const productOrderModes = ["QUOTE_OR_ORDER", "QUOTE_ONLY", "ORDER_ONLY"] as const;
@@ -54,24 +57,6 @@ export function parseOptionalDecimal(value: unknown) {
   const normalized = String(value).trim().replace(",", ".");
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : Number.NaN;
-}
-
-export function deriveStockStatus(quantity: number, reservedQuantity: number) {
-  const availableQuantity = quantity - reservedQuantity;
-
-  if (quantity <= 0) {
-    return "OUT_OF_STOCK";
-  }
-
-  if (availableQuantity <= 0) {
-    return "RESERVED";
-  }
-
-  if (availableQuantity <= 3) {
-    return "LOW_STOCK";
-  }
-
-  return "IN_STOCK";
 }
 
 export type CatalogViewer = {
@@ -251,11 +236,17 @@ export function resolveCatalogStockSummary(stockItems: CatalogStockCandidate[], 
   }
 
   const simplifiedStock = stockItems.find((item) => item.visibility === "SIMPLIFIED");
+  const simplifiedStatus = simplifiedStock
+    ? deriveStockStatus(
+        simplifiedStock.quantity,
+        simplifiedStock.reservedQuantity,
+      )
+    : "OUT_OF_STOCK";
 
   return {
-    label: simplifiedStock ? getStatusLabel(simplifiedStock.status) : "Stok teyidi gerekli",
+    label: simplifiedStock ? getStatusLabel(simplifiedStatus) : "Stok kaydı yok",
     detail: "Net stok adedi yetkinize göre gösterilir",
-    status: simplifiedStock?.status ?? "ASK_FOR_AVAILABILITY",
+    status: simplifiedStatus,
     isDetailed: false,
   };
 }

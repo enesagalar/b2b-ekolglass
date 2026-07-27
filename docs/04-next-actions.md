@@ -32,6 +32,10 @@ Tamamlanan:
     stok tablosunun amaca ozel kayit listesine donusturulmesi.
 18. Yonetim panelindeki devre disi ana butonlarin aktif gorunmesine neden olan
     ortak marka rengi cakismasinin giderilmesi.
+19. Stok durumunun fiziksel ve rezerve sayaclardan otomatik turetilmesi; urun
+    ve stok formlarindaki manuel durum seciminin kaldirilmasi.
+20. Mevcut stok durumlarinin geriye donuk duzeltilmesi ve uygulama disi yanlis
+    yazimlari da onleyen SQLite tetikleyicileri.
 
 Siradaki repo ici paket:
 
@@ -39,6 +43,26 @@ Siradaki repo ici paket:
 2. Entegrasyon ve CMS ekranlarinda teknik durum ile kullanici gorevini ayirmak.
 3. Gercek cihaz mobil kabulunu kaydetmek.
 4. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+
+## 2026-07-27 - Faz 7.3 otomatik stok durumu paketi
+
+- Stok durumu artik kullanicidan alinmaz; `fiziksel - rezerve` kullanilabilir
+  miktarina gore tek domain kuraliyla hesaplanir.
+- Kural: sifir fiziksel `Stok yok`, sifir kullanilabilir `Rezerve`, 1-3
+  kullanilabilir `Az stok`, 4 ve uzeri `Stokta`.
+- Urun olusturma ve urun detay stok formlarinda durum secicileri kaldirildi.
+  Kullanici fiziksel sayiyi yazarken kullanilabilir miktar ve hesaplanan durum
+  canli gorunur.
+- Server Action, istemciden gonderilen eski veya sahte `status` alanini okumaz.
+- SQLite migration mevcut kayitlari geriye donuk duzeltti ve insert/update
+  tetikleyicileriyle sayac-durum tutarliligini veritabani seviyesinde korur.
+- Ana sayfa, katalog, urun listesi, stok raporu, CSV ve toplu aktarim ayni
+  otomatik durum sozlesmesine baglandi.
+- Canli veritabaninda 1.384 stok kaydi kontrol edildi; algoritmayla celisen
+  kayit sayisi sifirdir.
+- Yerel kabul: 19 Node, 389 Vitest, 47 authenticated smoke, lint, typecheck,
+  migration integrity ve production build basarili. 390 ve 1265 px browser
+  kontrolunde yatay tasma ve console hatasi yok.
 
 ## 2026-07-27 - Faz 7.3 gorev odakli UX paketi 3
 

@@ -114,6 +114,40 @@ describe("stock database invariants", () => {
     ).rejects.toThrow();
   });
 
+  it("derives stock status from physical and reserved counters", async () => {
+    await prisma.stockItem.update({
+      where: { id: ids.stock },
+      data: { quantity: 3, reservedQuantity: 0, status: "IN_STOCK" },
+    });
+    expect(
+      await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stock } }),
+    ).toMatchObject({ quantity: 3, reservedQuantity: 0, status: "LOW_STOCK" });
+
+    await prisma.stockItem.update({
+      where: { id: ids.stock },
+      data: { quantity: 3, reservedQuantity: 3, status: "IN_STOCK" },
+    });
+    expect(
+      await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stock } }),
+    ).toMatchObject({ quantity: 3, reservedQuantity: 3, status: "RESERVED" });
+
+    await prisma.stockItem.update({
+      where: { id: ids.stock },
+      data: { quantity: 0, reservedQuantity: 0, status: "IN_STOCK" },
+    });
+    expect(
+      await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stock } }),
+    ).toMatchObject({ quantity: 0, reservedQuantity: 0, status: "OUT_OF_STOCK" });
+
+    await prisma.stockItem.update({
+      where: { id: ids.stock },
+      data: { quantity: 10, reservedQuantity: 0, status: "OUT_OF_STOCK" },
+    });
+    expect(
+      await prisma.stockItem.findUniqueOrThrow({ where: { id: ids.stock } }),
+    ).toMatchObject({ quantity: 10, reservedQuantity: 0, status: "IN_STOCK" });
+  });
+
   it("rejects lowering physical stock below the reserved counter", async () => {
     const activeReservation = await prisma.$transaction(async (tx) => {
       await tx.stockItem.update({

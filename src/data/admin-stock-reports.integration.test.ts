@@ -309,7 +309,6 @@ describe("admin stock reports", () => {
       physicalOutCount: 1,
       fullyReservedCount: 1,
       lowAvailableCount: 1,
-      askForAvailabilityCount: 1,
       ledgerMismatchCount: 1,
     });
     expect(report.rows.map((row) => row.operationalClass)).toEqual([
@@ -321,11 +320,11 @@ describe("admin stock reports", () => {
 
     const physicalRow = report.rows.find((row) => row.id === ids.physicalStock);
     expect(physicalRow).toMatchObject({
-      status: "IN_STOCK",
+      status: "OUT_OF_STOCK",
       operationalClass: "PHYSICAL_OUT",
-      declaredStatusLabel: getStatusLabel("IN_STOCK"),
+      declaredStatusLabel: getStatusLabel("OUT_OF_STOCK"),
     });
-    expect(physicalRow?.declaredStatusLabel).not.toBe(physicalRow?.operationalStatusLabel);
+    expect(physicalRow?.operationalStatusLabel).toBe("Fiziksel stok yok");
 
     const mismatchRow = report.rows.find((row) => row.id === ids.lowStock);
     expect(mismatchRow).toMatchObject({
@@ -361,7 +360,7 @@ describe("admin stock reports", () => {
     });
   });
 
-  it("exports every row in the filtered snapshot with declared and ledger states", async () => {
+  it("exports every row with calculated stock and ledger states", async () => {
     const filters = resolveStockReportFilters({ q: codePrefix });
     const { rows: exportRows, snapshotAt } = await getAdminStockExportRows(filters);
     const csv = buildStockReportCsv(exportRows);
@@ -376,7 +375,7 @@ describe("admin stock reports", () => {
       quantity: 5,
       reservedQuantity: 2,
       availableQuantity: 3,
-      declaredStatusLabel: getStatusLabel("OUT_OF_STOCK"),
+      declaredStatusLabel: getStatusLabel("LOW_STOCK"),
     });
     expect(exportRows.find((row) => row.warehouseCode === "SR-C")?.ledgerStatusLabel)
       .toContain("1");

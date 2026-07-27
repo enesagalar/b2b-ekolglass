@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ArrowRight, CarFront, Filter, PackageSearch, Search } from "lucide-react";
 
 import { canViewCatalogPrices, productGlassTypes, resolveCatalogStockSummary, selectCatalogPrice, type CatalogViewer } from "@/domain/catalog";
-import { getStatusLabel, stockStatuses } from "@/domain/statuses";
+import { automaticStockStatuses } from "@/domain/stock-status";
+import { getStatusLabel } from "@/domain/statuses";
 import { getProductBrowserData, type ProductSearchParams } from "@/data/product-browser";
 
 function pageHref(basePath: string, params: ProductSearchParams, page: number) {
@@ -47,7 +48,7 @@ export async function ProductBrowser({ searchParams, viewer, basePath, embedded 
         <label className="grid gap-1.5 text-xs font-semibold text-[#4b4c50]">Ürün ara<span className="flex h-12 items-center gap-2 rounded-lg border border-[#d9dadd] px-3 focus-within:border-[#00639a]"><Search size={17} className="text-[#77777c]"/><input name="q" defaultValue={data.query} placeholder="Kod, OEM, marka, model veya ölçü" className="min-w-0 flex-1 bg-transparent text-sm font-normal outline-none"/></span></label>
         <label className="grid gap-1.5 text-xs font-semibold text-[#4b4c50]">Kategori<select name="categoryId" defaultValue={data.categoryId} className="h-12 rounded-lg border border-[#d9dadd] bg-white px-3 text-sm font-normal"><option value="">Tüm kategoriler</option>{data.categories.map(category=><option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
         <label className="grid gap-1.5 text-xs font-semibold text-[#4b4c50]">Cam tipi<select name="glassType" defaultValue={data.glassType} className="h-12 rounded-lg border border-[#d9dadd] bg-white px-3 text-sm font-normal"><option value="">Tüm tipler</option>{productGlassTypes.map(type=><option key={type}>{type}</option>)}</select></label>
-        <label className="grid gap-1.5 text-xs font-semibold text-[#4b4c50]">Stok<select name="stockStatus" defaultValue={data.stockStatus} className="h-12 rounded-lg border border-[#d9dadd] bg-white px-3 text-sm font-normal"><option value="">Tüm stoklar</option>{stockStatuses.map(status=><option key={status} value={status}>{getStatusLabel(status)}</option>)}</select></label>
+        <label className="grid gap-1.5 text-xs font-semibold text-[#4b4c50]">Stok<select name="stockStatus" defaultValue={data.stockStatus} className="h-12 rounded-lg border border-[#d9dadd] bg-white px-3 text-sm font-normal"><option value="">Tüm stok seviyeleri</option>{automaticStockStatuses.map(status=><option key={status} value={status}>{getStatusLabel(status)}</option>)}</select></label>
         <button type="submit" className="inline-flex h-12 items-center justify-center gap-2 self-end rounded-lg bg-[#00639a] px-5 text-sm font-semibold text-white hover:bg-[#004f7c]"><Filter size={16}/>Filtrele</button>
       </form>
 

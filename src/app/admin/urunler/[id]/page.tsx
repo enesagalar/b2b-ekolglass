@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 
 import { getProductPublicationReadiness, getProductStatusLabel, getStockVisibilityLabel, stockVisibilities } from "@/domain/catalog";
-import { getStatusLabel, stockStatuses } from "@/domain/statuses";
 import { hasPermission, isKnownRole } from "@/domain/roles";
 import {
   deleteProductCompatibility,
@@ -30,6 +29,7 @@ import {
   setProductMediaStatus,
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
+import { StockQuantityField } from "@/features/catalog-management/stock-quantity-field";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -44,7 +44,7 @@ const tabs = [
   { key: "fiyat", label: "Fiyat", icon: CircleDollarSign },
   { key: "uyumluluk", label: "Uyumluluk", icon: ShieldCheck },
   { key: "medya", label: "Medya", icon: Image },
-  { key: "audit", label: "Audit", icon: History },
+  { key: "audit", label: "Denetim", icon: History },
 ];
 
 const inputClass =
@@ -165,12 +165,12 @@ export default async function AdminProductDetailPage({
         <div>
           <Link href="/admin/urunler" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950">
             <ArrowLeft size={16} aria-hidden="true" />
-            Urun listesine don
+            Ürün listesine dön
           </Link>
           <p className="mt-5 text-sm font-semibold text-teal-800">{product.category.name}</p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-950">{product.name}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            {product.code} kodlu urunun teknik, stok, fiyat ve operasyon gecmisi tek ekranda izlenir.
+            {product.code} kodlu ürünün teknik, stok, fiyat ve operasyon geçmişi tek ekranda izlenir.
           </p>
         </div>
         <div className="grid min-w-64 gap-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -181,11 +181,11 @@ export default async function AdminProductDetailPage({
             </span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-xs font-semibold text-slate-500">Satis modu</span>
-            <span className="text-sm font-semibold text-slate-950">Dogrudan siparis</span>
+            <span className="text-xs font-semibold text-slate-500">Satış modu</span>
+            <span className="text-sm font-semibold text-slate-950">Doğrudan sipariş</span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-xs font-semibold text-slate-500">Guncelleme</span>
+            <span className="text-xs font-semibold text-slate-500">Güncelleme</span>
             <span className="text-sm font-semibold text-slate-950">{formatDate(product.updatedAt)}</span>
           </div>
         </div>
@@ -247,13 +247,13 @@ export default async function AdminProductDetailPage({
 
       {activeTab === "genel" ? (
         <section className="grid gap-4 lg:grid-cols-3">
-          <Field label="Urun kodu" value={product.code} />
+          <Field label="Ürün kodu" value={product.code} />
           <Field label="Kategori" value={product.category.name} />
           <Field label="Arac" value={vehicle || "Proje / olcu bazli"} />
           <Field label="Cam tipi" value={product.glassType} />
           <Field label="Pozisyon" value={product.glassPosition} />
           <Field label="Olcu" value={product.dimensions} />
-          <Field label="Kalinlik" value={product.thicknessMm ? `${product.thicknessMm.toString()} mm` : null} />
+          <Field label="Kalınlık" value={product.thicknessMm ? `${product.thicknessMm.toString()} mm` : null} />
           <Field label="Renk" value={product.tint} />
           <div className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
@@ -261,7 +261,7 @@ export default async function AdminProductDetailPage({
               Teknik notlar
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <Field label="Isleme notlari" value={product.processingNotes} />
+              <Field label="İşleme notları" value={product.processingNotes} />
               <Field label="Uyumluluk notlari" value={product.compatibilityNotes} />
             </div>
           </div>
@@ -270,23 +270,30 @@ export default async function AdminProductDetailPage({
 
       {activeTab === "stok" ? (
         <section className="grid gap-4">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-950">
+            <strong className="font-semibold">Stok durumu otomatik hesaplanır.</strong>{" "}
+            Kullanılabilir miktar fiziksel stoktan açık siparişlere ayrılan
+            miktarın çıkarılmasıyla bulunur. 1–3 adet “Az stok”, 4 ve üzeri
+            “Stokta” olarak gösterilir.
+          </div>
           <CatalogActionForm action={saveProductStock} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
               <Plus size={16} aria-hidden="true" />
-              Depo stok satiri ekle veya guncelle
+              Depo stok satırı ekle veya güncelle
             </div>
             <input type="hidden" name="productId" value={product.id} />
             <input type="hidden" name="expectedUpdatedAt" value="" />
             <input type="hidden" name="idempotencyKey" value={randomUUID()} />
-            <div className="grid gap-3 lg:grid-cols-6">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <label className={labelClass}>
                 Depo
                 <input name="warehouseCode" required defaultValue="MERKEZ" className={inputClass} />
               </label>
-              <label className={labelClass}>
-                Stok
-                <input name="quantity" type="number" min={0} required defaultValue={0} className={inputClass} />
-              </label>
+              <StockQuantityField
+                defaultQuantity={0}
+                reservedQuantity={0}
+                inputClassName={inputClass}
+              />
               <label className={labelClass}>
                 Rezerve
                 <output className={`${inputClass} flex items-center bg-slate-50 text-slate-600`}>
@@ -294,7 +301,7 @@ export default async function AdminProductDetailPage({
                 </output>
               </label>
               <label className={labelClass}>
-                Gorunurluk
+                Görünürlük
                 <select name="visibility" defaultValue="SIMPLIFIED" className={inputClass}>
                   {stockVisibilities.map((visibility) => (
                     <option key={visibility} value={visibility}>
@@ -304,16 +311,6 @@ export default async function AdminProductDetailPage({
                 </select>
               </label>
               <label className={labelClass}>
-                Durum
-                <select name="status" defaultValue="ASK_FOR_AVAILABILITY" className={inputClass}>
-                  {stockStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {getStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className={`${labelClass} lg:col-span-2`}>
                 Düzeltme gerekçesi
                 <input name="reason" required minLength={10} maxLength={500} placeholder="Sayım, kabul veya düzeltme nedenini yazın" className={inputClass} />
               </label>
@@ -330,7 +327,7 @@ export default async function AdminProductDetailPage({
                   <CatalogActionForm
                     key={stock.id}
                     action={saveProductStock}
-                    className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[150px_120px_120px_160px_180px_minmax(220px,1fr)_auto] xl:items-end"
+                    className="grid gap-3 p-4 md:grid-cols-2 2xl:grid-cols-[150px_minmax(180px,1fr)_120px_180px_minmax(240px,1fr)_auto] 2xl:items-end"
                   >
                     <input type="hidden" name="productId" value={product.id} />
                     <input type="hidden" name="warehouseCode" value={stock.warehouseCode} />
@@ -340,10 +337,11 @@ export default async function AdminProductDetailPage({
                       <p className="text-xs font-semibold text-slate-500">Depo</p>
                       <p className="mt-2 font-semibold text-slate-950">{stock.warehouseCode}</p>
                     </div>
-                    <label className={labelClass}>
-                      Fiziksel stok
-                      <input name="quantity" type="number" min={stock.reservedQuantity} required defaultValue={stock.quantity} className={inputClass} />
-                    </label>
+                    <StockQuantityField
+                      defaultQuantity={stock.quantity}
+                      reservedQuantity={stock.reservedQuantity}
+                      inputClassName={inputClass}
+                    />
                     <div>
                       <p className="text-xs font-semibold text-slate-500">Rezerve</p>
                       <p className="mt-2 font-semibold text-amber-700">{stock.reservedQuantity}</p>
@@ -358,14 +356,6 @@ export default async function AdminProductDetailPage({
                       </select>
                     </label>
                     <label className={labelClass}>
-                      Durum
-                      <select name="status" defaultValue={stock.status} className={inputClass}>
-                        {stockStatuses.map((status) => (
-                          <option key={status} value={status}>{getStatusLabel(status)}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className={labelClass}>
                       Düzeltme gerekçesi
                       <input name="reason" required minLength={10} maxLength={500} placeholder="Sayım veya düzeltme nedeni" className={inputClass} />
                     </label>
@@ -374,7 +364,7 @@ export default async function AdminProductDetailPage({
                 ))}
               </div>
             ) : (
-              <EmptyState title="Stok satiri yok" body="Bu urune depo bazli stok eklenince burada gorunecek." />
+              <EmptyState title="Stok satırı yok" body="Bu ürüne depo bazlı stok eklenince burada görünecek." />
             )}
           </div>
         </section>
@@ -385,7 +375,7 @@ export default async function AdminProductDetailPage({
           <CatalogActionForm action={saveProductPrice} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
               <Plus size={16} aria-hidden="true" />
-              Yeni fiyat satiri ekle
+              Yeni fiyat satırı ekle
             </div>
             <input type="hidden" name="productId" value={product.id} />
             <div className="grid gap-3 lg:grid-cols-[1.4fr_0.7fr_0.7fr_auto]">
@@ -458,7 +448,7 @@ export default async function AdminProductDetailPage({
                 </tbody>
               </table>
             ) : (
-              <EmptyState title="Fiyat satiri yok" body="Bu urune fiyat listesi baglaninca burada gorunecek." />
+              <EmptyState title="Fiyat satırı yok" body="Bu ürüne fiyat listesi bağlanınca burada görünecek." />
             )}
           </div>
         </section>
@@ -550,7 +540,7 @@ export default async function AdminProductDetailPage({
                         <input name="notes" defaultValue={compatibility.notes ?? ""} className={inputClass} />
                       </label>
                       <div className="flex justify-end">
-                        <SubmitButton label="Uyumluluk guncelle" />
+                        <SubmitButton label="Uyumluluk güncelle" />
                       </div>
                     </div>
                   </CatalogActionForm>
@@ -569,7 +559,7 @@ export default async function AdminProductDetailPage({
               ))}
             </div>
           ) : (
-            <EmptyState title="Uyumluluk kaydi yok" body="Marka/model veya OEM referanslari eklendiginde burada yonetilecek." />
+            <EmptyState title="Uyumluluk kaydı yok" body="Marka/model veya OEM referansları eklendiğinde burada yönetilecek." />
           )}
         </section>
       ) : null}
@@ -594,7 +584,7 @@ export default async function AdminProductDetailPage({
               <label className={labelClass}>
                 Kullanim
                 <select name="usage" defaultValue="TECHNICAL_DOCUMENT" className={inputClass}>
-                  <option value="PRODUCT_IMAGE">Urun gorseli</option>
+                  <option value="PRODUCT_IMAGE">Ürün görseli</option>
                   <option value="TECHNICAL_DOCUMENT">Teknik dokuman</option>
                   <option value="CATALOG_PDF">Katalog PDF</option>
                   <option value="CERTIFICATE">Sertifika</option>
@@ -669,14 +659,14 @@ export default async function AdminProductDetailPage({
                         <input type="checkbox" name="isActive" defaultChecked={asset.isActive} className="h-4 w-4 rounded border-slate-300" />
                         Aktif
                       </label>
-                      <SubmitButton label="Medya guncelle" />
+                      <SubmitButton label="Medya güncelle" />
                     </div>
                   </div>
                 </CatalogActionForm>
               ))}
             </div>
           ) : (
-            <EmptyState title="Medya veya teknik dosya yok" body="Gorsel, katalog PDF ve teknik dosya URL'i ekleyerek urun dokumanlarini bayiye hazirlayabilirsin." />
+            <EmptyState title="Medya veya teknik dosya yok" body="Görsel, katalog PDF ve teknik dosya URL'si ekleyerek ürün dokümanlarını bayiye hazırlayabilirsiniz." />
           )}
           {product.mediaAssets.length > 0 ? (
             <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -718,7 +708,7 @@ export default async function AdminProductDetailPage({
               ))}
             </div>
           ) : (
-            <EmptyState title="Audit kaydi yok" body="Bu urun icin henuz operasyon kaydi bulunmuyor." />
+            <EmptyState title="Denetim kaydı yok" body="Bu ürün için henüz operasyon kaydı bulunmuyor." />
           )}
         </section>
       ) : null}

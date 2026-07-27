@@ -54,7 +54,7 @@ const importCatalog = db.transaction(() => {
   `);
   const insertStock = db.prepare(`
     INSERT OR IGNORE INTO StockItem (id, productId, warehouseCode, quantity, reservedQuantity, visibility, status, updatedAt)
-    VALUES (?, ?, 'MERKEZ', 0, 0, 'SIMPLIFIED', 'ASK_FOR_AVAILABILITY', CURRENT_TIMESTAMP)
+    VALUES (?, ?, 'MERKEZ', 0, 0, 'SIMPLIFIED', 'OUT_OF_STOCK', CURRENT_TIMESTAMP)
   `);
   for (const product of parsed.products) {
     const current = db.prepare("SELECT id FROM Product WHERE code = ?").get(product.code) as { id: string } | undefined;

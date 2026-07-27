@@ -129,7 +129,7 @@ export function buildStockReportCsv(rows: StockCsvRow[]) {
     "Rezerve",
     "Kullanılabilir",
     "Operasyon Durumu",
-    "Tanımlı Durum",
+    "Hesaplanan Stok Durumu",
     "Görünürlük",
     "Rezervasyon Tutarlılığı",
     "Son Güncelleme",
