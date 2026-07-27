@@ -5,6 +5,10 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { transitionOrderStatus } from "@/data/order-operations";
 import { recordStockMovement } from "@/domain/stock-movement";
 import { prisma } from "@/lib/prisma";
+import {
+  createTestWarehouses,
+  deleteTestWarehouses,
+} from "@/test/warehouse-fixtures";
 
 const suffix = `${Date.now()}-${randomUUID().slice(0, 8)}`;
 const ids = {
@@ -16,6 +20,10 @@ const ids = {
   stockA: `order-operations-stock-a-${suffix}`,
   stockB: `order-operations-stock-b-${suffix}`,
 };
+const warehouseCodes = [
+  `OPS-A-${suffix.slice(0, 20)}`.toUpperCase(),
+  `OPS-B-${suffix.slice(0, 20)}`.toUpperCase(),
+];
 const actor = { userId: ids.user };
 const orderIds = new Set<string>();
 let originalCheckoutLock: { version: number; updatedAt: Date } | null = null;
@@ -177,6 +185,7 @@ async function cleanupRuntimeFixtures() {
 
 describe("order status operations", () => {
   beforeAll(async () => {
+    await createTestWarehouses(warehouseCodes);
     originalCheckoutLock = await prisma.checkoutLock.findUnique({
       where: { id: "order-checkout" },
       select: { version: true, updatedAt: true },
@@ -235,7 +244,7 @@ describe("order status operations", () => {
         {
           id: ids.stockA,
           productId: ids.productA,
-          warehouseCode: `OPS-A-${suffix}`,
+          warehouseCode: warehouseCodes[0],
           quantity: 20,
           reservedQuantity: 0,
           status: "IN_STOCK",
@@ -243,7 +252,7 @@ describe("order status operations", () => {
         {
           id: ids.stockB,
           productId: ids.productA,
-          warehouseCode: `OPS-B-${suffix}`,
+          warehouseCode: warehouseCodes[1],
           quantity: 20,
           reservedQuantity: 0,
           status: "IN_STOCK",
@@ -261,6 +270,7 @@ describe("order status operations", () => {
     await prisma.stockItem.deleteMany({
       where: { id: { in: [ids.stockA, ids.stockB] } },
     });
+    await deleteTestWarehouses(warehouseCodes);
     await prisma.product.deleteMany({
       where: { id: { in: [ids.productA, ids.productB] } },
     });
@@ -374,7 +384,7 @@ describe("order status operations", () => {
       [
         {
           stockItemId: ids.stockA,
-          warehouseCode: `OPS-A-${suffix}`,
+          warehouseCode: warehouseCodes[0],
           quantity: 4,
           beforeQuantity: 12,
           afterQuantity: 12,
@@ -473,7 +483,7 @@ describe("order status operations", () => {
       [
         {
           stockItemId: ids.stockA,
-          warehouseCode: `OPS-A-${suffix}`,
+          warehouseCode: warehouseCodes[0],
           quantity: 2,
           beforeQuantity: 8,
           afterQuantity: 6,
@@ -482,7 +492,7 @@ describe("order status operations", () => {
         },
         {
           stockItemId: ids.stockB,
-          warehouseCode: `OPS-B-${suffix}`,
+          warehouseCode: warehouseCodes[1],
           quantity: 3,
           beforeQuantity: 10,
           afterQuantity: 7,

@@ -35,6 +35,14 @@ describe("role permissions", () => {
     expect(hasPermission("DEALER_OWNER", "stock.export")).toBe(false);
   });
 
+  it("limits warehouse master data to admin and warehouse operations", () => {
+    expect(hasPermission("SUPER_ADMIN", "warehouse.manage")).toBe(true);
+    expect(hasPermission("ADMIN", "warehouse.manage")).toBe(true);
+    expect(hasPermission("WAREHOUSE_STAFF", "warehouse.manage")).toBe(true);
+    expect(hasPermission("SALES_MANAGER", "warehouse.manage")).toBe(false);
+    expect(hasPermission("SALES_STAFF", "warehouse.manage")).toBe(false);
+  });
+
   it("keeps company-wide access revocation out of sales roles", () => {
     expect(hasPermission("ADMIN", "company.lifecycle.manage")).toBe(true);
     expect(hasPermission("SALES_MANAGER", "company.lifecycle.manage")).toBe(false);

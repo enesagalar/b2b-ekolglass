@@ -88,6 +88,16 @@ describe("SQLite migration chain", () => {
       expect(
         db.prepare(`SELECT "orderMode" FROM "Product" WHERE "id" = 'migration-product'`).get(),
       ).toEqual({ orderMode: "ORDER_ONLY" });
+      expect(
+        db.prepare(`SELECT "code", "name", "isActive" FROM "Warehouse" WHERE "code" = 'MERKEZ'`).get(),
+      ).toEqual({ code: "MERKEZ", name: "Merkez Depo", isActive: 1 });
+      expect(() =>
+        db.prepare(`INSERT INTO "StockItem" (
+          "id", "productId", "warehouseCode", "quantity", "updatedAt"
+        ) VALUES (
+          'unknown-warehouse-stock', 'migration-product', 'BILINMEYEN', 1, CURRENT_TIMESTAMP
+        )`).run(),
+      ).toThrow("FOREIGN KEY constraint failed");
       db.prepare(`INSERT INTO "CustomerGroup" ("id", "code", "name", "updatedAt") VALUES ('migration-group', 'MIGRATION', 'Migration Group', CURRENT_TIMESTAMP)`).run();
       expect(() =>
         db.prepare(`INSERT INTO "PriceList" (

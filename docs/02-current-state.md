@@ -1,5 +1,25 @@
 # Guncel Proje Durumu
 
+## 2026-07-27 - Faz 7.2A depo ana verisi
+
+- Depo kodu, adi, aktiflik ve adres bilgileri veritabaninda `Warehouse` ana
+  verisi olarak tanimlandi.
+- Mevcut 1.384 stok satiri `MERKEZ` deposuna geriye donuk baglandi; bilinmeyen
+  depo koduyla stok yazimi veritabani foreign key kuraliyla engellenir.
+- Urun ve stok formlarindaki serbest depo metni kaldirildi. Yeni stok kaydi ve
+  toplu fiyat/stok aktarimi yalniz aktif depo secimiyle calisir.
+- `/admin/stok/depolar` calisma alani depo olusturma, adres guncelleme ve
+  aktiflik yonetimini tek yerde toplar.
+- Depo yonetimi ayri `warehouse.manage` yetkisine baglandi. Salt stok okuma
+  yetkisi stok degistirme veya depo yonetme kontrolu gostermez.
+- Stok veya rezervasyon bakiyesi bulunan depo devre disi birakilamaz; son aktif
+  depo kapatilamaz. Guncellemeler optimistic concurrency ve audit kaydiyla
+  korunur.
+- Yerel kabul: 19/19 Node, 407/407 Vitest, 50 authenticated smoke, lint,
+  typecheck, production build, migration integrity ve 390/1280 px browser QA
+  basarili.
+- Faz 7.2B atomik depo transferi ve Faz 7.2C sayim oturumu sonraki paketlerdir.
+
 ## 2026-07-27 - Faz 7.3 entegrasyon ve CMS operasyon UX
 
 - Entegrasyon ekrani teknik telemetri listesi yerine kullanicinin tamamlamasi

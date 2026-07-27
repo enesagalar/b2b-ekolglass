@@ -3,6 +3,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { convertApprovedQuoteToOrder } from "@/data/quote-conversion";
 import { QuoteOperationError } from "@/data/quote-operations";
 import { prisma } from "@/lib/prisma";
+import {
+  createTestWarehouses,
+  deleteTestWarehouses,
+} from "@/test/warehouse-fixtures";
 
 const suffix = Date.now().toString();
 const ids = {
@@ -73,6 +77,7 @@ async function createApprovedQuote(quantity: number, validUntil?: Date) {
 
 describe("approved quote to order conversion", () => {
   beforeAll(async () => {
+    await createTestWarehouses(["QA", "QB"]);
     await prisma.company.create({
       data: {
         id: ids.company,
@@ -97,8 +102,8 @@ describe("approved quote to order conversion", () => {
     await prisma.product.create({ data: { id: ids.product, code: "CURRENT-CODE", name: "Current Product", categoryId: ids.category, glassType: "Lamine", orderMode: "QUOTE_ONLY", status: "ACTIVE" } });
     await prisma.stockItem.createMany({
       data: [
-        { id: ids.stockA, productId: ids.product, warehouseCode: "A", quantity: 4, reservedQuantity: 0 },
-        { id: ids.stockB, productId: ids.product, warehouseCode: "B", quantity: 5, reservedQuantity: 0 },
+        { id: ids.stockA, productId: ids.product, warehouseCode: "QA", quantity: 4, reservedQuantity: 0 },
+        { id: ids.stockB, productId: ids.product, warehouseCode: "QB", quantity: 5, reservedQuantity: 0 },
       ],
     });
   });
@@ -124,6 +129,7 @@ describe("approved quote to order conversion", () => {
     await prisma.auditLog.deleteMany({ where: { actorUserId: ids.actor } });
     await prisma.quoteRequest.deleteMany({ where: { id: { in: quoteIds } } });
     await prisma.stockItem.deleteMany({ where: { productId: ids.product } });
+    await deleteTestWarehouses(["QA", "QB"]);
     await prisma.product.delete({ where: { id: ids.product } });
     await prisma.productCategory.delete({ where: { id: ids.category } });
     await prisma.address.deleteMany({ where: { companyId: ids.company } });

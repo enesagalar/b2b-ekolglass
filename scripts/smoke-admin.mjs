@@ -1066,10 +1066,27 @@ assert(
 const stockOperationsHtml = await stockOperationsResponse.text();
 assert(
   stockOperationsHtml.includes("Stok ve depo") &&
+    stockOperationsHtml.includes("Depoları yönet") &&
     stockOperationsHtml.includes("Toplu stok aktar") &&
     stockOperationsHtml.includes("Riskli stokları incele") &&
     stockOperationsHtml.includes("Stok hareketlerini aç"),
   "Stock and warehouse operation controls not rendered",
+);
+
+const warehousesResponse = await request("/admin/stok/depolar", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  warehousesResponse.status === 200,
+  `Authenticated /admin/stok/depolar failed with ${warehousesResponse.status}`,
+);
+const warehousesHtml = await warehousesResponse.text();
+assert(
+  warehousesHtml.includes("Depo ana verisi") &&
+    warehousesHtml.includes("Yeni depo oluştur") &&
+    warehousesHtml.includes("Tanımlı depolar") &&
+    warehousesHtml.includes("MERKEZ"),
+  "Warehouse master data controls not rendered",
 );
 
 const priceStockImportResponse = await request("/admin/urunler/fiyat-stok-aktarimi", {
@@ -1258,6 +1275,7 @@ console.log(
         "authenticated-excel-price-import",
         "excel-price-template",
         "authenticated-stock-operations",
+        "authenticated-warehouse-master-data",
         "authenticated-price-stock-import",
         "price-stock-import-template",
         "authenticated-product-compatibility-tab",

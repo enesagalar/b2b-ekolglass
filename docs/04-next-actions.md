@@ -2,11 +2,12 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
-## Aktif Hedef - Faz 7.3 gorev odakli UX
+## Aktif Hedef - Faz 7.2 stok ve depo operasyonlari
 
-Faz 7.1 fiyat operasyonu tamamlandi. Kullanici talebiyle Faz 7.3 anlasilabilirlik
-calismasi stok/depo veri modelinin onune alinmistir. Faz 7.2 veri modeli korunur
-ve UX gecisinden sonra devam eder.
+Faz 7.1 fiyat operasyonu ve Faz 7.3 gorev odakli UX paketleri tamamlandi.
+Faz 7.2 tekrar aktif hale getirildi. Depo ana verisi 7.2A paketiyle
+tamamlandi; transfer ve sayim birbirinden bagimsiz kabul kapilariyla
+ilerleyecek.
 
 Tamamlanan:
 
@@ -54,11 +55,43 @@ Tamamlanan:
 28. Banner metni ve gorselinin iki adimli gorev akisinda yonetilmesi; canli
     kayitli onizleme ve yerel dosya onizlemesi.
 29. Teknik CMS sayfa kayitlarinin kapali, salt okunur envantere tasinmasi.
+30. `Warehouse` ana veri modeli, mevcut stoklarin `MERKEZ` deposuna geriye
+    donuk baglanmasi ve bilinmeyen depo kodunu engelleyen foreign key kurali.
+31. Depo olusturma, adres guncelleme ve aktiflik kontrolu icin
+    `/admin/stok/depolar` calisma alani.
+32. Serbest depo metninin urun, stok ve toplu aktarim akislari boyunca aktif
+    depo secimine donusturulmesi.
+33. Ayri `warehouse.manage` yetkisi, optimistic concurrency, audit ve bakiyesi
+    bulunan ya da son aktif olan depoyu kapatma korumalari.
+34. 19 Node, 407 Vitest, 50 authenticated smoke, lint, typecheck, production
+    build, migration integrity ve 390/1280 px browser kabulu.
 
 Siradaki repo ici paket:
 
-1. Gercek iOS Safari ve Android Chrome cihaz kabulunu kaydetmek.
-2. Ardindan Faz 7.2 depo ana verisi, transfer ve sayim paketine donmek.
+1. Faz 7.2B: iki depoyu tek transaction icinde etkileyen atomik transfer,
+   iki bacakli stok hareketi, idempotency ve rollback testleri.
+2. Faz 7.2C: sayim oturumu, beklenen/sayilan miktar, gerekce ve fark hareketi.
+3. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
+   kabul kapisi olarak kaydetmek.
+
+## 2026-07-27 - Faz 7.2A depo ana verisi paketi
+
+- `Warehouse` kod, ad, aktiflik ve teslimat adresiyle kalici ana veri oldu.
+- Migration mevcut stoklarda kullanilan depo kodlarini geriye donuk olusturdu,
+  `MERKEZ` deposunu garanti etti ve `StockItem.warehouseCode` alanini foreign
+  key ile korudu.
+- Yeni stok satiri, urun olusturma ve fiyat/stok CSV aktarimi yalniz aktif
+  depolarla calisir. Mevcut pasif depo satiri duzeltilebilir fakat yeni stok
+  acilamaz.
+- Depo kapatma islemi fiziksel veya rezerve bakiyesi varsa ve sistemdeki son
+  aktif depoysa reddedilir.
+- Depo mutasyonlari ayri yetki, stale-update kontrolu, transaction ve audit
+  kaydiyla korunur.
+- `/admin/stok/depolar` masaustu ve mobilde gorev odakli depo ozetini,
+  olusturma ve duzenleme kontrollerini sunar.
+- Yerel kabul: 19/19 Node, 407/407 Vitest, 50 authenticated smoke, lint,
+  typecheck, production build, migration integrity ve 390/1280 px browser QA
+  basarili.
 
 ## 2026-07-27 - Faz 7.3 entegrasyon ve CMS operasyon UX paketi
 

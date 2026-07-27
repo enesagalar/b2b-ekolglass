@@ -50,6 +50,20 @@ async function main() {
 
   const categoryBySlug = Object.fromEntries(categories.map((category) => [category.slug, category]));
 
+  await prisma.warehouse.upsert({
+    where: { code: "MERKEZ" },
+    update: {
+      name: "Merkez Depo",
+      isActive: true,
+    },
+    create: {
+      code: "MERKEZ",
+      name: "Merkez Depo",
+      isActive: true,
+      countryCode: "TR",
+    },
+  });
+
   const products = [
     {
       code: "EGL-OT-1458",

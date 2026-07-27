@@ -51,15 +51,32 @@ export async function createPriceStockImportBatch(formData: FormData) {
     fail(error instanceof Error ? error.message : "CSV ayrıştırılamadı.");
   }
 
-  const products = await prisma.product.findMany({
-    where: { code: { in: rows!.map((row) => row.productCode) } },
-    select: { id: true, code: true, stockItems: { select: { warehouseCode: true, reservedQuantity: true } } },
-  });
+  const [products, activeWarehouses] = await Promise.all([
+    prisma.product.findMany({
+      where: { code: { in: rows!.map((row) => row.productCode) } },
+      select: { id: true, code: true, stockItems: { select: { warehouseCode: true, reservedQuantity: true } } },
+    }),
+    prisma.warehouse.findMany({
+      where: {
+        code: {
+          in: rows!
+            .map((row) => row.warehouseCode)
+            .filter((code): code is string => Boolean(code)),
+        },
+        isActive: true,
+      },
+      select: { code: true },
+    }),
+  ]);
   const productByCode = new Map(products.map((product) => [product.code.toLocaleUpperCase("tr-TR"), product]));
+  const activeWarehouseCodes = new Set(activeWarehouses.map((warehouse) => warehouse.code));
   const stagedRows = rows!.map((row) => {
     const product = productByCode.get(row.productCode);
     const errors = [...row.errors];
     if (!product) errors.push("Ürün kodu katalogda bulunamadı.");
+    if (row.warehouseCode && !activeWarehouseCodes.has(row.warehouseCode)) {
+      errors.push("Depo kodu bulunamadı veya depo yeni işlemlere kapalı.");
+    }
     const stock = product?.stockItems.find((item) => item.warehouseCode === row.warehouseCode);
     if (stock && row.stockQuantity !== null && row.stockQuantity < stock.reservedQuantity) {
       errors.push(`Stok miktarı mevcut ${stock.reservedQuantity} adet rezervasyonun altına düşemez.`);
@@ -113,10 +130,18 @@ export async function applyPriceStockImportBatch(batchId: string) {
       const productIds = batch.rows.map((row) => row.productId).filter((id): id is string => Boolean(id));
       const currentStocks = await tx.stockItem.findMany({ where: { productId: { in: productIds } } });
       const products = await tx.product.findMany({ where: { id: { in: productIds } }, select: { id: true, code: true } });
+      const activeWarehouses = await tx.warehouse.findMany({
+        where: { isActive: true },
+        select: { code: true },
+      });
+      const activeWarehouseCodes = new Set(activeWarehouses.map((warehouse) => warehouse.code));
       const productCodeMap = new Map(products.map((product) => [product.id, product.code]));
       const stockMap = new Map(currentStocks.map((stock) => [`${stock.productId}:${stock.warehouseCode}`, stock]));
       for (const row of batch.rows) {
         if (!row.productId || row.netPrice === null || row.stockQuantity === null || !row.warehouseCode || !row.stockVisibility) throw new Error(`Satır ${row.rowNumber} eksik veri içeriyor.`);
+        if (!activeWarehouseCodes.has(row.warehouseCode)) {
+          throw new Error(`${row.warehouseCode} deposu bulunamadı veya yeni işlemlere kapalı.`);
+        }
         const current = stockMap.get(`${row.productId}:${row.warehouseCode}`);
         const reserved = current?.reservedQuantity ?? 0;
         if (row.stockQuantity < reserved) throw new Error(`${row.productCode} stoğu güncel ${reserved} adet rezervasyonun altına düşemez.`);

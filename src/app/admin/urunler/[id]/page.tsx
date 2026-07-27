@@ -108,9 +108,14 @@ export default async function AdminProductDetailPage({
   const activeTab = getSearchParam(resolvedSearchParams, "tab") ?? "genel";
   const actor = await requirePermissionUser("product.read", `/admin/urunler/${id}`);
   const canReadPrice = isKnownRole(actor.role) && hasPermission(actor.role, "price.read");
+  const canReadStock =
+    isKnownRole(actor.role) && hasPermission(actor.role, "stock.read.detailed");
+  const canManageStock =
+    isKnownRole(actor.role) && hasPermission(actor.role, "stock.manage");
   if (activeTab === "fiyat" && !canReadPrice) notFound();
+  if (activeTab === "stok" && !canReadStock) notFound();
 
-  const [product, priceLists] = await Promise.all([
+  const [product, priceLists, activeWarehouses] = await Promise.all([
     prisma.product.findUnique({
       where: { id },
       include: {
@@ -128,6 +133,13 @@ export default async function AdminProductDetailPage({
     canReadPrice ? prisma.priceList.findMany({
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
     }) : Promise.resolve([]),
+    canManageStock
+      ? prisma.warehouse.findMany({
+          where: { isActive: true },
+          orderBy: [{ name: "asc" }, { code: "asc" }],
+          select: { code: true, name: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   if (!product) {
@@ -226,7 +238,10 @@ export default async function AdminProductDetailPage({
       </section>
 
       <nav className="flex gap-2 overflow-x-auto border-b border-slate-200 pb-2">
-        {tabs.filter((tab) => tab.key !== "fiyat" || canReadPrice).map((tab) => {
+        {tabs.filter((tab) =>
+          (tab.key !== "fiyat" || canReadPrice) &&
+          (tab.key !== "stok" || canReadStock),
+        ).map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
 
@@ -276,6 +291,7 @@ export default async function AdminProductDetailPage({
             miktarın çıkarılmasıyla bulunur. 1–3 adet “Az stok”, 4 ve üzeri
             “Stokta” olarak gösterilir.
           </div>
+          {canManageStock && activeWarehouses.length > 0 ? (
           <CatalogActionForm action={saveProductStock} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
               <Plus size={16} aria-hidden="true" />
@@ -287,7 +303,18 @@ export default async function AdminProductDetailPage({
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <label className={labelClass}>
                 Depo
-                <input name="warehouseCode" required defaultValue="MERKEZ" className={inputClass} />
+                <select
+                  name="warehouseCode"
+                  required
+                  defaultValue={activeWarehouses[0]?.code}
+                  className={inputClass}
+                >
+                  {activeWarehouses.map((warehouse) => (
+                    <option key={warehouse.code} value={warehouse.code}>
+                      {warehouse.name} ({warehouse.code})
+                    </option>
+                  ))}
+                </select>
               </label>
               <StockQuantityField
                 defaultQuantity={0}
@@ -319,11 +346,16 @@ export default async function AdminProductDetailPage({
               </div>
             </div>
           </CatalogActionForm>
+          ) : canManageStock ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+              Yeni stok satırı için önce aktif bir depo oluşturun.
+            </p>
+          ) : null}
 
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
             {product.stockItems.length > 0 ? (
               <div className="divide-y divide-slate-200">
-                {product.stockItems.map((stock) => (
+                {product.stockItems.map((stock) => canManageStock ? (
                   <CatalogActionForm
                     key={stock.id}
                     action={saveProductStock}
@@ -361,6 +393,28 @@ export default async function AdminProductDetailPage({
                     </label>
                     <SubmitButton label="Güncelle" />
                   </CatalogActionForm>
+                ) : (
+                  <article
+                    key={stock.id}
+                    className="grid gap-3 p-4 sm:grid-cols-4"
+                  >
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">Depo</p>
+                      <p className="mt-1 font-semibold text-slate-950">{stock.warehouseCode}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">Fiziksel</p>
+                      <p className="mt-1 font-semibold text-slate-950">{stock.quantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">Rezerve</p>
+                      <p className="mt-1 font-semibold text-amber-700">{stock.reservedQuantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">Kullanılabilir</p>
+                      <p className="mt-1 font-semibold text-slate-950">{Math.max(0, stock.quantity - stock.reservedQuantity)}</p>
+                    </div>
+                  </article>
                 ))}
               </div>
             ) : (

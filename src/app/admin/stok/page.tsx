@@ -13,6 +13,7 @@ export default async function AdminStockPage({
   if (!isKnownRole(actor.role) || !hasPermission(actor.role, "stock.read.detailed")) {
     redirect("/admin");
   }
+  const canManageStock = hasPermission(actor.role, "stock.manage");
 
   return (
     <div className="grid min-w-0 gap-6">
@@ -20,7 +21,8 @@ export default async function AdminStockPage({
         searchParams={await searchParams}
         canExport={hasPermission(actor.role, "stock.export")}
         basePath="/admin/stok"
-        showOperations
+        showOperations={canManageStock}
+        canManageWarehouses={hasPermission(actor.role, "warehouse.manage")}
       />
     </div>
   );

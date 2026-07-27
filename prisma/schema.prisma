@@ -304,11 +304,29 @@ model ProductPrice {
   @@unique([productId, priceListId, minQuantity])
 }
 
+model Warehouse {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  isActive    Boolean     @default(true)
+  addressLine String?
+  district    String?
+  city        String?
+  postalCode  String?
+  countryCode String      @default("TR")
+  stockItems  StockItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([isActive, name])
+}
+
 model StockItem {
   id               String             @id @default(cuid())
   productId        String
   product          Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
   warehouseCode    String
+  warehouse        Warehouse          @relation(fields: [warehouseCode], references: [code], onDelete: Restrict, onUpdate: Cascade)
   quantity         Int                @default(0)
   reservedQuantity Int                @default(0)
   visibility       String             @default("SIMPLIFIED")
@@ -376,23 +394,23 @@ model CatalogImportBatch {
 }
 
 model CatalogImportRow {
-  id              String             @id @default(cuid())
-  batchId         String
-  batch           CatalogImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  rowNumber       Int
-  productId       String?
-  product         Product?           @relation(fields: [productId], references: [id], onDelete: Restrict)
-  productCode     String
-  netPrice        Decimal?
-  previousPrice   Decimal?
-  minQuantity     Int?
+  id                     String             @id @default(cuid())
+  batchId                String
+  batch                  CatalogImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  rowNumber              Int
+  productId              String?
+  product                Product?           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productCode            String
+  netPrice               Decimal?
+  previousPrice          Decimal?
+  minQuantity            Int?
   expectedPriceUpdatedAt DateTime?
-  warehouseCode   String?
-  stockQuantity   Int?
-  stockVisibility String?
-  status          String
-  errorMessage    String?
-  createdAt       DateTime           @default(now())
+  warehouseCode          String?
+  stockQuantity          Int?
+  stockVisibility        String?
+  status                 String
+  errorMessage           String?
+  createdAt              DateTime           @default(now())
 
   @@unique([batchId, rowNumber])
   @@index([batchId, status, rowNumber])

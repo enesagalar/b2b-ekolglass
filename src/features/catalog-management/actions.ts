@@ -457,6 +457,13 @@ export async function saveProductBundle(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const warehouse = await tx.warehouse.findUnique({
+        where: { code: stockParsed.data.warehouseCode },
+        select: { isActive: true },
+      });
+      if (!warehouse) throw new Error("WAREHOUSE_NOT_FOUND");
+      if (!warehouse.isActive) throw new Error("WAREHOUSE_INACTIVE");
+
       const productData = {
         code: productParsed.data.code,
         name: productParsed.data.name,
@@ -573,6 +580,12 @@ export async function saveProductBundle(
 
     return success(productParsed.data.id ? "Ürün güncellendi." : "Ürün, stok ve fiyat kaydı oluşturuldu.");
   } catch (error) {
+    if (error instanceof Error && error.message === "WAREHOUSE_NOT_FOUND") {
+      return failure("Seçilen depo bulunamadı. Depo ana verisini kontrol edin.");
+    }
+    if (error instanceof Error && error.message === "WAREHOUSE_INACTIVE") {
+      return failure("Pasif depoda yeni stok kaydı oluşturulamaz.");
+    }
     if (error instanceof Error && error.message === "STOCK_BELOW_RESERVED") {
       return failure("Fiziksel stok rezerve miktarın altına indirilemez.");
     }
@@ -627,6 +640,14 @@ export async function saveProductStock(
           },
         },
       });
+      const warehouse = await tx.warehouse.findUnique({
+        where: { code: parsed.data.warehouseCode },
+        select: { isActive: true },
+      });
+      if (!warehouse) throw new Error("WAREHOUSE_NOT_FOUND");
+      if (!warehouse.isActive && !current) {
+        throw new Error("WAREHOUSE_INACTIVE");
+      }
       if (current && (!parsed.data.expectedUpdatedAt || current.updatedAt.toISOString() !== parsed.data.expectedUpdatedAt)) {
         throw new Error("STOCK_STALE_BALANCE");
       }
@@ -695,6 +716,12 @@ export async function saveProductStock(
 
     return success(result.replay ? "Bu stok düzeltmesi daha önce uygulanmış." : "Stok güncellendi ve hareket defterine kaydedildi.");
   } catch (error) {
+    if (error instanceof Error && error.message === "WAREHOUSE_NOT_FOUND") {
+      return failure("Seçilen depo bulunamadı. Depo ana verisini kontrol edin.");
+    }
+    if (error instanceof Error && error.message === "WAREHOUSE_INACTIVE") {
+      return failure("Pasif depoda yeni stok kaydı oluşturulamaz.");
+    }
     if (error instanceof Error && error.message === "STOCK_STALE_BALANCE") {
       return failure("Stok bakiyesi başka bir işlem tarafından değiştirildi. Sayfayı yenileyip tekrar deneyin.");
     }

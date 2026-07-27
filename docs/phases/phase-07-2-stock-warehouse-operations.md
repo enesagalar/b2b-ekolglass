@@ -19,6 +19,14 @@ Durum: Devam ediyor.
 - Manuel stok durumu seciminin ve server tarafinda durum kabulunun kaldirilmasi.
 - Mevcut kayitlari duzelten ve dogrudan DB yazimlarini koruyan SQLite
   tetikleyicileri.
+- `Warehouse` ana veri modeli: kod, ad, aktiflik ve teslimat adresi.
+- Mevcut stok depolarinin geriye donuk olusturulmasi ve `StockItem` depo
+  baglantisinin foreign key ile korunmasi.
+- Urun, stok ve toplu aktarim akislari boyunca kontrollu aktif depo secimi.
+- Ayrik `/admin/stok/depolar` depo yonetim alani.
+- `warehouse.manage` yetkisi, optimistic concurrency ve audit kaydi.
+- Bakiyesi bulunan deponun ve sistemdeki son aktif deponun kapatilmasini
+  engelleyen server kurallari.
 
 ## Otomatik Stok Durumu Sozlesmesi
 
@@ -32,12 +40,22 @@ degistiginde server/domain ve veritabani ayni kuralla yeniden hesaplar.
 
 ## Kalan Kapsam
 
-1. `Warehouse` ana veri modeli: kod, ad, aktiflik ve teslimat adresi.
-2. Serbest metin depo kodunun kontrollu secime donusturulmesi.
-3. Depolar arasi atomik transfer.
-4. Sayim oturumu ve gerekceli fark duzeltme hareketi.
-5. Transfer/sayim yetki, audit, idempotency ve rollback testleri.
+1. Faz 7.2B: depolar arasi atomik transfer.
+2. Faz 7.2B: iki bacakli hareket defteri, yetki, audit, idempotency ve rollback
+   testleri.
+3. Faz 7.2C: sayim oturumu ve gerekceli fark duzeltme hareketi.
+4. Faz 7.2C: sayim yetki, audit, concurrency ve rollback testleri.
 
 ERP stok senkronizasyonu bu fazin parcasi degildir. Once portal icindeki stok
 operasyonu deterministik hale getirilecek, ERP sonraki entegrasyon katmani
 olacaktir.
+
+## Faz 7.2A Kabul Kaniti
+
+- Yerel veritabaninda 39 migration, 1.384 stok satiri, sifir bilinmeyen depo
+  baglantisi ve temiz `foreign_key_check`.
+- 19/19 Node testi ve 407/407 Vitest testi.
+- 50 authenticated admin smoke kontrolu.
+- Lint, typecheck ve production build basarili.
+- 390 px mobil ve 1280 px masaustu browser kontrolunde yatay tasma veya console
+  hatasi yok.

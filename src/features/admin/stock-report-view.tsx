@@ -52,11 +52,13 @@ export async function StockReportView({
   canExport,
   basePath = "/admin/raporlar",
   showOperations = false,
+  canManageWarehouses = false,
 }: {
   searchParams: SearchParams;
   canExport: boolean;
   basePath?: "/admin/stok" | "/admin/raporlar";
   showOperations?: boolean;
+  canManageWarehouses?: boolean;
 }) {
   let filterError: string | null = null;
   let filters;
@@ -95,6 +97,11 @@ export async function StockReportView({
           <p className="mt-2 text-xs font-semibold text-slate-500">Veri zamanı: {formatIstanbulDateTime(report.snapshotAt)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canManageWarehouses ? (
+            <Link href="/admin/stok/depolar" className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-teal-700 hover:text-teal-800">
+              <Warehouse size={16} /> Depoları yönet
+            </Link>
+          ) : null}
           {showOperations ? (
             <>
               <Link href="/admin/urunler/fiyat-stok-aktarimi" className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-teal-700 hover:text-teal-800">

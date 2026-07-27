@@ -9,6 +9,7 @@ import { createEmailHandlers } from "@/integrations/email/handlers";
 import type { EmailProvider, TransactionalEmail } from "@/integrations/email/types";
 import { processOutboxBatch } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
+import { createTestWarehouses } from "@/test/warehouse-fixtures";
 
 const runId = `release-lifecycle-${randomUUID()}`;
 const ids = {
@@ -38,6 +39,7 @@ describe("release demo: dealer order, stock, shipment, audit and email", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "http://localhost:3000";
     process.env.OUTBOX_CRON_SECRET = "release-lifecycle-outbox-secret-00000001";
 
+    await createTestWarehouses(["RELEASE-DEMO"]);
     await prisma.company.create({
       data: {
         id: ids.company,

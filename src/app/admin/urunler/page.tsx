@@ -256,6 +256,7 @@ function ProductCoreFields({
 function StockFields({
   productId,
   stock,
+  warehouses,
 }: {
   productId?: string;
   stock?: {
@@ -264,13 +265,25 @@ function StockFields({
     reservedQuantity: number;
     visibility: string;
   };
+  warehouses: Array<{ code: string; name: string }>;
 }) {
   return (
     <div className="grid gap-3 md:grid-cols-4">
       {productId ? <input type="hidden" name="productId" value={productId} /> : null}
       <label className={labelClass}>
         Depo
-        <input name="warehouseCode" required defaultValue={stock?.warehouseCode ?? "MERKEZ"} className={inputClass} />
+        <select
+          name="warehouseCode"
+          required
+          defaultValue={stock?.warehouseCode ?? warehouses[0]?.code}
+          className={inputClass}
+        >
+          {warehouses.map((warehouse) => (
+            <option key={warehouse.code} value={warehouse.code}>
+              {warehouse.name} ({warehouse.code})
+            </option>
+          ))}
+        </select>
       </label>
       <StockQuantityField
         defaultQuantity={stock?.quantity ?? 0}
@@ -353,7 +366,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   const productWhere = buildProductWhere({ query, categoryId, status, stockStatus });
 
-  const [categories, priceLists, products, counts, filteredProductCount] = await Promise.all([
+  const [categories, priceLists, activeWarehouses, products, counts, filteredProductCount] = await Promise.all([
     prisma.productCategory.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: { _count: { select: { products: true } } },
@@ -361,6 +374,11 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
     canReadPrice ? prisma.priceList.findMany({
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
     }) : Promise.resolve([]),
+    prisma.warehouse.findMany({
+      where: { isActive: true },
+      orderBy: [{ name: "asc" }, { code: "asc" }],
+      select: { code: true, name: true },
+    }),
     prisma.product.findMany({
       where: productWhere,
       include: {
@@ -386,7 +404,10 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   ]);
 
   const [totalProducts, activeProducts, stockAlerts, activePriceLists] = counts;
-  const canCreateProduct = categories.length > 0 && priceLists.length > 0;
+  const canCreateProduct =
+    categories.length > 0 &&
+    priceLists.length > 0 &&
+    activeWarehouses.length > 0;
   const totalPages = Math.max(1, Math.ceil(filteredProductCount / pageSize));
   const hasActiveFilter = Boolean(query || categoryId || status || stockStatus);
 
@@ -451,7 +472,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                     <Warehouse size={16} aria-hidden="true" />
                     İlk stok satırı
                   </div>
-                  <StockFields />
+                  <StockFields warehouses={activeWarehouses} />
                 </div>
                 <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
                   <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -464,7 +485,8 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               </CatalogActionForm>
             ) : (
               <p className="border-t border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-                Ürün oluşturmak için en az bir kategori ve bir fiyat listesi gerekir.
+                Ürün oluşturmak için en az bir kategori, aktif depo ve fiyat
+                listesi gerekir.
               </p>
             )}
           </details>

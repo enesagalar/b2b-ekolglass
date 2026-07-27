@@ -9,6 +9,10 @@ import {
 import { getStatusLabel } from "@/domain/statuses";
 import { recordStockMovement } from "@/domain/stock-movement";
 import { prisma } from "@/lib/prisma";
+import {
+  createTestWarehouses,
+  deleteTestWarehouses,
+} from "@/test/warehouse-fixtures";
 
 import {
   getAdminStockExportRows,
@@ -51,9 +55,11 @@ const stockIds = [
   ids.availableStock,
   ids.inactiveStock,
 ];
+const warehouseCodes = ["SR-A", "SR-B", "SR-C", "SR-D", "SR-E"];
 
 describe("admin stock reports", () => {
   beforeAll(async () => {
+    await createTestWarehouses(warehouseCodes);
     await prisma.productCategory.create({
       data: {
         id: ids.category,
@@ -276,6 +282,7 @@ describe("admin stock reports", () => {
     await prisma.stockReservation.deleteMany({ where: { stockItemId: { in: stockIds } } });
     await prisma.order.deleteMany({ where: { id: { in: [ids.order, ids.releasedOrder] } } });
     await prisma.stockItem.deleteMany({ where: { id: { in: stockIds } } });
+    await deleteTestWarehouses(warehouseCodes);
     await prisma.product.deleteMany({ where: { id: { in: productIds } } });
     await prisma.productCategory.deleteMany({ where: { id: ids.category } });
     await prisma.user.deleteMany({ where: { id: ids.user } });

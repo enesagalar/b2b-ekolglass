@@ -9,6 +9,10 @@ import {
   updateOrderCartProduct,
 } from "@/data/order-cart";
 import { prisma } from "@/lib/prisma";
+import {
+  createTestWarehouses,
+  deleteTestWarehouses,
+} from "@/test/warehouse-fixtures";
 
 const suffix = `${Date.now()}-${randomUUID().slice(0, 8)}`;
 const ids = {
@@ -48,6 +52,12 @@ const actorB = {
   companyId: ids.companyB,
   role: "DEALER_OWNER" as const,
 };
+const warehouseCodes = [
+  `A-${suffix}`.toUpperCase(),
+  `B-${suffix}`.toUpperCase(),
+  `M-${suffix}`.toUpperCase(),
+  `Z-${suffix}`.toUpperCase(),
+];
 
 async function clearRuntimeRecords() {
   const orders = await prisma.order.findMany({
@@ -125,6 +135,7 @@ async function restoreMutableFixtures() {
 
 describe("order cart submission and tenant isolation", () => {
   beforeAll(async () => {
+    await createTestWarehouses(warehouseCodes);
     await prisma.company.createMany({
       data: [
         {
@@ -279,7 +290,7 @@ describe("order cart submission and tenant isolation", () => {
         {
           id: ids.tierStockA,
           productId: ids.tierProduct,
-          warehouseCode: `A-${suffix}`,
+          warehouseCode: warehouseCodes[0],
           quantity: 4,
           reservedQuantity: 1,
           status: "LOW_STOCK",
@@ -287,7 +298,7 @@ describe("order cart submission and tenant isolation", () => {
         {
           id: ids.tierStockB,
           productId: ids.tierProduct,
-          warehouseCode: `B-${suffix}`,
+          warehouseCode: warehouseCodes[1],
           quantity: 10,
           reservedQuantity: 2,
           status: "IN_STOCK",
@@ -295,7 +306,7 @@ describe("order cart submission and tenant isolation", () => {
         {
           id: ids.mutableStock,
           productId: ids.mutableProduct,
-          warehouseCode: `M-${suffix}`,
+          warehouseCode: warehouseCodes[2],
           quantity: 5,
           reservedQuantity: 0,
           status: "IN_STOCK",
@@ -303,7 +314,7 @@ describe("order cart submission and tenant isolation", () => {
         {
           id: ids.insufficientStock,
           productId: ids.insufficientProduct,
-          warehouseCode: `Z-${suffix}`,
+          warehouseCode: warehouseCodes[3],
           quantity: 2,
           reservedQuantity: 1,
           status: "LOW_STOCK",
@@ -322,6 +333,7 @@ describe("order cart submission and tenant isolation", () => {
     await prisma.stockItem.deleteMany({
       where: { productId: { in: productIds } },
     });
+    await deleteTestWarehouses(warehouseCodes);
     await prisma.productPrice.deleteMany({
       where: { productId: { in: productIds } },
     });

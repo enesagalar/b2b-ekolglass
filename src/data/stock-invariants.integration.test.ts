@@ -3,6 +3,10 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/prisma";
+import {
+  createTestWarehouses,
+  deleteTestWarehouses,
+} from "@/test/warehouse-fixtures";
 
 const suffix = randomUUID();
 const ids = {
@@ -17,6 +21,7 @@ const ids = {
 
 describe("stock database invariants", () => {
   beforeAll(async () => {
+    await createTestWarehouses(["CHECK"]);
     await prisma.productCategory.create({
       data: {
         id: ids.category,
@@ -92,6 +97,7 @@ describe("stock database invariants", () => {
     await prisma.orderItem.deleteMany({ where: { id: ids.orderItem } });
     await prisma.order.deleteMany({ where: { id: ids.order } });
     await prisma.stockItem.deleteMany({ where: { productId: ids.product } });
+    await deleteTestWarehouses(["CHECK"]);
     await prisma.product.deleteMany({ where: { id: ids.product } });
     await prisma.productCategory.deleteMany({ where: { id: ids.category } });
     await prisma.user.deleteMany({ where: { id: ids.user } });

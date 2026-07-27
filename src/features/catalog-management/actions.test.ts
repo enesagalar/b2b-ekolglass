@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   stockMovementFindFirst: vi.fn(),
   stockMovementFindUnique: vi.fn(),
   stockItemUpsert: vi.fn(),
+  warehouseFindUnique: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -54,6 +55,9 @@ vi.mock("@/lib/prisma", () => ({
     },
     product: {
       findUnique: mocks.productFindUnique,
+    },
+    warehouse: {
+      findUnique: mocks.warehouseFindUnique,
     },
   },
 }));
@@ -120,6 +124,7 @@ describe("catalog management actions", () => {
     mocks.stockMovementFindFirst.mockResolvedValue(null);
     mocks.stockMovementFindUnique.mockResolvedValue(null);
     mocks.stockMovementCreate.mockResolvedValue({ id: "movement-1" });
+    mocks.warehouseFindUnique.mockResolvedValue({ isActive: true });
     mocks.transaction.mockImplementation(async (callback) => callback({
       auditLog: { create: mocks.auditLogCreate },
       product: { findUnique: mocks.productFindUnique },
@@ -133,6 +138,7 @@ describe("catalog management actions", () => {
         findFirst: mocks.stockMovementFindFirst,
         findUnique: mocks.stockMovementFindUnique,
       },
+      warehouse: { findUnique: mocks.warehouseFindUnique },
     }));
   });
 
