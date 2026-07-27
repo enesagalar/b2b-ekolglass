@@ -1,6 +1,6 @@
 # Faz 7.2 - Stok ve Depo Operasyonlari
 
-Durum: Devam ediyor.
+Durum: Tamamlandi.
 
 ## Tamamlanan Kapsam
 
@@ -36,6 +36,20 @@ Durum: Devam ediyor.
 - Tamamlanmis transfer kayitlarini degisiklik ve silmeye kapatan SQLite
   tetikleyicileri.
 - Tum stok yazicilarinin ortak `stock-mutations` kilit sirasina alinmasi.
+- `StockCountSession` ile urun/depo bazli fiziksel sayim oturumu.
+- Acilis aninda fiziksel, rezerve, stok surumu ve son hareket sirasinin
+  degistirilemez snapshot olarak saklanmasi.
+- Ayni stok satirinda yalniz bir acik sayima izin veren SQLite partial unique
+  index.
+- Pozitif, negatif ve sifir farki `INVENTORY_COUNT` hareketine baglayan atomik
+  sayim sonucu.
+- Rezerve miktari asagi cekmeyen ve eski bakiyeyi ezmeyen `STALE` inceleme
+  kaydi.
+- Sayim acma, uygulama ve iptal komutlarinda aktor/payload bagimli
+  idempotency, audit ve ortak stok kilidi.
+- Uygulanan, inceleme gereken ve iptal edilen terminal sayim kayitlarini
+  degisiklik/silmeye kapatan SQLite tetikleyicileri.
+- Ayrik `/admin/stok/sayimlar` mobil ve masaustu operasyon alani.
 
 ## Otomatik Stok Durumu Sozlesmesi
 
@@ -49,8 +63,8 @@ degistiginde server/domain ve veritabani ayni kuralla yeniden hesaplar.
 
 ## Kalan Kapsam
 
-1. Faz 7.2C: sayim oturumu ve gerekceli fark duzeltme hareketi.
-2. Faz 7.2C: sayim yetki, audit, concurrency, idempotency ve rollback testleri.
+Portal ici Faz 7.2 kapsami tamamlandi. Gercek iOS Safari ve Android Chrome
+cihaz kabulu yayin oncesi harici kabul kapisidir.
 
 ERP stok senkronizasyonu bu fazin parcasi degildir. Once portal icindeki stok
 operasyonu deterministik hale getirilecek, ERP sonraki entegrasyon katmani
@@ -74,6 +88,18 @@ olacaktir.
   append-only koruma ve eszamanli transfer yarisi dogrulandi.
 - 19/19 Node testi ve 418/418 Vitest testi.
 - 51 authenticated admin smoke kontrolu.
+- Lint, typecheck ve production build basarili.
+- 390 px mobil ve 1280 px masaustu browser kontrolunde yatay tasma veya console
+  hatasi yok.
+
+## Faz 7.2C Kabul Kaniti
+
+- Yerel veritabaninda 41 migration ve temiz migration integrity kontrolu.
+- Gercek SQLite testlerinde snapshot/replay, pozitif ve sifir fark, rezervasyon
+  korumasi, stale sonuc, iptal, terminal kayit korumasi ve eszamanli sonuc
+  yarisi dogrulandi.
+- 19/19 Node testi ve 431/431 Vitest testi.
+- 52 authenticated admin smoke kontrolu.
 - Lint, typecheck ve production build basarili.
 - 390 px mobil ve 1280 px masaustu browser kontrolunde yatay tasma veya console
   hatasi yok.

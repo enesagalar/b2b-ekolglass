@@ -1065,7 +1065,8 @@ assert(
 );
 const stockOperationsHtml = await stockOperationsResponse.text();
 assert(
-  stockOperationsHtml.includes("Stok ve depo") &&
+    stockOperationsHtml.includes("Stok ve depo") &&
+    stockOperationsHtml.includes("Fiziksel sayım") &&
     stockOperationsHtml.includes("Depolar arası transfer") &&
     stockOperationsHtml.includes("Depoları yönet") &&
     stockOperationsHtml.includes("Toplu stok aktar") &&
@@ -1104,6 +1105,22 @@ assert(
     stockTransfersHtml.includes("Yalnız kullanılabilir stok") &&
     stockTransfersHtml.includes("Son tamamlanan transferler"),
   "Atomic warehouse transfer controls not rendered",
+);
+
+const stockCountsResponse = await request("/admin/stok/sayimlar", {
+  headers: { Cookie: serializeCookies(cookieJar) },
+});
+assert(
+  stockCountsResponse.status === 200,
+  `Authenticated /admin/stok/sayimlar failed with ${stockCountsResponse.status}`,
+);
+const stockCountsHtml = await stockCountsResponse.text();
+assert(
+  stockCountsHtml.includes("Fiziksel stok sayımı") &&
+    stockCountsHtml.includes("Yeni sayım başlat") &&
+    stockCountsHtml.includes("Açık sayımlar") &&
+    stockCountsHtml.includes("Son sayım kayıtları"),
+  "Physical stock count controls not rendered",
 );
 
 const priceStockImportResponse = await request("/admin/urunler/fiyat-stok-aktarimi", {
@@ -1294,6 +1311,7 @@ console.log(
         "authenticated-stock-operations",
         "authenticated-warehouse-master-data",
         "authenticated-warehouse-transfers",
+        "authenticated-stock-counts",
         "authenticated-price-stock-import",
         "price-stock-import-template",
         "authenticated-product-compatibility-tab",

@@ -1,5 +1,23 @@
 # Guncel Proje Durumu
 
+## 2026-07-27 - Faz 7.2C fiziksel stok sayimi
+
+- `/admin/stok/sayimlar` urun/depo secimi, acik sayimlar ve son 20 terminal
+  kaydi tek operasyon alaninda toplar.
+- Sayim acilisinda fiziksel miktar, rezerve miktar, stok guncelleme surumu ve
+  son hareket sira numarasi snapshot olarak saklanir.
+- Sayim sonucu fiziksel stogu guncellerken rezerve miktari degistirmez; sifir
+  fark dahil her uygulanan sayim `INVENTORY_COUNT` kaniti olusturur.
+- Oturum sirasinda bakiye degismisse veya sayilan miktar aktif rezervasyonun
+  altindaysa sonuc kaybolmaz; stok ezilmeden `STALE / Inceleme gerekli`
+  terminal kaydi olarak saklanir.
+- Ayni stokta tek acik oturum, aktor/payload bagimli idempotency, ortak stok
+  kilidi, optimistic CAS, audit ve append-only terminal korumasi veritabani
+  seviyesinde tamamlandi.
+- Yerel kabul: 19/19 Node, 431/431 Vitest, 52 authenticated smoke, lint,
+  typecheck, 41 migration integrity, production build ve 390/1280 px browser
+  QA basarili.
+
 ## 2026-07-27 - Faz 7.2B atomik depo transferi
 
 - Depolar arasi transfer ayrik `StockTransfer` ana kaydi ve

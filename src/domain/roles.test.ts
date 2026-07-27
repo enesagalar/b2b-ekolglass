@@ -51,6 +51,14 @@ describe("role permissions", () => {
     expect(hasPermission("SALES_STAFF", "stock.transfer")).toBe(false);
   });
 
+  it("limits physical stock counts to inventory operators", () => {
+    expect(hasPermission("SUPER_ADMIN", "stock.count")).toBe(true);
+    expect(hasPermission("ADMIN", "stock.count")).toBe(true);
+    expect(hasPermission("WAREHOUSE_STAFF", "stock.count")).toBe(true);
+    expect(hasPermission("SALES_MANAGER", "stock.count")).toBe(false);
+    expect(hasPermission("SALES_STAFF", "stock.count")).toBe(false);
+  });
+
   it("keeps company-wide access revocation out of sales roles", () => {
     expect(hasPermission("ADMIN", "company.lifecycle.manage")).toBe(true);
     expect(hasPermission("SALES_MANAGER", "company.lifecycle.manage")).toBe(false);

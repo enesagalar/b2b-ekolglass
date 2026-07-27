@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Boxes,
   CircleHelp,
+  ClipboardCheck,
   Filter,
   PackageCheck,
   PackageMinus,
@@ -54,6 +55,7 @@ export async function StockReportView({
   basePath = "/admin/raporlar",
   showOperations = false,
   canTransfer = false,
+  canCount = false,
   canManageWarehouses = false,
 }: {
   searchParams: SearchParams;
@@ -61,6 +63,7 @@ export async function StockReportView({
   basePath?: "/admin/stok" | "/admin/raporlar";
   showOperations?: boolean;
   canTransfer?: boolean;
+  canCount?: boolean;
   canManageWarehouses?: boolean;
 }) {
   let filterError: string | null = null;
@@ -100,6 +103,11 @@ export async function StockReportView({
           <p className="mt-2 text-xs font-semibold text-slate-500">Veri zamanı: {formatIstanbulDateTime(report.snapshotAt)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {canCount ? (
+            <Link href="/admin/stok/sayimlar" className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-teal-700 hover:text-teal-800">
+              <ClipboardCheck size={16} /> Fiziksel sayım
+            </Link>
+          ) : null}
           {canTransfer ? (
             <Link href="/admin/stok/transferler" className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-teal-700 hover:text-teal-800">
               <ArrowLeftRight size={16} /> Depolar arası transfer

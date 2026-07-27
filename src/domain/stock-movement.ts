@@ -12,6 +12,7 @@ export const stockMovementTypes = [
   "ORDER_CONSUME",
   "TRANSFER_OUT",
   "TRANSFER_IN",
+  "INVENTORY_COUNT",
 ] as const;
 
 export type StockMovementType = (typeof stockMovementTypes)[number];
@@ -45,7 +46,13 @@ export async function recordStockMovement(
 ) {
   const physicalDelta = input.after.quantity - input.before.quantity;
   const reservedDelta = input.after.reservedQuantity - input.before.reservedQuantity;
-  if (physicalDelta === 0 && reservedDelta === 0) return null;
+  if (
+    physicalDelta === 0 &&
+    reservedDelta === 0 &&
+    input.movementType !== "INVENTORY_COUNT"
+  ) {
+    return null;
+  }
   if (
     input.before.quantity < 0 ||
     input.after.quantity < 0 ||

@@ -149,6 +149,46 @@ describe("SQLite migration chain", () => {
             .get(),
         ),
       ).toContain("TRANSFER_IN");
+      expect(
+        String(
+          db
+            .prepare(
+              `SELECT "sql" FROM sqlite_master
+               WHERE "type" = 'trigger'
+                 AND "name" = 'StockMovement_required_fields_insert'`,
+            )
+            .pluck()
+            .get(),
+        ),
+      ).toContain("INVENTORY_COUNT");
+      expect(
+        db
+          .prepare(
+            `SELECT COUNT(*) AS "count" FROM pragma_table_info('StockCountSession')
+             WHERE "name" IN (
+               'expectedQuantity',
+               'expectedReservedQuantity',
+               'expectedStockUpdatedAt',
+               'expectedMovementSequence',
+               'submissionIdempotencyKey',
+               'staleCode',
+               'movementId'
+             )`,
+          )
+          .get(),
+      ).toEqual({ count: 7 });
+      expect(
+        db
+          .prepare(
+            `SELECT COUNT(*) AS "count" FROM sqlite_master
+             WHERE ("type" = 'trigger' AND "name" IN (
+               'StockCountSession_lifecycle_update',
+               'StockCountSession_append_only_delete'
+             ))
+             OR ("type" = 'index' AND "name" = 'StockCountSession_one_open_per_stock_item')`,
+          )
+          .get(),
+      ).toEqual({ count: 3 });
       db.prepare(`INSERT INTO "CustomerGroup" ("id", "code", "name", "updatedAt") VALUES ('migration-group', 'MIGRATION', 'Migration Group', CURRENT_TIMESTAMP)`).run();
       expect(() =>
         db.prepare(`INSERT INTO "PriceList" (

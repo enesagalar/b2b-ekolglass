@@ -14,6 +14,7 @@ const movementLabels: Record<string, string> = {
   ORDER_CONSUME: "Sevk tüketimi",
   TRANSFER_OUT: "Depo transfer çıkışı",
   TRANSFER_IN: "Depo transfer girişi",
+  INVENTORY_COUNT: "Fiziksel sayım",
 };
 const sourceLabels: Record<string, string> = {
   CATALOG_IMPORT_BATCH: "Fiyat / stok CSV aktarımı",
@@ -25,6 +26,7 @@ const sourceLabels: Record<string, string> = {
   PRODUCT_BUNDLE: "Ürün kaydı",
   QUOTE_CONVERSION_ORDER: "Tekliften sipariş dönüşümü",
   WAREHOUSE_TRANSFER: "Depolar arası transfer",
+  STOCK_COUNT_SESSION: "Stok sayım oturumu",
 };
 
 function first(value: string | string[] | undefined) {

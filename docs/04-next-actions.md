@@ -5,9 +5,8 @@ Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu aza
 ## Aktif Hedef - Faz 7.2 stok ve depo operasyonlari
 
 Faz 7.1 fiyat operasyonu ve Faz 7.3 gorev odakli UX paketleri tamamlandi.
-Faz 7.2 tekrar aktif hale getirildi. Depo ana verisi 7.2A paketiyle
-tamamlandi. Atomik depo transferi 7.2B paketiyle tamamlandi; siradaki repo ici
-paket sayim oturumudur.
+Faz 7.2 tekrar aktif hale getirildi. Depo ana verisi 7.2A, atomik depo
+transferi 7.2B ve fiziksel sayim oturumu 7.2C paketleriyle tamamlandi.
 
 Tamamlanan:
 
@@ -77,14 +76,40 @@ Tamamlanan:
     aktif depo durumunda acik kurulum yonlendirmesi.
 40. 19 Node, 418 Vitest, 51 authenticated smoke, lint, typecheck, 40 migration
     integrity, production build ve 390/1280 px browser kabulu.
+41. Fiziksel/rezerve bakiye, stok surumu ve son hareket sirasini snapshot alan
+    `StockCountSession` veri modeli.
+42. Pozitif, negatif ve sifir farki append-only `INVENTORY_COUNT` hareketine
+    baglayan atomik sayim sonucu.
+43. Rezerve miktarin altina dusen veya oturum sirasinda eskiyen sayim
+    sonucunu stoga uygulamadan inceleme kaydi olarak saklayan koruma.
+44. `/admin/stok/sayimlar` acma, tamamlama, iptal ve son 20 kayit gorev akisi.
+45. 19 Node, 431 Vitest, 52 authenticated smoke, lint, typecheck, 41 migration
+    integrity, production build ve 390/1280 px browser kabulu.
 
-Siradaki repo ici paket:
+Siradaki kabul ve ertelenmis paketler:
 
-1. Faz 7.2C: sayim oturumu, beklenen/sayilan miktar, gerekce ve fark hareketi.
-2. Faz 7.2C: sayim yetkisi, optimistic concurrency, idempotency, audit ve
-   rollback testleri.
-3. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
+1. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
+2. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
+   tamamlamak.
+3. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
+   operasyonlardan ayri paketler olarak planlamak.
+
+## 2026-07-27 - Faz 7.2C fiziksel stok sayimi paketi
+
+- Ayni stok satirinda yalniz bir acik sayim bulunabilir.
+- Oturum acilisi fiziksel/rezerve bakiye, `updatedAt` ve son hareket sirasini
+  snapshot alir; hareket defteri mutabakatsizsa sayim baslatilmaz.
+- Sonuc `stock-mutations` kilidi ve CAS altinda uygulanir, rezerve miktar
+  degismez.
+- Sifir fark dahil uygulanan her sayim `INVENTORY_COUNT` hareketi uretir.
+- Eski bakiye ve rezervasyon alti sonuc stogu ezmez; gerekce ve sayilan miktar
+  `STALE` terminal kaydinda korunur.
+- Acma, sonuc ve iptal komutlari aktor/payload bagimli idempotency, audit ve
+  SQLite lifecycle tetikleyicileriyle korunur.
+- Yerel kabul: 19/19 Node, 431/431 Vitest, 52 authenticated smoke, lint,
+  typecheck, 41 migration integrity, production build ve 390/1280 px browser
+  QA basarili.
 
 ## 2026-07-27 - Faz 7.2B atomik depo transferi paketi
 
