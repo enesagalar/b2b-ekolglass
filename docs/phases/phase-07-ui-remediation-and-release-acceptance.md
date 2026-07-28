@@ -3,6 +3,28 @@
 Status: Local acceptance complete; production acceptance blocked by external inputs
 Started: 2026-07-24
 
+## 2026-07-28 - Admin teklif arsivi UX
+
+- Yeni B2B teklif olusturma kanali kapali kalir; standart urunler dogrudan
+  siparis akisindan ilerler.
+- Admin teklif listesi aktif talep kuyrugu yerine gecmis fiyat, karar ve
+  siparis donusum izini koruyan `Teklif arsivi` olarak yeniden konumlandi.
+- Gecmisten kalan acik kayitlar, teklif/karar kayitlari, siparise donusenler ve
+  kapananlar ayri arsiv gruplarinda gosterilir.
+- Kesin durum filtresi yalniz secili grubun durumlarini sunar; sahte veya
+  uyumsuz `view + status` birlesimi veri katmaninda fail-closed kesistirilir.
+- Arama teklif, firma, talep sahibi ve donusen siparis numarasini kapsar.
+  Sayaclar ayni arama baglamindan hesaplanir ve yuksek sayfa numarasi gercek
+  son sayfaya cekilir.
+- Arsiv listesindeki fiyat alanlari `price.read` izni olmadan sorgulanmaz veya
+  gosterilmez.
+- Bayi arsivi salt okunur kalir. Admin yalniz gecmisten kalan acik kayitlari
+  mevcut yetki ve state machine ile sonuclandirabilir; yeni teklif uretemez.
+- 1024 px ve altinda mobil arsiv kaydi, 1440 px'de yogun masaustu tablosu
+  kullanilir.
+- Kabul: lint, typecheck, 19 Node, 446 Vitest, 52 authenticated smoke,
+  production build ve 360/390/768/1024/1440 px browser QA basarili.
+
 ## 2026-07-28 - Admin siparis is kuyrugu UX
 
 - Admin siparisleri inceleme, bekletme, hazirlik, sevke hazir, yolda ve

@@ -419,9 +419,40 @@ try {
     adminQuotesResponse.status === 200,
     `Authenticated admin quotes failed with ${adminQuotesResponse.status}`,
   );
+  const adminQuoteArchiveHtml = await adminQuotesResponse.text();
   assert(
-    (await adminQuotesResponse.text()).includes(smokeQuoteNumber),
+    adminQuoteArchiveHtml.includes(smokeQuoteNumber),
     "Admin quote queue did not render smoke quote",
+  );
+  assert(
+    adminQuoteArchiveHtml.includes("Teklif arşivi") &&
+      adminQuoteArchiveHtml.includes("Yeni B2B teklif talebi alınmıyor") &&
+      adminQuoteArchiveHtml.includes(
+        'placeholder="Teklif, firma veya sipariş numarası"',
+      ) &&
+      adminQuoteArchiveHtml.includes("Müşteri Bilgisi Bekleniyor"),
+    "Admin quote archive boundary or Turkish filters not rendered",
+  );
+
+  const filteredQuoteArchiveResponse = await request(
+    "/admin/teklifler?view=CONVERTED&q=SMOKE-NOT-FOUND&page=999",
+    { headers: { Cookie: serializeCookies(cookieJar) } },
+  );
+  assert(
+    filteredQuoteArchiveResponse.status === 200,
+    `Filtered admin quote archive failed with ${filteredQuoteArchiveResponse.status}`,
+  );
+  const filteredQuoteArchiveHtml = await filteredQuoteArchiveResponse.text();
+  assert(
+    filteredQuoteArchiveHtml.includes(
+      'data-testid="admin-quote-archive-empty"',
+    ) &&
+      filteredQuoteArchiveHtml.includes(
+        'data-testid="admin-quote-pagination"',
+      ) &&
+      filteredQuoteArchiveHtml.includes('data-page="1"') &&
+      filteredQuoteArchiveHtml.includes('data-total-pages="1"'),
+    "Admin quote archive filters or pagination clamp not rendered",
   );
 
   const adminQuoteDetailResponse = await request(

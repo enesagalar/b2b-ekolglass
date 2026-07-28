@@ -1,5 +1,29 @@
 # Guncel Proje Durumu
 
+## 2026-07-28 - Faz 7.3 admin teklif arsivi UX
+
+- `/admin/teklifler` yeni talep kuyrugu degil, gecmis tekliflerin fiyat,
+  karar, durum ve siparis donusum izini koruyan `Teklif arsivi` olarak calisir.
+- Yeni B2B teklif olusturma kapali kalir; standart urunler dogrudan siparis
+  akisindan ilerler.
+- Arsiv `Acik eski kayitlar`, `Teklif ve karar`, `Siparise donusen` ve
+  `Kapanan` gruplarina ayrildi. Her kayit gecmis durumdan turetilen tek sonraki
+  yonetim gorevini aciklar.
+- Arama teklif, firma, yetkili ve donusen siparis numarasini kapsar. Arsiv
+  sayaclari arama baglamiyla birlikte hesaplanir.
+- Kesin durum filtresi secili arsiv grubuyla sinirlidir. Uyumsuz durum
+  enjeksiyonu bos sonuc uretir; gecersiz yuksek sayfa numarasi son sayfaya
+  cekilir.
+- Donusen kayitlar ilgili siparise dogrudan baglanir. Arsiv listesindeki fiyat
+  alanlari yalniz `price.read` izniyle veri sorgusuna ve arayuze girer.
+- Bayi teklif arsivi salt okunurdur. Admin tarafinda yalniz gecmisten kalan
+  acik kayitlar mevcut state machine ile sonuclandirilabilir; yeni teklif
+  talebi veya sepeti olusturulamaz.
+- 1024 px ve altinda mobil kayitlar, 1440 px'de yogun tablo kullanilir; sayfa
+  genelinde yatay tasma yoktur.
+- Yerel kabul: 19/19 Node, 446/446 Vitest, 52 authenticated smoke, lint,
+  typecheck, production build ve 360/390/768/1024/1440 px browser QA basarili.
+
 ## 2026-07-28 - Faz 7.3 admin siparis is kuyrugu UX
 
 - `/admin/siparisler` teknik durum tablosu yerine `Incelenecek`,
@@ -400,7 +424,8 @@ Son guncelleme: 2026-07-24
 - Idempotent ve audit log'lu dead-letter replay/retry-now komutlari.
 - Backlog, expired lease, dead-letter ve isleyicisiz topic durumlarini kapsayan outbox health metrigi.
 - B2B portalinda yalniz dogrudan siparis akisi; yeni teklif olusturma kapali.
-- Gecmis teklif kayitlari salt okunur audit arsivi olarak korunuyor.
+- Bayi tarafinda gecmis teklif kayitlari salt okunur audit arsivi olarak
+  korunuyor; admin yalniz kapanmamis eski kayitlari sonuclandirabiliyor.
 - Ekol UTF-8 genel listesinden 1.379 kod bazli taslak urun ice aktarildi.
 - Net fiyat kapsami: firma, musteri grubu, genel bayi sirasi.
 - Banner icin dosya secimli, MIME imzasi kontrollu lokal medya storage hatti.

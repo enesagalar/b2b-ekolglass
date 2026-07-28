@@ -1,64 +1,127 @@
+import {
+  adminQuoteArchiveScopes,
+  getAdminQuoteArchiveStatuses,
+  type AdminQuoteArchiveScope,
+} from "@/domain/admin-quote-archive";
+import { quoteStatuses } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type AdminQuoteFilters = {
   query?: string;
   status?: string;
+  scope?: AdminQuoteArchiveScope;
+  includePrices?: boolean;
   page: number;
   pageSize: number;
 };
 
 export async function getAdminQuotes(filters: AdminQuoteFilters) {
-  const where: Prisma.QuoteRequestWhereInput = {};
-  if (filters.status) where.status = filters.status;
+  const contextWhere: Prisma.QuoteRequestWhereInput = {};
   if (filters.query) {
-    where.OR = [
+    contextWhere.OR = [
       { quoteNumber: { contains: filters.query } },
       { requesterName: { contains: filters.query } },
       { requesterEmail: { contains: filters.query } },
       { company: { displayName: { contains: filters.query } } },
       { company: { legalName: { contains: filters.query } } },
+      {
+        convertedOrder: {
+          is: { orderNumber: { contains: filters.query } },
+        },
+      },
     ];
   }
 
-  const [quotes, total, newCount, waitingCount, readyCount] =
-    await Promise.all([
-      prisma.quoteRequest.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip: (filters.page - 1) * filters.pageSize,
-        take: filters.pageSize,
-        select: {
-          id: true,
-          quoteNumber: true,
-          status: true,
-          currency: true,
-          estimatedSubtotal: true,
-          hasUnpricedItems: true,
-          requesterName: true,
-          requesterEmail: true,
-          submittedAt: true,
-          createdAt: true,
-          company: {
-            select: { id: true, displayName: true, legalName: true },
-          },
-          activeOfferRevision: {
-            select: { revisionNumber: true, currency: true, subtotal: true },
-          },
-          _count: { select: { items: true } },
-        },
-      }),
-      prisma.quoteRequest.count({ where }),
-      prisma.quoteRequest.count({ where: { status: "NEW" } }),
-      prisma.quoteRequest.count({
-        where: { status: "WAITING_FOR_CUSTOMER_INFO" },
-      }),
-      prisma.quoteRequest.count({
-        where: { status: { in: ["PRICED", "OFFER_SENT"] } },
-      }),
-    ]);
+  const scope = adminQuoteArchiveScopes.includes(filters.scope ?? "ALL")
+    ? (filters.scope ?? "ALL")
+    : "ALL";
+  const scopeStatuses = getAdminQuoteArchiveStatuses(scope);
+  const exactStatus =
+    filters.status &&
+    quoteStatuses.some((status) => status === filters.status)
+      ? filters.status
+      : null;
+  const where: Prisma.QuoteRequestWhereInput = {
+    ...contextWhere,
+    status: {
+      in: exactStatus
+        ? scopeStatuses.filter((status) => status === exactStatus)
+        : [...scopeStatuses],
+    },
+  };
 
-  return { quotes, total, newCount, waitingCount, readyCount };
+  const [total, groupedStatuses] = await Promise.all([
+    prisma.quoteRequest.count({ where }),
+    prisma.quoteRequest.groupBy({
+      by: ["status"],
+      where: contextWhere,
+      _count: { _all: true },
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / filters.pageSize));
+  const page = Math.min(Math.max(1, filters.page), totalPages);
+  const quotes = await prisma.quoteRequest.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (page - 1) * filters.pageSize,
+    take: filters.pageSize,
+    select: {
+      id: true,
+      quoteNumber: true,
+      status: true,
+      currency: true,
+      estimatedSubtotal: filters.includePrices ?? false,
+      hasUnpricedItems: true,
+      requesterName: true,
+      requesterEmail: true,
+      submittedAt: true,
+      createdAt: true,
+      company: {
+        select: { id: true, displayName: true, legalName: true },
+      },
+      convertedOrder: {
+        select: { id: true, orderNumber: true, status: true },
+      },
+      activeOfferRevision: filters.includePrices
+        ? {
+            select: {
+              revisionNumber: true,
+              currency: true,
+              subtotal: true,
+            },
+          }
+        : false,
+      _count: { select: { items: true } },
+    },
+  });
+
+  const statusCounts = Object.fromEntries(
+    quoteStatuses.map((status) => [status, 0]),
+  ) as Record<(typeof quoteStatuses)[number], number>;
+  for (const row of groupedStatuses) {
+    if (row.status in statusCounts) {
+      statusCounts[row.status as keyof typeof statusCounts] = row._count._all;
+    }
+  }
+  const scopeCounts = Object.fromEntries(
+    adminQuoteArchiveScopes.map((item) => [
+      item,
+      getAdminQuoteArchiveStatuses(item).reduce(
+        (sum, status) => sum + statusCounts[status],
+        0,
+      ),
+    ]),
+  ) as Record<AdminQuoteArchiveScope, number>;
+
+  return {
+    quotes,
+    total,
+    page,
+    pageSize: filters.pageSize,
+    statusCounts,
+    scopeCounts,
+  };
 }
 
 export function getAdminQuoteDetail(quoteId: string) {
