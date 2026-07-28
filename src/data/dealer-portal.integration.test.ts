@@ -46,6 +46,24 @@ describe("dealer portal tenant isolation", () => {
         { id: orderBId, orderNumber: `HISTORY-DELIVERED-${suffix}-OTHER`, companyId: companyBId, status: "DELIVERED", createdAt: new Date("2026-02-15T10:00:00.000Z") },
       ],
     });
+    await prisma.shipment.createMany({
+      data: [
+        {
+          id: `dealer-portal-shipment-a-${suffix}`,
+          orderId: orderAId,
+          carrier: "Test Taşıyıcı",
+          trackingNumber: `TRACK-A-${suffix}`,
+          status: "PENDING",
+        },
+        {
+          id: `dealer-portal-shipment-b-${suffix}`,
+          orderId: orderBId,
+          carrier: "Test Taşıyıcı",
+          trackingNumber: `TRACK-A-${suffix}-OTHER`,
+          status: "PENDING",
+        },
+      ],
+    });
 
     await prisma.quoteRequest.createMany({
       data: [
@@ -88,6 +106,13 @@ describe("dealer portal tenant isolation", () => {
       orderAId,
     ]);
     expect(orderData.total).toBe(3);
+    expect(orderData.scopeCounts).toMatchObject({
+      ALL: 3,
+      REVIEW: 0,
+      PREPARING: 1,
+      IN_TRANSIT: 0,
+      COMPLETED: 2,
+    });
     expect(quotes.map((quote) => quote.id)).toEqual([quoteAId]);
     expect(dashboard.recentOrders.map((order) => order.id)).toEqual([
       cancelledOrderId,
@@ -127,5 +152,22 @@ describe("dealer portal tenant isolation", () => {
 
     const invalidStatus = await getDealerOrders(companyAId, { status: "FORGED" });
     expect(invalidStatus.total).toBe(3);
+  });
+
+  it("filters by dealer-facing scope and tracking number without tenant leakage", async () => {
+    const completed = await getDealerOrders(companyAId, {
+      scope: "COMPLETED",
+    });
+    expect(completed.total).toBe(2);
+    expect(completed.orders.map((order) => order.id)).toEqual([
+      cancelledOrderId,
+      deliveredOrderId,
+    ]);
+
+    const tracking = await getDealerOrders(companyAId, {
+      query: `TRACK-A-${suffix}`,
+    });
+    expect(tracking.total).toBe(1);
+    expect(tracking.orders.map((order) => order.id)).toEqual([orderAId]);
   });
 });

@@ -745,7 +745,7 @@ try {
   );
 
   for (const [path, expectedText] of [
-    ["/bayi/siparisler", "Sipariş ve sevkiyat takibi"],
+    ["/bayi/siparisler", "Siparişlerim"],
     ["/bayi/teklifler", "Teklif ar"],
     ["/bayi/hesabim", "Ticari koşullar"],
   ]) {
@@ -763,7 +763,7 @@ try {
   }
 
   const dealerOrderFilterResponse = await request(
-    "/bayi/siparisler?q=SMOKE&status=CONFIRMED&dateFrom=2026-01-01&dateTo=2026-12-31&page=999",
+    "/bayi/siparisler?q=SMOKE&view=PREPARING&status=CONFIRMED&dateFrom=2026-01-01&dateTo=2026-12-31&page=999",
     { headers: { Cookie: serializeCookies(dealerCookieJar) } },
   );
   assert(
@@ -775,7 +775,10 @@ try {
     dealerOrderFilterHtml.includes('name="q"') &&
       dealerOrderFilterHtml.includes('name="status"') &&
       dealerOrderFilterHtml.includes('name="dateFrom"') &&
-      dealerOrderFilterHtml.includes('name="dateTo"'),
+      dealerOrderFilterHtml.includes('name="dateTo"') &&
+      dealerOrderFilterHtml.includes("Sipariş veya takip numarası") &&
+      dealerOrderFilterHtml.includes("Durum ve tarih filtresi") &&
+      dealerOrderFilterHtml.includes("Yeni sipariş oluştur"),
     "Dealer order filter controls not rendered",
   );
 

@@ -1,5 +1,24 @@
 # Guncel Proje Durumu
 
+## 2026-07-28 - Faz 7.3 bayi siparis ve sevkiyat UX
+
+- `/bayi/siparisler` teknik durum listesi yerine `Incelemede`,
+  `Hazirlaniyor`, `Yolda` ve `Gecmis` operasyon gruplarini ve sayilarini
+  gosterir.
+- Arama siparis numarasinin yaninda sevkiyat takip numarasini da destekler;
+  sorgu her zaman oturumdan gelen `companyId` ile sinirlidir.
+- Her siparis satiri mevcut durumu, kullanicinin beklemesi gereken sonraki
+  adimi, istenen teslim tarihini ve varsa tasiyici/takip bilgisini aciklar.
+- Siparis detayinda ayni merkezi durum sozlesmesinden uretilen `Su anda ne
+  oluyor?` alani bulunur.
+- Tarih araligi Istanbul gun sinirlarina gore cozulur; gecersiz veya ters
+  aralik kullaniciya acik hata olarak doner.
+- Mobil operasyon sekmeleri dokunmatik kaydirilabilir, fakat gorunur sistem
+  scrollbar'i arayuzu bozmaz. Metrik aciklamalari kesilmeden satira kirilir.
+- Yerel kabul: 19/19 Node, 436/436 Vitest, 52 authenticated smoke, lint,
+  typecheck, 41 migration integrity, production build ve 360/390/768/1024/1440
+  px browser QA basarili; tarayici hata/uyari gunlugu bostur.
+
 ## 2026-07-27 - Faz 7.2C fiziksel stok sayimi
 
 - `/admin/stok/sayimlar` urun/depo secimi, acik sayimlar ve son 20 terminal

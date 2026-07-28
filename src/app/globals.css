@@ -194,6 +194,15 @@ button {
   padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 .sidebar-scroll {
   overscroll-behavior: contain;
   scrollbar-color: transparent transparent;

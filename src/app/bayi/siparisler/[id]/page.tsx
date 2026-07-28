@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 
 import { requireDealerContext } from "@/data/dealer-context";
 import { getDealerOrderDetail } from "@/data/dealer-portal";
+import { getDealerOrderJourney } from "@/domain/dealer-order-journey";
 import {
   formatPortalDate,
   formatPortalMoney,
@@ -34,6 +35,10 @@ export default async function DealerOrderDetailPage({
   ]);
   const order = await getDealerOrderDetail(company.id, id);
   if (!order) notFound();
+  const journey = getDealerOrderJourney(
+    order.status,
+    order.shipment?.trackingNumber,
+  );
   const address = [
     order.deliveryLine1,
     order.deliveryLine2,
@@ -94,6 +99,22 @@ export default async function DealerOrderDetailPage({
           {order.sourceQuote ? <Link href={`/bayi/teklifler/${order.sourceQuote.id}`} className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"><FileText size={17} />{order.sourceQuote.quoteNumber}</Link> : null}
           <Link href="/bayi/siparisler" className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold"><ArrowLeft size={17} />Tüm siparişler</Link>
         </div>
+      </section>
+      <section
+        aria-label="Siparişin sıradaki operasyon adımı"
+        className={`border-l-2 px-4 py-3 ${
+          journey.tone === "warning"
+            ? "border-amber-500 bg-amber-50 text-amber-950"
+            : journey.tone === "success"
+              ? "border-emerald-600 bg-emerald-50 text-emerald-950"
+              : journey.tone === "info"
+                ? "border-blue-600 bg-blue-50 text-blue-950"
+                : "border-slate-400 bg-slate-50 text-slate-700"
+        }`}
+      >
+        <p className="text-xs font-semibold uppercase">Şu anda ne oluyor?</p>
+        <p className="mt-1 font-semibold">{journey.title}</p>
+        <p className="mt-1 text-sm leading-6 opacity-80">{journey.detail}</p>
       </section>
       <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">

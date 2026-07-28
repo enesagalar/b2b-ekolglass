@@ -79,8 +79,12 @@ Kod yazmayan proje sahibi icin en pratik takip sirasi:
 
 Siradaki ana faz:
 
-- `docs/phases/phase-05-production-gap-closure.md`
-- UI yenilemesi, bu fazdaki ic P1 kapilarindan sonra proje sahibinin acik onayiyla baslayacak.
+- `docs/phases/phase-07-ui-remediation-and-release-acceptance.md`
+- Faz 7.3 kapsamindaki yogun ikincil ekranlar son gorev odakli UX kabul
+  taramasindan gecirilecek.
+- Production yayini icin kalan hosting, SMTP, kalici storage, scheduler ve
+  alarm girdileri `docs/phases/phase-05-production-gap-closure.md` altinda
+  izlenmeye devam edecek.
 
 ## Not
 

@@ -1,6 +1,6 @@
 # Faz Yol Haritasi
 
-## Kanonik Durum - 2026-07-24
+## Kanonik Durum - 2026-07-28
 
 Asagidaki sira bu dosyadaki eski tarihsel alt faz notlarina gore onceliklidir:
 
@@ -10,8 +10,8 @@ Asagidaki sira bu dosyadaki eski tarihsel alt faz notlarina gore onceliklidir:
 | 5A | Kapali | Guvenlik, gozlemlenebilirlik, raporlama ve production artifact hatti |
 | 6-7 | Kapali | Premium responsive UI ve yerel yayin kabul otomasyonu |
 | 7.1 | Tamamlandi | Anlasilir fiyat hiyerarsisi, firma iskontosu, Excel aktarimi, toplu fiyat degisimi ve geri alma |
-| 7.2 | Beklemede | Stok/depo operasyon ekrani ve coklu depo kaydi duzeltmesi tamam; depo ana verisi ve transfer Faz 7.3 UX gecisinden sonra |
-| 7.3 | Devam ediyor | Gorev odakli UX sozlesmesinin fiyat, urun, stok, firma, siparis, entegrasyon ve CMS ekranlarina uygulanmasi |
+| 7.2 | Tamamlandi | Stok/depo operasyonu, depo ana verisi, atomik transfer ve fiziksel sayim oturumlari |
+| 7.3 | Devam ediyor | Gorev odakli UX fiyat, urun, stok, firma, entegrasyon, CMS ve bayi siparis akislariyla genisletildi; ikincil yogun ekranlarin kabul taramasi suruyor |
 | 8 | Dis girdiye bagli | Production hosting, SMTP, kalici storage, scheduler, alarm ve canli kabul |
 | 9 | Ertelendi | City Lojistik canli adapteri, ERP ve urun gorsel otomasyonu |
 
@@ -143,7 +143,7 @@ Tamamlanan ticari kontrol ek kapsami:
 
 ## Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
 
-Durum: Ana siparis ve takip akislari tamamlandi; liste ergonomisi devam ediyor.
+Durum: Portal, siparis/takip ve bayi liste ergonomisi tamamlandi; production servis baglantilari dis kabul girdilerine bagli.
 
 Tamamlananlar:
 
@@ -153,6 +153,11 @@ Tamamlananlar:
 - Company-scoped order, quote ve shipment sorgulari.
 - Cross-company entegrasyon testi ve HTTP smoke kapsami.
 - Mobil kompakt operasyon listeleri.
+- Siparis ve sevkiyat durumlarini bayi dilinde operasyon gruplarina ayiran
+  gorev odakli liste.
+- Siparis veya tasiyici takip numarasiyla company-scoped arama.
+- Siparis detayinda mevcut durum ve siradaki operasyon adimi.
+- 360-1440 px responsive, gorunur scrollbar icermeyen mobil siparis gezintisi.
 
 Referans:
 

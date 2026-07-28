@@ -1,6 +1,11 @@
 import "server-only";
 
 import { orderExposureStatuses } from "@/domain/order-credit";
+import {
+  dealerOrderScopes,
+  getDealerOrderScopeStatuses,
+  type DealerOrderScope,
+} from "@/domain/dealer-order-journey";
 import { orderStatuses } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -35,6 +40,7 @@ export const dealerOrderStatuses = orderStatuses.filter((status) => status !== "
 export type DealerOrderFilters = {
   query?: string;
   status?: string;
+  scope?: DealerOrderScope;
   dateFrom?: Date;
   dateTo?: Date;
   page?: number;
@@ -138,13 +144,23 @@ export async function getDealerOrders(
   const where: Prisma.OrderWhereInput = buildDealerOwnershipWhere(companyId);
   const query = filters.query?.trim();
 
-  if (query) where.orderNumber = { contains: query };
-  if (
+  if (query) {
+    where.OR = [
+      { orderNumber: { contains: query } },
+      { shipment: { is: { trackingNumber: { contains: query } } } },
+    ];
+  }
+  const exactStatus =
     filters.status &&
     dealerOrderStatuses.some((status) => status === filters.status)
-  ) {
-    where.status = filters.status;
-  }
+      ? filters.status
+      : null;
+  const scope = dealerOrderScopes.includes(filters.scope ?? "ALL")
+    ? (filters.scope ?? "ALL")
+    : "ALL";
+  where.status = exactStatus
+    ? exactStatus
+    : { in: [...getDealerOrderScopeStatuses(scope)] };
   if (filters.dateFrom || filters.dateTo) {
     where.createdAt = {
       ...(filters.dateFrom ? { gte: filters.dateFrom } : {}),
@@ -152,7 +168,17 @@ export async function getDealerOrders(
     };
   }
 
-  const total = await prisma.order.count({ where });
+  const [total, groupedStatuses] = await Promise.all([
+    prisma.order.count({ where }),
+    prisma.order.groupBy({
+      by: ["status"],
+      where: {
+        ...buildDealerOwnershipWhere(companyId),
+        status: { in: [...dealerOrderStatuses] },
+      },
+      _count: { _all: true },
+    }),
+  ]);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const effectivePage = Math.min(page, totalPages);
   const orders = await prisma.order.findMany({
@@ -168,6 +194,7 @@ export async function getDealerOrders(
       subtotal: true,
       commercialReviewRequired: true,
       shipmentMethod: true,
+      requestedDeliveryDate: true,
       createdAt: true,
       updatedAt: true,
       shipment: {
@@ -182,7 +209,33 @@ export async function getDealerOrders(
     },
   });
 
-  return { orders, total, page: effectivePage, pageSize };
+  const statusCounts = Object.fromEntries(
+    dealerOrderStatuses.map((status) => [status, 0]),
+  ) as Record<(typeof dealerOrderStatuses)[number], number>;
+  for (const row of groupedStatuses) {
+    if (row.status in statusCounts) {
+      statusCounts[row.status as keyof typeof statusCounts] = row._count._all;
+    }
+  }
+  const scopeCounts = Object.fromEntries(
+    dealerOrderScopes.map((item) => [
+      item,
+      getDealerOrderScopeStatuses(item).reduce(
+        (sum, status) =>
+          sum + (statusCounts[status as keyof typeof statusCounts] ?? 0),
+        0,
+      ),
+    ]),
+  ) as Record<DealerOrderScope, number>;
+
+  return {
+    orders,
+    total,
+    page: effectivePage,
+    pageSize,
+    statusCounts,
+    scopeCounts,
+  };
 }
 
 export function getDealerOrderDetail(companyId: string, orderId: string) {

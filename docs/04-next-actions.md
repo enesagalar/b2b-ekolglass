@@ -2,11 +2,12 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
-## Aktif Hedef - Faz 7.2 stok ve depo operasyonlari
+## Aktif Hedef - Faz 7.3 son UX kabul taramasi
 
 Faz 7.1 fiyat operasyonu ve Faz 7.3 gorev odakli UX paketleri tamamlandi.
 Faz 7.2 tekrar aktif hale getirildi. Depo ana verisi 7.2A, atomik depo
-transferi 7.2B ve fiziksel sayim oturumu 7.2C paketleriyle tamamlandi.
+transferi 7.2B ve fiziksel sayim oturumu 7.2C paketleriyle tamamlandi. Bayi
+siparis/takip listesi de Faz 7.3 kapsaminda gorev odakli hale getirildi.
 
 Tamamlanan:
 
@@ -85,15 +86,40 @@ Tamamlanan:
 44. `/admin/stok/sayimlar` acma, tamamlama, iptal ve son 20 kayit gorev akisi.
 45. 19 Node, 431 Vitest, 52 authenticated smoke, lint, typecheck, 41 migration
     integrity, production build ve 390/1280 px browser kabulu.
+46. Bayi siparislerini operasyon gruplari, takip numarasi aramasi, siradaki
+    adim anlatimi ve filtreleri koruyan sayfalama ile tek calisma alaninda
+    birlestiren liste.
+47. Siparis detayinda merkezi durum/sonraki adim sozlesmesi ve company-scoped
+    takip numarasi aramasini kanitlayan entegrasyon testleri.
+48. 19 Node, 436 Vitest, 52 authenticated smoke, lint, typecheck, 41 migration
+    integrity, production build ve 360/390/768/1024/1440 px browser kabulu.
 
 Siradaki kabul ve ertelenmis paketler:
 
-1. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
+1. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
+   sozlesmesiyle son bir kabul taramasindan gecirmek.
+2. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
-2. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
+3. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
    tamamlamak.
-3. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
+4. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
    operasyonlardan ayri paketler olarak planlamak.
+
+## 2026-07-28 - Faz 7.3 bayi siparis UX paketi
+
+- Siparisler bayi icin teknik durum kodlari yerine operasyon asamalariyla
+  gruplandi.
+- Siparis ve sevkiyat takip numarasi aramasi ayni company-scoped sorguda
+  birlestirildi.
+- Tarih filtresi Istanbul gun sinirlari ve acik hata mesajlariyla
+  deterministik hale getirildi.
+- Liste ve detay ekrani ayni `dealer-order-journey` sozlesmesinden mevcut
+  durum ve sonraki adim metni uretir.
+- Mobil sekme kaydirmasi gorunur scrollbar olmadan korunur; metrik metinleri
+  kesilmez.
+- Yerel kabul: 19/19 Node, 436/436 Vitest, 52 authenticated smoke, lint,
+  typecheck, 41 migration integrity, production build ve
+  360/390/768/1024/1440 px browser QA basarili.
 
 ## 2026-07-27 - Faz 7.2C fiziksel stok sayimi paketi
 

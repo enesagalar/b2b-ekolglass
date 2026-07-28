@@ -3,6 +3,22 @@
 Status: Local acceptance complete; production acceptance blocked by external inputs
 Started: 2026-07-24
 
+## 2026-07-28 - Bayi siparis ve sevkiyat operasyon UX
+
+- Siparisler teknik durum filtresi yerine sayili operasyon gruplariyla
+  gezilir.
+- Arama siparis numarasi ve sevkiyat takip numarasini company tenant siniri
+  icinde birlikte destekler.
+- Liste ve detay ayni domain sozlesmesinden mevcut durum ve sonraki adim
+  metnini uretir.
+- Tarih filtresi Istanbul gun sinirlarini kullanir ve gecersiz araligi acikca
+  bildirir.
+- Mobil sekmeler gorunur scrollbar olmadan kaydirilir; ozet metinleri dar
+  ekranda kesilmez.
+- Kabul: lint, typecheck, 19 Node, 436 Vitest, 52 authenticated smoke, 41
+  migration integrity, production build ve 360/390/768/1024/1440 px browser
+  QA basarili.
+
 ## 2026-07-27 - Entegrasyon ve CMS operasyon UX
 
 - Entegrasyon sayfasi teknik metriklerden once tek birincil kullanici

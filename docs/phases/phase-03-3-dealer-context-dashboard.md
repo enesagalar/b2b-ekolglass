@@ -1,6 +1,6 @@
 # Faz 3.3 - Dealer Context ve Bayi Operasyon Portali
 
-Durum: Devam ediyor - portal, ticaret, transactional e-posta ve entegrasyon operasyon dilimleri tamamlandi.
+Durum: Repo ici portal, ticaret, siparis/takip, transactional e-posta ve entegrasyon operasyon dilimleri tamamlandi. Production servis kaniti dis girdilere baglidir.
 
 ## Hedef
 
@@ -19,6 +19,12 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 - Order, quote, address, item ve shipment sorgu indeksleri migration ile eklendi.
 - Guest `/bayi`, admin `/bayi`, dealer login ve tum bayi ekranlari HTTP smoke test kapsaminda.
 - Mobil listeler yatay tablo yerine kompakt operasyon satirlari gosteriyor.
+- Siparis listesi teknik durumlari `Incelemede`, `Hazirlaniyor`, `Yolda` ve
+  `Gecmis` gorev gruplarina ceviriyor.
+- Siparis ve tasiyici takip numarasi aramasi ayni tenant-korumali sorguda
+  calisiyor.
+- Liste ve detay mevcut durumla birlikte kullanicinin beklemesi gereken sonraki
+  operasyon adimini acikliyor.
 
 ## Veri Dogrulugu Karari
 
@@ -37,9 +43,9 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 
 ## Siradaki Dilim
 
-1. Kredi limiti/exposure tabanli ticari onay kapisi kurulacak.
-2. Production SMTP credential, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
-3. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
+1. Production SMTP credential, scheduler ve merkezi alarm kanali deployment ortaminda baglanacak.
+2. City Lojistik canli API sozlesmesi geldikten sonra provider mapping uygulanacak.
+3. Gercek iOS Safari ve Android Chrome cihaz kabulu production oncesi kaydedilecek.
 
 ## Teklif Arsivi Karari
 
@@ -89,6 +95,11 @@ Onayli bir firmaya bagli aktif bayi kullanicisinin yalnizca kendi firmasinin ope
 - Production auth/SMTP/proxy/secret/alarm sozlesmesi operasyon runbook'una yazildi.
 
 ## Kabul Durumu
+
+- Faz 7.3 bayi siparis UX kabulu: 19 Node, 436 Vitest, 52 authenticated
+  smoke, 41 migration integrity, lint, typecheck ve production build basarili.
+- Responsive browser kabulu 360, 390, 768, 1024 ve 1440 px'de yatay sayfa
+  tasmasi olmadan tamamlandi; tarayici hata/uyari gunlugu bostur.
 
 - Lint: basarili.
 - Test: 44 dosya, 196 test basarili.
