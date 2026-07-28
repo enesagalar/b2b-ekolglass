@@ -11,7 +11,7 @@ Asagidaki sira bu dosyadaki eski tarihsel alt faz notlarina gore onceliklidir:
 | 6-7 | Kapali | Premium responsive UI ve yerel yayin kabul otomasyonu |
 | 7.1 | Tamamlandi | Anlasilir fiyat hiyerarsisi, firma iskontosu, Excel aktarimi, toplu fiyat degisimi ve geri alma |
 | 7.2 | Tamamlandi | Stok/depo operasyonu, depo ana verisi, atomik transfer ve fiziksel sayim oturumlari |
-| 7.3 | Devam ediyor | Gorev odakli UX fiyat, urun, stok, firma, entegrasyon, CMS ve bayi siparis akislariyla genisletildi; ikincil yogun ekranlarin kabul taramasi suruyor |
+| 7.3 | Devam ediyor | Gorev odakli UX fiyat, urun, stok, firma, entegrasyon, CMS, bayi siparis ve admin siparis kuyruklarina uygulandi; kalan ikincil yogun ekranlarin kabul taramasi suruyor |
 | 8 | Dis girdiye bagli | Production hosting, SMTP, kalici storage, scheduler, alarm ve canli kabul |
 | 9 | Ertelendi | City Lojistik canli adapteri, ERP ve urun gorsel otomasyonu |
 
@@ -199,6 +199,10 @@ Tamamlananlar:
 - Teklif fiyatlandirma revizyonlari ve tekliften siparise izlenebilir donusum.
 - Iptal/release, sevk/consume ve teslim stok yasam dongusu.
 - Admin siparis/teklif kuyruklari ve bayi detay/takip ekranlari.
+- Admin siparislerinin inceleme, bekletme, hazirlik, sevk, yolda ve tamamlanan
+  is kuyruklarina ayrilmasi.
+- Arama ve City baglamiyla ayni veri kumesinden uretilen kuyruk sayaclari,
+  takip numarasi aramasi ve mobil siparis kayitlari.
 
 ## Faz 5 - Fiyat, Raporlama ve Entegrasyon Hazirligi
 

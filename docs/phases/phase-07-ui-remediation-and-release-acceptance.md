@@ -3,6 +3,21 @@
 Status: Local acceptance complete; production acceptance blocked by external inputs
 Started: 2026-07-24
 
+## 2026-07-28 - Admin siparis is kuyrugu UX
+
+- Admin siparisleri inceleme, bekletme, hazirlik, sevke hazir, yolda ve
+  tamamlanan is kuyruklarina ayrildi.
+- `ON_HOLD` ayri engel kuyrugunda tutulur; kuyruk secimi durum gecisi yetkisi
+  vermez ve server state machine degistirilmez.
+- Kuyruk sayaclari arama ve manuel City filtresiyle ayni veri baglamindan
+  hesaplanir.
+- Uyumsuz `view + status` birlesimi fail-closed kesistirilir; `DRAFT`
+  operasyon listesinden dislanir ve sayfa numarasi gercek araliga cekilir.
+- 1024 px ve altinda amaca ozel mobil kayit, 1440 px'de yogun tablo kullanilir.
+- Kabul: lint, typecheck, 19 Node, 441 Vitest, 52 authenticated smoke, 41
+  migration integrity, production build ve 360/390/768/1024/1440 px browser
+  QA basarili.
+
 ## 2026-07-28 - Bayi siparis ve sevkiyat operasyon UX
 
 - Siparisler teknik durum filtresi yerine sayili operasyon gruplariyla

@@ -1,71 +1,136 @@
+import {
+  adminOrderQueueScopes,
+  getAdminOrderQueueStatuses,
+  type AdminOrderQueueScope,
+} from "@/domain/admin-order-queue";
+import { orderStatuses } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type AdminOrderFilters = {
   query?: string;
   status?: string;
+  scope?: AdminOrderQueueScope;
   manualCityOnly?: boolean;
   page: number;
   pageSize: number;
 };
 
 export async function getAdminOrders(filters: AdminOrderFilters) {
-  const where: Prisma.OrderWhereInput = {};
+  const contextWhere: Prisma.OrderWhereInput = {
+    status: { in: orderStatuses.filter((status) => status !== "DRAFT") },
+  };
 
-  if (filters.status) where.status = filters.status;
   if (filters.manualCityOnly) {
-    where.shipment = {
+    contextWhere.shipment = {
       is: {
         carrier: "CITY_LOJISTIK",
         status: "AWAITING_MANUAL_DISPATCH",
       },
     };
   }
+
   if (filters.query) {
-    where.OR = [
+    contextWhere.OR = [
       { orderNumber: { contains: filters.query } },
       { company: { displayName: { contains: filters.query } } },
       { company: { legalName: { contains: filters.query } } },
       { createdBy: { name: { contains: filters.query } } },
       { createdBy: { email: { contains: filters.query } } },
+      { shipment: { is: { trackingNumber: { contains: filters.query } } } },
     ];
   }
 
-  const [orders, total, submitted, preparing, readyToShip] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (filters.page - 1) * filters.pageSize,
-      take: filters.pageSize,
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        currency: true,
-        subtotal: true,
-        shipmentMethod: true,
-        deliveryCity: true,
-        submittedAt: true,
-        createdAt: true,
-        company: { select: { id: true, displayName: true, legalName: true } },
-        createdBy: { select: { name: true, email: true } },
-        shipment: {
-          select: { status: true, carrier: true, trackingNumber: true },
-        },
-        _count: { select: { items: true } },
-      },
-    }),
-    prisma.order.count({ where }),
-    prisma.order.count({
-      where: { status: { in: ["SUBMITTED", "WAITING_FOR_APPROVAL"] } },
-    }),
-    prisma.order.count({
-      where: { status: { in: ["CONFIRMED", "PREPARING", "IN_PRODUCTION"] } },
-    }),
-    prisma.order.count({ where: { status: "READY_FOR_SHIPMENT" } }),
-  ]);
+  const where: Prisma.OrderWhereInput = { ...contextWhere };
+  const exactStatus =
+    filters.status &&
+    orderStatuses.some(
+      (status) => status !== "DRAFT" && status === filters.status,
+    )
+      ? filters.status
+      : null;
+  const scope = adminOrderQueueScopes.includes(filters.scope ?? "ALL")
+    ? (filters.scope ?? "ALL")
+    : "ALL";
+  const scopeStatuses = getAdminOrderQueueStatuses(scope);
+  where.status = {
+    in: exactStatus
+      ? scopeStatuses.filter((status) => status === exactStatus)
+      : [...scopeStatuses],
+  };
 
-  return { orders, total, submitted, preparing, readyToShip };
+  const [total, groupedStatuses] = await Promise.all([
+    prisma.order.count({ where }),
+    prisma.order.groupBy({
+      by: ["status"],
+      where: contextWhere,
+      _count: { _all: true },
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / filters.pageSize));
+  const page = Math.min(Math.max(1, filters.page), totalPages);
+  const orders = await prisma.order.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (page - 1) * filters.pageSize,
+    take: filters.pageSize,
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      currency: true,
+      subtotal: true,
+      shipmentMethod: true,
+      deliveryCity: true,
+      requestedDeliveryDate: true,
+      submittedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      company: { select: { id: true, displayName: true, legalName: true } },
+      createdBy: { select: { name: true, email: true } },
+      shipment: {
+        select: { status: true, carrier: true, trackingNumber: true },
+      },
+      _count: { select: { items: true } },
+    },
+  });
+
+  const statusCounts = Object.fromEntries(
+    orderStatuses
+      .filter((status) => status !== "DRAFT")
+      .map((status) => [status, 0]),
+  ) as Record<Exclude<(typeof orderStatuses)[number], "DRAFT">, number>;
+  for (const row of groupedStatuses) {
+    if (row.status in statusCounts) {
+      statusCounts[row.status as keyof typeof statusCounts] = row._count._all;
+    }
+  }
+  const queueCounts = Object.fromEntries(
+    adminOrderQueueScopes.map((item) => [
+      item,
+      getAdminOrderQueueStatuses(item).reduce(
+        (sum, status) =>
+          sum + (statusCounts[status as keyof typeof statusCounts] ?? 0),
+        0,
+      ),
+    ]),
+  ) as Record<AdminOrderQueueScope, number>;
+
+  return {
+    orders,
+    total,
+    page,
+    pageSize: filters.pageSize,
+    statusCounts,
+    queueCounts,
+    submitted:
+      statusCounts.SUBMITTED + statusCounts.WAITING_FOR_APPROVAL,
+    preparing:
+      statusCounts.CONFIRMED +
+      statusCounts.PREPARING +
+      statusCounts.IN_PRODUCTION,
+    readyToShip: statusCounts.READY_FOR_SHIPMENT,
+  };
 }
 
 export function getAdminOrderDetail(orderId: string) {

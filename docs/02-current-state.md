@@ -1,5 +1,29 @@
 # Guncel Proje Durumu
 
+## 2026-07-28 - Faz 7.3 admin siparis is kuyrugu UX
+
+- `/admin/siparisler` teknik durum tablosu yerine `Incelenecek`,
+  `Bekletilen`, `Hazirlik`, `Sevke hazir`, `Yolda` ve `Tamamlanan` is
+  kuyruklariyla calisir.
+- `ON_HOLD` ticari incelemeye karistirilmaz; operasyon veya ticari engel
+  cozumunu bekleyen ayri kuyrukta gosterilir.
+- Her kayit mevcut durumdan turetilen tek siradaki yonetim gorevini aciklar.
+  Kuyruk grubu herhangi bir durum gecisi veya ek yetki vermez.
+- Arama siparis, firma, kullanici ve sevkiyat takip numarasini kapsar. Kuyruk
+  sayaclari arama ve manuel City filtresiyle ayni veri kumesinden uretilir.
+- Kesin durum filtresi yalniz secili kuyrugun durumlarini sunar; veri katmani
+  sahte veya uyumsuz `view + status` birlesimlerini de fail-closed kesistirir.
+- `DRAFT` kayitlar operasyon kuyruguna girmez. Gecersiz yuksek sayfa numarasi
+  gercek son sayfaya cekilir ve UI `data.page` degerini gosterir.
+- 1024 px ve altinda yatay tablo yerine amaca ozel mobil siparis kayitlari,
+  1440 px'de yogun masaustu tablosu kullanilir.
+- Yerel kabul: 19/19 Node, 441/441 Vitest, 52 authenticated smoke, lint,
+  typecheck, 41 migration integrity, production build ve 360/390/768/1024/1440
+  px browser QA basarili; tarayici hata/uyari gunlugu bostur.
+- Ilk 4-worker Vitest kosusunda degismeyen parola sifirlama testi Windows
+  altinda 5 saniyelik sureyi 431 ms asti. Test tek basina 1,9 saniyede ve tam
+  set 2 worker ile 441/441 gecti; davranis regresyonu bulunmadi.
+
 ## 2026-07-28 - Faz 7.3 bayi siparis ve sevkiyat UX
 
 - `/bayi/siparisler` teknik durum listesi yerine `Incelemede`,

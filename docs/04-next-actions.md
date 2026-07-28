@@ -93,6 +93,16 @@ Tamamlanan:
     takip numarasi aramasini kanitlayan entegrasyon testleri.
 48. 19 Node, 436 Vitest, 52 authenticated smoke, lint, typecheck, 41 migration
     integrity, production build ve 360/390/768/1024/1440 px browser kabulu.
+49. Admin siparislerini inceleme, bekletme, hazirlik, sevke hazir, yolda ve
+    tamamlanan is kuyruklarina ayiran merkezi domain sozlesmesi.
+50. Siparis, firma, kullanici ve takip numarasi aramasiyla ayni baglamdan
+    uretilen kuyruk sayaclari; City manuel filtresiyle tutarli daralma.
+51. Kesin durum ve kuyruk filtresini fail-closed kesistiren veri korumasi,
+    `DRAFT` dislama ve yuksek sayfa numarasini gercek son sayfaya cekme.
+52. 1024 px ve altinda amaca ozel mobil siparis kayitlari, 1440 px'de yogun
+    masaustu tablosu ve her kayitta tek siradaki operasyon gorevi.
+53. 19 Node, 441 Vitest, 52 authenticated smoke, lint, typecheck, 41 migration
+    integrity, production build ve 360/390/768/1024/1440 px browser kabulu.
 
 Siradaki kabul ve ertelenmis paketler:
 
@@ -118,6 +128,23 @@ Siradaki kabul ve ertelenmis paketler:
 - Mobil sekme kaydirmasi gorunur scrollbar olmadan korunur; metrik metinleri
   kesilmez.
 - Yerel kabul: 19/19 Node, 436/436 Vitest, 52 authenticated smoke, lint,
+  typecheck, 41 migration integrity, production build ve
+  360/390/768/1024/1440 px browser QA basarili.
+
+## 2026-07-28 - Faz 7.3 admin siparis kuyrugu UX paketi
+
+- Admin siparisleri teknik status listesinden gorev odakli is kuyruklarina
+  tasindi.
+- `ON_HOLD` ayri `Bekletilen` kuyrugunda ele alindi; mevcut state machine,
+  permission ve optimistic transition kurallari degistirilmedi.
+- Kuyruk sayaclari arama ve City baglamiyla ayni veri kumesinden hesaplanir.
+- Uyumsuz kuyruk/durum birlesimleri veri katmaninda kayit gostermez; filtre UI
+  yalniz secili kuyrugun kesin durumlarini sunar.
+- Takip numarasi aramasi, sayfa clamp korumasi ve makine-okunur smoke kabul
+  sozlesmesi eklendi.
+- Mobilde yatay tablo kaldirildi; siparis, firma, gorev, teslimat, tutar ve
+  sevkiyat amaca ozel kayit duzeninde gosterilir.
+- Yerel kabul: 19/19 Node, 441/441 Vitest, 52 authenticated smoke, lint,
   typecheck, 41 migration integrity, production build ve
   360/390/768/1024/1440 px browser QA basarili.
 

@@ -247,9 +247,26 @@ assert(
   adminOrdersResponse.status === 200,
   `Authenticated admin orders failed with ${adminOrdersResponse.status}`,
 );
+const adminOrdersHtml = await adminOrdersResponse.text();
 assert(
-  (await adminOrdersResponse.text()).includes("/admin/siparisler"),
-  "Admin orders navigation not rendered",
+  adminOrdersHtml.includes("/admin/siparisler") &&
+    adminOrdersHtml.includes("Sipariş kuyruğu") &&
+    adminOrdersHtml.includes("Sipariş, firma veya takip numarası") &&
+    adminOrdersHtml.includes("Kesin durum filtresi"),
+  "Admin order queue or navigation not rendered",
+);
+const adminOrderQueueResponse = await request(
+  "/admin/siparisler?view=READY_TO_SHIP&q=SMOKE-NOT-FOUND&page=999",
+  { headers: { Cookie: serializeCookies(cookieJar) } },
+);
+const adminOrderQueueHtml = await adminOrderQueueResponse.text();
+assert(
+  adminOrderQueueResponse.status === 200 &&
+    adminOrderQueueHtml.includes('data-testid="admin-order-queue-empty"') &&
+    adminOrderQueueHtml.includes('data-testid="admin-order-pagination"') &&
+    adminOrderQueueHtml.includes('data-page="1"') &&
+    adminOrderQueueHtml.includes('data-total-pages="1"'),
+  "Admin order queue filtering or page clamping failed",
 );
 const adminManualCityOrdersResponse = await request("/admin/siparisler?cityManual=1", {
   headers: { Cookie: serializeCookies(cookieJar) },
