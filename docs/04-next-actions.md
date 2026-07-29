@@ -120,11 +120,14 @@ Tamamlanan:
     authenticated smoke kabulu.
 61. Fiyat ve fiyat/stok onizleme satirlarinin mobilde yatay tablo yerine amaca
     ozel fiyat, stok, depo ve kontrol kayitlarina donusturulmesi.
+62. Commit `79fc40a` icin GitHub Actions `30438583188` kalite ve release
+    artifact islerinin gecmesi; recovery drill ve immutable release manifest
+    artifact'larinin uretilmesi.
 
 Siradaki kabul ve ertelenmis paketler:
 
-1. Guncel commit'i GitHub'a gonderip `main` CI, release artifact, SBOM,
-   provenance ve attestation sonucunu kaydetmek.
+1. GitHub `main` branch protection ve zorunlu CI kontrolunun repository
+   ayarlarinda etkin oldugunu dogrulamak.
 2. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
    sozlesmesiyle son bir kabul taramasindan gecirmek.
 3. Urun, firma, bayi basvurusu ve stok hareketi ekranlarinda kalan yogun

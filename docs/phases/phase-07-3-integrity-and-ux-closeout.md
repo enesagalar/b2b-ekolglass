@@ -20,7 +20,8 @@ demo, production build ve 52 authenticated smoke kapisi gecti.
 
 ## Paket B - Dependency ve CI Guvenlik Kapisi
 
-Durum: Yerelde uygulandi; GitHub CI ve release artifact kaniti bekleniyor.
+Durum: Kod, CI ve release artifact kapisi tamamlandi; branch protection
+repository ayari dogrulamasi bekleniyor.
 
 - ExcelJS -> brace-expansion runtime zinciri dar kapsamli `.xlsx` paketlerine
   gecilerek kaldirildi.
@@ -28,7 +29,9 @@ Durum: Yerelde uygulandi; GitHub CI ve release artifact kaniti bekleniyor.
 - `npm audit --omit=dev --audit-level=high` 0 bulgu ile geciyor.
 - Tam agacta Next lint pluginlerinin desteklemedigi ESLint 10'a zorla gecmeden,
   dev-only 9 high bulgu acik takip borcu olarak kaydedildi.
-- Yeni release artifact, SBOM/provenance ve attestation kanitini kaydet.
+- Commit `79fc40a` icin GitHub Actions `30438583188` kalite ve release artifact
+  isleri gecti; immutable manifest, SBOM/provenance ve attestation hatti
+  calisti.
 - GitHub `main` branch protection ve zorunlu CI kontrolunu etkinlestir.
 
 ## Paket C - Aktarim Butunlugu ve Operasyonel UX

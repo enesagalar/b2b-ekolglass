@@ -26,8 +26,11 @@
   1440 px'de masaustu tablo aktif, mobil satir kaydi gizli.
 - Fiyat ve fiyat/stok onizleme satirlari mobilde yatay tablo yerine amaca ozel
   fiyat, stok, depo ve kontrol kayitlari olarak sunulur.
-- Faz 7.3 kapanmadi. Kalan ikincil ekran taramasi ve guncel GitHub CI/release
-  artifact kaniti siradadir.
+- GitHub Actions `30438583188`, commit `79fc40a` icin `quality` ve
+  `release-artifact` islerini basariyla tamamladi. Recovery drill evidence ile
+  immutable release manifest artifact'i uretildi.
+- Faz 7.3 kapanmadi. Kalan ikincil ekran taramasi ve `main` branch protection
+  dogrulamasi siradadir.
 
 ## 2026-07-29 - Faz 7.3 teklif-siparis ticari butunlugu
 
