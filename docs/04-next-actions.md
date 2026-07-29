@@ -2,7 +2,7 @@
 
 Bu dosya her calisma turunda guncellenir. Amaci "nerede kalmistik?" sorusunu azaltmaktir.
 
-## Aktif Hedef - Faz 7.3 son UX kabul taramasi
+## Aktif Hedef - Faz 7.3 butunluk ve UX kapanisi
 
 Faz 7.1 fiyat operasyonu ve Faz 7.3 gorev odakli UX paketleri tamamlandi.
 Faz 7.2 tekrar aktif hale getirildi. Depo ana verisi 7.2A, atomik depo
@@ -103,16 +103,27 @@ Tamamlanan:
     masaustu tablosu ve her kayitta tek siradaki operasyon gorevi.
 53. 19 Node, 441 Vitest, 52 authenticated smoke, lint, typecheck, 41 migration
     integrity, production build ve 360/390/768/1024/1440 px browser kabulu.
+54. Tekliften siparise donusumun normal checkout ile ayni kredi/vade/risk
+    snapshot kuralina ve ortak checkout kilidine baglanmasi.
+55. EUR/tanimsiz/limit asimi hesaplarin ticari onaya alinmasi; limitsiz TRY
+    hesabinin dogrudan siparis olusturabilmesi.
+56. Tuketicisi olmayan `commerce.quote.converted_to_order.v1` olayinin
+    kaldirilmasi ve siparis e-postasi icin ilk durum snapshot'i.
 
 Siradaki kabul ve ertelenmis paketler:
 
-1. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
+1. Dependency audit ve kirik CI kapisini uyumlu, testli bir cozumle kapatmak;
+   guncel commit icin release artifact uretmek.
+2. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
    sozlesmesiyle son bir kabul taramasindan gecirmek.
-2. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
-   kabul kapisi olarak kaydetmek.
-3. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
+3. Fiyat ve fiyat/stok aktarimlarinda eski onizlemenin yeni veriyi ezmesini
+   optimistic concurrency ile engellemek; mobil kayit ve pending durumlarini
    tamamlamak.
-4. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
+4. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
+   kabul kapisi olarak kaydetmek.
+5. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
+   tamamlamak.
+6. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
    operasyonlardan ayri paketler olarak planlamak.
 
 ## 2026-07-28 - Faz 7.3 bayi siparis UX paketi

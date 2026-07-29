@@ -32,7 +32,9 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 - SameSite session cookie ve Next.js Server Action Origin/Host dogrulamasi.
 - HSTS, frame deny, MIME nosniff, referrer, permissions policy ve dar CSP savunma basliklari.
 - Production proxy/IP header sozlesmesi ve mutlak kalici SQLite yolu icin fail-closed preflight.
-- Dependency audit'i Next.js 16.2.11, Prisma 7.9.0 ve guvenli transitive override'larla sifir bilinen bulgu veriyor.
+- Dependency audit release kapisidir. 2026-07-29 taramasinda ExcelJS ->
+  brace-expansion zincirinde 9 high, Prisma -> valibot zincirinde 3 moderate
+  bulgu tespit edildi; onceki "sifir bulgu" kaniti artik guncel degildir.
 - Fiyat listesi, urun fiyati, firma ticari kosulu ve CMS yazimlarinda optimistic concurrency ile transaction ici audit.
 - Banner upload'inda ayni-origin fail-closed siniri, benzersiz object key ve DB/audit hatasinda storage telafisi.
 - Beklenmeyen ticari/CMS altyapi hatalarinda correlation ID'li guvenli kullanici mesaji.
@@ -41,6 +43,13 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 
 ## Kisa Vadeli Eksikler
 
+- Excel yukleme yolundaki brace-expansion DoS advisory'si uyumlu bir upstream
+  surum veya kutuphane degisikligiyle kapatilmali; global major override eski
+  minimatch API'sini bozabilecegi icin testsiz zorlanmamalidir.
+- Prisma CLI zincirindeki valibot advisory'si uyumlu override/upgrade ile
+  kapatilmali ve generate/migrate komutlari yeniden dogrulanmalidir.
+- `main` branch korumasi ve zorunlu CI kontrolu GitHub ayarlarinda
+  etkinlestirilmelidir.
 - Production transactional e-posta ile aktivasyon/parola sifirlama teslimi.
 - Audit log ekrani.
 - Merkezi alarm kanali ve production scheduler kurulumu deployment ortaminda tamamlanmali.

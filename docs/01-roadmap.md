@@ -1,6 +1,6 @@
 # Faz Yol Haritasi
 
-## Kanonik Durum - 2026-07-28
+## Kanonik Durum - 2026-07-29
 
 Asagidaki sira bu dosyadaki eski tarihsel alt faz notlarina gore onceliklidir:
 
@@ -8,10 +8,10 @@ Asagidaki sira bu dosyadaki eski tarihsel alt faz notlarina gore onceliklidir:
 | --- | --- | --- |
 | 1-4 | Kapali | Temel platform, auth, katalog, bayi ve siparis yasam dongusu |
 | 5A | Kapali | Guvenlik, gozlemlenebilirlik, raporlama ve production artifact hatti |
-| 6-7 | Kapali | Premium responsive UI ve yerel yayin kabul otomasyonu |
+| 6 | Kapali | Premium responsive UI temeli ve yerel yayin kabul otomasyonu |
 | 7.1 | Tamamlandi | Anlasilir fiyat hiyerarsisi, firma iskontosu, Excel aktarimi, toplu fiyat degisimi ve geri alma |
 | 7.2 | Tamamlandi | Stok/depo operasyonu, depo ana verisi, atomik transfer ve fiziksel sayim oturumlari |
-| 7.3 | Devam ediyor | Gorev odakli UX fiyat, urun, stok, firma, entegrasyon, CMS, bayi siparis ve admin siparis kuyruklarina uygulandi; kalan ikincil yogun ekranlarin kabul taramasi suruyor |
+| 7.3 | Devam ediyor | Ticari butunluk ve gorev odakli UX kapanisi: teklif-siparis kredi kapisi tamamlandi; dependency/CI kapisi ve kalan yogun ikincil ekranlar suruyor |
 | 8 | Dis girdiye bagli | Production hosting, SMTP, kalici storage, scheduler, alarm ve canli kabul |
 | 9 | Ertelendi | City Lojistik canli adapteri, ERP ve urun gorsel otomasyonu |
 

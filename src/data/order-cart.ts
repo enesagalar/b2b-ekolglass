@@ -611,6 +611,7 @@ export async function submitOrderCart(
         orderId: order.id,
         companyId: actor.companyId,
         source: "ORDER_CART",
+        submittedStatus: initialStatus,
       },
       idempotencyKey: `order:${order.id}:submitted:v1`,
     });

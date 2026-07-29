@@ -21,7 +21,11 @@ const ids = {
 };
 const quoteIds: string[] = [];
 
-async function createApprovedQuote(quantity: number, validUntil?: Date) {
+async function createApprovedQuote(
+  quantity: number,
+  validUntil?: Date,
+  currency = "EUR",
+) {
   const quote = await prisma.quoteRequest.create({
     data: {
       quoteNumber: `CONV-${crypto.randomUUID()}`,
@@ -50,7 +54,7 @@ async function createApprovedQuote(quantity: number, validUntil?: Date) {
     data: {
       quoteId: quote.id,
       revisionNumber: 1,
-      currency: "EUR",
+      currency,
       subtotal: 25 * quantity,
       validUntil,
       createdById: ids.actor,
@@ -156,15 +160,27 @@ describe("approved quote to order conversion", () => {
       await prisma.integrationOutboxEvent.count({
         where: { aggregateId: { in: [quote.id, first.id] } },
       }),
-    ).toBe(2);
+    ).toBe(1);
     await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, notes: "Different note" })).rejects.toMatchObject({ code: "CONFLICT" } satisfies Partial<QuoteOperationError>);
 
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: first.id },
       include: { items: { include: { reservations: true } }, statusHistory: true, quoteConversionCommand: true },
     });
-    expect(order).toMatchObject({ companyId: ids.company, status: "SUBMITTED", currency: "EUR", sourceQuoteId: quote.id, sourceQuoteVersion: 1, sourceOfferRevisionId: quote.activeOfferRevisionId });
+    expect(order).toMatchObject({
+      companyId: ids.company,
+      status: "WAITING_FOR_APPROVAL",
+      currency: "EUR",
+      approvedById: null,
+      creditPolicySnapshot: "UNSET",
+      commercialReviewRequired: true,
+      sourceQuoteId: quote.id,
+      sourceQuoteVersion: 1,
+      sourceOfferRevisionId: quote.activeOfferRevisionId,
+    });
     expect(order.subtotal.toString()).toBe("175");
+    expect(order.creditExposureBefore.toString()).toBe("0");
+    expect(order.creditExposureAfter.toString()).toBe("175");
     expect(order.requestedDeliveryDate?.toISOString()).toBe("2026-08-15T12:00:00.000Z");
     expect(order.items[0]).toMatchObject({ quantity: 7, productCodeSnapshot: "OFFER-CODE", productNameSnapshot: "Offer Product Snapshot", priceScope: "QUOTE_REVISION" });
     expect(order.items[0]!.reservations.map((item) => item.quantity).sort()).toEqual([3, 4]);
@@ -187,6 +203,83 @@ describe("approved quote to order conversion", () => {
     ]);
 
     await expect(convertApprovedQuoteToOrder({ userId: ids.actor }, { ...input, idempotencyKey: crypto.randomUUID() })).rejects.toMatchObject({ code: "CONFLICT" } satisfies Partial<QuoteOperationError>);
+  });
+
+  it("allows an unlimited TRY account and persists its commercial snapshots", async () => {
+    await prisma.company.update({
+      where: { id: ids.company },
+      data: {
+        paymentTerms: "30 gün vade",
+        creditPolicy: "UNLIMITED",
+        creditLimit: null,
+      },
+    });
+    const quote = await createApprovedQuote(
+      1,
+      new Date("2027-01-01T00:00:00.000Z"),
+      "TRY",
+    );
+    const result = await convertApprovedQuoteToOrder(
+      { userId: ids.actor },
+      {
+        quoteId: quote.id,
+        expectedVersion: quote.version,
+        expectedOfferRevisionId: quote.activeOfferRevisionId!,
+        deliveryAddressId: ids.address,
+        shipmentMethod: "CUSTOMER_PICKUP",
+        idempotencyKey: crypto.randomUUID(),
+      },
+    );
+
+    const order = await prisma.order.findUniqueOrThrow({
+      where: { id: result.id },
+    });
+    expect(order.status).toBe("SUBMITTED");
+    expect(order.approvedById).toBeNull();
+    expect(order.paymentTermsSnapshot).toBe("30 gün vade");
+    expect(order.creditPolicySnapshot).toBe("UNLIMITED");
+    expect(order.creditLimitSnapshot).toBeNull();
+    expect(order.creditExposureBefore.toString()).toBe("0");
+    expect(order.creditExposureAfter.toString()).toBe("25");
+    expect(order.commercialReviewRequired).toBe(false);
+  });
+
+  it("routes a limited TRY account to review using its current exposure", async () => {
+    await prisma.company.update({
+      where: { id: ids.company },
+      data: {
+        paymentTerms: "Peşin",
+        creditPolicy: "LIMITED",
+        creditLimit: 40,
+      },
+    });
+    const quote = await createApprovedQuote(
+      1,
+      new Date("2027-01-01T00:00:00.000Z"),
+      "TRY",
+    );
+    const result = await convertApprovedQuoteToOrder(
+      { userId: ids.actor },
+      {
+        quoteId: quote.id,
+        expectedVersion: quote.version,
+        expectedOfferRevisionId: quote.activeOfferRevisionId!,
+        deliveryAddressId: ids.address,
+        shipmentMethod: "SALES_COORDINATION",
+        idempotencyKey: crypto.randomUUID(),
+      },
+    );
+
+    const order = await prisma.order.findUniqueOrThrow({
+      where: { id: result.id },
+    });
+    expect(order.status).toBe("WAITING_FOR_APPROVAL");
+    expect(order.paymentTermsSnapshot).toBe("Peşin");
+    expect(order.creditPolicySnapshot).toBe("LIMITED");
+    expect(order.creditLimitSnapshot?.toString()).toBe("40");
+    expect(order.creditExposureBefore.toString()).toBe("25");
+    expect(order.creditExposureAfter.toString()).toBe("50");
+    expect(order.commercialReviewRequired).toBe(true);
   });
 
   it("rolls back completely when stock is insufficient", async () => {

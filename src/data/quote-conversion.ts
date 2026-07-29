@@ -5,7 +5,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { QuoteOperationError } from "@/data/quote-operations";
 import { acquireStockMutationLock } from "@/data/stock-mutation-lock";
 import { deriveStockStatus } from "@/domain/catalog";
+import {
+  orderExposureStatuses,
+  requiresCommercialReview,
+} from "@/domain/order-credit";
 import { recordStockMovement } from "@/domain/stock-movement";
+import { Prisma } from "@/generated/prisma/client";
 import { enqueueIntegrationEvent } from "@/integrations/outbox";
 import { prisma } from "@/lib/prisma";
 
@@ -49,8 +54,8 @@ export async function convertApprovedQuoteToOrder(
   return prisma.$transaction(async (tx) => {
     await acquireStockMutationLock(tx);
     await tx.checkoutLock.upsert({
-      where: { id: "quote-operations" },
-      create: { id: "quote-operations", version: 1 },
+      where: { id: "order-checkout" },
+      create: { id: "order-checkout", version: 1 },
       update: { version: { increment: 1 } },
     });
 
@@ -83,6 +88,21 @@ export async function convertApprovedQuoteToOrder(
         requesterUserId: true,
         desiredDeliveryDate: true,
         activeOfferRevisionId: true,
+        company: {
+          select: {
+            status: true,
+            paymentTerms: true,
+            creditPolicy: true,
+            creditLimit: true,
+          },
+        },
+        requester: {
+          select: {
+            status: true,
+            role: true,
+            companyId: true,
+          },
+        },
         _count: { select: { items: true } },
         activeOfferRevision: {
           select: {
@@ -145,9 +165,16 @@ export async function convertApprovedQuoteToOrder(
         "CONFLICT",
       );
     }
-    if (!quote.companyId || !quote.activeOfferRevision) {
+    if (
+      !quote.companyId ||
+      !quote.activeOfferRevision ||
+      quote.company?.status !== "APPROVED" ||
+      quote.requester?.status !== "ACTIVE" ||
+      !["DEALER_OWNER", "DEALER_STAFF"].includes(quote.requester.role) ||
+      quote.requester.companyId !== quote.companyId
+    ) {
       throw new QuoteOperationError(
-        "Teklifin firması veya aktif fiyat revizyonu eksik.",
+        "Teklifin aktif firması, bayi kullanıcısı veya fiyat revizyonu eksik.",
         "INVALID_CONVERSION",
       );
     }
@@ -219,15 +246,45 @@ export async function convertApprovedQuoteToOrder(
     });
 
     const now = new Date();
+    const exposureAggregate = await tx.order.aggregate({
+      where: {
+        companyId: quote.companyId,
+        status: { in: [...orderExposureStatuses] },
+        currency: quote.activeOfferRevision.currency,
+      },
+      _sum: { subtotal: true },
+    });
+    const creditExposureBefore = new Prisma.Decimal(
+      exposureAggregate._sum.subtotal?.toString() ?? "0",
+    );
+    const creditExposureAfter = creditExposureBefore.add(
+      quote.activeOfferRevision.subtotal,
+    );
+    const creditPolicy = quote.company.creditPolicy;
+    const creditLimit = quote.company.creditLimit;
+    const commercialReviewRequired = requiresCommercialReview({
+      policy: creditPolicy,
+      limit: creditLimit,
+      exposureAfter: creditExposureAfter,
+      currency: quote.activeOfferRevision.currency,
+    });
+    const initialStatus = commercialReviewRequired
+      ? "WAITING_FOR_APPROVAL"
+      : "SUBMITTED";
     const order = await tx.order.create({
       data: {
         orderNumber: `SPR-${now.toISOString().slice(0, 10).replaceAll("-", "")}-${randomUUID().slice(0, 8).toUpperCase()}`,
         companyId: quote.companyId,
         createdById: quote.requesterUserId,
-        approvedById: actor.userId,
-        status: "SUBMITTED",
+        status: initialStatus,
         currency: quote.activeOfferRevision.currency,
         subtotal: quote.activeOfferRevision.subtotal,
+        paymentTermsSnapshot: quote.company.paymentTerms,
+        creditPolicySnapshot: creditPolicy,
+        creditLimitSnapshot: creditLimit,
+        creditExposureBefore,
+        creditExposureAfter,
+        commercialReviewRequired,
         deliveryAddressId: address.id,
         deliveryLabel: address.label,
         deliveryLine1: address.line1,
@@ -349,9 +406,11 @@ export async function convertApprovedQuoteToOrder(
     await tx.orderStatusHistory.create({
       data: {
         orderId: order.id,
-        toStatus: "SUBMITTED",
+        toStatus: initialStatus,
         changedById: actor.userId,
-        note: "Onaylanan tekliften sipariş oluşturuldu.",
+        note: commercialReviewRequired
+          ? "Onaylanan tekliften sipariş oluşturuldu; ticari onaya alındı."
+          : "Onaylanan tekliften sipariş oluşturuldu.",
       },
     });
     await tx.quoteStatusHistory.create({
@@ -390,22 +449,19 @@ export async function convertApprovedQuoteToOrder(
           action: "order.created_from_quote",
           entityType: "Order",
           entityId: order.id,
-          metadata: JSON.stringify({ quoteId: quote.id, offerRevisionId: quote.activeOfferRevision.id, itemCount: snapshots.length }),
+          metadata: JSON.stringify({
+            quoteId: quote.id,
+            offerRevisionId: quote.activeOfferRevision.id,
+            itemCount: snapshots.length,
+            paymentTerms: quote.company.paymentTerms,
+            creditPolicy,
+            creditLimit: creditLimit?.toString() ?? null,
+            creditExposureBefore: creditExposureBefore.toString(),
+            creditExposureAfter: creditExposureAfter.toString(),
+            commercialReviewRequired,
+          }),
         },
       ],
-    });
-    await enqueueIntegrationEvent(tx, {
-      topic: "commerce.quote.converted_to_order.v1",
-      eventType: "QUOTE_CONVERTED_TO_ORDER",
-      aggregateType: "QuoteRequest",
-      aggregateId: quote.id,
-      payload: {
-        quoteId: quote.id,
-        orderId: order.id,
-        offerRevisionId: quote.activeOfferRevision.id,
-        resultVersion,
-      },
-      idempotencyKey: `quote:${quote.id}:converted:${resultVersion}`,
     });
     await enqueueIntegrationEvent(tx, {
       topic: "commerce.order.submitted.v1",
@@ -417,6 +473,7 @@ export async function convertApprovedQuoteToOrder(
         companyId: quote.companyId,
         source: "QUOTE_CONVERSION",
         sourceQuoteId: quote.id,
+        submittedStatus: initialStatus,
       },
       idempotencyKey: `order:${order.id}:submitted:v1`,
     });

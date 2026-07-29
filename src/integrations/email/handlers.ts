@@ -18,7 +18,12 @@ const credentialPayload = z.object({
   tokenId: z.string().min(1),
   userId: z.string().min(1),
 });
-const orderPayload = z.object({ orderId: z.string().min(1) }).passthrough();
+const orderPayload = z
+  .object({
+    orderId: z.string().min(1),
+    submittedStatus: z.string().min(1).optional(),
+  })
+  .passthrough();
 const orderStatusPayload = orderPayload.extend({ toStatus: z.string().min(1) });
 const quotePayload = z.object({ quoteId: z.string().min(1) }).passthrough();
 const quoteStatusPayload = quotePayload.extend({ toStatus: z.string().min(1) });
@@ -73,7 +78,9 @@ export function createEmailHandlers(provider: EmailProvider = createSmtpEmailPro
     if (!record?.createdBy || record.createdBy.status !== "ACTIVE" || !["DEALER_OWNER", "DEALER_STAFF"].includes(record.createdBy.role) || record.createdBy.companyId !== record.companyId || record.createdBy.company?.status !== "APPROVED") {
       throw new PermanentOutboxError("Sipariş bildirimi için aktif firma alıcısı bulunamadı.");
     }
-    const status = submitted ? record.status : (data as z.infer<typeof orderStatusPayload>).toStatus;
+    const status = submitted
+      ? data.submittedStatus ?? record.status
+      : (data as z.infer<typeof orderStatusPayload>).toStatus;
     const content = commerceTemplate({ kind: "order", name: record.createdBy.name, reference: record.orderNumber, statusLabel: getStatusLabel(status), url: `${siteUrl}/bayi/siparisler/${record.id}`, submitted });
     return provider.send({ to: { email: record.createdBy.email, name: record.createdBy.name }, ...content, messageId: messageId(context.eventId) });
   }

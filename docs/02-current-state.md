@@ -1,5 +1,24 @@
 # Guncel Proje Durumu
 
+## 2026-07-29 - Faz 7.3 teklif-siparis ticari butunlugu
+
+- Onayli eski teklifin siparise donusumu artik normal sepet checkout'u ile
+  ayni `order-checkout` kilidini ve kredi degerlendirme kuralini kullanir.
+- Firma vadesi, kredi politikasi, limit ve siparis oncesi/sonrasi risk
+  degerleri siparise degismez snapshot olarak yazilir.
+- TRY disi para birimi, tanimsiz politika veya limiti asan hesap
+  `WAITING_FOR_APPROVAL` durumunda baslar. Yalniz acikca limitsiz TRY hesap
+  dogrudan `SUBMITTED` olabilir.
+- Teklif donusumunun tuketicisi olmayan outbox olayi kaldirildi. Siparis
+  olayi, e-posta gec calissa bile ilk siparis durumunu payload icinde tasir.
+- Idempotent tekrar, stok rezervasyonu, EUR fail-closed, limitsiz TRY ve
+  limitli TRY mevcut risk senaryolari entegrasyon testleriyle dogrulandi.
+- Yerel regresyon: lint, typecheck, 19/19 Node, 448/448 Vitest, 41/41
+  migration integrity, release demo, production build ve 52/52 authenticated
+  smoke basarili.
+- Faz 7.3 kapanmadi. Dependency audit/CI kapisi ve kalan yogun ikincil admin
+  ekranlarinin mobil/gorev odakli UX kabulu siradaki yerel paketlerdir.
+
 ## 2026-07-28 - Faz 7.3 admin teklif arsivi UX
 
 - `/admin/teklifler` yeni talep kuyrugu degil, gecmis tekliflerin fiyat,
@@ -475,9 +494,13 @@ Son guncelleme: 2026-07-24
 
 2. Urun ve stok yonetiminde cekirdek sayaç kapsami tamamlandi:
    - Fiziksel/rezerve stok sayaclari, turetilen stok durumu, rezervasyon defteri ve append-only hareket defteri birlikte mutabakat uretiyor.
-   - Tekil fiyat, CMS ve medya yazimlarinin audit atomikligi; firma ticari kosullarinin stale-form korumasi kalan P1 kapanis isidir.
+   - Tekil fiyat, CMS ve firma ticari kosullari transaction ici audit ve
+     stale-form korumasi kullaniyor. Medya/kategori/uyumluluk yazimlarinin
+     audit atomikligi kalan kapanis isidir.
 
 3. Teklif/siparis akisinda kalanlar:
+   - Tekliften siparise donusum kredi/vade/risk snapshot kapisina baglandi ve
+     tuketicisiz outbox olayi kaldirildi.
    - SMTP teslim ve outbox operasyon hatti hazir; production credential, scheduler ve alarm kanali kurulumu bekliyor.
 
 4. Entegrasyonlar hazirlik seviyesinde:
@@ -493,6 +516,9 @@ Son guncelleme: 2026-07-24
 
 Yerel UI ve release kabulunden sonra production kurulumu tamamlanacak:
 
+- Dependency audit'teki Excel/brace-expansion ve Prisma/valibot zinciri
+  uyumlu bir surum veya guvenli kutuphane degisikligiyle kapatilacak; CI
+  yesile donmeden release artifact kabul edilmeyecek.
 - Kalan yogun ikincil admin/bayi ekranlari Faz 7 tasarim sistemiyle kademeli sadelestirilecek.
 - Degismez deployment artifact'i ve rollback manifesti secilen platformda uygulanacak.
 - Production credential, DNS/TLS, SMTP, scheduler ve merkezi log sink dis kabul listesi.

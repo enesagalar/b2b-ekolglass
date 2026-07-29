@@ -44,7 +44,6 @@ Mevcut versiyonlu olaylar:
 - `commerce.order.status_changed.v1`
 - `commerce.quote.submitted.v1`
 - `commerce.quote.status_changed.v1`
-- `commerce.quote.converted_to_order.v1`
 - `shipping.shipment_create_requested.v1` (canli adapter kabulunden sonra etkinlestirilecek rezerve topic)
 
 City Lojistik secili siparis `READY_FOR_SHIPMENT` oldugunda `Shipment.status=AWAITING_MANUAL_DISPATCH` intent'i ayni transaction'da olusturulur. Dogrulanmis endpoint, auth, DTO ve provider idempotency davranisi gelmeden shipping outbox olayi uretilmez; boylece isleyicisiz sahte backlog ve yanlis health alarmi olusmaz.

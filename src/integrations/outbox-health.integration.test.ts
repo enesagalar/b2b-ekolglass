@@ -22,9 +22,9 @@ describe("outbox health", () => {
     process.env.EMAIL_PROVIDER = "smtp";
     const event = await prisma.$transaction((tx) =>
       enqueueIntegrationEvent(tx, {
-        topic: "commerce.quote.converted_to_order.v1",
-        eventType: "QUOTE_CONVERTED_TO_ORDER",
-        aggregateType: "QuoteRequest",
+        topic: "commerce.unsupported.test.v1",
+        eventType: "UNSUPPORTED_TEST_EVENT",
+        aggregateType: "TestAggregate",
         aggregateId: `${prefix}-unsupported`,
         payload: { quoteId: `${prefix}-unsupported` },
         idempotencyKey: `${prefix}:unsupported`,
@@ -38,7 +38,7 @@ describe("outbox health", () => {
     expect(health.unsupportedReady).toBeGreaterThanOrEqual(1);
     expect(health.unsupportedTopics).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ topic: "commerce.quote.converted_to_order.v1" }),
+        expect.objectContaining({ topic: "commerce.unsupported.test.v1" }),
       ]),
     );
   });

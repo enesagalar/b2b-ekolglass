@@ -1,7 +1,21 @@
 # Faz 7 - UI Remediation and Release Acceptance
 
-Status: Local acceptance complete; production acceptance blocked by external inputs
+Status: In progress; local integrity, dependency and secondary-route UX gates remain
 Started: 2026-07-24
+
+## 2026-07-29 - Tekliften siparise ticari butunluk
+
+- Onayli teklif donusumu normal sepet checkout'u ile ayni kredi politikasi,
+  limit, acik risk ve para birimi kurallarini kullanir.
+- Vade, politika, limit ve risk degerleri sipariste snapshot olarak saklanir.
+- Ticari inceleme gereken siparis `WAITING_FOR_APPROVAL`, yalniz limitsiz TRY
+  hesap `SUBMITTED` durumunda baslar.
+- Teklif donusumu ve sepet checkout'u ayni `order-checkout` kilidiyle
+  eszamanli risk hesaplamasini siralar.
+- Tuketicisi olmayan teklif-donusum outbox olayi kaldirildi. Siparis e-posta
+  olayi ilk durum snapshot'ini tasir.
+- Hedef kabul: typecheck ve 4 kritik entegrasyon dosyasinda 13/13 test; ek
+  limitli TRY senaryosuyla teklif donusumu 5/5 test.
 
 ## 2026-07-28 - Admin teklif arsivi UX
 
@@ -151,7 +165,10 @@ Local evidence:
 - `npm run demo:release`: 1/1 lifecycle scenario passed.
 - Authenticated isolated smoke: 44/44 checks passed.
 - `npm run build`: passed on Next.js 16.2.11.
-- `npm audit --omit=dev --audit-level=high`: 0 vulnerabilities.
+- `npm audit --omit=dev --audit-level=high`: 2026-07-29 itibariyla artik
+  gecmiyor; ExcelJS -> brace-expansion zincirinde 9 high ve Prisma ->
+  valibot zincirinde 3 moderate bulgu var. Uyumlu dependency cozumunden sonra
+  yerel ve CI kabul yeniden alinacak.
 
 ## External Inputs Required for GO
 
