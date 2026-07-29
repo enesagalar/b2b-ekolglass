@@ -1068,7 +1068,7 @@ assert(
   priceListsHtml.includes("Fiyat yönetimi") &&
     priceListsHtml.includes("Ürün fiyatlarını Excel ile güncelle") &&
     priceListsHtml.includes("Bir firmaya iskonto tanımla") &&
-    priceListsHtml.includes("Toplu zam veya indirim"),
+    priceListsHtml.includes("Tüm fiyatlara zam veya indirim uygula"),
   "Admin price hierarchy, company discount, or bulk adjustment controls not rendered",
 );
 
