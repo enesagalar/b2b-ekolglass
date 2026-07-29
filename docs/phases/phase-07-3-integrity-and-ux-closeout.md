@@ -20,25 +20,27 @@ demo, production build ve 52 authenticated smoke kapisi gecti.
 
 ## Paket B - Dependency ve CI Guvenlik Kapisi
 
-Durum: Siradaki.
+Durum: Yerelde uygulandi; GitHub CI ve release artifact kaniti bekleniyor.
 
-- ExcelJS -> brace-expansion advisory zincirini API uyumunu bozmadan kaldir.
-- Prisma -> valibot advisory zincirini generate/migrate testleriyle kapat.
-- `npm audit --omit=dev --audit-level=high` ve guncel `main` CI'yi yesile getir.
+- ExcelJS -> brace-expansion runtime zinciri dar kapsamli `.xlsx` paketlerine
+  gecilerek kaldirildi.
+- Prisma -> valibot zinciri 7.9.1 generate/migrate kabuluyle kapatildi.
+- `npm audit --omit=dev --audit-level=high` 0 bulgu ile geciyor.
+- Tam agacta Next lint pluginlerinin desteklemedigi ESLint 10'a zorla gecmeden,
+  dev-only 9 high bulgu acik takip borcu olarak kaydedildi.
 - Yeni release artifact, SBOM/provenance ve attestation kanitini kaydet.
 - GitHub `main` branch protection ve zorunlu CI kontrolunu etkinlestir.
 
 ## Paket C - Aktarim Butunlugu ve Operasyonel UX
 
-Durum: Bekliyor.
+Durum: Yerelde tamamlandi.
 
-- Fiyat/stok onizlemesinde fiyat ve stok surumlerini snapshot al.
-- Uygulama aninda stale satiri fail-closed reddet; baska yoneticinin yeni
-  verisini eski CSV ile ezme.
-- Preview/cancel mutation ve audit yazimlarini ayni transaction'a al.
-- Fiyat ve fiyat/stok aktarim detaylarini mobil kayit + masaustu tablo olarak
-  duzenle.
-- Uygula, iptal ve geri alma formlarinda pending/cift tik kilidi kullan.
+- Fiyat/stok onizlemesinde fiyat ve stok surumleri snapshot aliniyor.
+- Stale fiyat veya stok tum batch'i fail-closed reddediyor.
+- Preview/cancel mutation ve audit yazimlari ayni transaction'da.
+- Fiyat ve fiyat/stok aktarim detaylari mobil kayit + masaustu tablo olarak
+  duzenlendi.
+- Uygula, iptal ve geri alma formlarinda pending/cift tik kilidi kullaniliyor.
 
 ## Paket D - Kalan UX ve Yerel Release Kabulu
 

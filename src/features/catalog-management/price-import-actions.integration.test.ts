@@ -1,5 +1,5 @@
-import { Workbook } from "exceljs";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import writeXlsxFile from "write-excel-file/node";
 
 const mocks = vi.hoisted(() => ({
   revalidatePath: vi.fn(),
@@ -31,11 +31,13 @@ const priceListId = `excel-price-list-${suffix}`;
 const productCode = `PX-${suffix}`.slice(0, 60).toUpperCase();
 
 async function excelFile() {
-  const workbook = new Workbook();
-  const sheet = workbook.addWorksheet("Fiyatlar");
-  sheet.addRow(["urun_kodu", "urun_adi", "liste_fiyati", "minimum_adet"]);
-  sheet.addRow([productCode, "Excel Product", 125.5, 1]);
-  const output = await workbook.xlsx.writeBuffer();
+  const output = await writeXlsxFile(
+    [
+      ["urun_kodu", "urun_adi", "liste_fiyati", "minimum_adet"],
+      [productCode, "Excel Product", 125.5, 1],
+    ],
+    { sheet: "Fiyatlar" },
+  ).toBuffer();
   return new File([new Uint8Array(output)], "fiyatlar.xlsx", {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });

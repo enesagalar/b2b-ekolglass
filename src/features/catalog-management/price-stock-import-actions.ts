@@ -55,7 +55,23 @@ export async function createPriceStockImportBatch(formData: FormData) {
   const [products, activeWarehouses] = await Promise.all([
     prisma.product.findMany({
       where: { code: { in: rows!.map((row) => row.productCode) } },
-      select: { id: true, code: true, stockItems: { select: { warehouseCode: true, reservedQuantity: true } } },
+      select: {
+        id: true,
+        code: true,
+        prices: {
+          where: { priceListId, minQuantity: 1 },
+          select: { amount: true, updatedAt: true },
+        },
+        stockItems: {
+          select: {
+            warehouseCode: true,
+            quantity: true,
+            reservedQuantity: true,
+            visibility: true,
+            updatedAt: true,
+          },
+        },
+      },
     }),
     prisma.warehouse.findMany({
       where: {
@@ -82,36 +98,64 @@ export async function createPriceStockImportBatch(formData: FormData) {
     if (stock && row.stockQuantity !== null && row.stockQuantity < stock.reservedQuantity) {
       errors.push(`Stok miktarı mevcut ${stock.reservedQuantity} adet rezervasyonun altına düşemez.`);
     }
-    return { row, productId: product?.id, errors };
+    return {
+      row,
+      productId: product?.id,
+      currentPrice: product?.prices[0],
+      stock,
+      errors,
+    };
   });
   const invalidRows = stagedRows.filter((item) => item.errors.length > 0).length;
 
-  const batch = await prisma.catalogImportBatch.create({
-    data: {
-      fileName: file.name.slice(0, 180),
-      fileHash: createHash("sha256").update(text!).digest("hex"),
-      priceListId,
-      createdById: actor.id,
-      totalRows: stagedRows.length,
-      validRows: stagedRows.length - invalidRows,
-      invalidRows,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      rows: {
-        create: stagedRows.map(({ row, productId, errors }) => ({
-          rowNumber: row.rowNumber,
-          productId,
-          productCode: row.productCode,
-          netPrice: row.netPrice,
-          warehouseCode: row.warehouseCode,
-          stockQuantity: row.stockQuantity,
-          stockVisibility: row.stockVisibility,
-          status: errors.length ? "INVALID" : "VALID",
-          errorMessage: errors.length ? errors.join(" ") : null,
-        })),
+  const batch = await prisma.$transaction(async (tx) => {
+    const created = await tx.catalogImportBatch.create({
+      data: {
+        fileName: file.name.slice(0, 180),
+        fileHash: createHash("sha256").update(text!).digest("hex"),
+        priceListId,
+        createdById: actor.id,
+        totalRows: stagedRows.length,
+        validRows: stagedRows.length - invalidRows,
+        invalidRows,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        rows: {
+          create: stagedRows.map(({ row, productId, currentPrice, stock, errors }) => ({
+            rowNumber: row.rowNumber,
+            productId,
+            productCode: row.productCode,
+            netPrice: row.netPrice,
+            previousPrice: currentPrice?.amount,
+            minQuantity: 1,
+            expectedPriceUpdatedAt: currentPrice?.updatedAt,
+            warehouseCode: row.warehouseCode,
+            stockQuantity: row.stockQuantity,
+            stockVisibility: row.stockVisibility,
+            previousStockQuantity: stock?.quantity,
+            previousStockReserved: stock?.reservedQuantity,
+            previousStockVisibility: stock?.visibility,
+            expectedStockUpdatedAt: stock?.updatedAt,
+            status: errors.length ? "INVALID" : "VALID",
+            errorMessage: errors.length ? errors.join(" ") : null,
+          })),
+        },
       },
-    },
+    });
+    await tx.auditLog.create({
+      data: {
+        actorUserId: actor.id,
+        action: "catalog.price_stock.import.previewed",
+        entityType: "CatalogImportBatch",
+        entityId: created.id,
+        metadata: JSON.stringify({
+          fileHash: created.fileHash,
+          totalRows: created.totalRows,
+          invalidRows,
+        }),
+      },
+    });
+    return created;
   });
-  await prisma.auditLog.create({ data: { actorUserId: actor.id, action: "catalog.price_stock.import.previewed", entityType: "CatalogImportBatch", entityId: batch.id, metadata: JSON.stringify({ fileHash: batch.fileHash, totalRows: batch.totalRows, invalidRows }) } });
   redirect(`${importPath}/${batch.id}`);
 }
 
@@ -130,28 +174,54 @@ export async function applyPriceStockImportBatch(batchId: string) {
       if (!batch.priceList.isActive || batch.priceList.companyId || batch.priceList.customerGroupId || batch.priceList.startsAt > now || (batch.priceList.endsAt && batch.priceList.endsAt < now)) throw new Error("Seçilen standart fiyat listesi artık geçerli değil.");
 
       const productIds = batch.rows.map((row) => row.productId).filter((id): id is string => Boolean(id));
-      const currentStocks = await tx.stockItem.findMany({ where: { productId: { in: productIds } } });
-      const products = await tx.product.findMany({ where: { id: { in: productIds } }, select: { id: true, code: true } });
-      const activeWarehouses = await tx.warehouse.findMany({
-        where: { isActive: true },
-        select: { code: true },
-      });
+      const [currentStocks, currentPrices, products, activeWarehouses] = await Promise.all([
+        tx.stockItem.findMany({ where: { productId: { in: productIds } } }),
+        tx.productPrice.findMany({
+          where: { productId: { in: productIds }, priceListId: batch.priceListId, minQuantity: 1 },
+        }),
+        tx.product.findMany({ where: { id: { in: productIds } }, select: { id: true, code: true } }),
+        tx.warehouse.findMany({ where: { isActive: true }, select: { code: true } }),
+      ]);
       const activeWarehouseCodes = new Set(activeWarehouses.map((warehouse) => warehouse.code));
       const productCodeMap = new Map(products.map((product) => [product.id, product.code]));
       const stockMap = new Map(currentStocks.map((stock) => [`${stock.productId}:${stock.warehouseCode}`, stock]));
+      const priceMap = new Map(currentPrices.map((price) => [price.productId, price]));
       for (const row of batch.rows) {
         if (!row.productId || row.netPrice === null || row.stockQuantity === null || !row.warehouseCode || !row.stockVisibility) throw new Error(`Satır ${row.rowNumber} eksik veri içeriyor.`);
         if (!activeWarehouseCodes.has(row.warehouseCode)) {
           throw new Error(`${row.warehouseCode} deposu bulunamadı veya yeni işlemlere kapalı.`);
         }
         const current = stockMap.get(`${row.productId}:${row.warehouseCode}`);
+        const currentPrice = priceMap.get(row.productId);
+        const priceChanged =
+          (row.previousPrice === null && Boolean(currentPrice)) ||
+          (row.previousPrice !== null &&
+            (!currentPrice ||
+              !currentPrice.amount.equals(row.previousPrice) ||
+              currentPrice.updatedAt.getTime() !== row.expectedPriceUpdatedAt?.getTime()));
+        const stockChanged =
+          (row.expectedStockUpdatedAt === null && Boolean(current)) ||
+          (row.expectedStockUpdatedAt !== null &&
+            (!current ||
+              current.quantity !== row.previousStockQuantity ||
+              current.reservedQuantity !== row.previousStockReserved ||
+              current.visibility !== row.previousStockVisibility ||
+              current.updatedAt.getTime() !== row.expectedStockUpdatedAt.getTime()));
+        if (priceChanged || stockChanged) throw new Error("PRICE_STOCK_BATCH_STALE");
+
         const reserved = current?.reservedQuantity ?? 0;
         if (row.stockQuantity < reserved) throw new Error(`${row.productCode} stoğu güncel ${reserved} adet rezervasyonun altına düşemez.`);
-        await tx.productPrice.upsert({
-          where: { productId_priceListId_minQuantity: { productId: row.productId, priceListId: batch.priceListId, minQuantity: 1 } },
-          update: { amount: row.netPrice },
-          create: { productId: row.productId, priceListId: batch.priceListId, minQuantity: 1, amount: row.netPrice },
-        });
+        if (currentPrice) {
+          const updated = await tx.productPrice.updateMany({
+            where: { id: currentPrice.id, updatedAt: currentPrice.updatedAt },
+            data: { amount: row.netPrice },
+          });
+          if (updated.count !== 1) throw new Error("PRICE_STOCK_BATCH_STALE");
+        } else {
+          await tx.productPrice.create({
+            data: { productId: row.productId, priceListId: batch.priceListId, minQuantity: 1, amount: row.netPrice },
+          });
+        }
         const before = { quantity: current?.quantity ?? 0, reservedQuantity: reserved };
         const stock = await tx.stockItem.upsert({
           where: { productId_warehouseCode: { productId: row.productId, warehouseCode: row.warehouseCode } },
@@ -182,14 +252,36 @@ export async function applyPriceStockImportBatch(batchId: string) {
     redirect(`${importPath}/${batchId}?success=${encodeURIComponent(`${result} ürünün standart fiyatı ve stoğu güncellendi.`)}`);
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
-    redirect(`${importPath}/${batchId}?error=${encodeURIComponent(error instanceof Error ? error.message : "Aktarım uygulanamadı.")}`);
+    const code = error instanceof Error ? error.message : "";
+    const message =
+      code === "PRICE_STOCK_BATCH_STALE"
+        ? "Fiyat veya stok önizlemeden sonra değişti. Hiçbir satır uygulanmadı; yeni bir önizleme oluşturun."
+        : error instanceof Error
+          ? error.message
+          : "Aktarım uygulanamadı.";
+    redirect(`${importPath}/${batchId}?error=${encodeURIComponent(message)}`);
   }
 }
 
 export async function cancelPriceStockImportBatch(batchId: string) {
   const actor = await requireImportUser();
-  const updated = await prisma.catalogImportBatch.updateMany({ where: { id: batchId, createdById: actor.id, status: "PREVIEW" }, data: { status: "CANCELLED", cancelledAt: new Date() } });
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.catalogImportBatch.updateMany({
+      where: { id: batchId, createdById: actor.id, status: "PREVIEW" },
+      data: { status: "CANCELLED", cancelledAt: new Date() },
+    });
+    if (result.count) {
+      await tx.auditLog.create({
+        data: {
+          actorUserId: actor.id,
+          action: "catalog.price_stock.import.cancelled",
+          entityType: "CatalogImportBatch",
+          entityId: batchId,
+        },
+      });
+    }
+    return result;
+  });
   if (!updated.count) redirect(`${importPath}/${batchId}?error=${encodeURIComponent("Parti iptal edilemedi.")}`);
-  await prisma.auditLog.create({ data: { actorUserId: actor.id, action: "catalog.price_stock.import.cancelled", entityType: "CatalogImportBatch", entityId: batchId } });
   redirect(`${importPath}?success=${encodeURIComponent("Aktarım partisi iptal edildi.")}`);
 }

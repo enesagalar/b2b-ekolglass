@@ -1,4 +1,4 @@
-import { Workbook } from "exceljs";
+import writeXlsxFile, { type SheetData } from "write-excel-file/node";
 
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -55,27 +55,21 @@ export async function GET(request: Request) {
     pricesByProduct.set(price.productId, current);
   }
 
-  const workbook = new Workbook();
-  workbook.creator = "EkolGlass B2B";
-  workbook.created = new Date();
-  const sheet = workbook.addWorksheet("Fiyatlar", {
-    views: [{ state: "frozen", ySplit: 1 }],
+  const headerCell = (value: string) => ({
+    value,
+    type: String,
+    fontWeight: "bold" as const,
+    textColor: "#FFFFFF",
+    backgroundColor: "#00639A",
   });
-  sheet.columns = [
-    { header: "urun_kodu", key: "productCode", width: 18 },
-    { header: "urun_adi", key: "productName", width: 58 },
-    { header: "liste_fiyati", key: "netPrice", width: 16 },
-    { header: "minimum_adet", key: "minQuantity", width: 16 },
+  const priceRows: SheetData = [
+    [
+      headerCell("urun_kodu"),
+      headerCell("urun_adi"),
+      headerCell("liste_fiyati"),
+      headerCell("minimum_adet"),
+    ],
   ];
-  sheet.autoFilter = "A1:D1";
-  sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-  sheet.getRow(1).fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "FF00639A" },
-  };
-  sheet.getColumn(3).numFmt = '#,##0.00';
-  sheet.getColumn(4).numFmt = '0';
 
   for (const product of products) {
     const prices = pricesByProduct.get(product.id);
@@ -83,29 +77,28 @@ export async function GET(request: Request) {
       for (const price of prices.sort(
         (left, right) => left.minQuantity - right.minQuantity,
       )) {
-        sheet.addRow({
-          productCode: product.code,
-          productName: product.name,
-          netPrice: Number(price.amount),
-          minQuantity: price.minQuantity,
-        });
+        priceRows.push([
+          product.code,
+          product.name,
+          {
+            value: Number(price.amount),
+            type: Number,
+            format: "#,##0.00",
+          },
+          { value: price.minQuantity, type: Number, format: "0" },
+        ]);
       }
     } else {
-      sheet.addRow({
-        productCode: product.code,
-        productName: product.name,
-        netPrice: "",
-        minQuantity: 1,
-      });
+      priceRows.push([
+        product.code,
+        product.name,
+        "",
+        { value: 1, type: Number, format: "0" },
+      ]);
     }
   }
 
-  const instructions = workbook.addWorksheet("Açıklama");
-  instructions.columns = [
-    { key: "title", width: 28 },
-    { key: "description", width: 90 },
-  ];
-  [
+  const instructions: SheetData = [
     ["Fiyat listesi", `${priceList.name} (${priceList.currency})`],
     ["urun_kodu", "Değiştirmeyin; katalogdaki ürün kodudur."],
     ["urun_adi", "Bilgi amaçlıdır; aktarımda değiştirilmez."],
@@ -115,12 +108,27 @@ export async function GET(request: Request) {
       "İşleyiş",
       "Dosya önce önizlenir. Hatalı satırlar düzeltilmeden canlı fiyatlar değişmez.",
     ],
-  ].forEach(([title, description]) =>
-    instructions.addRow({ title, description }),
-  );
-  instructions.getColumn(1).font = { bold: true };
+  ].map(([title, description]) => [
+    { value: title, type: String, fontWeight: "bold" },
+    description,
+  ]);
 
-  const output = await workbook.xlsx.writeBuffer();
+  const output = await writeXlsxFile(
+    [
+      {
+        data: priceRows,
+        sheet: "Fiyatlar",
+        columns: [{ width: 18 }, { width: 58 }, { width: 16 }, { width: 16 }],
+        stickyRowsCount: 1,
+      },
+      {
+        data: instructions,
+        sheet: "Açıklama",
+        columns: [{ width: 28 }, { width: 90 }],
+      },
+    ],
+    { fontFamily: "Arial", fontSize: 10 },
+  ).toBuffer();
   const fileName = `ekolglass-${safeFileName(priceList.name) || "fiyat-listesi"}.xlsx`;
   return new Response(new Uint8Array(output), {
     headers: {

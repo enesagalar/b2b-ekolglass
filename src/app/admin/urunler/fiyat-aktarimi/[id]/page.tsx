@@ -2,6 +2,7 @@ import { AlertTriangle, CheckCircle2, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   applyPriceImportBatch,
   cancelPriceImportBatch,
@@ -105,7 +106,50 @@ export default async function PriceImportDetailPage({
       </section>
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-slate-100 lg:hidden">
+          {batch.rows.map((row) => (
+            <article
+              key={row.id}
+              className={row.errorMessage ? "bg-red-50/60 p-4" : "p-4"}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-500">
+                    Satır {row.rowNumber}
+                  </p>
+                  <p className="mt-1 break-all font-semibold text-slate-950">
+                    {row.productCode}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {row.product?.name ?? "Katalogda bulunamadı"}
+                  </p>
+                </div>
+                <span className={row.errorMessage ? "text-xs font-semibold text-red-800" : "text-xs font-semibold text-emerald-700"}>
+                  {row.errorMessage ?? "Geçerli"}
+                </span>
+              </div>
+              <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt className="text-xs text-slate-500">Önceki fiyat</dt>
+                  <dd className="mt-1 font-medium text-slate-800">
+                    {row.previousPrice?.toString() ?? "Yeni kayıt"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500">Yeni fiyat</dt>
+                  <dd className="mt-1 font-semibold text-slate-950">
+                    {row.netPrice?.toString() ?? "-"} {batch.priceList.currency}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500">Minimum adet</dt>
+                  <dd className="mt-1 font-medium text-slate-800">{row.minQuantity ?? "-"}</dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[920px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
               <tr>
@@ -163,17 +207,18 @@ export default async function PriceImportDetailPage({
           </p>
           <div className="flex gap-2">
             <form action={cancelAction}>
-              <button className="h-10 rounded-md border border-slate-300 px-4 text-sm font-semibold">
+              <PendingSubmitButton pendingLabel="İptal ediliyor" className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60">
                 İptal et
-              </button>
+              </PendingSubmitButton>
             </form>
             <form action={applyAction}>
-              <button
+              <PendingSubmitButton
+                pendingLabel="Uygulanıyor"
                 disabled={!canApply}
-                className="h-10 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Fiyatları uygula
-              </button>
+              </PendingSubmitButton>
             </form>
           </div>
         </section>
@@ -186,10 +231,10 @@ export default async function PriceImportDetailPage({
             değerlerine atomik olarak döndürebilirsiniz.
           </p>
           <form action={revertAction}>
-            <button className="inline-flex h-10 items-center gap-2 rounded-md border border-amber-400 bg-white px-4 text-sm font-semibold text-amber-950">
+            <PendingSubmitButton pendingLabel="Geri alınıyor" className="inline-flex h-10 items-center gap-2 rounded-md border border-amber-400 bg-white px-4 text-sm font-semibold text-amber-950 disabled:cursor-not-allowed disabled:opacity-60">
               <RotateCcw size={16} />
               İşlemi geri al
-            </button>
+            </PendingSubmitButton>
           </form>
         </section>
       ) : null}

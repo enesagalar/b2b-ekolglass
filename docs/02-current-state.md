@@ -1,5 +1,34 @@
 # Guncel Proje Durumu
 
+## 2026-07-29 - Faz 7.3 dependency ve aktarim butunlugu
+
+- ExcelJS ve onun runtime `archiver/glob/minimatch/brace-expansion` zinciri
+  kaldirildi. `.xlsx` okuma ve yazma, dar kapsamli `read-excel-file` ve
+  `write-excel-file` paketlerine tasindi.
+- Prisma istemcisi, adapteri ve CLI 7.9.1'e sabitlendi; valibot advisory zinciri
+  runtime ve generate/migrate grafiginden cikti.
+- Production dependency audit 0 bulgu ile geciyor. Tam dependency agacinda
+  yalniz ESLint/Next lint arac zincirinden gelen 9 high gelistirme-bagimliligi
+  bulgusu kaldi; ESLint 10 mevcut Next plugin peer sozlesmesiyle uyumlu olmadigi
+  icin breaking override uygulanmadi.
+- CI artik kilitli agaci `npm ls --all` ile dogrular ve release kapisinda
+  production dependency grafigini denetler. PR dependency review yeni high ve
+  critical bulgulari reddetmeye devam eder.
+- Fiyat/stok onizlemesi mevcut fiyat ile depo stok miktari, rezervasyon,
+  gorunurluk ve `updatedAt` snapshot'larini saklar. Uygulama aninda bunlardan
+  biri degismisse tum batch fail-closed durur ve hicbir satir yazilmaz.
+- Preview ve cancel audit kayitlari ilgili mutation ile ayni transaction'a
+  alindi. Uygula, iptal ve geri alma dugmeleri pending durumunda kilitlenir.
+- Yerel kabul: 42/42 migration integrity, 0 production dependency vulnerability,
+  lint, typecheck, 19/19 Node, 450/450 Vitest, production build ve 52/52
+  authenticated smoke basarili.
+- Browser kabulu: 390 px sinifinda yatay tasma yok ve mobil kayitlar aktif;
+  1440 px'de masaustu tablo aktif, mobil satir kaydi gizli.
+- Fiyat ve fiyat/stok onizleme satirlari mobilde yatay tablo yerine amaca ozel
+  fiyat, stok, depo ve kontrol kayitlari olarak sunulur.
+- Faz 7.3 kapanmadi. Kalan ikincil ekran taramasi ve guncel GitHub CI/release
+  artifact kaniti siradadir.
+
 ## 2026-07-29 - Faz 7.3 teklif-siparis ticari butunlugu
 
 - Onayli eski teklifin siparise donusumu artik normal sepet checkout'u ile

@@ -1,9 +1,9 @@
 "use server";
 
 import { createHash } from "crypto";
-import { Workbook } from "exceljs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { readSheet } from "read-excel-file/node";
 
 import { parsePriceImportRows } from "@/domain/price-import";
 import { requirePermissionUser } from "@/lib/auth";
@@ -18,16 +18,6 @@ function fail(message: string): never {
 
 async function requirePriceManager() {
   return requirePermissionUser("price.manage", importPath);
-}
-
-function workbookRows(workbook: Workbook) {
-  const worksheet = workbook.worksheets[0];
-  if (!worksheet) throw new Error("Excel çalışma sayfası bulunamadı.");
-  const rows: unknown[][] = [];
-  worksheet.eachRow({ includeEmpty: false }, (row) => {
-    rows.push([1, 2, 3, 4].map((column) => row.getCell(column).text));
-  });
-  return rows;
 }
 
 function revalidatePriceSurfaces() {
@@ -58,18 +48,20 @@ export async function createPriceImportBatch(formData: FormData) {
   if (!priceList) fail("Aktif bir fiyat listesi seçin.");
 
   const bytes = Buffer.from(await file.arrayBuffer());
-  const workbook = new Workbook();
+  let workbookRows: unknown[][];
   try {
-    const workbookInput =
-      bytes as unknown as Parameters<typeof workbook.xlsx.load>[0];
-    await workbook.xlsx.load(workbookInput);
+    workbookRows = (await readSheet(bytes))
+      .filter((row) =>
+        row.some((value) => String(value ?? "").trim().length > 0),
+      )
+      .map((row) => row.slice(0, 4));
   } catch {
     fail("Excel dosyası okunamadı veya geçerli bir .xlsx dosyası değil.");
   }
 
   let rows;
   try {
-    rows = parsePriceImportRows(workbookRows(workbook));
+    rows = parsePriceImportRows(workbookRows!);
   } catch (error) {
     fail(error instanceof Error ? error.message : "Excel satırları ayrıştırılamadı.");
   }

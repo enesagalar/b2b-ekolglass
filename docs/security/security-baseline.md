@@ -32,9 +32,10 @@ Bu proje B2B bayi, fiyat, siparis ve stok verisi tasiyacagi icin security isleml
 - SameSite session cookie ve Next.js Server Action Origin/Host dogrulamasi.
 - HSTS, frame deny, MIME nosniff, referrer, permissions policy ve dar CSP savunma basliklari.
 - Production proxy/IP header sozlesmesi ve mutlak kalici SQLite yolu icin fail-closed preflight.
-- Dependency audit release kapisidir. 2026-07-29 taramasinda ExcelJS ->
-  brace-expansion zincirinde 9 high, Prisma -> valibot zincirinde 3 moderate
-  bulgu tespit edildi; onceki "sifir bulgu" kaniti artik guncel degildir.
+- Dependency audit release kapisidir. 2026-07-29 taramasinda production
+  dependency grafigi 0 bulgu ile gecmistir. Tam agacta kalan 9 high bulgu
+  ESLint/Next lint dev-only arac zincirindedir; uyumsuz major override yerine
+  `npm ls --all`, production audit ve PR dependency review birlikte uygulanir.
 - Fiyat listesi, urun fiyati, firma ticari kosulu ve CMS yazimlarinda optimistic concurrency ile transaction ici audit.
 - Banner upload'inda ayni-origin fail-closed siniri, benzersiz object key ve DB/audit hatasinda storage telafisi.
 - Beklenmeyen ticari/CMS altyapi hatalarinda correlation ID'li guvenli kullanici mesaji.

@@ -489,23 +489,27 @@ model CatalogImportBatch {
 }
 
 model CatalogImportRow {
-  id                     String             @id @default(cuid())
-  batchId                String
-  batch                  CatalogImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  rowNumber              Int
-  productId              String?
-  product                Product?           @relation(fields: [productId], references: [id], onDelete: Restrict)
-  productCode            String
-  netPrice               Decimal?
-  previousPrice          Decimal?
-  minQuantity            Int?
-  expectedPriceUpdatedAt DateTime?
-  warehouseCode          String?
-  stockQuantity          Int?
-  stockVisibility        String?
-  status                 String
-  errorMessage           String?
-  createdAt              DateTime           @default(now())
+  id                      String             @id @default(cuid())
+  batchId                 String
+  batch                   CatalogImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  rowNumber               Int
+  productId               String?
+  product                 Product?           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productCode             String
+  netPrice                Decimal?
+  previousPrice           Decimal?
+  minQuantity             Int?
+  expectedPriceUpdatedAt  DateTime?
+  warehouseCode           String?
+  stockQuantity           Int?
+  stockVisibility         String?
+  previousStockQuantity   Int?
+  previousStockReserved   Int?
+  previousStockVisibility String?
+  expectedStockUpdatedAt  DateTime?
+  status                  String
+  errorMessage            String?
+  createdAt               DateTime           @default(now())
 
   @@unique([batchId, rowNumber])
   @@index([batchId, status, rowNumber])

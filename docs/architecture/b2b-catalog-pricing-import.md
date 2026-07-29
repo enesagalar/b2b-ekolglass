@@ -92,7 +92,11 @@ Fiyat ve stok CSV aktarimi `/admin/urunler/fiyat-stok-aktarimi` altinda staging 
 - Tek dosya en fazla 2 MB ve 2.000 urundur. Bir urun kodu ayni partide yalniz bir kez bulunabilir.
 - Fiyat secilen aktif genel bayi fiyat listesine `minQuantity=1` olarak yazilir. Firma veya grup ozel fiyatlari bu akisla ezilmez.
 - Stok `urun + depo` bazinda guncellenir; mevcut rezerve miktar korunur ve fiziksel miktar rezervasyonun altina indirilemez.
-- Hata raporu bulunan parti uygulanamaz. Onay sirasinda fiyat listesi ve rezervasyonlar transaction icinde yeniden dogrulanir.
+- Hata raporu bulunan parti uygulanamaz. Preview, mevcut fiyat ile stok miktari,
+  rezervasyon, gorunurluk ve surum zamanini snapshot alir. Onay sirasinda
+  bunlardan biri degismisse tum parti yeni veriyi ezmeden fail-closed durur.
+- Preview, uygulama ve iptal mutation'lari kendi audit kayitlariyla ayni
+  transaction icindedir.
 - Uygulama urunun yayin durumunu degistirmez; yayin karari toplu yayin hazirligi ekraninda ayrica verilir.
 - Partiler kullanici kapsamli, 24 saatlik ve audit kayitlidir.
 

@@ -109,16 +109,26 @@ Tamamlanan:
     hesabinin dogrudan siparis olusturabilmesi.
 56. Tuketicisi olmayan `commerce.quote.converted_to_order.v1` olayinin
     kaldirilmasi ve siparis e-postasi icin ilk durum snapshot'i.
+57. ExcelJS runtime advisory zincirinin dar kapsamli, temiz `.xlsx` okuma/yazma
+    paketleriyle kaldirilmasi ve Prisma 7.9.1 guvenlik guncellemesi.
+58. CI'da kilitli dependency agaci kontrolu ve 0 bulgulu production audit
+    kapisi; ESLint arac zincirindeki dev-only bulgularin acik takip borcu.
+59. Fiyat/stok aktariminda fiyat ve stok snapshot'i, stale fail-closed kontrolu
+    ve preview/cancel audit transaction butunlugu.
+60. Fiyat aktarimlarinda uygula, iptal ve geri alma dugmelerinin pending
+    durumunda kilitlenmesi; 42 migration, 450 Vitest, production build ve 52
+    authenticated smoke kabulu.
+61. Fiyat ve fiyat/stok onizleme satirlarinin mobilde yatay tablo yerine amaca
+    ozel fiyat, stok, depo ve kontrol kayitlarina donusturulmesi.
 
 Siradaki kabul ve ertelenmis paketler:
 
-1. Dependency audit ve kirik CI kapisini uyumlu, testli bir cozumle kapatmak;
-   guncel commit icin release artifact uretmek.
+1. Guncel commit'i GitHub'a gonderip `main` CI, release artifact, SBOM,
+   provenance ve attestation sonucunu kaydetmek.
 2. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
    sozlesmesiyle son bir kabul taramasindan gecirmek.
-3. Fiyat ve fiyat/stok aktarimlarinda eski onizlemenin yeni veriyi ezmesini
-   optimistic concurrency ile engellemek; mobil kayit ve pending durumlarini
-   tamamlamak.
+3. Urun, firma, bayi basvurusu ve stok hareketi ekranlarinda kalan yogun
+   mobil tablo/aksiyon noktalarini kabul taramasindan gecirmek.
 4. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
 5. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde

@@ -39,9 +39,13 @@ jobs:
           node-version: 22.23.1
           cache: npm
 
-      - run: npm ci
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify dependency tree
+        run: npm ls --all
       - run: npm run prisma:generate
-      - run: npm audit --audit-level=high
+      - name: Audit production dependency graph
+        run: npm run audit:production
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:node

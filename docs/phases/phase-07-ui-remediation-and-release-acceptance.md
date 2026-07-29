@@ -165,10 +165,10 @@ Local evidence:
 - `npm run demo:release`: 1/1 lifecycle scenario passed.
 - Authenticated isolated smoke: 44/44 checks passed.
 - `npm run build`: passed on Next.js 16.2.11.
-- `npm audit --omit=dev --audit-level=high`: 2026-07-29 itibariyla artik
-  gecmiyor; ExcelJS -> brace-expansion zincirinde 9 high ve Prisma ->
-  valibot zincirinde 3 moderate bulgu var. Uyumlu dependency cozumunden sonra
-  yerel ve CI kabul yeniden alinacak.
+- `npm audit --omit=dev --audit-level=high`: 2026-07-29 guncel kabulunde
+  0 bulgu ile gecti. ExcelJS runtime zinciri kaldirildi, Prisma 7.9.1'e
+  guncellendi. Tam agactaki 9 high bulgu yalniz ESLint/Next lint gelistirme
+  arac zincirindedir ve upstream peer uyumlu surum beklenerek izlenir.
 
 ## External Inputs Required for GO
 
