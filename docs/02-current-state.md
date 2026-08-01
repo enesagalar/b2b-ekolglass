@@ -1,5 +1,26 @@
 # Guncel Proje Durumu
 
+## 2026-08-01 - Faz 7.3 firma ve bayi basvurusu mobil UX
+
+- `/admin/firmalar` ve `/admin/bayi-basvurulari` ekranlarinda yatay kayan
+  tablolar mobilde kaldirildi; durum, siradaki gorev, temel operasyon verisi
+  ve tek birincil aksiyon amaca ozel kayitlarla sunulur.
+- 1024 px ve ustunde mevcut yogun masaustu tablolari korunur; is kurallari,
+  izinler, firma izolasyonu ve durum gecisleri degistirilmedi.
+- Gecersiz veya cok yuksek `page` degeri bos ekran yerine gercek son sayfaya
+  cekilir. Pasif onceki/sonraki durumlari artik odaklanabilir baglanti degildir.
+- Ortak sayfalama bileseni erisilebilir ad, canli sayfa bilgisi ve 44 px dokunma
+  hedefiyle iki ekrani ayni davranis sozlesmesine baglar.
+- Yerel kabul: lint, Next 16 typecheck, 19/19 Node, 452/452 Vitest,
+  42/42 migration integrity, 0 production dependency vulnerability,
+  production build ve 52/52 authenticated smoke basarili.
+- Browser kabulu: 390 px'de iki ekranda yatay tasma yok, mobil kayitlar aktif
+  ve masaustu tablolar gizli; 1440 px'de tablolar aktif, mobil kayit aksiyonlari
+  gizli. Yuksek sayfa numarasi son sayfaya cekiliyor ve browser hata/uyari
+  gunlugu bos.
+- Faz 7.3 kapanmadi. Urun/stok hareketi mobil kabul paketi, urun detay sorgu
+  optimizasyonu ve repository branch protection ayari siradadir.
+
 ## 2026-07-29 - Faz 7.3 dependency ve aktarim butunlugu
 
 - ExcelJS ve onun runtime `archiver/glob/minimatch/brace-expansion` zinciri

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Clock3, Filter, Search, UserRoundCheck, UsersRound } from "lucide-react";
 
+import { ListPagination } from "@/components/list-pagination";
 import { dealerApplicationStatuses, getStatusLabel } from "@/domain/statuses";
 import { Prisma } from "@/generated/prisma/client";
 import { requirePermissionUser } from "@/lib/auth";
@@ -53,7 +54,7 @@ export default async function DealerApplicationsAdminPage({ searchParams }: { se
     ? requestedStatus
     : "";
   const requestedPage = Number.parseInt(getSearchParam(params, "page") ?? "1", 10);
-  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const normalizedPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   const where: Prisma.DealerApplicationWhereInput = {};
   if (status) where.status = status;
@@ -68,14 +69,7 @@ export default async function DealerApplicationsAdminPage({ searchParams }: { se
     ];
   }
 
-  const [applications, total, newCount, reviewCount, approvedCount] = await Promise.all([
-    prisma.dealerApplication.findMany({
-      where,
-      include: { company: { select: { id: true, displayName: true } } },
-      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
+  const [total, newCount, reviewCount, approvedCount] = await Promise.all([
     prisma.dealerApplication.count({ where }),
     prisma.dealerApplication.count({ where: { status: "NEW" } }),
     prisma.dealerApplication.count({ where: { status: { in: ["IN_REVIEW", "NEEDS_INFO"] } } }),
@@ -83,6 +77,14 @@ export default async function DealerApplicationsAdminPage({ searchParams }: { se
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(normalizedPage, totalPages);
+  const applications = await prisma.dealerApplication.findMany({
+    where,
+    include: { company: { select: { id: true, displayName: true } } },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
   const currentParams = new URLSearchParams();
   if (query) currentParams.set("q", query);
   if (status) currentParams.set("status", status);
@@ -131,7 +133,7 @@ export default async function DealerApplicationsAdminPage({ searchParams }: { se
       </section>
 
       <section className={panelClass}>
-        <form className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-[minmax(0,1fr)_220px_auto]">
+        <form aria-label="Bayi başvurularını filtrele" className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-[minmax(0,1fr)_220px_auto]">
           <label className="relative">
             <span className="sr-only">Başvurularda ara</span>
             <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={17} aria-hidden="true" />
@@ -161,7 +163,46 @@ export default async function DealerApplicationsAdminPage({ searchParams }: { se
         </form>
 
         {applications.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-slate-200 lg:hidden">
+            {applications.map((application) => {
+              const nextAction = {
+                NEW: "İlk inceleme bekliyor",
+                IN_REVIEW: "İnceleme devam ediyor",
+                NEEDS_INFO: "Başvuru sahibinden bilgi bekleniyor",
+                APPROVED: application.company ? "Firma hesabı oluşturuldu" : "Onay kaydı kontrol edilmeli",
+                REJECTED: "Başvuru kapatıldı",
+              }[application.status] ?? "Başvuru durumunu inceleyin";
+              return (
+                <article key={application.id} className="p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-sm font-semibold text-slate-950">{application.companyName}</h3>
+                      <p className="mt-1 break-all text-xs leading-5 text-slate-500">{application.email}</p>
+                    </div>
+                    <span className={`shrink-0 rounded px-2 py-1 text-xs font-semibold ring-1 ${statusClass(application.status)}`}>
+                      {getStatusLabel(application.status)}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-sm font-semibold text-slate-800">{nextAction}</p>
+                  <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                    <div><dt className="text-xs text-slate-500">Yetkili</dt><dd className="mt-1 font-medium text-slate-800">{application.contactName}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Telefon</dt><dd className="mt-1 font-medium text-slate-800">{application.phone}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Konum</dt><dd className="mt-1 font-medium text-slate-800">{application.city}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Müşteri tipi</dt><dd className="mt-1 font-medium text-slate-800">{application.customerType}</dd></div>
+                    <div className="col-span-2"><dt className="text-xs text-slate-500">Başvuru zamanı</dt><dd className="mt-1 font-medium text-slate-800">{formatDate(application.createdAt)}</dd></div>
+                  </dl>
+                  <Link
+                    href={`/admin/bayi-basvurulari/${application.id}`}
+                    className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-teal-700 hover:text-teal-800"
+                  >
+                    Başvuruyu incele <ArrowRight size={15} aria-hidden="true" />
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto lg:block">
             <table className="w-full min-w-[860px] text-left">
               <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                 <tr>
@@ -215,6 +256,7 @@ export default async function DealerApplicationsAdminPage({ searchParams }: { se
               </tbody>
             </table>
           </div>
+          </>
         ) : (
           <div className="px-5 py-14 text-center">
             <UsersRound className="mx-auto text-slate-300" size={34} aria-hidden="true" />
@@ -222,25 +264,13 @@ export default async function DealerApplicationsAdminPage({ searchParams }: { se
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-4 text-sm text-slate-600">
-          <span>Sayfa {Math.min(page, totalPages)} / {totalPages}</span>
-          <div className="flex gap-2">
-            <Link
-              href={buildPageHref(currentParams, Math.max(1, page - 1))}
-              aria-disabled={page <= 1}
-              className={page <= 1 ? "pointer-events-none rounded-md border border-slate-200 px-3 py-2 text-slate-300" : "rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-700"}
-            >
-              Önceki
-            </Link>
-            <Link
-              href={buildPageHref(currentParams, Math.min(totalPages, page + 1))}
-              aria-disabled={page >= totalPages}
-              className={page >= totalPages ? "pointer-events-none rounded-md border border-slate-200 px-3 py-2 text-slate-300" : "rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-700"}
-            >
-              Sonraki
-            </Link>
-          </div>
-        </div>
+        <ListPagination
+          page={page}
+          totalPages={totalPages}
+          previousHref={buildPageHref(currentParams, Math.max(1, page - 1))}
+          nextHref={buildPageHref(currentParams, Math.min(totalPages, page + 1))}
+          ariaLabel="Bayi başvurusu listesi sayfaları"
+        />
       </section>
     </div>
   );

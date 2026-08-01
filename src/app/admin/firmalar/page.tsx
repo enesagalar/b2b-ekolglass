@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Filter, Search, UserRoundCheck, UsersRound } from "lucide-react";
 
 import { Prisma } from "@/generated/prisma/client";
+import { ListPagination } from "@/components/list-pagination";
 import { getStatusLabel } from "@/domain/statuses";
 import { requirePermissionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const pageSize = 25;
+const companyStatuses = ["APPROVED", "PENDING", "SUSPENDED"] as const;
 const panelClass = "rounded-lg border border-slate-200 bg-white shadow-sm";
 const inputClass =
   "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-teal-700";
@@ -36,10 +38,13 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
   await requirePermissionUser("company.manage", "/admin/firmalar");
   const params = await searchParams;
   const query = getSearchParam(params, "q")?.trim() ?? "";
-  const status = getSearchParam(params, "status")?.trim() ?? "";
+  const requestedStatus = getSearchParam(params, "status")?.trim() ?? "";
+  const status = companyStatuses.includes(requestedStatus as (typeof companyStatuses)[number])
+    ? requestedStatus
+    : "";
   const customerGroupId = getSearchParam(params, "customerGroupId")?.trim() ?? "";
   const requestedPage = Number.parseInt(getSearchParam(params, "page") ?? "1", 10);
-  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const normalizedPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   const where: Prisma.CompanyWhereInput = {};
   if (status) where.status = status;
@@ -55,18 +60,7 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
     ];
   }
 
-  const [companies, total, approvedCount, activeUserCount, invitedUserCount, customerGroups] = await Promise.all([
-    prisma.company.findMany({
-      where,
-      include: {
-        customerGroup: true,
-        users: { select: { id: true, status: true } },
-        _count: { select: { orders: true, quoteRequests: true } },
-      },
-      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
+  const [total, approvedCount, activeUserCount, invitedUserCount, customerGroups] = await Promise.all([
     prisma.company.count({ where }),
     prisma.company.count({ where: { status: "APPROVED" } }),
     prisma.user.count({
@@ -87,6 +81,18 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(normalizedPage, totalPages);
+  const companies = await prisma.company.findMany({
+    where,
+    include: {
+      customerGroup: true,
+      users: { select: { id: true, status: true } },
+      _count: { select: { orders: true, quoteRequests: true } },
+    },
+    orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
   const currentParams = new URLSearchParams();
   if (query) currentParams.set("q", query);
   if (status) currentParams.set("status", status);
@@ -127,7 +133,7 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
       </section>
 
       <section className={`${panelClass} min-w-0 overflow-hidden`}>
-        <form className="grid gap-3 border-b border-slate-200 p-4 lg:grid-cols-[minmax(0,1fr)_180px_220px_auto]">
+        <form aria-label="Firma listesini filtrele" className="grid gap-3 border-b border-slate-200 p-4 lg:grid-cols-[minmax(0,1fr)_180px_220px_auto]">
           <label className="relative">
             <span className="sr-only">Firmalarda ara</span>
             <Search className="pointer-events-none absolute left-3 top-3 text-slate-400" size={17} aria-hidden="true" />
@@ -165,7 +171,47 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
         </form>
 
         {companies.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-slate-200 lg:hidden">
+            {companies.map((company) => {
+              const activeUsers = company.users.filter((user) => user.status === "ACTIVE").length;
+              const invitedUsers = company.users.filter((user) => user.status === "INVITED").length;
+              const nextAction = company.status === "SUSPENDED"
+                ? "Portal erişimi askıda"
+                : invitedUsers > 0
+                  ? `${invitedUsers} kullanıcı aktivasyon bekliyor`
+                  : activeUsers > 0
+                    ? "Hesap kullanıma hazır"
+                    : "Aktif portal kullanıcısı yok";
+              return (
+                <article key={company.id} className="p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-sm font-semibold text-slate-950">{company.displayName}</h3>
+                      <p className="mt-1 break-all text-xs leading-5 text-slate-500">{company.city} · {company.email}</p>
+                    </div>
+                    <span className={`shrink-0 rounded px-2 py-1 text-xs font-semibold ring-1 ${statusClass(company.status)}`}>
+                      {getStatusLabel(company.status)}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-sm font-semibold text-slate-800">{nextAction}</p>
+                  <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                    <div><dt className="text-xs text-slate-500">Müşteri grubu</dt><dd className="mt-1 font-medium text-slate-800">{company.customerGroup?.name ?? "Atanmadı"}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Portal kullanıcıları</dt><dd className="mt-1 font-medium text-slate-800">{activeUsers} aktif{invitedUsers > 0 ? ` · ${invitedUsers} bekliyor` : ""}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Sipariş</dt><dd className="mt-1 font-medium text-slate-800">{company._count.orders}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Geçmiş teklif</dt><dd className="mt-1 font-medium text-slate-800">{company._count.quoteRequests}</dd></div>
+                  </dl>
+                  <Link
+                    href={`/admin/firmalar/${company.id}`}
+                    className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-teal-700 hover:text-teal-800"
+                  >
+                    Firma hesabını yönet <ArrowRight size={15} aria-hidden="true" />
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto lg:block">
             <table className="w-full min-w-[900px] text-left">
               <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                 <tr>
@@ -214,6 +260,7 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
               </tbody>
             </table>
           </div>
+          </>
         ) : (
           <div className="px-5 py-14 text-center">
             <Building2 className="mx-auto text-slate-300" size={34} aria-hidden="true" />
@@ -221,21 +268,13 @@ export default async function CompaniesAdminPage({ searchParams }: { searchParam
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-4 text-sm text-slate-600">
-          <span>Sayfa {Math.min(page, totalPages)} / {totalPages}</span>
-          <div className="flex gap-2">
-            <Link
-              href={buildPageHref(currentParams, Math.max(1, page - 1))}
-              aria-disabled={page <= 1}
-              className={page <= 1 ? "pointer-events-none rounded-md border border-slate-200 px-3 py-2 text-slate-300" : "rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-700"}
-            >Önceki</Link>
-            <Link
-              href={buildPageHref(currentParams, Math.min(totalPages, page + 1))}
-              aria-disabled={page >= totalPages}
-              className={page >= totalPages ? "pointer-events-none rounded-md border border-slate-200 px-3 py-2 text-slate-300" : "rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-700"}
-            >Sonraki</Link>
-          </div>
-        </div>
+        <ListPagination
+          page={page}
+          totalPages={totalPages}
+          previousHref={buildPageHref(currentParams, Math.max(1, page - 1))}
+          nextHref={buildPageHref(currentParams, Math.min(totalPages, page + 1))}
+          ariaLabel="Firma listesi sayfaları"
+        />
       </section>
     </div>
   );

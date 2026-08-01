@@ -123,6 +123,11 @@ Tamamlanan:
 62. Commit `79fc40a` icin GitHub Actions `30438583188` kalite ve release
     artifact islerinin gecmesi; recovery drill ve immutable release manifest
     artifact'larinin uretilmesi.
+63. Firma ve bayi basvurusu listelerinin mobilde amaca ozel kayitlara
+    donusturulmesi; yuksek sayfa numarasinin son sayfaya cekilmesi ve pasif
+    sayfalama kontrollerinin baglanti olmaktan cikarilmasi; 452 Vitest, 42
+    migration, 52 authenticated smoke, production build ve 390/1440 px browser
+    kabulunun tamamlanmasi.
 
 Siradaki kabul ve ertelenmis paketler:
 
@@ -130,8 +135,8 @@ Siradaki kabul ve ertelenmis paketler:
    ayarlarinda etkin oldugunu dogrulamak.
 2. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
    sozlesmesiyle son bir kabul taramasindan gecirmek.
-3. Urun, firma, bayi basvurusu ve stok hareketi ekranlarinda kalan yogun
-   mobil tablo/aksiyon noktalarini kabul taramasindan gecirmek.
+3. Urun ve stok hareketi ekranlarinda kalan yogun mobil tablo/aksiyon
+   noktalarini kabul taramasindan gecirmek.
 4. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
 5. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde

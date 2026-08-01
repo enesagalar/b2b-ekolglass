@@ -47,14 +47,21 @@ Durum: Yerelde tamamlandi.
 
 ## Paket D - Kalan UX ve Yerel Release Kabulu
 
-Durum: Bekliyor.
+Durum: Devam ediyor; firma ve bayi basvurusu liste paketi tamamlandi.
 
-- Urun, firma, bayi basvurusu, stok hareketi ve aktarim listelerindeki yogun
-  tablolari 360/390/768/1024 px amaca ozel kayitlara donustur.
+- Firma ve bayi basvurusu listeleri 1024 px altinda amaca ozel kayitlara,
+  masaustunde yogun tabloya donusturuldu.
+- Bu iki listede gecersiz yuksek sayfa numarasi son sayfaya cekildi; pasif
+  onceki/sonraki kontrolleri tiklanabilir baglanti olmaktan cikarildi.
+- Paket parcasi lint, typecheck, 19 Node, 452 Vitest, 42 migration, 0
+  production audit, production build, 52 authenticated smoke ve 390/1440 px
+  browser kabulunden gecti.
+- Urun ve stok hareketi listelerinde kalan yogun mobil tablo/aksiyon
+  noktalarini 360/390/768/1024 px kabulunden gecir.
 - Urun detay sorgularini aktif sekmeye gore daralt; katalog gorsellerini
   `next/image` ile optimize et.
-- Turkce operasyon dili, erisilebilir adlar, pasif sayfalama ve klavye/focus
-  kabulunu tamamla.
+- Kalan ekranlarda Turkce operasyon dili, erisilebilir adlar, pasif sayfalama
+  ve klavye/focus kabulunu tamamla.
 - Lint, typecheck, Node, tam Vitest, migration, recovery, release demo,
   production build ve authenticated smoke kapilarini tek guncel checkpoint'te
   kaydet.
