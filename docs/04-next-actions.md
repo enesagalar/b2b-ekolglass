@@ -135,6 +135,9 @@ Tamamlanan:
     duzenine alinmasi; yuksek sayfanin son sayfaya cekilmesi, filtre baglaminin
     korunmasi ve ortak erisilebilir sayfalama kullanilmasi; loading tasmasinin
     giderilmesi, 453 Vitest, 52 smoke ve 390/1024/1440 px kabulunun gecmesi.
+66. Commit `6a7bf69` icin GitHub Actions `30698332950` kalite ve release
+    artifact islerinin gecmesi; recovery, immutable image taramasi, provenance
+    ve release manifest kanitlarinin uretilmesi.
 
 Siradaki kabul ve ertelenmis paketler:
 
@@ -144,11 +147,13 @@ Siradaki kabul ve ertelenmis paketler:
    sozlesmesiyle son bir kabul taramasindan gecirmek.
 3. Urun detay sorgularini aktif sekmeye gore daraltmak ve katalog gorsellerini
    `next/image` ile optimize etmek.
-4. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
+4. GitHub'in pinned resmi action'larindaki Node 20 deprecation annotation'ini
+   Node 24 uyumlu upstream surumlerle ayri CI bakim paketinde kapatmak.
+5. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
-5. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
+6. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
    tamamlamak.
-6. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
+7. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
    operasyonlardan ayri paketler olarak planlamak.
 
 ## 2026-07-28 - Faz 7.3 bayi siparis UX paketi

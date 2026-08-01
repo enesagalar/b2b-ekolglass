@@ -66,6 +66,8 @@ Durum: Devam ediyor; ikincil admin liste paketleri tamamlandi.
 - Ortak admin loading iskeletinin mobil yatay tasmasi giderildi. Paket lint,
   typecheck, 19 Node, 453 Vitest, 42 migration, 0 production audit, production
   build, 52 authenticated smoke ve 390/1024/1440 px browser kabulunden gecti.
+- Commit `6a7bf69` icin GitHub Actions `30698332950` kalite ve immutable
+  release artifact islerini basariyla tamamladi.
 - Urun detay sorgularini aktif sekmeye gore daralt; katalog gorsellerini
   `next/image` ile optimize et.
 - Kalan ekranlarda Turkce operasyon dili, erisilebilir adlar, pasif sayfalama

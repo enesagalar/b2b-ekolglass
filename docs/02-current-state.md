@@ -21,6 +21,13 @@
 - Browser kabulu: 390 ve 1024 px'de yatay tasma yok, mobil kayitlar aktif ve
   tablolar gizli; 1440 px'de tablolar aktif, mobil kayitlar gizli. Yuksek sayfa
   urunlerde 56/56'ya, hareketlerde 28/28'e cekildi; hata/uyari gunlugu bos.
+- Commit `6a7bf69` icin GitHub Actions `30698332950` kalite ve release artifact
+  islerini basariyla tamamladi; recovery drill, authenticated smoke, immutable
+  image taramasi, provenance ve release manifest hatti gecti.
+- CI yalniz GitHub'in pinned resmi checkout/setup-node/upload-artifact
+  action'larinin Node 20 runtime bildirimini Node 24'e zorlamasiyla ilgili
+  deprecation annotation'i uretiyor; uygulama testi veya release kapisi hatasi
+  degildir ve ayri CI bakim borcu olarak izlenir.
 - Faz 7.3 kapanmadi. Urun detay aktif-sekme sorgu optimizasyonu, katalog
   gorsellerinin `next/image` kabulu ve repository branch protection ayari
   siradadir.
