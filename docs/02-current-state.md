@@ -26,6 +26,11 @@
   veritabaninda yayindaki urunlere bagli aktif medya bulunmadigi icin canli
   optimizer istegi yerine yerel/harici kaynak davranisi bilesen testiyle
   kanitlandi.
+- Commit `3bf44d7` icin GitHub Actions `30699625492` kalite ve release artifact
+  islerini basariyla tamamladi; recovery drill, authenticated smoke, immutable
+  image taramasi, provenance ve release manifest hatti gecti. Tek annotation,
+  pinned resmi GitHub action'larinin Node 20 taniminin runner tarafindan Node
+  24'e zorlanmasiyla ilgili mevcut CI bakim kaydidir.
 - Faz 7.3 yerel kod paketinde kalan kapanis isi, Turkce metin, klavye/focus ve
   gercek iOS/Android kabul taramasidir. Repository `main` branch protection ve
   resmi GitHub Actions Node 24 runtime gecisi ayri yonetim/CI bakimidir.
