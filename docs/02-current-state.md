@@ -25,6 +25,11 @@
 - Faz 7.3 icin yerel kod, masaustu responsive ve otomasyon kabul kapsaminda
   kalan bilinen bir blok yoktur. Gercek iOS Safari/Android Chrome, production
   ortam kaniti ve repository branch protection harici kabul kapilaridir.
+- Commit `2358199` icin GitHub Actions `30700968303` kalite ve release artifact
+  islerini basariyla tamamladi. Recovery drill, authenticated smoke, immutable
+  OCI image, fixable high taramasi, provenance ve release manifest hatti
+  gecti. Tek annotation, pinned resmi GitHub action'larinin Node 20 taniminin
+  runner tarafindan Node 24'e zorlanmasiyla ilgili takipteki CI bakim kaydidir.
 
 ## 2026-08-01 - Faz 7.3 urun detay sorgusu ve katalog gorsel hatti
 

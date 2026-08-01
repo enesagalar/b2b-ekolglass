@@ -19,6 +19,9 @@ Started: 2026-07-24
   authenticated smoke basarili.
 - Lokal kod kabulunde acik bir Faz 7.3 kalemi yoktur. Faz 7 production GO icin
   asagidaki harici ortam ve gercek cihaz kanitlari zorunlu olmaya devam eder.
+- Commit `2358199`, GitHub Actions `30700968303` kalite ve release artifact
+  islerinde basarili oldu; recovery drill, authenticated smoke, image scan,
+  provenance ve release manifest kanitlari uretildi.
 
 ## 2026-07-29 - Tekliften siparise ticari butunluk
 

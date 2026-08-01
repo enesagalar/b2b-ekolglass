@@ -148,6 +148,9 @@ Tamamlanan:
     production build ve urun detayinda 360/390/768/1024/1440 px tarayici
     kabulunun gecmesi; mobil cekmece focus/Escape/body-scroll davranisinin
     dogrulanmasi.
+70. Commit `2358199` icin GitHub Actions `30700968303` kalite ve release
+    artifact islerinin gecmesi; recovery, authenticated smoke, immutable OCI
+    image taramasi, provenance ve release manifest kanitlarinin uretilmesi.
 
 Siradaki kabul ve ertelenmis paketler:
 
