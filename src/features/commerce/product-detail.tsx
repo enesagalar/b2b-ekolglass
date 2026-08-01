@@ -20,6 +20,7 @@ import {
   type CatalogViewer,
 } from "@/domain/catalog";
 import { AddToOrderCartForm } from "@/features/orders/order-forms";
+import { CatalogImage } from "@/features/commerce/catalog-image";
 
 function safeMediaUrl(url: string) {
   if (url.startsWith("/")) return url;
@@ -141,12 +142,12 @@ export function ProductDetail({
           <div className="overflow-hidden rounded-lg border border-[#d9dadd] bg-white">
             <div className="relative flex aspect-[4/3] max-h-[680px] min-h-[280px] items-center justify-center overflow-hidden bg-[#fbfbfd] p-4 sm:aspect-[16/10] sm:p-8">
               {primaryImage ? (
-                // Product media can be hosted by customer-managed domains, so the native element avoids a brittle host allowlist.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <CatalogImage
                   src={primaryImage.url}
                   alt={primaryImage.altText}
-                  className="h-full w-full object-contain transition duration-300 hover:scale-[1.01]"
+                  sizes="(min-width: 1280px) 56vw, 100vw"
+                  className="object-contain transition duration-300 hover:scale-[1.01]"
+                  priority
                 />
               ) : (
                 <div className="grid justify-items-center gap-4 px-6 text-center text-slate-400">
@@ -182,11 +183,11 @@ export function ProductDetail({
                   rel="noreferrer"
                   className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-[#d9dadd] bg-white transition hover:border-[#00639a] focus:outline-none focus:ring-2 focus:ring-[#00639a] focus:ring-offset-2"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <CatalogImage
                     src={image.url}
                     alt={image.altText}
-                    className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                    sizes="(min-width: 768px) 22vw, 46vw"
+                    className="object-cover transition group-hover:scale-[1.02]"
                   />
                 </a>
               ))}

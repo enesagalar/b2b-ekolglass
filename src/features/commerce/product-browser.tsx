@@ -5,6 +5,7 @@ import { canViewCatalogPrices, productGlassTypes, resolveCatalogStockSummary, se
 import { automaticStockStatuses } from "@/domain/stock-status";
 import { getStatusLabel } from "@/domain/statuses";
 import { getProductBrowserData, type ProductSearchParams } from "@/data/product-browser";
+import { CatalogImage } from "@/features/commerce/catalog-image";
 
 function pageHref(basePath: string, params: ProductSearchParams, page: number) {
   const next = new URLSearchParams();
@@ -69,10 +70,12 @@ export async function ProductBrowser({ searchParams, viewer, basePath, embedded 
               <article key={product.id} className="interactive-lift overflow-hidden rounded-lg border border-[#d9dadd] bg-white">
                 <Link href={detailHref} className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#f5f5f7] text-[#8a8b90]">
                   {media ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={media.url} alt={media.altText} className="h-full w-full object-cover transition duration-300 hover:scale-[1.02]" />
-                    </>
+                    <CatalogImage
+                      src={media.url}
+                      alt={media.altText}
+                      sizes="(min-width: 1536px) 23vw, (min-width: 1280px) 31vw, (min-width: 640px) 48vw, 100vw"
+                      className="object-cover transition duration-300 hover:scale-[1.02]"
+                    />
                   ) : <CarFront size={48} strokeWidth={1.2}/>}<span className="absolute left-3 top-3 rounded bg-white/90 px-2 py-1 text-[11px] font-semibold text-[#4b4c50] backdrop-blur-lg">{product.category.name}</span>
                 </Link>
                 <div className="p-4">

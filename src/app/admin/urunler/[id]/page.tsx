@@ -30,8 +30,11 @@ import {
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
 import { StockQuantityField } from "@/features/catalog-management/stock-quantity-field";
+import {
+  getAdminProductDetailData,
+  resolveAdminProductDetailTab,
+} from "@/data/admin-product-detail";
 import { requirePermissionUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +108,9 @@ export default async function AdminProductDetailPage({
   searchParams: ProductDetailSearchParams;
 }) {
   const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
-  const activeTab = getSearchParam(resolvedSearchParams, "tab") ?? "genel";
+  const activeTab = resolveAdminProductDetailTab(
+    getSearchParam(resolvedSearchParams, "tab"),
+  );
   const actor = await requirePermissionUser("product.read", `/admin/urunler/${id}`);
   const canReadPrice = isKnownRole(actor.role) && hasPermission(actor.role, "price.read");
   const canReadStock =
@@ -115,61 +120,36 @@ export default async function AdminProductDetailPage({
   if (activeTab === "fiyat" && !canReadPrice) notFound();
   if (activeTab === "stok" && !canReadStock) notFound();
 
-  const [product, priceLists, activeWarehouses] = await Promise.all([
-    prisma.product.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        stockItems: { orderBy: { warehouseCode: "asc" } },
-        prices: {
-          where: canReadPrice ? {} : { id: "__price_access_denied__" },
-          include: { priceList: true },
-          orderBy: [{ priceList: { name: "asc" } }, { minQuantity: "asc" }],
-        },
-        compatibilities: { orderBy: [{ vehicleBrand: "asc" }, { vehicleModel: "asc" }] },
-        mediaAssets: { orderBy: [{ isActive: "desc" }, { title: "asc" }] },
-      },
-    }),
-    canReadPrice ? prisma.priceList.findMany({
-      orderBy: [{ isActive: "desc" }, { name: "asc" }],
-    }) : Promise.resolve([]),
-    canManageStock
-      ? prisma.warehouse.findMany({
-          where: { isActive: true },
-          orderBy: [{ name: "asc" }, { code: "asc" }],
-          select: { code: true, name: true },
-        })
-      : Promise.resolve([]),
-  ]);
+  const data = await getAdminProductDetailData({
+    id,
+    activeTab,
+    canReadPrice,
+    canReadStock,
+    canManageStock,
+  });
 
-  if (!product) {
+  if (!data) {
     notFound();
   }
 
-  const auditLogs =
-    activeTab === "audit"
-      ? await prisma.auditLog.findMany({
-          where: {
-            OR: [
-              { entityType: "Product", entityId: product.id },
-              ...(canReadPrice && product.prices.length > 0
-                ? [
-                    {
-                      entityType: "ProductPrice",
-                      entityId: { in: product.prices.map((price) => price.id) },
-                    },
-                  ]
-                : []),
-            ],
-          },
-          include: { actor: true },
-          orderBy: { createdAt: "desc" },
-          take: 30,
-        })
-      : [];
+  const {
+    product,
+    publicationPrices,
+    publicationStockItems,
+    stockItems,
+    prices,
+    compatibilities,
+    mediaAssets,
+    priceLists,
+    activeWarehouses,
+    auditLogs,
+  } = data;
 
   const vehicle = [product.vehicleBrand, product.vehicleModel].filter(Boolean).join(" ");
-  const publicationReadiness = getProductPublicationReadiness(product);
+  const publicationReadiness = getProductPublicationReadiness({
+    prices: publicationPrices,
+    stockItems: publicationStockItems,
+  });
 
   return (
     <div className="grid gap-6">
@@ -353,9 +333,9 @@ export default async function AdminProductDetailPage({
           ) : null}
 
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-            {product.stockItems.length > 0 ? (
+            {stockItems.length > 0 ? (
               <div className="divide-y divide-slate-200">
-                {product.stockItems.map((stock) => canManageStock ? (
+                {stockItems.map((stock) => canManageStock ? (
                   <CatalogActionForm
                     key={stock.id}
                     action={saveProductStock}
@@ -458,7 +438,7 @@ export default async function AdminProductDetailPage({
           </CatalogActionForm>
 
           <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-            {product.prices.length > 0 ? (
+            {prices.length > 0 ? (
               <table className="w-full min-w-[700px] border-collapse text-left text-sm">
                 <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
                   <tr>
@@ -470,7 +450,7 @@ export default async function AdminProductDetailPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {product.prices.map((price) => (
+                  {prices.map((price) => (
                     <tr key={price.id} className="border-t border-slate-200">
                       <td className="px-4 py-4 font-semibold text-slate-950">{price.priceList.name}</td>
                       <td className="px-4 py-4">{price.priceList.currency}</td>
@@ -549,9 +529,9 @@ export default async function AdminProductDetailPage({
             </div>
           </CatalogActionForm>
 
-          {product.compatibilities.length > 0 ? (
+          {compatibilities.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              {product.compatibilities.map((compatibility) => (
+              {compatibilities.map((compatibility) => (
                 <article key={compatibility.id} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                   <CatalogActionForm action={saveProductCompatibility} className="grid gap-4">
                     <input type="hidden" name="id" value={compatibility.id} />
@@ -664,9 +644,9 @@ export default async function AdminProductDetailPage({
             </div>
           </CatalogActionForm>
 
-          {product.mediaAssets.length > 0 ? (
+          {mediaAssets.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              {product.mediaAssets.map((asset) => (
+              {mediaAssets.map((asset) => (
                 <CatalogActionForm key={asset.id} action={saveProductMedia} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                   <input type="hidden" name="id" value={asset.id} />
                   <input type="hidden" name="productId" value={product.id} />
@@ -722,14 +702,14 @@ export default async function AdminProductDetailPage({
           ) : (
             <EmptyState title="Medya veya teknik dosya yok" body="Görsel, katalog PDF ve teknik dosya URL'si ekleyerek ürün dokümanlarını bayiye hazırlayabilirsiniz." />
           )}
-          {product.mediaAssets.length > 0 ? (
+          {mediaAssets.length > 0 ? (
             <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-950">Pasife alma modeli</p>
               <p className="text-sm leading-6 text-slate-600">
                 Medya kayitlari silinmez; audit ve CMS referanslari korunarak aktif/pasif durumuyla yayindan kaldirilir.
               </p>
               <div className="flex flex-wrap gap-2">
-                {product.mediaAssets.map((asset) => (
+                {mediaAssets.map((asset) => (
                   <CatalogActionForm key={`status-${asset.id}`} action={setProductMediaStatus} className="inline-flex">
                     <input type="hidden" name="id" value={asset.id} />
                     <input type="hidden" name="productId" value={product.id} />

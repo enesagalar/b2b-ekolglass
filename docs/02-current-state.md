@@ -1,5 +1,35 @@
 # Guncel Proje Durumu
 
+## 2026-08-01 - Faz 7.3 urun detay sorgusu ve katalog gorsel hatti
+
+- `/admin/urunler/[id]` artik her istekte stok, fiyat, uyumluluk ve medya
+  iliskilerinin tamamini yuklemez. Genel sekme yalniz yayin uygunlugu icin dar
+  fiyat/stok ozetlerini; diger sekmeler yalniz kendi tam kayitlarini sorgular.
+- Fiyat ve stok sekmelerindeki tam satirlar yayin uygunlugu hesabinda yeniden
+  kullanilir. Denetim sekmesi urun ve fiyat audit kayitlarini korurken medya,
+  uyumluluk, fiyat listesi ve depo ana verisini yuklemez.
+- Bilinmeyen `tab` degeri bos ekran veya yetki sapmasi yerine guvenli bicimde
+  `Genel` sekmesine doner. Fiyat ve stok sekmelerinin mevcut izin kapilari
+  korunur.
+- Urun karti, urun detay ana gorseli ve galeri kucuk gorselleri ortak
+  `CatalogImage` bilesenine tasindi. Portal icindeki medya `next/image`
+  optimizer, boyut ipucu ve lazy-load hattini kullanir; musteri tarafindan
+  yonetilen HTTPS kaynaklari kirilgan genis host allowlist'i acilmadan dogrudan
+  sunulur.
+- Sorgu plani ve gorsel hatti 17 hedefli testle sabitlendi. Tam yerel kabul:
+  lint, Next 16 typecheck, 19/19 Node, 470/470 Vitest, 42/42 migration
+  integrity, 0 production dependency vulnerability, production build ve
+  52/52 authenticated smoke basarili.
+- Browser kabulu: gercek admin urununde `Genel`, `Stok`, `Fiyat`, `Uyumluluk`,
+  `Medya` ve `Denetim` sekmeleri dogru aktif durumu gosterdi. 375 ve 1425 px
+  olcumlerinde yatay tasma, browser hata veya uyari kaydi yoktur. Yerel
+  veritabaninda yayindaki urunlere bagli aktif medya bulunmadigi icin canli
+  optimizer istegi yerine yerel/harici kaynak davranisi bilesen testiyle
+  kanitlandi.
+- Faz 7.3 yerel kod paketinde kalan kapanis isi, Turkce metin, klavye/focus ve
+  gercek iOS/Android kabul taramasidir. Repository `main` branch protection ve
+  resmi GitHub Actions Node 24 runtime gecisi ayri yonetim/CI bakimidir.
+
 ## 2026-08-01 - Faz 7.3 urun ve stok hareketi mobil UX
 
 - `/admin/urunler` 1280 px altinda kod, yayin durumu, arac/kategori baglami,
@@ -28,9 +58,8 @@
   action'larinin Node 20 runtime bildirimini Node 24'e zorlamasiyla ilgili
   deprecation annotation'i uretiyor; uygulama testi veya release kapisi hatasi
   degildir ve ayri CI bakim borcu olarak izlenir.
-- Faz 7.3 kapanmadi. Urun detay aktif-sekme sorgu optimizasyonu, katalog
-  gorsellerinin `next/image` kabulu ve repository branch protection ayari
-  siradadir.
+- Faz 7.3 kapanmadi. Turkce metin, klavye/focus, gercek cihaz kabul taramasi ve
+  repository branch protection ayari siradadir.
 
 ## 2026-08-01 - Faz 7.3 firma ve bayi basvurusu mobil UX
 
