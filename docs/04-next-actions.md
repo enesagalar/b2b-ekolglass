@@ -128,6 +128,9 @@ Tamamlanan:
     sayfalama kontrollerinin baglanti olmaktan cikarilmasi; 452 Vitest, 42
     migration, 52 authenticated smoke, production build ve 390/1440 px browser
     kabulunun tamamlanmasi.
+64. Commit `0d379be` icin GitHub Actions `30697297769` kalite ve release
+    artifact islerinin gecmesi; immutable image taramasi, provenance ve release
+    manifest uretiminin tamamlanmasi.
 
 Siradaki kabul ve ertelenmis paketler:
 

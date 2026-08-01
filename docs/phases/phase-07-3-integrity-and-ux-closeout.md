@@ -56,6 +56,8 @@ Durum: Devam ediyor; firma ve bayi basvurusu liste paketi tamamlandi.
 - Paket parcasi lint, typecheck, 19 Node, 452 Vitest, 42 migration, 0
   production audit, production build, 52 authenticated smoke ve 390/1440 px
   browser kabulunden gecti.
+- Commit `0d379be` icin GitHub Actions `30697297769` kalite ve immutable
+  release artifact islerini basariyla tamamladi.
 - Urun ve stok hareketi listelerinde kalan yogun mobil tablo/aksiyon
   noktalarini 360/390/768/1024 px kabulunden gecir.
 - Urun detay sorgularini aktif sekmeye gore daralt; katalog gorsellerini

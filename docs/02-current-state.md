@@ -18,6 +18,9 @@
   ve masaustu tablolar gizli; 1440 px'de tablolar aktif, mobil kayit aksiyonlari
   gizli. Yuksek sayfa numarasi son sayfaya cekiliyor ve browser hata/uyari
   gunlugu bos.
+- Commit `0d379be` icin GitHub Actions `30697297769` kalite ve release artifact
+  islerini basariyla tamamladi; immutable OCI image taramasi, provenance ve
+  release manifest hatti gecti.
 - Faz 7.3 kapanmadi. Urun/stok hareketi mobil kabul paketi, urun detay sorgu
   optimizasyonu ve repository branch protection ayari siradadir.
 
