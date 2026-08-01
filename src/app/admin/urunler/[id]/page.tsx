@@ -3,18 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
-  Boxes,
-  CircleDollarSign,
   FileText,
-  History,
-  Image,
   LinkIcon,
   Plus,
   Rocket,
   Save,
-  ShieldCheck,
   Trash2,
-  Warehouse,
 } from "lucide-react";
 
 import { getProductPublicationReadiness, getProductStatusLabel, getStockVisibilityLabel, stockVisibilities } from "@/domain/catalog";
@@ -29,6 +23,7 @@ import {
   setProductMediaStatus,
 } from "@/features/catalog-management/actions";
 import { CatalogActionForm } from "@/features/catalog-management/catalog-action-form";
+import { ProductDetailTabs } from "@/features/catalog-management/product-detail-tabs";
 import { StockQuantityField } from "@/features/catalog-management/stock-quantity-field";
 import {
   getAdminProductDetailData,
@@ -41,24 +36,15 @@ export const dynamic = "force-dynamic";
 type ProductDetailParams = Promise<{ id: string }>;
 type ProductDetailSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-const tabs = [
-  { key: "genel", label: "Genel", icon: Boxes },
-  { key: "stok", label: "Stok", icon: Warehouse },
-  { key: "fiyat", label: "Fiyat", icon: CircleDollarSign },
-  { key: "uyumluluk", label: "Uyumluluk", icon: ShieldCheck },
-  { key: "medya", label: "Medya", icon: Image },
-  { key: "audit", label: "Denetim", icon: History },
-];
-
 const inputClass =
-  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-teal-700";
+  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-teal-700 focus-visible:ring-2 focus-visible:ring-teal-700/20";
 const labelClass = "grid gap-1.5 text-xs font-semibold text-slate-700";
 
 function SubmitButton({ label }: { label: string }) {
   return (
     <button
       type="submit"
-      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
     >
       <Save size={16} aria-hidden="true" />
       {label}
@@ -155,7 +141,7 @@ export default async function AdminProductDetailPage({
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
         <div>
-          <Link href="/admin/urunler" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950">
+          <Link href="/admin/urunler" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">
             <ArrowLeft size={16} aria-hidden="true" />
             Ürün listesine dön
           </Link>
@@ -217,37 +203,21 @@ export default async function AdminProductDetailPage({
         </CatalogActionForm>
       </section>
 
-      <nav className="flex gap-2 overflow-x-auto border-b border-slate-200 pb-2">
-        {tabs.filter((tab) =>
-          (tab.key !== "fiyat" || canReadPrice) &&
-          (tab.key !== "stok" || canReadStock),
-        ).map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.key;
-
-          return (
-            <Link
-              key={tab.key}
-              href={`/admin/urunler/${product.id}?tab=${tab.key}`}
-              className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-semibold ${
-                isActive ? "bg-slate-950 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              <Icon size={16} aria-hidden="true" />
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <ProductDetailTabs
+        productId={product.id}
+        activeTab={activeTab}
+        canReadPrice={canReadPrice}
+        canReadStock={canReadStock}
+      />
 
       {activeTab === "genel" ? (
         <section className="grid gap-4 lg:grid-cols-3">
           <Field label="Ürün kodu" value={product.code} />
           <Field label="Kategori" value={product.category.name} />
-          <Field label="Arac" value={vehicle || "Proje / olcu bazli"} />
+          <Field label="Araç" value={vehicle || "Proje / ölçü bazlı"} />
           <Field label="Cam tipi" value={product.glassType} />
           <Field label="Pozisyon" value={product.glassPosition} />
-          <Field label="Olcu" value={product.dimensions} />
+          <Field label="Ölçü" value={product.dimensions} />
           <Field label="Kalınlık" value={product.thicknessMm ? `${product.thicknessMm.toString()} mm` : null} />
           <Field label="Renk" value={product.tint} />
           <div className="rounded-lg border border-slate-200 bg-white p-5 lg:col-span-3">
@@ -257,7 +227,7 @@ export default async function AdminProductDetailPage({
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <Field label="İşleme notları" value={product.processingNotes} />
-              <Field label="Uyumluluk notlari" value={product.compatibilityNotes} />
+              <Field label="Uyumluluk notları" value={product.compatibilityNotes} />
             </div>
           </div>
         </section>
@@ -493,7 +463,7 @@ export default async function AdminProductDetailPage({
           <CatalogActionForm action={saveProductCompatibility} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
               <Plus size={16} aria-hidden="true" />
-              Uyumluluk veya OEM referansi ekle
+              Uyumluluk veya OEM referansı ekle
             </div>
             <input type="hidden" name="productId" value={product.id} />
             <div className="grid gap-3 lg:grid-cols-[1fr_1fr_0.5fr_0.5fr]">
@@ -506,17 +476,17 @@ export default async function AdminProductDetailPage({
                 <input name="vehicleModel" required defaultValue={product.vehicleModel ?? ""} className={inputClass} />
               </label>
               <label className={labelClass}>
-                Baslangic
+                Başlangıç yılı
                 <input name="yearStart" type="number" min={1900} max={2100} defaultValue={product.yearStart ?? ""} className={inputClass} />
               </label>
               <label className={labelClass}>
-                Bitis
+                Bitiş yılı
                 <input name="yearEnd" type="number" min={1900} max={2100} defaultValue={product.yearEnd ?? ""} className={inputClass} />
               </label>
             </div>
             <div className="grid gap-3 lg:grid-cols-[0.8fr_1.4fr_auto]">
               <label className={labelClass}>
-                OEM referansi
+                OEM referansı
                 <input name="oemReference" className={inputClass} placeholder="OEM / muadil kod" />
               </label>
               <label className={labelClass}>
@@ -541,7 +511,7 @@ export default async function AdminProductDetailPage({
                         {compatibility.vehicleBrand} {compatibility.vehicleModel}
                       </p>
                       <p className="mt-2 text-xs font-semibold text-slate-500">
-                        {[compatibility.yearStart, compatibility.yearEnd].filter(Boolean).join(" - ") || "Yil araligi yok"}
+                        {[compatibility.yearStart, compatibility.yearEnd].filter(Boolean).join(" - ") || "Yıl aralığı yok"}
                       </p>
                     </div>
                     <div className="grid gap-3">
@@ -557,16 +527,16 @@ export default async function AdminProductDetailPage({
                       </div>
                       <div className="grid gap-3 md:grid-cols-2">
                         <label className={labelClass}>
-                          Baslangic
+                          Başlangıç yılı
                           <input name="yearStart" type="number" min={1900} max={2100} defaultValue={compatibility.yearStart ?? ""} className={inputClass} />
                         </label>
                         <label className={labelClass}>
-                          Bitis
+                          Bitiş yılı
                           <input name="yearEnd" type="number" min={1900} max={2100} defaultValue={compatibility.yearEnd ?? ""} className={inputClass} />
                         </label>
                       </div>
                       <label className={labelClass}>
-                        OEM referansi
+                        OEM referansı
                         <input name="oemReference" defaultValue={compatibility.oemReference ?? ""} className={inputClass} />
                       </label>
                       <label className={labelClass}>
@@ -586,7 +556,7 @@ export default async function AdminProductDetailPage({
                       className="inline-flex h-9 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-700 transition hover:bg-red-100"
                     >
                       <Trash2 size={14} aria-hidden="true" />
-                      Uyumlulugu sil
+                      Uyumluluğu sil
                     </button>
                   </CatalogActionForm>
                 </article>
@@ -608,18 +578,18 @@ export default async function AdminProductDetailPage({
             <input type="hidden" name="productId" value={product.id} />
             <div className="grid gap-3 lg:grid-cols-[1fr_1fr_0.7fr]">
               <label className={labelClass}>
-                Baslik
-                <input name="title" required className={inputClass} placeholder="Teknik cizim PDF" />
+                Başlık
+                <input name="title" required className={inputClass} placeholder="Teknik çizim PDF" />
               </label>
               <label className={labelClass}>
                 URL
                 <input name="url" required type="url" className={inputClass} placeholder="https://..." />
               </label>
               <label className={labelClass}>
-                Kullanim
+                Kullanım amacı
                 <select name="usage" defaultValue="TECHNICAL_DOCUMENT" className={inputClass}>
                   <option value="PRODUCT_IMAGE">Ürün görseli</option>
-                  <option value="TECHNICAL_DOCUMENT">Teknik dokuman</option>
+                  <option value="TECHNICAL_DOCUMENT">Teknik doküman</option>
                   <option value="CATALOG_PDF">Katalog PDF</option>
                   <option value="CERTIFICATE">Sertifika</option>
                 </select>
@@ -628,11 +598,11 @@ export default async function AdminProductDetailPage({
             <div className="grid gap-3 lg:grid-cols-[1fr_0.7fr_auto]">
               <label className={labelClass}>
                 Alternatif metin
-                <input name="altText" required className={inputClass} placeholder={`${product.name} teknik dosyasi`} />
+                <input name="altText" required className={inputClass} placeholder={`${product.name} teknik dosyası`} />
               </label>
               <label className={labelClass}>
-                Opsiyonel key
-                <input name="key" className={inputClass} placeholder="Bos birakilabilir" />
+                Dosya anahtarı (isteğe bağlı)
+                <input name="key" className={inputClass} placeholder="Boş bırakılabilir" />
               </label>
               <div className="flex items-end gap-4">
                 <label className="inline-flex h-10 items-center gap-2 text-sm font-medium text-slate-700">
@@ -660,14 +630,14 @@ export default async function AdminProductDetailPage({
                           </span>
                         </div>
                       </div>
-                      <a href={asset.url} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700">
+                      <a href={asset.url} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">
                         <LinkIcon size={14} aria-hidden="true" />
-                      Ac
+                      Aç
                     </a>
                   </div>
                   <div className="grid gap-3">
                     <label className={labelClass}>
-                      Baslik
+                      Başlık
                       <input name="title" required defaultValue={asset.title} className={inputClass} />
                     </label>
                     <label className={labelClass}>
@@ -680,7 +650,7 @@ export default async function AdminProductDetailPage({
                     </label>
                     <div className="grid gap-3 md:grid-cols-2">
                       <label className={labelClass}>
-                        Kullanim
+                        Kullanım kodu
                         <input name="usage" required defaultValue={asset.usage} className={inputClass} />
                       </label>
                       <label className={labelClass}>
@@ -706,7 +676,7 @@ export default async function AdminProductDetailPage({
             <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-950">Pasife alma modeli</p>
               <p className="text-sm leading-6 text-slate-600">
-                Medya kayitlari silinmez; audit ve CMS referanslari korunarak aktif/pasif durumuyla yayindan kaldirilir.
+                Medya kayıtları silinmez; denetim ve CMS referansları korunarak aktif/pasif durumuyla yayından kaldırılır.
               </p>
               <div className="flex flex-wrap gap-2">
                 {mediaAssets.map((asset) => (

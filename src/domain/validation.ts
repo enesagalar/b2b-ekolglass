@@ -120,18 +120,18 @@ export const productBulkPublicationSchema = z.object({
 
 export const mediaAssetFormSchema = z.object({
   id: optionalText(120),
-  productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+  productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
   key: optionalText(120),
   title: z.string().trim().min(2, "Medya basligi zorunludur.").max(160),
   url: z.url("Gecerli bir medya URL'i girin.").max(1000),
   altText: z.string().trim().min(2, "Alternatif metin zorunludur.").max(200),
-  usage: z.string().trim().min(2, "Kullanim tipi zorunludur.").max(80),
+  usage: z.string().trim().min(2, "Kullanım tipi zorunludur.").max(80),
   isActive: checkboxBoolean.default(false),
 });
 
 export const mediaAssetStatusFormSchema = z.object({
-  id: z.string().trim().min(1, "Medya kaydi secimi zorunludur."),
-  productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+  id: z.string().trim().min(1, "Medya kaydı seçimi zorunludur."),
+  productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
   isActive: checkboxBoolean.default(false),
 });
 
@@ -292,13 +292,13 @@ export const priceListFormSchema = z
       context.addIssue({ code: "custom", path: ["expectedUpdatedAt"], message: "Fiyat listesi sürümü geçersiz." });
     }
     if (data.startsAt && Number.isNaN(Date.parse(data.startsAt))) {
-      context.addIssue({ code: "custom", path: ["startsAt"], message: "Baslangic tarihi gecersiz." });
+      context.addIssue({ code: "custom", path: ["startsAt"], message: "Başlangıç tarihi geçersiz." });
     }
     if (data.endsAt && Number.isNaN(Date.parse(data.endsAt))) {
-      context.addIssue({ code: "custom", path: ["endsAt"], message: "Bitis tarihi gecersiz." });
+      context.addIssue({ code: "custom", path: ["endsAt"], message: "Bitiş tarihi geçersiz." });
     }
     if (data.startsAt && data.endsAt && Date.parse(data.endsAt) <= Date.parse(data.startsAt)) {
-      context.addIssue({ code: "custom", path: ["endsAt"], message: "Bitis tarihi baslangictan sonra olmalidir." });
+      context.addIssue({ code: "custom", path: ["endsAt"], message: "Bitiş tarihi başlangıçtan sonra olmalıdır." });
     }
   });
 
@@ -368,7 +368,7 @@ export const productFormSchema = z
 export const productCompatibilityFormSchema = z
   .object({
     id: optionalText(120),
-    productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+    productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
     vehicleBrand: z.string().trim().min(2, "Marka zorunludur.").max(80),
     vehicleModel: z.string().trim().min(1, "Model zorunludur.").max(100),
     yearStart: optionalInt,
@@ -383,7 +383,7 @@ export const productCompatibilityFormSchema = z
     ) {
       context.addIssue({
         code: "custom",
-        message: "Baslangic yili 1900-2100 arasinda olmalidir.",
+        message: "Başlangıç yılı 1900-2100 arasında olmalıdır.",
         path: ["yearStart"],
       });
     }
@@ -394,7 +394,7 @@ export const productCompatibilityFormSchema = z
     ) {
       context.addIssue({
         code: "custom",
-        message: "Bitis yili 1900-2100 arasinda olmalidir.",
+        message: "Bitiş yılı 1900-2100 arasında olmalıdır.",
         path: ["yearEnd"],
       });
     }
@@ -406,15 +406,15 @@ export const productCompatibilityFormSchema = z
     ) {
       context.addIssue({
         code: "custom",
-        message: "Bitis yili baslangic yilindan kucuk olamaz.",
+        message: "Bitiş yılı başlangıç yılından küçük olamaz.",
         path: ["yearEnd"],
       });
     }
   });
 
 export const productCompatibilityDeleteFormSchema = z.object({
-  id: z.string().trim().min(1, "Uyumluluk kaydi secimi zorunludur."),
-  productId: z.string().trim().min(1, "Urun secimi zorunludur."),
+  id: z.string().trim().min(1, "Uyumluluk kaydı seçimi zorunludur."),
+  productId: z.string().trim().min(1, "Ürün seçimi zorunludur."),
 });
 
 export const stockFormSchema = z

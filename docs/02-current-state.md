@@ -1,5 +1,31 @@
 # Guncel Proje Durumu
 
+## 2026-08-01 - Faz 7.3 Turkce dil ve erisilebilirlik kapanisi
+
+- Urun detay, kategori yonetimi ve urun liste filtrelerinde kullaniciya
+  gorunen ASCII/Turkcesiz metinler dogal Turkce operasyon diline cevrildi.
+  Ayni formlardan donen validation mesajlari da Turkce karakterlerle
+  guncellendi.
+- Urun detay sekmeleri erisilebilir navigasyon adi, `aria-current="page"`,
+  gorunur klavye odagi ve gizli scrollbar ile ortak bilesene tasindi. Fiyat ve
+  stok sekmelerinin mevcut izin kapilari korunuyor; yetkisiz sekme DOM'a
+  girmiyor.
+- Public ve bayi urun kataloglarindaki pasif `Onceki`/`Sonraki` kontrolleri
+  tiklanabilir gorunen link olmaktan cikarildi ve ortak erisilebilir sayfalama
+  sozlesmesine baglandi.
+- Mobil kategori ve urun detay gorunumleri gorsel olarak kontrol edildi.
+  Urun detayinda 360/390/768/1024/1440 isteklerinin tamaminda yatay belge
+  tasmasi yok; aktif sekme ve focus halkasi dogru. Mobil cekmece odakla
+  aciliyor, body scroll'u kilitliyor, Escape ile kapanip odagi menu dugmesine
+  geri veriyor. Kategori ve katalog 360/1440 kabulunde de tasma yok; tarayici
+  hata/uyari gunlugu bos.
+- Yerel kabul: lint, Next 16 typecheck, 19/19 Node, 472/472 Vitest, 42/42
+  migration integrity, 0 production dependency vulnerability, production
+  build, release lifecycle demo ve 52/52 authenticated smoke basarili.
+- Faz 7.3 icin yerel kod, masaustu responsive ve otomasyon kabul kapsaminda
+  kalan bilinen bir blok yoktur. Gercek iOS Safari/Android Chrome, production
+  ortam kaniti ve repository branch protection harici kabul kapilaridir.
+
 ## 2026-08-01 - Faz 7.3 urun detay sorgusu ve katalog gorsel hatti
 
 - `/admin/urunler/[id]` artik her istekte stok, fiyat, uyumluluk ve medya
@@ -31,9 +57,9 @@
   image taramasi, provenance ve release manifest hatti gecti. Tek annotation,
   pinned resmi GitHub action'larinin Node 20 taniminin runner tarafindan Node
   24'e zorlanmasiyla ilgili mevcut CI bakim kaydidir.
-- Faz 7.3 yerel kod paketinde kalan kapanis isi, Turkce metin, klavye/focus ve
-  gercek iOS/Android kabul taramasidir. Repository `main` branch protection ve
-  resmi GitHub Actions Node 24 runtime gecisi ayri yonetim/CI bakimidir.
+- Bu paketin Turkce metin ve klavye/focus kapanisi sonraki kabul diliminde
+  tamamlandi. Gercek iOS/Android, repository `main` branch protection ve resmi
+  GitHub Actions Node 24 runtime gecisi harici kabul/bakim kaydidir.
 
 ## 2026-08-01 - Faz 7.3 urun ve stok hareketi mobil UX
 

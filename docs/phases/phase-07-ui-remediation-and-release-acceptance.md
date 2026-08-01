@@ -1,7 +1,24 @@
 # Faz 7 - UI Remediation and Release Acceptance
 
-Status: In progress; local integrity, dependency and secondary-route UX gates remain
+Status: Local code acceptance complete; external production and real-device evidence remain
 Started: 2026-07-24
+
+## 2026-08-01 - Turkce dil, klavye ve responsive kabul kapanisi
+
+- Urun detay ve kategori yonetiminde gorunen Turkcesiz metinler ve validation
+  geri bildirimleri dogal Turkceye cevrildi.
+- Urun detay sekmeleri erisilebilir navigasyon adi, aktif sayfa bildirimi,
+  gorunur focus ve yetkiye gore fail-closed gorunurluk kullaniyor.
+- Katalog sayfalama sinirlarinda pasif yonler link degildir.
+- Urun detayi 360/390/768/1024/1440 isteklerinde yatay tasmasizdir. Mobil
+  cekmece focus, body-scroll kilidi, Escape ve focus-return kabulunu gecti.
+  Kategori ve katalogta 360/1440 px kontrolleri ve browser hata/uyari gunlugu
+  temizdir.
+- Kabul: lint, typecheck, 19 Node, 472 Vitest, 42 migration integrity, 0
+  production dependency vulnerability, production build, release demo ve 52
+  authenticated smoke basarili.
+- Lokal kod kabulunde acik bir Faz 7.3 kalemi yoktur. Faz 7 production GO icin
+  asagidaki harici ortam ve gercek cihaz kanitlari zorunlu olmaya devam eder.
 
 ## 2026-07-29 - Tekliften siparise ticari butunluk
 
@@ -122,7 +139,7 @@ Status: Implemented and locally accepted.
 - Retain the B2B sales focus; do not add corporate-site pages.
 - Continue removing nested-card patterns from high-use catalog, price, order and stock routes.
 
-Status: Core surfaces implemented; dense secondary-route cleanup remains.
+Status: Implemented and locally accepted.
 
 ## Package 3 - Repeatable Release Demo
 

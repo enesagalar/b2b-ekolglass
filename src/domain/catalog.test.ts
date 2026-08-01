@@ -412,7 +412,7 @@ describe("catalog validation schemas", () => {
       productId: "product-1",
       title: "Teknik PDF",
       url: "https://cdn.example.com/teknik.pdf",
-      altText: "Teknik dokuman",
+      altText: "Teknik doküman",
       usage: "TECHNICAL_DOCUMENT",
       isActive: "on",
     });

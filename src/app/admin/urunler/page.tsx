@@ -695,7 +695,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 </select>
               </label>
               <label className={labelClass}>
-                Yayin
+                Yayın durumu
                 <select name="status" defaultValue={status} className={inputClass}>
                   <option value="">Tüm durumlar</option>
                   {productStatuses.map((productStatus) => (

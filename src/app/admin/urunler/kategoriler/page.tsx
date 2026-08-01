@@ -8,9 +8,9 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const inputClass =
-  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-teal-700";
+  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-teal-700 focus-visible:ring-2 focus-visible:ring-teal-700/20";
 const textareaClass =
-  "min-h-20 w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-700";
+  "min-h-20 w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-700 focus-visible:ring-2 focus-visible:ring-teal-700/20";
 const labelClass = "grid gap-1.5 text-xs font-semibold text-slate-700";
 const panelClass = "rounded-lg border border-slate-200 bg-white p-5 shadow-sm";
 
@@ -18,7 +18,7 @@ function SubmitButton({ label }: { label: string }) {
   return (
     <button
       type="submit"
-      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
     >
       <Save size={16} aria-hidden="true" />
       {label}
@@ -35,14 +35,14 @@ export default async function AdminProductCategoriesPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <Link href="/admin/urunler" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950">
+        <Link href="/admin/urunler" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">
           <ArrowLeft size={16} aria-hidden="true" />
-          Urun operasyonuna don
+          Ürün operasyonuna dön
         </Link>
         <p className="mt-5 text-sm font-medium text-teal-800">Katalog taksonomisi</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-950">Kategori yonetimi</h1>
+        <h1 className="mt-2 text-3xl font-semibold text-slate-950">Kategori yönetimi</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Public katalog filtreleri ve admin urun formlari bu kategori kayitlarini kullanir.
+          Bayi kataloğundaki filtreler ve ürün formları bu kategori kayıtlarını kullanır.
         </p>
       </div>
 
@@ -53,22 +53,22 @@ export default async function AdminProductCategoriesPage() {
         </div>
         <CatalogActionForm action={saveCategory} className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr_0.35fr_auto]">
           <label className={labelClass}>
-            Kategori adi
-            <input name="name" required className={inputClass} placeholder="Otomotiv Cami" />
+            Kategori adı
+            <input name="name" required className={inputClass} placeholder="Otomotiv Camı" />
           </label>
           <label className={labelClass}>
             Slug
-            <input name="slug" className={inputClass} placeholder="Bossa addan uretilir" />
+            <input name="slug" className={inputClass} placeholder="Boşsa addan otomatik üretilir" />
           </label>
           <label className={labelClass}>
-            Sira
+            Sıra
             <input name="sortOrder" type="number" min={0} defaultValue={0} className={inputClass} />
           </label>
           <div className="flex items-end">
             <SubmitButton label="Kategori ekle" />
           </div>
           <label className={`${labelClass} lg:col-span-4`}>
-            Aciklama
+            Açıklama
             <textarea name="description" className={textareaClass} />
           </label>
         </CatalogActionForm>
@@ -76,7 +76,7 @@ export default async function AdminProductCategoriesPage() {
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-950">Kategori kayitlari</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Kategori kayıtları</h2>
           <p className="mt-1 text-sm text-slate-500">{categories.length} kategori listeleniyor.</p>
         </div>
         <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
@@ -84,7 +84,7 @@ export default async function AdminProductCategoriesPage() {
             <CatalogActionForm key={category.id} action={saveCategory} className="grid gap-3 rounded-lg border border-slate-200 p-4">
               <input type="hidden" name="id" value={category.id} />
               <label className={labelClass}>
-                Kategori adi
+                Kategori adı
                 <input name="name" required defaultValue={category.name} className={inputClass} />
               </label>
               <label className={labelClass}>
@@ -92,16 +92,16 @@ export default async function AdminProductCategoriesPage() {
                 <input name="slug" defaultValue={category.slug} className={inputClass} />
               </label>
               <label className={labelClass}>
-                Sira
+                Sıra
                 <input name="sortOrder" type="number" min={0} defaultValue={category.sortOrder} className={inputClass} />
               </label>
               <label className={labelClass}>
-                Aciklama
+                Açıklama
                 <textarea name="description" defaultValue={category.description ?? ""} className={textareaClass} />
               </label>
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium text-slate-500">{category._count.products} urun</span>
-                <SubmitButton label="Guncelle" />
+                <span className="text-xs font-medium text-slate-500">{category._count.products} ürün</span>
+                <SubmitButton label="Güncelle" />
               </div>
             </CatalogActionForm>
           ))}

@@ -138,22 +138,28 @@ Tamamlanan:
 66. Commit `6a7bf69` icin GitHub Actions `30698332950` kalite ve release
     artifact islerinin gecmesi; recovery, immutable image taramasi, provenance
     ve release manifest kanitlarinin uretilmesi.
+67. Urun detay sorgularinin aktif sekmeye gore daraltilmasi ve katalog
+    gorsellerinin ortak `next/image` hattina alinmasi; 470 Vitest ve 52 smoke
+    kabulunun tamamlanmasi.
+68. Urun detay/kategori Turkce dil temizligi, erisilebilir aktif sekme ve
+    gorunur focus sozlesmesi; katalog pasif sayfalamasinin gercek link olmaktan
+    cikarilmasi.
+69. 472 Vitest, 19 Node, 42 migration, 52 authenticated smoke, release demo,
+    production build ve urun detayinda 360/390/768/1024/1440 px tarayici
+    kabulunun gecmesi; mobil cekmece focus/Escape/body-scroll davranisinin
+    dogrulanmasi.
 
 Siradaki kabul ve ertelenmis paketler:
 
 1. GitHub `main` branch protection ve zorunlu CI kontrolunun repository
    ayarlarinda etkin oldugunu dogrulamak.
-2. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
-   sozlesmesiyle son bir kabul taramasindan gecirmek.
-3. Urun detay sorgularini aktif sekmeye gore daraltmak ve katalog gorsellerini
-   `next/image` ile optimize etmek.
-4. GitHub'in pinned resmi action'larindaki Node 20 deprecation annotation'ini
+2. GitHub'in pinned resmi action'larindaki Node 20 deprecation annotation'ini
    Node 24 uyumlu upstream surumlerle ayri CI bakim paketinde kapatmak.
-5. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
+3. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
-6. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
+4. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde
    tamamlamak.
-7. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
+5. ERP senkronizasyonu ve urun gorsel otomasyonunu portal ici cekirdek
    operasyonlardan ayri paketler olarak planlamak.
 
 ## 2026-07-28 - Faz 7.3 bayi siparis UX paketi

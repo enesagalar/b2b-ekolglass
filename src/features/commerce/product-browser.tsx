@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CarFront, Filter, PackageSearch, Search } from "lucide-react";
 
+import { ListPagination } from "@/components/list-pagination";
 import { canViewCatalogPrices, productGlassTypes, resolveCatalogStockSummary, selectCatalogPrice, type CatalogViewer } from "@/domain/catalog";
 import { automaticStockStatuses } from "@/domain/stock-status";
 import { getStatusLabel } from "@/domain/statuses";
@@ -91,7 +92,15 @@ export async function ProductBrowser({ searchParams, viewer, basePath, embedded 
         </div>
       ) : <div className="rounded-lg border border-dashed border-[#c4c6ca] bg-white px-6 py-16 text-center"><PackageSearch className="mx-auto text-[#a5a7ab]" size={34}/><h2 className="mt-4 text-base font-semibold">Eşleşen ürün bulunamadı</h2><p className="mt-2 text-sm text-[#68686d]">Arama ifadesini veya filtreleri değiştirerek tekrar deneyin.</p><Link href={basePath} className="mt-4 inline-flex text-sm font-semibold text-[#00639a]">Filtreleri temizle</Link></div>}
 
-      {data.totalPages > 1 ? <nav className="flex items-center justify-between border-t border-slate-200 pt-5"><Link aria-disabled={data.page===1} href={pageHref(basePath,searchParams,Math.max(1,data.page-1))} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold">Önceki</Link><span className="text-sm text-slate-500">{data.page} / {data.totalPages}</span><Link aria-disabled={data.page===data.totalPages} href={pageHref(basePath,searchParams,Math.min(data.totalPages,data.page+1))} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold">Sonraki</Link></nav> : null}
+      {data.totalPages > 1 ? (
+        <ListPagination
+          page={data.page}
+          totalPages={data.totalPages}
+          previousHref={pageHref(basePath, searchParams, data.page - 1)}
+          nextHref={pageHref(basePath, searchParams, data.page + 1)}
+          ariaLabel="Ürün kataloğu sayfaları"
+        />
+      ) : null}
     </section>
   );
 }

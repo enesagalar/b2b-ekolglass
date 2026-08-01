@@ -1038,7 +1038,7 @@ assert(
 );
 const categoriesHtml = await categoriesResponse.text();
 assert(
-  categoriesHtml.includes("Kategori yonetimi"),
+  categoriesHtml.includes("Kategori yönetimi"),
   "Admin product categories screen not rendered",
 );
 assert(
@@ -1248,7 +1248,7 @@ try {
   );
   const compatibilityHtml = await compatibilityResponse.text();
   assert(
-    compatibilityHtml.includes("Uyumluluk veya OEM referansi ekle"),
+    compatibilityHtml.includes("Uyumluluk veya OEM referansı ekle"),
     "Product compatibility create form not rendered",
   );
   assert(
@@ -1256,7 +1256,7 @@ try {
     "Product compatibility submit action not rendered",
   );
   assert(
-    compatibilityHtml.includes("Uyumlulugu sil"),
+    compatibilityHtml.includes("Uyumluluğu sil"),
     "Product compatibility delete action not rendered",
   );
   assert(
