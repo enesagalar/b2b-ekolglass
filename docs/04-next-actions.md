@@ -131,6 +131,10 @@ Tamamlanan:
 64. Commit `0d379be` icin GitHub Actions `30697297769` kalite ve release
     artifact islerinin gecmesi; immutable image taramasi, provenance ve release
     manifest uretiminin tamamlanmasi.
+65. Urun listesi ve stok hareket defterinin mobil kayit + genis ekran tablo
+    duzenine alinmasi; yuksek sayfanin son sayfaya cekilmesi, filtre baglaminin
+    korunmasi ve ortak erisilebilir sayfalama kullanilmasi; loading tasmasinin
+    giderilmesi, 453 Vitest, 52 smoke ve 390/1024/1440 px kabulunun gecmesi.
 
 Siradaki kabul ve ertelenmis paketler:
 
@@ -138,8 +142,8 @@ Siradaki kabul ve ertelenmis paketler:
    ayarlarinda etkin oldugunu dogrulamak.
 2. Faz 7.3 kapsamindaki yogun ikincil admin ekranlarini ayni gorev odakli UX
    sozlesmesiyle son bir kabul taramasindan gecirmek.
-3. Urun ve stok hareketi ekranlarinda kalan yogun mobil tablo/aksiyon
-   noktalarini kabul taramasindan gecirmek.
+3. Urun detay sorgularini aktif sekmeye gore daraltmak ve katalog gorsellerini
+   `next/image` ile optimize etmek.
 4. Gercek iOS Safari ve Android Chrome cihaz kabulunu yayin oncesi harici
    kabul kapisi olarak kaydetmek.
 5. City Lojistik canli adapterini resmi API dokumani ve test hesabi geldiginde

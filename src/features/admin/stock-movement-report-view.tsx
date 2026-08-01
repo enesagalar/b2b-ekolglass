@@ -1,6 +1,7 @@
-import { ArrowLeft, ArrowRight, Filter, History } from "lucide-react";
+import { Filter, History } from "lucide-react";
 import Link from "next/link";
 
+import { ListPagination } from "@/components/list-pagination";
 import { getAdminStockMovements } from "@/data/admin-stock-movements";
 
 const inputClass = "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700";
@@ -72,7 +73,7 @@ export async function StockMovementReportView({ searchParams }: { searchParams: 
         <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600"><History size={18} />{report.totalRows} hareket</div>
       </section>
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <form className="grid gap-3 lg:grid-cols-6 lg:items-end">
+        <form aria-label="Stok hareketlerini filtrele" className="grid gap-3 lg:grid-cols-6 lg:items-end">
           <input type="hidden" name="view" value="stock-movements" />
           <label className="grid gap-1.5 text-xs font-semibold text-slate-700 lg:col-span-2">Ürün veya kaynak<input name="q" defaultValue={filters.q} className={inputClass} /></label>
           <label className="grid gap-1.5 text-xs font-semibold text-slate-700">Depo<select name="warehouse" defaultValue={filters.warehouse} className={inputClass}><option value="">Tüm depolar</option>{report.warehouses.map((value) => <option key={value}>{value}</option>)}</select></label>
@@ -85,9 +86,63 @@ export async function StockMovementReportView({ searchParams }: { searchParams: 
         </form>
       </section>
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        {report.rows.length ? <div className="overflow-x-auto"><table className="w-full min-w-[1240px] text-left text-sm"><thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500"><tr><th className="px-4 py-3">Tarih</th><th className="px-4 py-3">Ürün / depo</th><th className="px-4 py-3">Hareket</th><th className="px-4 py-3 text-right">Fiziksel</th><th className="px-4 py-3 text-right">Rezerve</th><th className="px-4 py-3">Kaynak</th><th className="px-4 py-3">Aktör / gerekçe</th></tr></thead><tbody className="divide-y divide-slate-100">{report.rows.map((row) => <tr key={row.id}><td className="whitespace-nowrap px-4 py-4 text-slate-500">{new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(row.createdAt)}</td><td className="px-4 py-4"><Link href={`/admin/urunler/${row.productId}`} className="font-semibold text-teal-800">{row.productCode}</Link><p className="mt-1 text-xs text-slate-500">{row.warehouseCode} · #{row.sequence}</p></td><td className="px-4 py-4 font-semibold">{movementLabels[row.movementType] ?? row.movementType}</td><td className="px-4 py-4 text-right tabular-nums"><span className={row.physicalDelta < 0 ? "text-red-700" : row.physicalDelta > 0 ? "text-emerald-700" : "text-slate-500"}>{row.physicalDelta > 0 ? "+" : ""}{row.physicalDelta}</span><p className="mt-1 text-xs text-slate-500">{row.beforeQuantity} → {row.afterQuantity}</p></td><td className="px-4 py-4 text-right tabular-nums"><span className={row.reservedDelta < 0 ? "text-red-700" : row.reservedDelta > 0 ? "text-amber-700" : "text-slate-500"}>{row.reservedDelta > 0 ? "+" : ""}{row.reservedDelta}</span><p className="mt-1 text-xs text-slate-500">{row.beforeReservedQuantity} → {row.afterReservedQuantity}</p></td><td className="px-4 py-4"><span className="font-semibold">{sourceLabels[row.sourceType] ?? row.sourceType}</span><p className="mt-1 max-w-56 truncate text-xs text-slate-500" title={row.sourceId}>{row.sourceId}</p></td><td className="px-4 py-4"><span className="font-semibold">{row.actorName}</span><p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">{row.reason}</p></td></tr>)}</tbody></table></div> : <p className="px-5 py-14 text-center text-sm text-slate-500">Filtrelerle eşleşen stok hareketi yok.</p>}
+        {report.rows.length ? (
+          <>
+            <div className="divide-y divide-slate-200 xl:hidden">
+              {report.rows.map((row) => (
+                <article key={row.id} className="p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-950">{movementLabels[row.movementType] ?? row.movementType}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(row.createdAt)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">#{row.sequence}</span>
+                  </div>
+                  <div className="mt-4 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/admin/urunler/${row.productId}`} className="font-semibold text-teal-800">{row.productCode}</Link>
+                      <p className="mt-1 text-xs text-slate-500">Depo: {row.warehouseCode}</p>
+                    </div>
+                    <p className="text-right text-xs text-slate-500">{sourceLabels[row.sourceType] ?? row.sourceType}</p>
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-md bg-slate-50 p-3">
+                      <dt className="text-xs text-slate-500">Fiziksel değişim</dt>
+                      <dd className={`mt-1 font-semibold tabular-nums ${row.physicalDelta < 0 ? "text-red-700" : row.physicalDelta > 0 ? "text-emerald-700" : "text-slate-700"}`}>
+                        {row.physicalDelta > 0 ? "+" : ""}{row.physicalDelta}
+                      </dd>
+                      <dd className="mt-1 text-xs tabular-nums text-slate-500">{row.beforeQuantity} → {row.afterQuantity}</dd>
+                    </div>
+                    <div className="rounded-md bg-slate-50 p-3">
+                      <dt className="text-xs text-slate-500">Rezerve değişim</dt>
+                      <dd className={`mt-1 font-semibold tabular-nums ${row.reservedDelta < 0 ? "text-red-700" : row.reservedDelta > 0 ? "text-amber-700" : "text-slate-700"}`}>
+                        {row.reservedDelta > 0 ? "+" : ""}{row.reservedDelta}
+                      </dd>
+                      <dd className="mt-1 text-xs tabular-nums text-slate-500">{row.beforeReservedQuantity} → {row.afterReservedQuantity}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-4 border-t border-slate-100 pt-3 text-sm">
+                    <p className="font-semibold text-slate-800">{row.actorName}</p>
+                    <p className="mt-1 break-words text-xs leading-5 text-slate-500">{row.reason}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto xl:block">
+              <table className="w-full min-w-[1240px] text-left text-sm"><thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500"><tr><th className="px-4 py-3">Tarih</th><th className="px-4 py-3">Ürün / depo</th><th className="px-4 py-3">Hareket</th><th className="px-4 py-3 text-right">Fiziksel</th><th className="px-4 py-3 text-right">Rezerve</th><th className="px-4 py-3">Kaynak</th><th className="px-4 py-3">Aktör / gerekçe</th></tr></thead><tbody className="divide-y divide-slate-100">{report.rows.map((row) => <tr key={row.id}><td className="whitespace-nowrap px-4 py-4 text-slate-500">{new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(row.createdAt)}</td><td className="px-4 py-4"><Link href={`/admin/urunler/${row.productId}`} className="font-semibold text-teal-800">{row.productCode}</Link><p className="mt-1 text-xs text-slate-500">{row.warehouseCode} · #{row.sequence}</p></td><td className="px-4 py-4 font-semibold">{movementLabels[row.movementType] ?? row.movementType}</td><td className="px-4 py-4 text-right tabular-nums"><span className={row.physicalDelta < 0 ? "text-red-700" : row.physicalDelta > 0 ? "text-emerald-700" : "text-slate-500"}>{row.physicalDelta > 0 ? "+" : ""}{row.physicalDelta}</span><p className="mt-1 text-xs text-slate-500">{row.beforeQuantity} → {row.afterQuantity}</p></td><td className="px-4 py-4 text-right tabular-nums"><span className={row.reservedDelta < 0 ? "text-red-700" : row.reservedDelta > 0 ? "text-amber-700" : "text-slate-500"}>{row.reservedDelta > 0 ? "+" : ""}{row.reservedDelta}</span><p className="mt-1 text-xs text-slate-500">{row.beforeReservedQuantity} → {row.afterReservedQuantity}</p></td><td className="px-4 py-4"><span className="font-semibold">{sourceLabels[row.sourceType] ?? row.sourceType}</span><p className="mt-1 max-w-56 truncate text-xs text-slate-500" title={row.sourceId}>{row.sourceId}</p></td><td className="px-4 py-4"><span className="font-semibold">{row.actorName}</span><p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">{row.reason}</p></td></tr>)}</tbody></table>
+            </div>
+          </>
+        ) : <p className="px-5 py-14 text-center text-sm text-slate-500">Filtrelerle eşleşen stok hareketi yok.</p>}
+        <ListPagination
+          page={report.currentPage}
+          totalPages={report.pageCount}
+          previousHref={pageHref(query, Math.max(1, report.currentPage - 1))}
+          nextHref={pageHref(query, Math.min(report.pageCount, report.currentPage + 1))}
+          ariaLabel="Stok hareketi sayfaları"
+        />
       </section>
-      <nav className="flex items-center justify-between"><Link aria-disabled={page <= 1} href={pageHref(query, Math.max(1, page - 1))} className={`inline-flex items-center gap-2 text-sm font-semibold ${page <= 1 ? "pointer-events-none text-slate-300" : "text-teal-800"}`}><ArrowLeft size={16} />Önceki</Link><span className="text-sm text-slate-500">{Math.min(page, report.pageCount)} / {report.pageCount}</span><Link aria-disabled={page >= report.pageCount} href={pageHref(query, Math.min(report.pageCount, page + 1))} className={`inline-flex items-center gap-2 text-sm font-semibold ${page >= report.pageCount ? "pointer-events-none text-slate-300" : "text-teal-800"}`}>Sonraki<ArrowRight size={16} /></Link></nav>
     </div>
   );
 }

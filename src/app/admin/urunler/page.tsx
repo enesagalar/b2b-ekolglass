@@ -1,7 +1,5 @@
 import { randomUUID } from "node:crypto";
 import {
-  ArrowLeft,
-  ArrowRight,
   Boxes,
   CircleDollarSign,
   ChevronDown,
@@ -17,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { ListPagination } from "@/components/list-pagination";
 import {
   currencies,
   deriveStockStatus,
@@ -356,7 +355,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const categoryId = getSearchParam(resolvedSearchParams, "categoryId") ?? "";
   const status = getSearchParam(resolvedSearchParams, "status") ?? "";
   const stockStatus = getSearchParam(resolvedSearchParams, "stockStatus") ?? "";
-  const page = Math.max(1, Number(getSearchParam(resolvedSearchParams, "page") ?? 1) || 1);
+  const requestedPage = Math.max(1, Number(getSearchParam(resolvedSearchParams, "page") ?? 1) || 1);
   const listParams = new URLSearchParams();
 
   if (query) listParams.set("q", query);
@@ -366,7 +365,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   const productWhere = buildProductWhere({ query, categoryId, status, stockStatus });
 
-  const [categories, priceLists, activeWarehouses, products, counts, filteredProductCount] = await Promise.all([
+  const [categories, priceLists, activeWarehouses, counts, filteredProductCount] = await Promise.all([
     prisma.productCategory.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: { _count: { select: { products: true } } },
@@ -379,21 +378,6 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       orderBy: [{ name: "asc" }, { code: "asc" }],
       select: { code: true, name: true },
     }),
-    prisma.product.findMany({
-      where: productWhere,
-      include: {
-        category: true,
-        stockItems: { orderBy: { warehouseCode: "asc" } },
-        prices: {
-          where: canReadPrice ? {} : { id: "__price_access_denied__" },
-          include: { priceList: true },
-          orderBy: [{ priceList: { name: "asc" } }, { minQuantity: "asc" }],
-        },
-      },
-      orderBy: [{ updatedAt: "desc" }, { code: "asc" }],
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
     Promise.all([
       prisma.product.count(),
       prisma.product.count({ where: { status: "ACTIVE" } }),
@@ -404,11 +388,27 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   ]);
 
   const [totalProducts, activeProducts, stockAlerts, activePriceLists] = counts;
+  const totalPages = Math.max(1, Math.ceil(filteredProductCount / pageSize));
+  const page = Math.min(requestedPage, totalPages);
+  const products = await prisma.product.findMany({
+    where: productWhere,
+    include: {
+      category: true,
+      stockItems: { orderBy: { warehouseCode: "asc" } },
+      prices: {
+        where: canReadPrice ? {} : { id: "__price_access_denied__" },
+        include: { priceList: true },
+        orderBy: [{ priceList: { name: "asc" } }, { minQuantity: "asc" }],
+      },
+    },
+    orderBy: [{ updatedAt: "desc" }, { code: "asc" }],
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
   const canCreateProduct =
     categories.length > 0 &&
     priceLists.length > 0 &&
     activeWarehouses.length > 0;
-  const totalPages = Math.max(1, Math.ceil(filteredProductCount / pageSize));
   const hasActiveFilter = Boolean(query || categoryId || status || stockStatus);
 
   return (
@@ -659,9 +659,9 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           <div className="border-b border-slate-200 px-5 py-4">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">Urun kayitlari</h2>
+                <h2 className="text-lg font-semibold text-slate-950">Ürün kayıtları</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {filteredProductCount} kayit listeleniyor. Sayfa {Math.min(page, totalPages)} / {totalPages}.
+                  {filteredProductCount} kayıt listeleniyor. Sayfa {page} / {totalPages}.
                 </p>
               </div>
               {hasActiveFilter ? (
@@ -670,7 +670,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 </Link>
               ) : null}
             </div>
-            <form className="mt-5 grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 xl:grid-cols-[1.4fr_0.8fr_0.7fr_0.8fr_auto]" action="/admin/urunler">
+            <form aria-label="Ürün listesini filtrele" className="mt-5 grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 xl:grid-cols-[1.4fr_0.8fr_0.7fr_0.8fr_auto]" action="/admin/urunler">
               <label className="grid gap-1.5 text-xs font-semibold text-slate-700">
                 Arama
                 <span className="flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-3">
@@ -679,14 +679,14 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                     name="q"
                     defaultValue={query}
                     className="w-full bg-transparent text-sm font-normal outline-none"
-                    placeholder="Kod, urun adi, marka, model, olcu"
+                    placeholder="Kod, ürün adı, marka, model, ölçü"
                   />
                 </span>
               </label>
               <label className={labelClass}>
                 Kategori
                 <select name="categoryId" defaultValue={categoryId} className={inputClass}>
-                  <option value="">Tum kategoriler</option>
+                  <option value="">Tüm kategoriler</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
@@ -697,7 +697,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               <label className={labelClass}>
                 Yayin
                 <select name="status" defaultValue={status} className={inputClass}>
-                  <option value="">Tum durumlar</option>
+                  <option value="">Tüm durumlar</option>
                   {productStatuses.map((productStatus) => (
                     <option key={productStatus} value={productStatus}>
                       {getProductStatusLabel(productStatus)}
@@ -725,7 +725,55 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               </button>
             </form>
           </div>
-          <div className="overflow-x-auto">
+          {products.length > 0 ? (
+            <div className="divide-y divide-slate-200 xl:hidden">
+              {products.map((product) => {
+                const stock = product.stockItems[0];
+                const price = canReadPrice ? product.prices[0] : null;
+                const vehicle = [product.vehicleBrand, product.vehicleModel].filter(Boolean).join(" ");
+                return (
+                  <article key={product.id} className="p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs font-semibold text-teal-800">{product.code}</p>
+                        <h3 className="mt-1 break-words text-sm font-semibold text-slate-950">{product.name}</h3>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">{vehicle || "Proje / ölçü bazlı"} · {product.category.name}</p>
+                      </div>
+                      <span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                        {getProductStatusLabel(product.status)}
+                      </span>
+                    </div>
+                    <dl className={`mt-4 grid gap-3 text-sm ${canReadPrice ? "grid-cols-2" : "grid-cols-1"}`}>
+                      <div className="rounded-md bg-slate-50 p-3">
+                        <dt className="text-xs text-slate-500">Stok</dt>
+                        <dd className="mt-1 font-semibold text-slate-900">{stock ? `${stock.quantity} adet` : "Stok kaydı yok"}</dd>
+                        <dd className="mt-1 text-xs text-slate-500">{stock ? getStatusLabel(deriveStockStatus(stock.quantity, stock.reservedQuantity)) : "Depo satırı ekleyin"}</dd>
+                      </div>
+                      {canReadPrice ? (
+                        <div className="rounded-md bg-slate-50 p-3">
+                          <dt className="text-xs text-slate-500">Fiyat</dt>
+                          <dd className="mt-1 font-semibold text-slate-900">{price ? `${price.priceList.currency} ${price.amount.toString()}` : "Fiyat kaydı yok"}</dd>
+                          <dd className="mt-1 text-xs text-slate-500">{price ? price.priceList.name : "Liste satırı ekleyin"}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                    <Link
+                      href={`/admin/urunler/${product.id}`}
+                      className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-teal-700 hover:text-teal-800"
+                    >
+                      <Eye size={16} aria-hidden="true" /> Ürün kaydını aç
+                    </Link>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="px-5 py-14 text-center xl:hidden">
+              <p className="font-semibold text-slate-800">Filtrelerle eşleşen ürün bulunamadı</p>
+              <p className="mt-1 text-sm text-slate-500">Arama metnini veya filtreleri değiştirerek yeniden deneyin.</p>
+            </div>
+          )}
+          <div className="hidden overflow-x-auto xl:block">
             <table className="w-full min-w-[1160px] border-collapse text-left text-sm">
               <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
                 <tr>
@@ -781,40 +829,23 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 {products.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
-                      Bu filtrelerle eslesen urun bulunamadi.
+                      Bu filtrelerle eşleşen ürün bulunamadı.
                     </td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
           </div>
-          <div className="flex flex-col justify-between gap-3 border-t border-slate-200 px-5 py-4 md:flex-row md:items-center">
-            <p className="text-xs font-medium text-slate-500">
-              {pageSize} kayit/sayfa. Toplam {filteredProductCount} kayit.
-            </p>
-            <div className="flex items-center gap-2">
-              <Link
-                href={buildPageHref(listParams, Math.max(1, page - 1))}
-                aria-disabled={page <= 1}
-                className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-semibold ${
-                  page <= 1 ? "pointer-events-none border-slate-200 text-slate-300" : "border-slate-300 text-slate-700 hover:bg-slate-50"
-                }`}
-              >
-                <ArrowLeft size={14} aria-hidden="true" />
-                Onceki
-              </Link>
-              <Link
-                href={buildPageHref(listParams, Math.min(totalPages, page + 1))}
-                aria-disabled={page >= totalPages}
-                className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-semibold ${
-                  page >= totalPages ? "pointer-events-none border-slate-200 text-slate-300" : "border-slate-300 text-slate-700 hover:bg-slate-50"
-                }`}
-              >
-                Sonraki
-                <ArrowRight size={14} aria-hidden="true" />
-              </Link>
-            </div>
+          <div className="border-t border-slate-200 px-4 pt-4 text-xs font-medium text-slate-500 sm:px-5">
+            {pageSize} kayıt/sayfa · Toplam {filteredProductCount} kayıt
           </div>
+          <ListPagination
+            page={page}
+            totalPages={totalPages}
+            previousHref={buildPageHref(listParams, Math.max(1, page - 1))}
+            nextHref={buildPageHref(listParams, Math.min(totalPages, page + 1))}
+            ariaLabel="Ürün listesi sayfaları"
+          />
         </section>
     </div>
   );

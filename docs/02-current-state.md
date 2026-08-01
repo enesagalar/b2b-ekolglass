@@ -1,5 +1,30 @@
 # Guncel Proje Durumu
 
+## 2026-08-01 - Faz 7.3 urun ve stok hareketi mobil UX
+
+- `/admin/urunler` 1280 px altinda kod, yayin durumu, arac/kategori baglami,
+  stok, yetkili kullanici icin fiyat ve tek detay aksiyonunu amaca ozel kayit
+  olarak sunar. Genis ekranda yogun tablo korunur.
+- `/admin/raporlar?view=stock-movements` mobilde hareket turu, zaman, urun/depo,
+  fiziksel ve rezerve once/sonra degerleri, kaynak, aktor ve gerekceyi okunabilir
+  defter kayitlarina ayirir.
+- Her iki liste gecersiz yuksek sayfa numarasini son sayfaya ceker. Hareket
+  defteri filtreleri sayfalama boyunca korunur; pasif yonler baglanti degildir.
+- Is kurallari, stok hareket defteri yazimi, fiyat yetkisi ve urun/stok
+  mutation davranislari degistirilmedi.
+- Ortak admin route loading iskeletindeki 520 px ic genislik mobil grid'i
+  buyutuyordu. `min-w-0` ve sinirli tam genislik ile gecis anindaki yatay
+  scrollbar kaldirildi.
+- Yerel kabul: lint, Next 16 typecheck, 19/19 Node, 453/453 Vitest,
+  42/42 migration integrity, 0 production dependency vulnerability,
+  production build ve 52/52 authenticated smoke basarili.
+- Browser kabulu: 390 ve 1024 px'de yatay tasma yok, mobil kayitlar aktif ve
+  tablolar gizli; 1440 px'de tablolar aktif, mobil kayitlar gizli. Yuksek sayfa
+  urunlerde 56/56'ya, hareketlerde 28/28'e cekildi; hata/uyari gunlugu bos.
+- Faz 7.3 kapanmadi. Urun detay aktif-sekme sorgu optimizasyonu, katalog
+  gorsellerinin `next/image` kabulu ve repository branch protection ayari
+  siradadir.
+
 ## 2026-08-01 - Faz 7.3 firma ve bayi basvurusu mobil UX
 
 - `/admin/firmalar` ve `/admin/bayi-basvurulari` ekranlarinda yatay kayan

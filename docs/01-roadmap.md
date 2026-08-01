@@ -11,7 +11,7 @@ Asagidaki sira bu dosyadaki eski tarihsel alt faz notlarina gore onceliklidir:
 | 6 | Kapali | Premium responsive UI temeli ve yerel yayin kabul otomasyonu |
 | 7.1 | Tamamlandi | Anlasilir fiyat hiyerarsisi, firma iskontosu, Excel aktarimi, toplu fiyat degisimi ve geri alma |
 | 7.2 | Tamamlandi | Stok/depo operasyonu, depo ana verisi, atomik transfer ve fiziksel sayim oturumlari |
-| 7.3 | Devam ediyor | Ticari butunluk ve gorev odakli UX kapanisi: kredi, production dependency, stale aktarim, firma ve bayi basvurusu mobil listeleri tamamlandi; urun/stok hareketi mobil kabulu ile repo koruma ayari suruyor |
+| 7.3 | Devam ediyor | Ticari butunluk ve gorev odakli UX kapanisi: kredi, production dependency, stale aktarim ve ikincil admin mobil listeleri tamamlandi; urun detay performansi ile repo koruma ayari suruyor |
 | 8 | Dis girdiye bagli | Production hosting, SMTP, kalici storage, scheduler, alarm ve canli kabul |
 | 9 | Ertelendi | City Lojistik canli adapteri, ERP ve urun gorsel otomasyonu |
 

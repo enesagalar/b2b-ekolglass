@@ -47,7 +47,7 @@ Durum: Yerelde tamamlandi.
 
 ## Paket D - Kalan UX ve Yerel Release Kabulu
 
-Durum: Devam ediyor; firma ve bayi basvurusu liste paketi tamamlandi.
+Durum: Devam ediyor; ikincil admin liste paketleri tamamlandi.
 
 - Firma ve bayi basvurusu listeleri 1024 px altinda amaca ozel kayitlara,
   masaustunde yogun tabloya donusturuldu.
@@ -58,8 +58,14 @@ Durum: Devam ediyor; firma ve bayi basvurusu liste paketi tamamlandi.
   browser kabulunden gecti.
 - Commit `0d379be` icin GitHub Actions `30697297769` kalite ve immutable
   release artifact islerini basariyla tamamladi.
-- Urun ve stok hareketi listelerinde kalan yogun mobil tablo/aksiyon
-  noktalarini 360/390/768/1024 px kabulunden gecir.
+- Urun ve stok hareketi listeleri 1280 px altinda amaca ozel kayitlara,
+  genis ekranda yogun tabloya donusturuldu.
+- Bu iki listede yuksek sayfa numarasi gercek son sayfaya cekildi ve ortak
+  erisilebilir sayfalama kullanildi. Stok hareketi filtreleri sayfalama boyunca
+  korunur.
+- Ortak admin loading iskeletinin mobil yatay tasmasi giderildi. Paket lint,
+  typecheck, 19 Node, 453 Vitest, 42 migration, 0 production audit, production
+  build, 52 authenticated smoke ve 390/1024/1440 px browser kabulunden gecti.
 - Urun detay sorgularini aktif sekmeye gore daralt; katalog gorsellerini
   `next/image` ile optimize et.
 - Kalan ekranlarda Turkce operasyon dili, erisilebilir adlar, pasif sayfalama

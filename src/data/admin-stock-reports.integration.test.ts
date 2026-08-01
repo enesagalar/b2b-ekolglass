@@ -18,6 +18,7 @@ import {
   getAdminStockExportRows,
   getAdminStockReport,
 } from "./admin-stock-reports";
+import { getAdminStockMovements } from "./admin-stock-movements";
 
 const suffix = randomUUID();
 const codePrefix = `SR-${suffix}`;
@@ -365,6 +366,22 @@ describe("admin stock reports", () => {
       availableQuantity: 3,
       lowAvailableCount: 1,
     });
+  });
+
+  it("clamps an out-of-range stock movement page to the final available page", async () => {
+    const report = await getAdminStockMovements({
+      q: codePrefix,
+      warehouse: "",
+      movementType: "",
+      sourceType: "",
+      page: 9_999,
+    });
+
+    expect(report.totalRows).toBeGreaterThan(0);
+    expect(report.pageCount).toBe(1);
+    expect(report.currentPage).toBe(1);
+    expect(report.rows).toHaveLength(report.totalRows);
+    expect(report.rows.every((row) => row.productCode.startsWith(codePrefix))).toBe(true);
   });
 
   it("exports every row with calculated stock and ledger states", async () => {
